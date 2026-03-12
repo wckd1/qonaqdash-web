@@ -1,13 +1,23 @@
 <template>
   <div class="app-layout" :class="{ collapsed: sidebarCollapsed }">
-    <aside class="sidebar">
-      <div class="sidebar-header">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="collapse-btn" @click="toggleSidebar" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="15" y2="12" />
+            <line x1="3" y1="18" x2="18" y2="18" />
+          </svg>
+        </button>
         <div class="brand">
           <span class="brand-mark">Q</span>
           <span class="brand-name">QonaqDash</span>
         </div>
       </div>
+      <div class="topbar-right"></div>
+    </header>
 
+    <aside class="sidebar">
       <nav class="sidebar-nav">
         <router-link to="/bookings" class="nav-link">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -45,32 +55,43 @@
         </router-link>
       </nav>
 
-      <div class="sidebar-footer">
-        <button class="sidebar-btn" @click="toggleSidebar" aria-label="Toggle sidebar">
-          <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polyline :points="sidebarCollapsed ? '9 18 15 12 9 6' : '15 18 9 12 15 6'" />
-          </svg>
+      <div ref="userAreaRef" class="sidebar-user">
+        <button class="user-trigger" @click="toggleUserMenu">
+          <div class="user-avatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div class="user-info">
+            <span class="user-name">{{ userName }}</span>
+            <span class="user-role">Administrator</span>
+          </div>
         </button>
+
+        <Transition name="menu">
+          <div v-if="userMenuOpen" class="user-menu">
+            <button class="menu-item" @click="handleProfile">
+              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Profile
+            </button>
+            <button class="menu-item menu-item--danger" @click="logout">
+              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Log out
+            </button>
+          </div>
+        </Transition>
       </div>
     </aside>
 
     <div class="main-wrapper">
-      <header class="topbar">
-        <div class="topbar-context">
-          <span v-if="contextLabel" class="context-badge">{{ contextLabel }}</span>
-        </div>
-        <div class="topbar-actions">
-          <button class="btn-logout" @click="logout">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span class="logout-label">Logout</span>
-          </button>
-        </div>
-      </header>
-
       <main class="content">
         <router-view />
       </main>
@@ -79,19 +100,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { useJwt } from '@/shared/composables/useJwt'
+import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 
 const router = useRouter()
-const { getClaims } = useJwt()
+const authStore = useAuthStore()
+const userAreaRef = ref(null)
 
 const sidebarCollapsed = ref(localStorage.getItem('sidebar_collapsed') === 'true')
+const userMenuOpen = ref(false)
 
-const contextLabel = computed(() => {
-  const claims = getClaims()
-  if (!claims) return ''
-  return claims.hotelId || claims.orgId || ''
+const userName = computed(() => {
+  return authStore.user?.email || 'User'
 })
 
 function toggleSidebar() {
@@ -99,83 +120,143 @@ function toggleSidebar() {
   localStorage.setItem('sidebar_collapsed', sidebarCollapsed.value)
 }
 
+function toggleUserMenu() {
+  userMenuOpen.value = !userMenuOpen.value
+}
+
+function handleClickOutside(e) {
+  if (userMenuOpen.value && userAreaRef.value && !userAreaRef.value.contains(e.target)) {
+    userMenuOpen.value = false
+  }
+}
+
+function handleProfile() {
+  userMenuOpen.value = false
+}
+
 function logout() {
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('refresh_token')
+  userMenuOpen.value = false
+  authStore.logout()
   router.push({ name: 'login' })
 }
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <style scoped>
 .app-layout {
-  display: flex;
   min-height: 100vh;
 }
 
-/* ---- Sidebar ---- */
+/* ---- Topbar (full-width, above everything) ---- */
 
-.sidebar {
-  width: 240px;
-  background: #1a2332;
-  color: #c8d6e5;
-  display: flex;
-  flex-direction: column;
+.topbar {
   position: fixed;
   top: 0;
   left: 0;
-  bottom: 0;
-  z-index: 100;
-  transition: width 0.25s ease;
-  overflow: hidden;
+  right: 0;
+  height: 56px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  z-index: 200;
 }
 
-.collapsed .sidebar {
-  width: 64px;
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.sidebar-header {
-  padding: 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+.collapse-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.collapse-btn:hover {
+  background: var(--bg-base, #f5f7fa);
+  color: #374151;
+}
+
+.collapse-btn:focus-visible {
+  outline: 2px solid var(--color-teal, #2a9d8f);
+  outline-offset: 2px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  overflow: hidden;
-  white-space: nowrap;
+  gap: 0.625rem;
 }
 
 .brand-mark {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  background: var(--color-teal, #2a9d8f);
-  color: #fff;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: 1.5px solid rgba(42, 157, 143, 0.3);
+  background: rgba(42, 157, 143, 0.06);
+  color: var(--color-teal, #2a9d8f);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.125rem;
+  font-family: var(--font-display, serif);
+  font-size: 1rem;
 }
 
 .brand-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #fff;
-  transition: opacity 0.2s ease;
+  font-family: var(--font-display, serif);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  color: #1a1a1a;
 }
 
-.collapsed .brand-name {
-  opacity: 0;
-  pointer-events: none;
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ---- Sidebar (below topbar) ---- */
+
+.sidebar {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  bottom: 0;
+  width: 220px;
+  background: #1a2332;
+  color: #c8d6e5;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: width 0.25s ease;
+}
+
+.sidebar-nav,
+.user-trigger {
+  overflow: hidden;
+}
+
+.collapsed .sidebar {
+  width: 60px;
 }
 
 /* ---- Navigation ---- */
 
 .sidebar-nav {
-  flex: 1;
   padding: 0.75rem 0;
   display: flex;
   flex-direction: column;
@@ -186,13 +267,15 @@ function logout() {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.625rem 1.125rem;
   color: #c8d6e5;
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
   overflow: hidden;
   white-space: nowrap;
   border: none;
+  outline: none;
+  font-size: 0.9375rem;
 }
 
 .nav-link:hover {
@@ -200,10 +283,16 @@ function logout() {
   color: #fff;
 }
 
+.nav-link:focus-visible {
+  background: rgba(42, 157, 143, 0.12);
+  color: #fff;
+  box-shadow: inset 2px 0 0 var(--color-teal, #2a9d8f);
+}
+
 .nav-link.router-link-active {
   background: rgba(42, 157, 143, 0.2);
-  color: #2a9d8f;
-  box-shadow: inset 3px 0 0 #2a9d8f;
+  color: var(--color-teal, #2a9d8f);
+  box-shadow: inset 3px 0 0 var(--color-teal, #2a9d8f);
 }
 
 .nav-icon {
@@ -222,103 +311,185 @@ function logout() {
   pointer-events: none;
 }
 
-/* ---- Sidebar footer ---- */
+/* ---- User area (sidebar bottom) ---- */
 
-.sidebar-footer {
-  padding: 0.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+.sidebar-user {
+  margin-top: auto;
+  position: relative;
 }
 
-.sidebar-btn {
+.user-trigger {
   all: unset;
   box-sizing: border-box;
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  color: #c8d6e5;
+  gap: 0.75rem;
+  padding: 0.75rem 1.125rem;
   cursor: pointer;
-  border-radius: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   transition: background 0.15s ease;
+  overflow: hidden;
 }
 
-.sidebar-btn:hover {
+.user-trigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.user-trigger:focus-visible {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.toggle-icon {
-  width: 20px;
-  height: 20px;
+.collapsed .user-trigger {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8899aa;
+}
+
+.user-avatar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.collapsed .user-info {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+.user-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: 0.6875rem;
+  color: #6b7d8e;
+  letter-spacing: 0.01em;
+}
+
+/* ---- User dropdown menu ---- */
+
+.user-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0.5rem;
+  right: 0.5rem;
+  background: #232f3e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.375rem;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 300;
+}
+
+.collapsed .user-menu {
+  left: calc(100% + 6px);
+  right: auto;
+  bottom: 0;
+  min-width: 180px;
+}
+
+.menu-item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  color: #c8d6e5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.menu-item:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.menu-item--danger:hover {
+  background: rgba(229, 115, 115, 0.12);
+  color: var(--color-red, #e57373);
+}
+
+.menu-item--danger:focus-visible {
+  background: rgba(229, 115, 115, 0.12);
+  color: var(--color-red, #e57373);
+}
+
+.menu-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Menu transition */
+
+.menu-enter-active {
+  transition: all 0.15s ease-out;
+}
+
+.menu-leave-active {
+  transition: all 0.1s ease-in;
+}
+
+.menu-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.menu-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
 }
 
 /* ---- Main area ---- */
 
 .main-wrapper {
-  flex: 1;
-  margin-left: 240px;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  margin-left: 220px;
+  margin-top: 56px;
+  min-height: calc(100vh - 56px);
+  background: var(--bg-base, #f5f7fa);
   transition: margin-left 0.25s ease;
-  background: var(--bg-cream, #faf8f5);
 }
 
 .collapsed .main-wrapper {
-  margin-left: 64px;
-}
-
-.topbar {
-  height: 60px;
-  background: #fff;
-  border-bottom: 1px solid var(--border-light, #e8e5e0);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-.context-badge {
-  font-weight: 500;
-  font-size: 0.9375rem;
-  color: #374151;
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-}
-
-.btn-logout {
-  all: unset;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--border-light, #e8e5e0);
-  border-radius: 6px;
-  color: #6b7280;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.15s ease;
-}
-
-.btn-logout:hover {
-  background: #fef2f2;
-  border-color: var(--color-red, #e57373);
-  color: var(--color-red, #e57373);
-}
-
-.logout-label {
-  line-height: 1;
+  margin-left: 60px;
 }
 
 .content {
-  flex: 1;
   padding: 1.5rem 2rem;
 }
 </style>

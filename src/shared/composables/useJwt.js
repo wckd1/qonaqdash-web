@@ -18,6 +18,7 @@ export function useJwt() {
     if (!payload) return null
     return {
       sub: payload.sub,
+      email: payload.email,
       orgId: payload.org_id,
       hotelId: payload.hotel_id,
     }

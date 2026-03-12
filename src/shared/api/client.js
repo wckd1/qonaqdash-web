@@ -29,9 +29,12 @@ api.interceptors.response.use(
     const { status, data } = err.response
 
     if (status === 401) {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(REFRESH_TOKEN_KEY)
-      window.location.href = '/auth/login'
+      const isAuthRequest = err.config?.url?.startsWith('/api/auth/')
+      if (!isAuthRequest) {
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(REFRESH_TOKEN_KEY)
+        window.location.href = '/auth/login'
+      }
       return Promise.reject(err)
     }
 

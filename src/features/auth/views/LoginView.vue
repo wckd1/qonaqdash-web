@@ -1,44 +1,71 @@
 <template>
-  <main class="auth-page">
-    <article>
-      <header>
-        <div class="brand-mark">Q</div>
-        <h2>Sign in to QonaqDash</h2>
-      </header>
-      <p>Login form — coming in P0.</p>
-    </article>
-  </main>
+  <AuthLayout title="Sign in to QonaqDash" subtitle="Enter your credentials to continue">
+    <div v-if="formError" class="form-error">{{ formError }}</div>
+
+    <form @submit.prevent="handleSubmit">
+      <label>
+        Email
+        <input
+          v-model="email"
+          type="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          required
+          :disabled="loading"
+        />
+      </label>
+
+      <label>
+        Password
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Your password"
+          autocomplete="current-password"
+          required
+          :disabled="loading"
+        />
+      </label>
+
+      <button type="submit" :aria-busy="loading" :disabled="loading">
+        {{ loading ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+  </AuthLayout>
 </template>
 
-<style scoped>
-.auth-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 2rem;
-}
+<script setup>
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
-.auth-page article {
-  width: 100%;
-  max-width: 400px;
-}
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
-.auth-page header {
-  text-align: center;
-}
+const email = ref('')
+const password = ref('')
+const loading = ref(false)
+const formError = ref('')
 
-.brand-mark {
-  width: 48px;
-  height: 48px;
-  background: var(--color-teal, #2a9d8f);
-  color: #fff;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+async function handleSubmit() {
+  formError.value = ''
+  loading.value = true
+
+  try {
+    await authStore.login(email.value, password.value)
+    const redirect = route.query.redirect || '/'
+    router.push(redirect)
+  } catch (err) {
+    if (err.response) {
+      const msg = err.response.data?.message || err.response.data?.error
+      formError.value = msg || 'Invalid email or password. Please try again.'
+    } else {
+      formError.value = 'Unable to reach the server. Please check your connection.'
+    }
+  } finally {
+    loading.value = false
+  }
 }
-</style>
+</script>

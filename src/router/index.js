@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useJwt } from '@/shared/composables/useJwt'
+import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 
 const routes = [
   {
@@ -32,20 +32,17 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const { isExpired } = useJwt()
-  const token = localStorage.getItem('access_token')
-  const isAuthenticated = !!token && !isExpired(token)
+  const auth = useAuthStore()
 
-  if (!isAuthenticated && token) {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+  if (!auth.isAuthenticated && auth.accessToken) {
+    auth.logout()
   }
 
-  if (to.matched.some((r) => r.meta.requiresAuth) && !isAuthenticated) {
+  if (to.matched.some((r) => r.meta.requiresAuth) && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.path.startsWith('/auth/') && isAuthenticated) {
+  if (to.path.startsWith('/auth/') && auth.isAuthenticated) {
     return { path: '/' }
   }
 })

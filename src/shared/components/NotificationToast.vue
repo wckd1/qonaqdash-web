@@ -39,24 +39,24 @@ const { notifications, dismiss } = useNotification()
   padding: 0.75rem 1rem;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  border-left: 4px solid;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-left: 2px solid;
   font-size: 0.875rem;
 }
 
 .toast--error {
   border-left-color: var(--color-red, #e57373);
-  background: #fef2f2;
+  background: var(--semantic-error-bg, #fef2f2);
 }
 
 .toast--success {
   border-left-color: var(--color-green, #4caf50);
-  background: #f0fdf4;
+  background: var(--semantic-success-bg, #f0fdf4);
 }
 
 .toast--info {
   border-left-color: var(--color-teal, #2a9d8f);
-  background: #f0fdfa;
+  background: var(--semantic-info-bg, #f0fdfa);
 }
 
 .toast-message {

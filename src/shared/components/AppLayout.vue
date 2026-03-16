@@ -146,7 +146,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 <style scoped>
 .app-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ---- Topbar (full-width, above everything) ---- */
@@ -480,9 +481,13 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .main-wrapper {
   margin-left: 220px;
   margin-top: 56px;
-  min-height: calc(100vh - 56px);
+  height: calc(100vh - 56px);
+  padding: var(--content-area-gap, 16px);
   background: var(--bg-base, #f5f7fa);
   transition: margin-left 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .collapsed .main-wrapper {
@@ -490,6 +495,15 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .content {
-  padding: 1.5rem 2rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--content-area-padding, 16px);
+  background: var(--surface-1, #fff);
+  border-radius: var(--content-area-radius, 18px);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  box-sizing: border-box;
 }
 </style>

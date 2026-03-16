@@ -59,7 +59,7 @@ async function handleSubmit() {
     router.push(redirect)
   } catch (err) {
     if (err.response) {
-      const msg = err.response.data?.message || err.response.data?.error
+      const msg = err.response.data?.error
       formError.value = msg || 'Invalid email or password. Please try again.'
     } else {
       formError.value = 'Unable to reach the server. Please check your connection.'

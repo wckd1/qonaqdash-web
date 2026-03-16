@@ -23,60 +23,60 @@ const { notifications, dismiss } = useNotification()
 <style scoped>
 .toast-container {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: var(--space-md);
+  right: var(--space-md);
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   max-width: 400px;
 }
 
 .toast {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-md);
   border-left: 2px solid;
-  font-size: 0.875rem;
+  font-size: var(--text-body-size);
 }
 
 .toast--error {
-  border-left-color: var(--color-red, #e57373);
-  background: var(--semantic-error-bg, #fef2f2);
+  border-left-color: var(--semantic-error);
+  background: var(--semantic-error-bg);
 }
 
 .toast--success {
-  border-left-color: var(--color-green, #4caf50);
-  background: var(--semantic-success-bg, #f0fdf4);
+  border-left-color: var(--semantic-success);
+  background: var(--semantic-success-bg);
 }
 
 .toast--info {
-  border-left-color: var(--color-teal, #2a9d8f);
-  background: var(--semantic-info-bg, #f0fdfa);
+  border-left-color: var(--semantic-info);
+  background: var(--semantic-info-bg);
 }
 
 .toast-message {
   flex: 1;
-  color: #1a2332;
+  color: var(--ink-primary);
 }
 
 .toast-close {
   all: unset;
   cursor: pointer;
   font-size: 1.25rem;
-  color: #9ca3af;
+  color: var(--ink-muted);
   line-height: 1;
   padding: 0.125rem 0.25rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .toast-close:hover {
-  color: #4b5563;
-  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink-secondary);
+  background: rgba(30, 41, 59, 0.05);
 }
 
 .toast-enter-active {

@@ -43,8 +43,8 @@ defineProps({
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 1.5rem;
-  background: var(--bg-base, #f5f7fa);
+  padding: var(--space-lg);
+  background: var(--canvas);
 }
 
 /* ---- Card shell ---- */
@@ -54,11 +54,9 @@ defineProps({
   width: 100%;
   max-width: 840px;
   min-height: 520px;
-  border-radius: 16px;
+  border-radius: var(--content-area-radius);
   overflow: hidden;
-  box-shadow:
-    0 8px 40px rgba(26, 35, 50, 0.08),
-    0 1px 3px rgba(26, 35, 50, 0.04);
+  box-shadow: var(--shadow-lg);
   animation: cardEnter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -73,7 +71,7 @@ defineProps({
   justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: 3rem 2.5rem;
+  padding: var(--space-block) 2.5rem;
 }
 
 .brand-content {
@@ -87,29 +85,29 @@ defineProps({
   height: 60px;
   border: 2px solid rgba(42, 157, 143, 0.35);
   background: rgba(42, 157, 143, 0.08);
-  color: var(--color-teal, #2a9d8f);
-  border-radius: 16px;
+  color: var(--brand-primary);
+  border-radius: var(--content-area-radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display, serif);
+  font-family: var(--font-display);
   font-size: 1.875rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-lg);
   animation: brandFadeIn 0.6s ease-out 0.2s both;
 }
 
 .brand-name {
-  font-family: var(--font-display, serif);
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  color: #fff;
-  margin-bottom: 0.5rem;
+  color: var(--ink-inverse);
+  margin-bottom: var(--space-xs);
   letter-spacing: 0.01em;
   animation: brandFadeIn 0.6s ease-out 0.3s both;
 }
 
 .brand-tagline {
   color: rgba(200, 214, 229, 0.5);
-  font-size: 0.8125rem;
+  font-size: var(--text-label-size);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0;
@@ -151,8 +149,8 @@ defineProps({
 
 .auth-form {
   flex: 1;
-  padding: 3rem;
-  background: #fff;
+  padding: var(--space-block) var(--space-xl);
+  background: var(--surface-1);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -160,34 +158,34 @@ defineProps({
 }
 
 .auth-form-header {
-  margin-bottom: 1.75rem;
+  margin-bottom: var(--space-lg);
 }
 
 .auth-form-header h2 {
-  font-family: var(--font-display, serif);
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: var(--text-heading-weight);
   font-size: 1.625rem;
-  color: #1a1a1a;
-  margin-bottom: 0.375rem;
+  color: var(--ink-primary);
+  margin-bottom: var(--space-micro);
 }
 
 .auth-subtitle {
-  color: #6b7280;
-  font-size: 0.9375rem;
+  color: var(--ink-secondary);
+  font-size: var(--text-body-size);
   margin: 0;
 }
 
 .auth-footer {
   text-align: center;
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  font-size: 0.875rem;
-  color: #6b7280;
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
 }
 
 .auth-footer :slotted(a) {
-  color: var(--color-teal, #2a9d8f);
+  color: var(--brand-primary);
   text-decoration: none;
   font-weight: 500;
 }
@@ -199,24 +197,24 @@ defineProps({
 /* ---- Slotted content styles ---- */
 
 :slotted(.form-error) {
-  background: #fef2f2;
-  border: 1px solid rgba(239, 68, 68, 0.15);
-  color: #b91c1c;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
+  background: var(--semantic-error-bg);
+  border: 1px solid rgba(200, 90, 90, 0.2);
+  color: var(--semantic-error);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-body-size);
+  margin-bottom: var(--space-md);
   animation: slideDown 0.25s ease-out;
 }
 
 :slotted(.invite-info) {
   background: rgba(42, 157, 143, 0.06);
   border: 1px solid rgba(42, 157, 143, 0.15);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.5rem;
-  font-size: 0.9375rem;
-  color: #134e4a;
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-lg);
+  font-size: var(--text-body-size);
+  color: var(--ink-primary);
 }
 
 /* ---- Animations ---- */
@@ -294,7 +292,7 @@ defineProps({
 
   .auth-brand {
     width: 100%;
-    padding: 2rem 1.5rem;
+    padding: var(--space-xl) var(--space-lg);
     min-height: auto;
   }
 
@@ -306,7 +304,7 @@ defineProps({
 
   .auth-form {
     flex: 1;
-    padding: 2rem 1.5rem;
+    padding: var(--space-xl) var(--space-lg);
     justify-content: flex-start;
   }
 }

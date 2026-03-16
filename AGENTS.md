@@ -15,7 +15,7 @@
 
 - **Design implementation**: Use `/frontend-design` and `/interface-design` skills when working on UI/UX design and implementation
 - **Design system**: All colors, typography, spacing, and depth live in [src/assets/main.css](src/assets/main.css) as CSS custom properties. Reference page: [docs/design.html](docs/design.html). Use tokens from main.css in new components; do not introduce hardcoded hex or ad-hoc values.
-- **Navigation**: Collapsible sidebar -- Bookings (home/grid), Guests, Settings
+- **Navigation**: Collapsible **dark** sidebar — Bookings (home/grid), Guests, Settings. Sidebar uses `--sidebar-bg`, `--sidebar-text`, `--sidebar-user-menu-bg` etc. in [main.css](src/assets/main.css); see [docs/design.md](docs/design.md) and design.html.
 - **Interaction pattern (universal)**: List/Grid -> Side panel (summary + quick actions) -> Full page (detail + edit). Consistent for bookings and guests.
 - **Visual style**: Cool gray-blue base (`--canvas`), teal accent (`--brand-primary`) on Pico CSS; corporate but joyful; generous whitespace. Typography: DM Sans (`--font-body`) + Plus Jakarta Sans (`--font-display`) for headings. Main content area: spacing (--content-area-gap), rounded panel (--content-area-radius). See design system tokens and [docs/design.html](docs/design.html) for full reference.
 - **Booking status colors**: `--status-confirmed`, `--status-checked-in`, `--status-checked-out`, `--status-canceled` (see main.css and design reference)
@@ -26,6 +26,8 @@
 - `docs/` directory contains design and requirements reference — excluded from builds
 - Don't create `.md` files unless explicitly requested
 - Don't bypass errors with workarounds — fix root causes
+- **API errors**: Backend returns `{ "error": "human-readable message" }`. Use `data?.error` (not `data?.message`) in the API client and in feature views when surfacing API error messages.
+- **Design doc sync**: When changing UI or design decisions (e.g. sidebar theme, new tokens), update both [docs/design.md](docs/design.md) (decisions + palette list) and [docs/design.html](docs/design.html) (visual reference + swatches) so the design system stays the single source of truth.
 
 ## Design system learnings
 

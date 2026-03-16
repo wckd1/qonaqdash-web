@@ -8,7 +8,7 @@
 
     <template v-else-if="invite">
       <div class="invite-info">
-        You've been invited to <strong>{{ invite.organization }}</strong>
+        You've been invited to <strong>{{ invite.organization_name }}</strong>
         as <strong>{{ invite.email }}</strong>
       </div>
 
@@ -78,7 +78,7 @@ onMounted(async () => {
     invite.value = await fetchInvite(route.params.token)
   } catch (err) {
     if (err.response) {
-      const msg = err.response.data?.message || err.response.data?.error
+      const msg = err.response.data?.error
       loadError.value = msg || 'This invitation link is invalid or has expired.'
     } else {
       loadError.value = 'Unable to reach the server. Please check your connection.'
@@ -103,7 +103,7 @@ async function handleSubmit() {
     router.push('/')
   } catch (err) {
     if (err.response) {
-      const msg = err.response.data?.message || err.response.data?.error
+      const msg = err.response.data?.error
       formError.value = msg || 'Failed to complete invitation. Please try again.'
     } else {
       formError.value = 'Unable to reach the server. Please check your connection.'
@@ -116,6 +116,6 @@ async function handleSubmit() {
 
 <style scoped>
 .invite-info strong {
-  color: #0f766e;
+  color: var(--brand-primary);
 }
 </style>

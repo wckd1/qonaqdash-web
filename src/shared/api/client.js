@@ -39,11 +39,11 @@ api.interceptors.response.use(
     }
 
     if (status === 409) {
-      showError(data?.message || 'Conflict: the resource was modified. Please retry.')
+      showError(data?.error || 'Conflict: the resource was modified. Please retry.')
       return Promise.reject(err)
     }
 
-    const message = data?.message || data?.error || `Request failed (${status})`
+    const message = data?.error || `Request failed (${status})`
     showError(message)
     return Promise.reject(err)
   },

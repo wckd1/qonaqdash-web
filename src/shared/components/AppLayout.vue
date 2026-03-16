@@ -150,7 +150,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   overflow: hidden;
 }
 
-/* ---- Topbar (full-width, above everything) ---- */
+/* ---- Topbar ---- */
 
 .topbar {
   position: fixed;
@@ -158,19 +158,19 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   left: 0;
   right: 0;
   height: 56px;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
+  padding: 0 var(--space-lg);
   z-index: 200;
 }
 
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-sm);
 }
 
 .collapse-btn {
@@ -181,19 +181,19 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  color: #6b7280;
+  border-radius: var(--radius-md);
+  color: var(--ink-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .collapse-btn:hover {
-  background: var(--bg-base, #f5f7fa);
-  color: #374151;
+  background: var(--canvas);
+  color: var(--ink-primary);
 }
 
 .collapse-btn:focus-visible {
-  outline: 2px solid var(--color-teal, #2a9d8f);
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -209,20 +209,20 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   min-width: 32px;
   border: 1.5px solid rgba(42, 157, 143, 0.3);
   background: rgba(42, 157, 143, 0.06);
-  color: var(--color-teal, #2a9d8f);
-  border-radius: 8px;
+  color: var(--brand-primary);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display, serif);
+  font-family: var(--font-display);
   font-size: 1rem;
 }
 
 .brand-name {
-  font-family: var(--font-display, serif);
+  font-family: var(--font-display);
   font-size: 1.0625rem;
   font-weight: 400;
-  color: #1a1a1a;
+  color: var(--ink-primary);
 }
 
 .topbar-right {
@@ -230,7 +230,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   align-items: center;
 }
 
-/* ---- Sidebar (below topbar) ---- */
+/* ---- Sidebar (dark) ---- */
 
 .sidebar {
   position: fixed;
@@ -238,8 +238,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   left: 0;
   bottom: 0;
   width: 220px;
-  background: #1a2332;
-  color: #c8d6e5;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
   z-index: 100;
@@ -258,7 +258,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 /* ---- Navigation ---- */
 
 .sidebar-nav {
-  padding: 0.75rem 0;
+  padding: var(--space-sm) 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -267,33 +267,33 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-sm);
   padding: 0.625rem 1.125rem;
-  color: #c8d6e5;
+  color: var(--sidebar-text);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
   overflow: hidden;
   white-space: nowrap;
   border: none;
   outline: none;
-  font-size: 0.9375rem;
+  font-size: var(--text-body-size);
 }
 
 .nav-link:hover {
-  background: rgba(42, 157, 143, 0.12);
-  color: #fff;
+  background: var(--sidebar-hover-bg);
+  color: var(--ink-inverse);
 }
 
 .nav-link:focus-visible {
-  background: rgba(42, 157, 143, 0.12);
-  color: #fff;
-  box-shadow: inset 2px 0 0 var(--color-teal, #2a9d8f);
+  background: var(--sidebar-hover-bg);
+  color: var(--ink-inverse);
+  box-shadow: inset 2px 0 0 var(--brand-primary);
 }
 
 .nav-link.router-link-active {
-  background: rgba(42, 157, 143, 0.2);
-  color: var(--color-teal, #2a9d8f);
-  box-shadow: inset 3px 0 0 var(--color-teal, #2a9d8f);
+  background: var(--sidebar-active-bg);
+  color: var(--brand-primary);
+  box-shadow: inset 3px 0 0 var(--brand-primary);
 }
 
 .nav-icon {
@@ -325,10 +325,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.125rem;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 1.125rem;
   cursor: pointer;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--sidebar-border);
   transition: background 0.15s ease;
   overflow: hidden;
 }
@@ -343,7 +343,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .collapsed .user-trigger {
   justify-content: center;
-  padding: 0.75rem 0;
+  padding: var(--space-sm) 0;
 }
 
 .user-avatar {
@@ -355,7 +355,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8899aa;
+  color: var(--sidebar-text-muted);
 }
 
 .user-avatar svg {
@@ -379,8 +379,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .user-name {
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
   color: #e2e8f0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -388,21 +388,21 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .user-role {
   font-size: 0.6875rem;
-  color: #6b7d8e;
+  color: var(--sidebar-text-muted);
   letter-spacing: 0.01em;
 }
 
-/* ---- User dropdown menu ---- */
+/* ---- User dropdown menu (dark, matches sidebar) ---- */
 
 .user-menu {
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 0.5rem;
-  right: 0.5rem;
-  background: #232f3e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 0.375rem;
+  left: var(--space-xs);
+  right: var(--space-xs);
+  background: var(--sidebar-user-menu-bg);
+  border: 1px solid var(--sidebar-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-micro);
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
   z-index: 300;
 }
@@ -421,10 +421,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   align-items: center;
   gap: 0.625rem;
   width: 100%;
-  padding: 0.5rem 0.625rem;
-  font-size: 0.8125rem;
-  color: #c8d6e5;
-  border-radius: 6px;
+  padding: var(--space-xs) 0.625rem;
+  font-size: var(--text-label-size);
+  color: var(--sidebar-text);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
   white-space: nowrap;
@@ -432,22 +432,22 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  color: var(--ink-inverse);
 }
 
 .menu-item:focus-visible {
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: var(--ink-inverse);
 }
 
 .menu-item--danger:hover {
   background: rgba(229, 115, 115, 0.12);
-  color: var(--color-red, #e57373);
+  color: var(--status-canceled);
 }
 
 .menu-item--danger:focus-visible {
   background: rgba(229, 115, 115, 0.12);
-  color: var(--color-red, #e57373);
+  color: var(--status-canceled);
 }
 
 .menu-icon {
@@ -482,8 +482,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   margin-left: 220px;
   margin-top: 56px;
   height: calc(100vh - 56px);
-  padding: var(--content-area-gap, 16px);
-  background: var(--bg-base, #f5f7fa);
+  padding: var(--content-area-gap);
+  background: var(--canvas);
   transition: margin-left 0.25s ease;
   display: flex;
   flex-direction: column;
@@ -499,9 +499,9 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--content-area-padding, 16px);
-  background: var(--surface-1, #fff);
-  border-radius: var(--content-area-radius, 18px);
+  padding: var(--content-area-padding);
+  background: var(--surface-1);
+  border-radius: var(--content-area-radius);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-subtle);
   box-sizing: border-box;

@@ -22,6 +22,18 @@ const routes = [
         name: 'home',
         component: () => import('@/views/HomeView.vue'),
       },
+      {
+        path: 'property',
+        name: 'property',
+        component: () => import('@/features/property/views/PropertyView.vue'),
+      },
+      { path: 'property/room-types', redirect: { name: 'property' } },
+      { path: 'property/rooms', redirect: { name: 'property' } },
+      {
+        path: '/:pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/shared/views/NotFoundView.vue'),
+      },
     ],
   },
 ]

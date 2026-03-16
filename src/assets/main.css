@@ -122,6 +122,26 @@
   --border-light: var(--border-subtle);
 }
 
+/* Pico: remove default bottom margin on buttons (we control spacing in layout) */
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  margin-bottom: 0;
+}
+
+/* Pico: remove default bottom margin on block elements (we control spacing in layout) */
+address,
+blockquote,
+details,
+dl,
+ol,
+p,
+pre,
+table,
+ul {
+  margin-bottom: 0;
+}
+
 /* Form input labels use body size for readability */
 label {
   font-size: var(--text-body-size);

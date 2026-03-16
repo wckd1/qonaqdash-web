@@ -34,3 +34,11 @@
 - **Intent block** in [src/assets/main.css](src/assets/main.css): who (reception, staff), what (manage bookings/guests), feel (warm, calm, teal accent). When adding or changing tokens, keep intent consistent.
 - **Content and forms**: Content sections use full horizontal space (no arbitrary max-width). Form inputs stack vertically; form labels use body font size (`label` rule in main.css). Apply these in new views.
 - **When reviewing UI** (e.g. with /interface-design): Ensure fallbacks in components match current token values; avoid template-style constraints (e.g. max-width on cards) that contradict full-width content; run token test (names should evoke the product).
+
+## Frontend / Vue learnings
+
+- **Pinia state in views**: Use `storeToRefs(store)` when destructuring store state in components so the view stays reactive to async store updates (e.g. direct navigation vs. coming from another page that already loaded data).
+- **Sidebar active link**: Use CSS class `router-link-exact-active` (not `router-link-active`) for nav link styling when the root path is `/` and all app routes are its children—otherwise the home/dashboard link stays active on every page.
+- **Pico margin overrides**: In [main.css](src/assets/main.css) we override Pico’s default bottom margins (buttons, block elements, `details`) so the app controls spacing; add new Pico overrides there rather than in components.
+- **404 inside layout**: Use a catch-all child route under the main layout (`path: '/:pathMatch(.*)*'`) so unknown routes still render AppLayout with a NotFound view in the content area.
+- **Accordions (multiple open)**: Use native `<details>` without a controlled `:open` binding so each accordion opens and closes independently.

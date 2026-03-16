@@ -19,6 +19,14 @@
 
     <aside class="sidebar">
       <nav class="sidebar-nav">
+        <router-link to="/" class="nav-link">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7l-9-6-9 6z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span class="nav-label">Dashboard</span>
+        </router-link>
+
         <router-link to="/bookings" class="nav-link">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -39,20 +47,29 @@
           <span class="nav-label">Guests</span>
         </router-link>
 
-        <router-link to="/settings" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="4" y1="21" x2="4" y2="14" />
-            <line x1="4" y1="10" x2="4" y2="3" />
-            <line x1="12" y1="21" x2="12" y2="12" />
-            <line x1="12" y1="8" x2="12" y2="3" />
-            <line x1="20" y1="21" x2="20" y2="16" />
-            <line x1="20" y1="12" x2="20" y2="3" />
-            <line x1="1" y1="14" x2="7" y2="14" />
-            <line x1="9" y1="8" x2="15" y2="8" />
-            <line x1="17" y1="16" x2="23" y2="16" />
-          </svg>
-          <span class="nav-label">Settings</span>
-        </router-link>
+        <div class="nav-group">
+          <span class="nav-group-label">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" />
+              <line x1="9" y1="8" x2="15" y2="8" />
+              <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            <span class="nav-label">Settings</span>
+          </span>
+          <router-link to="/property" class="nav-link nav-sublink">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span class="nav-label">Rooms</span>
+          </router-link>
+        </div>
       </nav>
 
       <div ref="userAreaRef" class="sidebar-user">
@@ -290,7 +307,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   box-shadow: inset 2px 0 0 var(--brand-primary);
 }
 
-.nav-link.router-link-active {
+.nav-link.router-link-exact-active {
   background: var(--sidebar-active-bg);
   color: var(--brand-primary);
   box-shadow: inset 3px 0 0 var(--brand-primary);
@@ -310,6 +327,38 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .collapsed .nav-label {
   opacity: 0;
   pointer-events: none;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-group-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.625rem 1.125rem;
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--sidebar-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.collapsed .nav-group-label {
+  display: none;
+}
+
+.nav-sublink {
+  padding-left: 2.25rem;
+}
+
+.collapsed .nav-sublink {
+  padding-left: 1.125rem;
 }
 
 /* ---- User area (sidebar bottom) ---- */

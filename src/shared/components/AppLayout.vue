@@ -120,7 +120,7 @@
       <div class="breadcrumb-row">
         <Breadcrumbs />
       </div>
-      <main class="main-inner">
+      <main class="main-inner" :class="{ 'main-inner--fit-content': isFormPage }">
         <router-view />
       </main>
     </div>
@@ -129,12 +129,19 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import Breadcrumbs from '@/shared/components/Breadcrumbs.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
+
+/** Form/detail pages: main content height fits content instead of filling available space. */
+const isFormPage = computed(() => {
+  const p = route.path
+  return p === '/guests/new' || p === '/bookings/new' || /^\/guests\/[^/]+$/.test(p) || /^\/bookings\/[^/]+$/.test(p)
+})
 const userAreaRef = ref(null)
 
 const sidebarCollapsed = ref(localStorage.getItem('sidebar_collapsed') === 'true')

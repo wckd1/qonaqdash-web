@@ -27,6 +27,25 @@ export function getValueByPath(obj, path) {
 }
 
 /**
+ * Write value at path (array of keys). Mutates obj; creates nested objects as needed.
+ * @param {Record<string, unknown>} obj
+ * @param {string[]} path
+ * @param {unknown} value
+ */
+export function setValueByPath(obj, path, value) {
+  if (!path?.length) return
+  let target = obj
+  for (let i = 0; i < path.length - 1; i++) {
+    const key = path[i]
+    if (target[key] == null || typeof target[key] !== 'object') {
+      target[key] = {}
+    }
+    target = target[key]
+  }
+  target[path[path.length - 1]] = value
+}
+
+/**
  * Resolve JSON Schema entry for path (array of keys). Walks schema.properties only.
  * @param {Record<string, unknown>} schema - Root or fragment (e.g. item schema)
  * @param {string[]} path

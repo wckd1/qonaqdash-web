@@ -23,6 +23,32 @@ export const useGuestStore = defineStore('guests', () => {
     return guest
   }
 
+  /**
+   * @returns {Promise<{ schema: object, uischema: object, data: object }>}
+   */
+  async function fetchGuestForm() {
+    return guestsApi.fetchGuestForm()
+  }
+
+  /**
+   * @param {Record<string, unknown>} data - camelCase form data (firstName, lastName, email, phone)
+   * @returns {Promise<import('@/features/guests/api').GuestDetailResponse>}
+   */
+  async function createGuest(data) {
+    return guestsApi.createGuest(data)
+  }
+
+  /**
+   * @param {string} id
+   * @param {Record<string, unknown>} data - camelCase form data
+   * @returns {Promise<import('@/features/guests/api').GuestDetailResponse>}
+   */
+  async function updateGuest(id, data) {
+    const updated = await guestsApi.updateGuest(id, data)
+    currentGuest.value = updated
+    return updated
+  }
+
   function clearCurrentGuest() {
     currentGuest.value = null
   }
@@ -32,6 +58,9 @@ export const useGuestStore = defineStore('guests', () => {
     currentGuest,
     fetchGuests,
     fetchGuest,
+    fetchGuestForm,
+    createGuest,
+    updateGuest,
     clearCurrentGuest,
   }
 })

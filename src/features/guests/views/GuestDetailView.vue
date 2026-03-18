@@ -1,6 +1,21 @@
 <template>
   <header class="page-header">
     <h1>{{ guestDisplayName }}</h1>
+    <button
+      v-if="guestId && guestForm && !editing"
+      type="button"
+      @click="editing = true"
+    >
+      Edit
+    </button>
+    <div v-else-if="guestId && guestForm && editing" class="page-header-actions">
+      <button type="button" :disabled="submitting" @click="onSave">
+        {{ submitting ? 'Saving…' : 'Save' }}
+      </button>
+      <button type="button" class="btn-secondary" :disabled="submitting" @click="cancelEdit">
+        Cancel
+      </button>
+    </div>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
@@ -10,12 +25,23 @@
   </p>
   <template v-else-if="currentGuest">
     <div class="guest-detail-body">
-      <JsonFormView
-        v-if="guestForm"
-        :schema="guestForm.schema"
-        :uischema="guestForm.uischema"
-        :data="guestForm.data"
-      />
+      <template v-if="guestForm">
+        <JsonFormView
+          v-if="!editing"
+          :schema="guestForm.schema"
+          :uischema="guestForm.uischema"
+          :data="guestForm.data"
+        />
+        <template v-else>
+          <JsonFormEdit
+            :schema="guestForm.schema"
+            :uischema="guestForm.uischema"
+            :data="editFormData"
+            :errors-map="errorsMap"
+            @update:data="editFormData = $event"
+          />
+        </template>
+      </template>
 
       <section v-if="guestId" class="previous-bookings" aria-labelledby="previous-bookings-heading">
       <h2 id="previous-bookings-heading">Bookings</h2>
@@ -59,6 +85,7 @@ import { storeToRefs } from 'pinia'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
+import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchBookings } from '@/features/bookings/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
@@ -70,6 +97,10 @@ const { setItems: setBreadcrumb } = useBreadcrumb()
 
 const loadError = ref('')
 const notFound = ref(false)
+const editing = ref(false)
+const editFormData = ref({})
+const errorsMap = ref({})
+const submitting = ref(false)
 
 const guestId = computed(() => route.params.id || null)
 
@@ -136,9 +167,37 @@ async function loadBookings() {
   }
 }
 
+watch(editing, (isEdit) => {
+  if (isEdit && guestForm.value) {
+    editFormData.value = { ...guestForm.value.data }
+    errorsMap.value = {}
+  }
+})
+
 watch(() => route.params.id, (newId) => {
   if (newId) load()
+  editing.value = false
 })
+
+function cancelEdit() {
+  editing.value = false
+  if (guestForm.value) editFormData.value = { ...guestForm.value.data }
+}
+
+async function onSave() {
+  if (!guestId.value) return
+  errorsMap.value = {}
+  submitting.value = true
+  try {
+    await store.updateGuest(guestId.value, editFormData.value)
+    editing.value = false
+  } catch (err) {
+    const msg = err.response?.data?.error ?? 'Failed to save.'
+    errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
+  } finally {
+    submitting.value = false
+  }
+}
 
 watch(guestId, (id) => {
   if (id && currentGuest.value) loadBookings()

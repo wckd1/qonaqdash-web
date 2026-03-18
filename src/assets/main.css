@@ -162,6 +162,35 @@ main .page-header {
   flex-wrap: wrap;
   gap: var(--space-md);
 }
+main .page-header button {
+  font-size: var(--text-label-size);
+}
+main .page-header-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+main .page-header-actions .btn-secondary {
+  font-size: var(--text-label-size);
+  color: var(--ink-secondary);
+  background: var(--pico-form-element-background-color);
+  border: 1px solid var(--border-default);
+}
+main .page-header-actions .btn-secondary:hover:not(:disabled) {
+  color: var(--ink-primary);
+  border-color: var(--border-emphasis);
+}
+
+/* Form/detail pages: main content area only as tall as content (no stretch). */
+.main-inner--fit-content {
+  flex: 0 1 auto;
+  height: fit-content;
+  align-self: flex-start;
+}
+/* Form page section (jsonform Group): do not grow — wrap content like list. */
+.main-inner--fit-content > section {
+  flex: 0 1 auto;
+  height: fit-content;
+}
 
 main > section {
   background: var(--surface-1);
@@ -383,6 +412,7 @@ label {
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-md);
+  height: fit-content;
 }
 .form-view-layout--group:last-child {
   margin-bottom: 0;
@@ -409,6 +439,12 @@ label {
   flex-direction: row;
   gap: var(--space-md);
   flex-wrap: wrap;
+}
+/* Children of horizontal layout share the row (do not force 100% width). */
+.form-view-layout--horizontal > .form-view-layout {
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
 }
 .form-view-control--full-width {
   grid-column: 1 / -1;
@@ -454,6 +490,64 @@ label {
   color: var(--ink-tertiary);
   font-style: italic;
   margin: 0;
+}
+
+/* Form edit: same layout as form-view; controls are inputs/selects. Reuses form-view-layout*. */
+.form-edit-control {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-md);
+}
+.form-edit-control:last-child {
+  margin-bottom: 0;
+}
+.form-edit-control label {
+  margin-bottom: var(--space-xs);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+}
+.form-edit-control__input-wrap {
+  min-width: 0;
+}
+.form-edit-control__input-wrap input,
+.form-edit-control__input-wrap select,
+.form-edit-control__input-wrap button {
+  font-size: var(--text-label-size);
+}
+.form-edit-control--full-width {
+  grid-column: 1 / -1;
+}
+.form-edit-array__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+.form-edit-array__item-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.form-edit-array__remove {
+  flex-shrink: 0;
+  font-size: var(--text-label-size);
+  color: var(--semantic-error);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+}
+.form-edit-array__remove:hover {
+  text-decoration: underline;
+}
+.form-edit-array__add {
+  margin-top: var(--space-sm);
+  font-size: var(--text-label-size);
 }
 
 /* Panel / card: elevated surface for content blocks. */

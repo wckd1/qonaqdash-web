@@ -16,6 +16,14 @@ export const useBookingStore = defineStore('bookings', () => {
   }
 
   /**
+   * Blank form for create. Returns { schema, uischema, data }.
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
+   */
+  async function fetchBookingForm() {
+    return bookingsApi.fetchBookingForm()
+  }
+
+  /**
    * @param {string} id
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
@@ -82,6 +90,7 @@ export const useBookingStore = defineStore('bookings', () => {
     bookings,
     currentBooking,
     fetchBookings,
+    fetchBookingForm,
     fetchBooking,
     createBooking,
     updateBooking,

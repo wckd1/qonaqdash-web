@@ -39,6 +39,14 @@ export function fetchBookings(params = {}) {
 }
 
 /**
+ * Blank booking form for create. Returns schema, uischema, and empty or default data.
+ * @returns {Promise<BookingFormResponse>}
+ */
+export function fetchBookingForm() {
+  return api.get('/api/bookings/form').then(({ data }) => data)
+}
+
+/**
  * Single booking as FormResponse (schema, uischema, data). Use for detail view and 409 re-fetch.
  * @param {string} id
  * @returns {Promise<BookingFormResponse>}

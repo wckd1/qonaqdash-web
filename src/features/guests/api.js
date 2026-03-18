@@ -24,3 +24,34 @@ export function fetchGuests(params = {}) {
 export function fetchGuest(id) {
   return api.get(`/api/guests/${id}`).then(({ data }) => data)
 }
+
+/**
+ * Returns guest form schema for create (empty data). Use for new-guest page.
+ * @returns {Promise<{ schema: object, uischema: object, data: object }>}
+ */
+export function fetchGuestForm() {
+  return api.get('/api/guests/form').then(({ data }) => ({
+    schema: data.schema ?? {},
+    uischema: data.uischema ?? {},
+    data: data.data ?? {},
+  }))
+}
+
+/**
+ * Creates a new guest. Body is flat camelCase (firstName, lastName, email, phone).
+ * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
+ * @returns {Promise<GuestDetailResponse>}
+ */
+export function createGuest(data) {
+  return api.post('/api/guests', data).then(({ data: res }) => res)
+}
+
+/**
+ * Updates an existing guest. Body is flat camelCase (same shape as create).
+ * @param {string} id
+ * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
+ * @returns {Promise<GuestDetailResponse>}
+ */
+export function updateGuest(id, data) {
+  return api.put(`/api/guests/${id}`, data).then(({ data: res }) => res)
+}

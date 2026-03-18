@@ -51,6 +51,24 @@ const routes = [
         meta: { breadcrumb: [{ label: 'Guests', path: '/guests' }, { label: 'Guest', path: null }] },
       },
       {
+        path: 'bookings',
+        name: 'bookings',
+        component: () => import('@/features/bookings/views/BookingListView.vue'),
+        meta: { breadcrumb: [{ label: 'Bookings', path: null }] },
+      },
+      {
+        path: 'bookings/new',
+        name: 'booking-new',
+        component: () => import('@/features/bookings/views/BookingFormView.vue'),
+        meta: { breadcrumb: [{ label: 'Bookings', path: '/bookings' }, { label: 'New booking', path: null }] },
+      },
+      {
+        path: 'bookings/:id',
+        name: 'booking-detail',
+        component: () => import('@/features/bookings/views/BookingDetailView.vue'),
+        meta: { breadcrumb: [{ label: 'Bookings', path: '/bookings' }, { label: 'Booking', path: null }] },
+      },
+      {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         component: () => import('@/shared/views/NotFoundView.vue'),

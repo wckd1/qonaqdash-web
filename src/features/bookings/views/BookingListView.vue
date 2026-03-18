@@ -1,22 +1,22 @@
 <template>
-  <div class="guest-list-view">
+  <div class="booking-list-view">
     <div class="list-area">
       <header class="page-header">
-        <h1 class="page-title">Guests</h1>
-        <router-link :to="{ name: 'guest-new' }" class="btn-add-guest">
+        <h1 class="page-title">Bookings</h1>
+        <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New guest
+          New booking
         </router-link>
       </header>
 
       <div class="list-toolbar">
         <SearchBar
           v-model="searchQuery"
-          placeholder="Search by name, email, phone…"
-          aria-label="Search guests"
+          placeholder="Search by guest name or room…"
+          aria-label="Search by guest or room"
           :searching="searching"
         />
       </div>
@@ -24,30 +24,32 @@
       <p v-if="loadError" class="error-message">{{ loadError }}</p>
       <div v-else-if="initialLoading" class="loading-state">Loading…</div>
       <template v-else>
-        <p v-if="!guests.length && !searchQuery" class="empty-state">No guests yet.</p>
-        <p v-else-if="!guests.length && searchQuery" class="empty-state">No guests match your search.</p>
-        <div v-else-if="guests.length" class="guest-table-wrap">
-          <table class="guest-table" role="grid">
+        <p v-if="!bookings.length && !searchQuery" class="empty-state">No bookings yet.</p>
+        <p v-else-if="!bookings.length && searchQuery" class="empty-state">No bookings match your search.</p>
+        <div v-else-if="bookings.length" class="booking-table-wrap">
+          <table class="booking-table" role="grid">
             <thead>
               <tr>
-                <th scope="col">First name</th>
-                <th scope="col">Last name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Phone</th>
+                <th scope="col">Guest</th>
+                <th scope="col">Check-in</th>
+                <th scope="col">Check-out</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="guest in guests"
-                :key="guest.id"
-                class="guest-row"
-                :class="{ 'guest-row--selected': selectedGuest?.id === guest.id }"
-                @click="openPanel(guest)"
+                v-for="booking in bookings"
+                :key="booking.id"
+                class="booking-row"
+                :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
+                @click="openPanel(booking)"
               >
-                <td data-label="First name">{{ guest.first_name ?? '—' }}</td>
-                <td data-label="Last name">{{ guest.last_name ?? '—' }}</td>
-                <td data-label="Email">{{ guest.email ?? '—' }}</td>
-                <td data-label="Phone">{{ guest.phone ?? '—' }}</td>
+                <td data-label="Guest">{{ bookingGuestName(booking) }}</td>
+                <td data-label="Check-in">{{ formatDate(booking.check_in) }}</td>
+                <td data-label="Check-out">{{ formatDate(booking.check_out) }}</td>
+                <td data-label="Status">
+                  <BookingStatusBadge :status="booking.status" />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -57,42 +59,48 @@
 
     <Transition name="slide-panel">
       <aside
-        v-if="selectedGuest"
-        class="guest-panel"
+        v-if="selectedBooking"
+        class="booking-panel"
         role="dialog"
-        aria-labelledby="guest-panel-title"
+        aria-labelledby="booking-panel-title"
       >
-        <div class="guest-panel-header">
-        <h2 id="guest-panel-title" class="guest-panel-title">{{ guestPanelTitle }}</h2>
-        <button
-          type="button"
-          class="guest-panel-close"
-          aria-label="Close panel"
-          @click="closePanel"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </div>
-      <div class="guest-panel-body">
-        <dl class="guest-panel-dl">
-          <dt>Email</dt>
-          <dd>{{ selectedGuest.email ?? '—' }}</dd>
-          <dt>Phone</dt>
-          <dd>{{ selectedGuest.phone ?? '—' }}</dd>
-        </dl>
-      </div>
-      <div class="guest-panel-footer">
-        <router-link
-          :to="{ name: 'guest-detail', params: { id: selectedGuest.id } }"
-          class="btn-open-full-page"
-          @click="closePanel"
-        >
-          Open Full Page
-        </router-link>
-      </div>
+        <div class="booking-panel-header">
+          <h2 id="booking-panel-title" class="booking-panel-title">{{ bookingPanelTitle }}</h2>
+          <button
+            type="button"
+            class="booking-panel-close"
+            aria-label="Close panel"
+            @click="closePanel"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="booking-panel-body">
+          <dl class="booking-panel-dl">
+            <dt>Guest</dt>
+            <dd>{{ bookingGuestName(selectedBooking) }}</dd>
+            <dt>Check-in</dt>
+            <dd>{{ formatDate(selectedBooking.check_in) }}</dd>
+            <dt>Check-out</dt>
+            <dd>{{ formatDate(selectedBooking.check_out) }}</dd>
+            <dt>Status</dt>
+            <dd>
+              <BookingStatusBadge :status="selectedBooking.status" />
+            </dd>
+          </dl>
+        </div>
+        <div class="booking-panel-footer">
+          <router-link
+            :to="{ name: 'booking-detail', params: { id: selectedBooking.id } }"
+            class="btn-open-full-page"
+            @click="closePanel"
+          >
+            Open Full Page
+          </router-link>
+        </div>
       </aside>
     </Transition>
   </div>
@@ -102,38 +110,58 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
-import { useGuestStore } from '@/features/guests/stores/useGuestStore'
+import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
+import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 
 const DEBOUNCE_MS = 300
 
-const store = useGuestStore()
-const { guests } = storeToRefs(store)
+const store = useBookingStore()
+const { bookings } = storeToRefs(store)
 
 const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-const selectedGuest = ref(null)
+const selectedBooking = ref(null)
 let searchDebounceId = null
 
-const guestPanelTitle = computed(() => {
-  if (!selectedGuest.value) return ''
-  const first = selectedGuest.value.first_name ?? ''
-  const last = selectedGuest.value.last_name ?? ''
-  return [first, last].filter(Boolean).join(' ') || 'Guest'
+const bookingPanelTitle = computed(() => {
+  if (!selectedBooking.value) return ''
+  const name = bookingGuestName(selectedBooking.value)
+  return name ? `Booking — ${name}` : 'Booking'
 })
 
-function openPanel(guest) {
-  selectedGuest.value = guest
+function bookingGuestName(booking) {
+  if (!booking) return '—'
+  if (booking.guest_name) return booking.guest_name
+  const g = booking.guest
+  if (!g) return '—'
+  const first = g.first_name ?? ''
+  const last = g.last_name ?? ''
+  const parts = [first, last].filter(Boolean)
+  return parts.length ? parts.join(' ') : (g.email ?? '—')
+}
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
+  } catch {
+    return iso
+  }
+}
+
+function openPanel(booking) {
+  selectedBooking.value = booking
 }
 
 function closePanel() {
-  selectedGuest.value = null
+  selectedBooking.value = null
 }
 
 /**
  * @param {{ q?: string }} [params]
- * @param {boolean} [isInitial] - If true, show full-page "Loading…"; otherwise keep search bar and table visible (no focus loss).
+ * @param {boolean} [isInitial]
  */
 async function load(params = {}, isInitial = false) {
   loadError.value = ''
@@ -143,9 +171,9 @@ async function load(params = {}, isInitial = false) {
     searching.value = true
   }
   try {
-    await store.fetchGuests(params)
+    await store.fetchBookings(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || 'Failed to load guests.'
+    loadError.value = err.response?.data?.error || 'Failed to load bookings.'
   } finally {
     initialLoading.value = false
     searching.value = false
@@ -164,7 +192,7 @@ onMounted(() => load({}, true))
 </script>
 
 <style scoped>
-.guest-list-view {
+.booking-list-view {
   position: relative;
   min-height: 100%;
 }
@@ -175,7 +203,7 @@ onMounted(() => load({}, true))
   gap: var(--space-lg);
 }
 
-.guest-panel {
+.booking-panel {
   position: absolute;
   right: 0;
   top: 0;
@@ -207,7 +235,7 @@ onMounted(() => load({}, true))
   transform: translateX(0);
 }
 
-.guest-panel-header {
+.booking-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -216,7 +244,7 @@ onMounted(() => load({}, true))
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.guest-panel-title {
+.booking-panel-title {
   font-family: var(--font-display);
   font-size: var(--text-heading-size);
   font-weight: var(--text-heading-weight);
@@ -225,7 +253,7 @@ onMounted(() => load({}, true))
   line-height: 1.3;
 }
 
-.guest-panel-close {
+.booking-panel-close {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -241,50 +269,50 @@ onMounted(() => load({}, true))
   transition: color 0.15s ease, background 0.15s ease;
 }
 
-.guest-panel-close:hover {
+.booking-panel-close:hover {
   color: var(--ink-primary);
   background: var(--surface-2);
 }
 
-.guest-panel-close svg {
+.booking-panel-close svg {
   width: 18px;
   height: 18px;
 }
 
-.guest-panel-body {
+.booking-panel-body {
   flex: 1;
   min-height: 0;
   padding: var(--space-lg);
   overflow-y: auto;
 }
 
-.guest-panel-footer {
-  flex-shrink: 0;
-  padding: var(--space-md) var(--space-lg);
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.guest-panel-dl {
+.booking-panel-dl {
   margin: 0;
   font-size: var(--text-body-size);
 }
 
-.guest-panel-dl dt {
+.booking-panel-dl dt {
   font-weight: var(--text-label-weight);
   color: var(--ink-tertiary);
   margin-top: var(--space-sm);
   margin-bottom: var(--space-micro);
 }
 
-.guest-panel-dl dt:first-child {
+.booking-panel-dl dt:first-child {
   margin-top: 0;
 }
 
-.guest-panel-dl dd {
+.booking-panel-dl dd {
   margin: 0;
   color: var(--ink-primary);
+}
+
+.booking-panel-footer {
+  flex-shrink: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-end;
 }
 
 .btn-open-full-page {
@@ -324,7 +352,7 @@ onMounted(() => load({}, true))
   margin: 0;
 }
 
-.btn-add-guest {
+.btn-add-booking {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
@@ -340,7 +368,7 @@ onMounted(() => load({}, true))
   text-decoration: none;
 }
 
-.btn-add-guest:hover {
+.btn-add-booking:hover {
   background: var(--semantic-info-bg);
   color: var(--brand-primary-hover);
 }
@@ -367,24 +395,24 @@ onMounted(() => load({}, true))
   width: 100%;
 }
 
-.guest-table-wrap {
+.booking-table-wrap {
   overflow: hidden;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   background: var(--surface-1);
 }
 
-.guest-table {
+.booking-table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-body-size);
 }
 
-.guest-table thead {
+.booking-table thead {
   background: var(--surface-2);
 }
 
-.guest-table th {
+.booking-table th {
   text-align: left;
   font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
@@ -393,30 +421,30 @@ onMounted(() => load({}, true))
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.guest-table td {
+.booking-table td {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border-subtle);
   color: var(--ink-primary);
 }
 
-.guest-table tbody tr:last-child td {
+.booking-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.guest-row {
+.booking-row {
   cursor: pointer;
   transition: background 0.12s ease;
 }
 
-.guest-row:hover {
+.booking-row:hover {
   background: var(--surface-2);
 }
 
-.guest-row--selected {
+.booking-row--selected {
   background: var(--semantic-info-bg);
 }
 
-.guest-row--selected:hover {
+.booking-row--selected:hover {
   background: var(--semantic-info-bg);
 }
 </style>

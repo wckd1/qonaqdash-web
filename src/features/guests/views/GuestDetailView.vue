@@ -1,22 +1,55 @@
 <template>
-  <div class="guest-detail-view">
-    <header class="page-header">
-      <h1 class="page-title">{{ guestDisplayName }}</h1>
-    </header>
+  <header class="page-header">
+    <h1>{{ guestDisplayName }}</h1>
+  </header>
 
-    <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <p v-else-if="notFound" class="error-message">
-      Guest not found.
-      <router-link to="/guests" class="inline-link">Back to guests</router-link>
-    </p>
-    <template v-else-if="currentGuest">
-      <section class="detail-section" aria-labelledby="detail-heading">
-        <h2 id="detail-heading" class="section-title">Details</h2>
-        <p class="section-placeholder">Form will be added in P5.</p>
+  <p v-if="loadError" class="error-message">{{ loadError }}</p>
+  <p v-else-if="notFound" class="error-message">
+    Guest not found.
+    <router-link to="/guests" class="inline-link">Back to guests</router-link>
+  </p>
+  <template v-else-if="currentGuest">
+    <div class="guest-detail-body">
+      <JsonFormView
+        v-if="guestForm"
+        :schema="guestForm.schema"
+        :uischema="guestForm.uischema"
+        :data="guestForm.data"
+      />
+
+      <section v-if="guestId" class="previous-bookings" aria-labelledby="previous-bookings-heading">
+      <h2 id="previous-bookings-heading">Bookings</h2>
+      <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
+      <div v-else-if="bookingsLoading" class="loading-state">Loading…</div>
+      <p v-else-if="!previousBookings.length" class="empty-state">No bookings.</p>
+      <div v-else class="booking-table-wrap">
+        <table class="booking-table" role="grid">
+          <thead>
+            <tr>
+              <th scope="col">Check-in</th>
+              <th scope="col">Check-out</th>
+              <th scope="col">Status</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in previousBookings" :key="b.id" class="booking-row">
+              <td data-label="Check-in">{{ formatDate(b.check_in) }}</td>
+              <td data-label="Check-out">{{ formatDate(b.check_out) }}</td>
+              <td data-label="Status">
+                <BookingStatusBadge :status="b.status" />
+              </td>
+              <td>
+                <router-link :to="{ name: 'booking-detail', params: { id: b.id } }" class="link-booking">View</router-link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       </section>
-    </template>
-    <div v-else class="loading-state">Loading…</div>
-  </div>
+    </div>
+  </template>
+  <div v-else class="loading-state">Loading…</div>
 </template>
 
 <script setup>
@@ -25,6 +58,10 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
+import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
+import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormResponse'
+import { fetchBookings } from '@/features/bookings/api'
+import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 
 const route = useRoute()
 const store = useGuestStore()
@@ -33,6 +70,24 @@ const { setItems: setBreadcrumb } = useBreadcrumb()
 
 const loadError = ref('')
 const notFound = ref(false)
+
+const guestId = computed(() => route.params.id || null)
+
+/** Normalized { schema, uischema, data } for JsonFormView (backend FormResponse or plain guest). */
+const guestForm = computed(() => normalizeGuestFormResponse(currentGuest.value ?? null))
+
+const previousBookings = ref([])
+const bookingsLoading = ref(false)
+const bookingsLoadError = ref('')
+
+function formatDate(iso) {
+  if (!iso) return '—'
+  try {
+    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
+  } catch {
+    return iso
+  }
+}
 
 /**
  * Guest name from API: response has "data" with "firstName" and "lastName" (camelCase).
@@ -65,9 +120,33 @@ async function load() {
   }
 }
 
+async function loadBookings() {
+  const id = guestId.value
+  if (!id) return
+  bookingsLoadError.value = ''
+  bookingsLoading.value = true
+  try {
+    const list = await fetchBookings({ guest_id: id })
+    previousBookings.value = list.filter((b) => b.guest_id === id)
+  } catch (err) {
+    bookingsLoadError.value = err.response?.data?.error || 'Failed to load bookings.'
+    previousBookings.value = []
+  } finally {
+    bookingsLoading.value = false
+  }
+}
+
 watch(() => route.params.id, (newId) => {
   if (newId) load()
 })
+
+watch(guestId, (id) => {
+  if (id && currentGuest.value) loadBookings()
+})
+
+watch(currentGuest, (guest) => {
+  if (guest && guestId.value) loadBookings()
+}, { immediate: true })
 
 watch(
   guestDisplayName,
@@ -83,25 +162,6 @@ load()
 </script>
 
 <style scoped>
-.guest-detail-view {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.page-header {
-  margin: 0;
-}
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
 .error-message {
   color: var(--semantic-error);
   font-size: var(--text-body-size);
@@ -113,30 +173,78 @@ load()
   margin-left: var(--space-xs);
 }
 
-.detail-section {
+.loading-state {
+  color: var(--ink-tertiary);
+  font-size: var(--text-body-size);
+}
+
+.guest-detail-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.guest-detail-body > :first-child {
+  flex-shrink: 0;
+}
+
+.guest-detail-body > .previous-bookings {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.previous-bookings {
+  padding: var(--content-area-padding);
   background: var(--surface-1);
   border-radius: var(--content-area-radius);
-  padding: var(--content-area-padding);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
 }
 
-.section-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin: 0 0 var(--space-md) 0;
-}
-
-.section-placeholder {
+.empty-state {
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
   margin: 0;
 }
 
-.loading-state {
-  color: var(--ink-tertiary);
+.booking-table-wrap {
+  overflow-x: auto;
+}
+
+.booking-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: var(--text-body-size);
+}
+
+.booking-table th {
+  text-align: left;
+  padding: var(--space-xs) var(--space-sm);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.booking-table td {
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--ink-primary);
+}
+
+.booking-row:hover {
+  background: var(--surface-2);
+}
+
+.link-booking {
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-weight: var(--text-label-weight);
+}
+
+.link-booking:hover {
+  text-decoration: underline;
 }
 </style>

@@ -1,27 +1,24 @@
 <template>
-  <div class="guest-list-view">
-    <div class="list-area">
-      <header class="page-header">
-        <h1 class="page-title">Guests</h1>
-        <router-link :to="{ name: 'guest-new' }" class="btn-add-guest">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          New guest
-        </router-link>
-      </header>
+  <header class="page-header">
+    <h1>Guests</h1>
+    <router-link :to="{ name: 'guest-new' }" class="btn-add-guest">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      New guest
+    </router-link>
+  </header>
 
-      <div class="list-toolbar">
-        <SearchBar
-          v-model="searchQuery"
-          placeholder="Search by name, email, phone…"
-          aria-label="Search guests"
-          :searching="searching"
-        />
-      </div>
+  <SearchBar
+    v-model="searchQuery"
+    placeholder="Search by name, email, phone…"
+    aria-label="Search guests"
+    :searching="searching"
+  />
 
-      <p v-if="loadError" class="error-message">{{ loadError }}</p>
+  <section class="list-content">
+    <p v-if="loadError" class="error-message">{{ loadError }}</p>
       <div v-else-if="initialLoading" class="loading-state">Loading…</div>
       <template v-else>
         <p v-if="!guests.length && !searchQuery" class="empty-state">No guests yet.</p>
@@ -52,18 +49,18 @@
             </tbody>
           </table>
         </div>
-      </template>
-    </div>
+    </template>
+  </section>
 
-    <Transition name="slide-panel">
-      <aside
-        v-if="selectedGuest"
-        class="guest-panel"
-        role="dialog"
-        aria-labelledby="guest-panel-title"
-      >
-        <div class="guest-panel-header">
-        <h2 id="guest-panel-title" class="guest-panel-title">{{ guestPanelTitle }}</h2>
+  <Transition name="slide-panel">
+    <aside
+      v-if="selectedGuest"
+      class="guest-panel"
+      role="dialog"
+      aria-labelledby="guest-panel-title"
+    >
+      <div class="guest-panel-header">
+        <h2 id="guest-panel-title">{{ guestPanelTitle }}</h2>
         <button
           type="button"
           class="guest-panel-close"
@@ -93,9 +90,8 @@
           Open Full Page
         </router-link>
       </div>
-      </aside>
-    </Transition>
-  </div>
+    </aside>
+  </Transition>
 </template>
 
 <script setup>
@@ -164,17 +160,6 @@ onMounted(() => load({}, true))
 </script>
 
 <style scoped>
-.guest-list-view {
-  position: relative;
-  min-height: 100%;
-}
-
-.list-area {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
 .guest-panel {
   position: absolute;
   right: 0;
@@ -214,15 +199,6 @@ onMounted(() => load({}, true))
   gap: var(--space-sm);
   padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--border-subtle);
-}
-
-.guest-panel-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin: 0;
-  line-height: 1.3;
 }
 
 .guest-panel-close {
@@ -307,23 +283,6 @@ onMounted(() => load({}, true))
   color: var(--brand-primary-hover);
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-}
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
 .btn-add-guest {
   display: inline-flex;
   align-items: center;
@@ -361,10 +320,6 @@ onMounted(() => load({}, true))
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
   margin: 0;
-}
-
-.list-toolbar {
-  width: 100%;
 }
 
 .guest-table-wrap {

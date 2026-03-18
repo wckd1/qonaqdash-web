@@ -161,13 +161,6 @@ defineProps({
   margin-bottom: var(--space-lg);
 }
 
-.auth-form-header h2 {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin-bottom: var(--space-micro);
-}
 
 .auth-subtitle {
   color: var(--ink-secondary);

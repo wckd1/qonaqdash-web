@@ -1,6 +1,6 @@
 <template>
-  <main class="container">
+  <header class="page-header">
     <h1>QonaqDash</h1>
-    <p>App is running.</p>
-  </main>
+  </header>
+  <p>App is running.</p>
 </template>

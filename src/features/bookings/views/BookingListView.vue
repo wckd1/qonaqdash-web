@@ -1,109 +1,105 @@
 <template>
-  <div class="booking-list-view">
-    <div class="list-area">
-      <header class="page-header">
-        <h1 class="page-title">Bookings</h1>
-        <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          New booking
-        </router-link>
-      </header>
+  <header class="page-header">
+    <h1>Bookings</h1>
+    <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      New booking
+    </router-link>
+  </header>
 
-      <div class="list-toolbar">
-        <SearchBar
-          v-model="searchQuery"
-          placeholder="Search by guest name…"
-          aria-label="Search by guest"
-          :searching="searching"
-        />
+  <SearchBar
+    v-model="searchQuery"
+    placeholder="Search by guest name…"
+    aria-label="Search by guest"
+    :searching="searching"
+  />
+
+  <section class="list-content">
+    <p v-if="loadError" class="error-message">{{ loadError }}</p>
+    <div v-else-if="initialLoading" class="loading-state">Loading…</div>
+    <template v-else>
+      <p v-if="!bookings.length && !searchQuery" class="empty-state">No bookings yet.</p>
+      <p v-else-if="!bookings.length && searchQuery" class="empty-state">No bookings match your search.</p>
+      <div v-else-if="bookings.length" class="booking-table-wrap">
+        <table class="booking-table" role="grid">
+          <thead>
+            <tr>
+              <th scope="col">Guest</th>
+              <th scope="col">Check-in</th>
+              <th scope="col">Check-out</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="booking in bookings"
+              :key="booking.id"
+              class="booking-row"
+              :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
+              @click="openPanel(booking)"
+            >
+              <td data-label="Guest">{{ bookingGuestName(booking) }}</td>
+              <td data-label="Check-in">{{ formatDate(booking.check_in) }}</td>
+              <td data-label="Check-out">{{ formatDate(booking.check_out) }}</td>
+              <td data-label="Status">
+                <BookingStatusBadge :status="booking.status" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+    </template>
+  </section>
 
-      <p v-if="loadError" class="error-message">{{ loadError }}</p>
-      <div v-else-if="initialLoading" class="loading-state">Loading…</div>
-      <template v-else>
-        <p v-if="!bookings.length && !searchQuery" class="empty-state">No bookings yet.</p>
-        <p v-else-if="!bookings.length && searchQuery" class="empty-state">No bookings match your search.</p>
-        <div v-else-if="bookings.length" class="booking-table-wrap">
-          <table class="booking-table" role="grid">
-            <thead>
-              <tr>
-                <th scope="col">Guest</th>
-                <th scope="col">Check-in</th>
-                <th scope="col">Check-out</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="booking in bookings"
-                :key="booking.id"
-                class="booking-row"
-                :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
-                @click="openPanel(booking)"
-              >
-                <td data-label="Guest">{{ bookingGuestName(booking) }}</td>
-                <td data-label="Check-in">{{ formatDate(booking.check_in) }}</td>
-                <td data-label="Check-out">{{ formatDate(booking.check_out) }}</td>
-                <td data-label="Status">
-                  <BookingStatusBadge :status="booking.status" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
-    </div>
-
-    <Transition name="slide-panel">
-      <aside
-        v-if="selectedBooking"
-        class="booking-panel"
-        role="dialog"
-        aria-labelledby="booking-panel-title"
-      >
-        <div class="booking-panel-header">
-          <h2 id="booking-panel-title" class="booking-panel-title">{{ bookingPanelTitle }}</h2>
-          <button
-            type="button"
-            class="booking-panel-close"
-            aria-label="Close panel"
-            @click="closePanel"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        </div>
-        <div class="booking-panel-body">
-          <dl class="booking-panel-dl">
-            <dt>Guest</dt>
-            <dd>{{ bookingGuestName(selectedBooking) }}</dd>
-            <dt>Check-in</dt>
-            <dd>{{ formatDate(selectedBooking.check_in) }}</dd>
-            <dt>Check-out</dt>
-            <dd>{{ formatDate(selectedBooking.check_out) }}</dd>
-            <dt>Status</dt>
-            <dd>
-              <BookingStatusBadge :status="selectedBooking.status" />
-            </dd>
-          </dl>
-        </div>
-        <div class="booking-panel-footer">
-          <router-link
-            :to="{ name: 'booking-detail', params: { id: selectedBooking.id } }"
-            class="btn-open-full-page"
-            @click="closePanel"
-          >
-            Open Full Page
-          </router-link>
-        </div>
-      </aside>
-    </Transition>
-  </div>
+  <Transition name="slide-panel">
+    <aside
+      v-if="selectedBooking"
+      class="booking-panel"
+      role="dialog"
+      aria-labelledby="booking-panel-title"
+    >
+      <div class="booking-panel-header">
+        <h2 id="booking-panel-title">{{ bookingPanelTitle }}</h2>
+        <button
+          type="button"
+          class="booking-panel-close"
+          aria-label="Close panel"
+          @click="closePanel"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="booking-panel-body">
+        <dl class="booking-panel-dl">
+          <dt>Guest</dt>
+          <dd>{{ bookingGuestName(selectedBooking) }}</dd>
+          <dt>Check-in</dt>
+          <dd>{{ formatDate(selectedBooking.check_in) }}</dd>
+          <dt>Check-out</dt>
+          <dd>{{ formatDate(selectedBooking.check_out) }}</dd>
+          <dt>Status</dt>
+          <dd>
+            <BookingStatusBadge :status="selectedBooking.status" />
+          </dd>
+        </dl>
+      </div>
+      <div class="booking-panel-footer">
+        <router-link
+          :to="{ name: 'booking-detail', params: { id: selectedBooking.id } }"
+          class="btn-open-full-page"
+          @click="closePanel"
+        >
+          Open Full Page
+        </router-link>
+      </div>
+    </aside>
+  </Transition>
 </template>
 
 <script setup>
@@ -192,17 +188,6 @@ onMounted(() => load({}, true))
 </script>
 
 <style scoped>
-.booking-list-view {
-  position: relative;
-  min-height: 100%;
-}
-
-.list-area {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
 .booking-panel {
   position: absolute;
   right: 0;
@@ -242,15 +227,6 @@ onMounted(() => load({}, true))
   gap: var(--space-sm);
   padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--border-subtle);
-}
-
-.booking-panel-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin: 0;
-  line-height: 1.3;
 }
 
 .booking-panel-close {
@@ -335,23 +311,6 @@ onMounted(() => load({}, true))
   color: var(--brand-primary-hover);
 }
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-}
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
 .btn-add-booking {
   display: inline-flex;
   align-items: center;
@@ -389,10 +348,6 @@ onMounted(() => load({}, true))
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
   margin: 0;
-}
-
-.list-toolbar {
-  width: 100%;
 }
 
 .booking-table-wrap {

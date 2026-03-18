@@ -1,28 +1,27 @@
 <template>
-  <div class="rooms-view">
-    <div class="list-area">
-      <header class="page-header">
-      <h1 class="page-title">Rooms</h1>
-      <button type="button" class="btn-add-type" @click="openAddTypeDialog" aria-label="Add room type">
-        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Add type
-      </button>
-    </header>
+  <header class="page-header">
+    <h1>Rooms</h1>
+    <button type="button" class="btn-add-type" @click="openAddTypeDialog" aria-label="Add room type">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      Add type
+    </button>
+  </header>
 
+  <SearchBar
+    v-if="roomTypes.length"
+    v-model="searchQuery"
+    placeholder="Search by type name, room number…"
+    aria-label="Search rooms"
+    :searching="searching"
+  />
+
+  <section class="list-content">
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
     <div v-else-if="initialLoading" class="loading-state">Loading…</div>
     <template v-else>
-      <div v-if="roomTypes.length" class="list-toolbar">
-        <SearchBar
-          v-model="searchQuery"
-          placeholder="Search by type name, room number…"
-          aria-label="Search rooms"
-          :searching="searching"
-        />
-      </div>
       <p v-if="!roomTypes.length && !searchQuery" class="empty-state">No room types yet. Click “Add type” to create one.</p>
       <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">No rooms match your search.</p>
       <div v-else class="accordion-list">
@@ -81,17 +80,17 @@
         </details>
       </div>
     </template>
-    </div>
+  </section>
 
-    <Transition name="slide-panel">
-      <aside
-        v-if="selectedRoom"
-        class="room-panel"
+  <Transition name="slide-panel">
+    <aside
+      v-if="selectedRoom"
+      class="room-panel"
         role="dialog"
         aria-labelledby="room-panel-title"
       >
         <div class="room-panel-header">
-          <h2 id="room-panel-title" class="room-panel-title">{{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}</h2>
+          <h2 id="room-panel-title">{{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}</h2>
           <button
             type="button"
             class="room-panel-close"
@@ -116,44 +115,43 @@
           </dl>
         </div>
       </aside>
-    </Transition>
+  </Transition>
 
-    <!-- Add room type dialog -->
-    <div v-if="addTypeOpen" class="dialog-backdrop" @click.self="closeAddTypeDialog">
-      <div class="dialog" role="dialog" aria-labelledby="add-type-title">
-        <h2 id="add-type-title" class="dialog-title">Add room type</h2>
-        <form @submit.prevent="submitAddType">
-          <label>
-            Name
-            <input v-model="addTypeForm.name" type="text" placeholder="e.g. Double" required :disabled="addTypeSaving" />
-          </label>
-          <label>
-            Description <span class="optional">(optional)</span>
-            <input v-model="addTypeForm.description" type="text" placeholder="Short description" :disabled="addTypeSaving" />
-          </label>
-          <div class="dialog-actions">
-            <button type="button" class="btn-secondary" @click="closeAddTypeDialog">Cancel</button>
-            <button type="submit" :aria-busy="addTypeSaving" :disabled="addTypeSaving">Add</button>
-          </div>
-        </form>
-      </div>
+  <!-- Add room type dialog -->
+  <div v-if="addTypeOpen" class="dialog-backdrop" @click.self="closeAddTypeDialog">
+    <div class="dialog" role="dialog" aria-labelledby="add-type-title">
+      <h2 id="add-type-title">Add room type</h2>
+      <form @submit.prevent="submitAddType">
+        <label>
+          Name
+          <input v-model="addTypeForm.name" type="text" placeholder="e.g. Double" required :disabled="addTypeSaving" />
+        </label>
+        <label>
+          Description <span class="optional">(optional)</span>
+          <input v-model="addTypeForm.description" type="text" placeholder="Short description" :disabled="addTypeSaving" />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="btn-secondary" @click="closeAddTypeDialog">Cancel</button>
+          <button type="submit" :aria-busy="addTypeSaving" :disabled="addTypeSaving">Add</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Add room dialog -->
-    <div v-if="addRoomOpen" class="dialog-backdrop" @click.self="closeAddRoomDialog">
-      <div class="dialog" role="dialog" aria-labelledby="add-room-title">
-        <h2 id="add-room-title" class="dialog-title">Add room to {{ addRoomType?.name }}</h2>
-        <form @submit.prevent="submitAddRoom">
-          <label>
-            Room number
-            <input v-model="addRoomForm.number" type="text" placeholder="e.g. 101" required :disabled="addRoomSaving" />
-          </label>
-          <div class="dialog-actions">
-            <button type="button" class="btn-secondary" @click="closeAddRoomDialog">Cancel</button>
-            <button type="submit" :aria-busy="addRoomSaving" :disabled="addRoomSaving">Add</button>
-          </div>
-        </form>
-      </div>
+  <!-- Add room dialog -->
+  <div v-if="addRoomOpen" class="dialog-backdrop" @click.self="closeAddRoomDialog">
+    <div class="dialog" role="dialog" aria-labelledby="add-room-title">
+      <h2 id="add-room-title">Add room to {{ addRoomType?.name }}</h2>
+      <form @submit.prevent="submitAddRoom">
+        <label>
+          Room number
+          <input v-model="addRoomForm.number" type="text" placeholder="e.g. 101" required :disabled="addRoomSaving" />
+        </label>
+        <div class="dialog-actions">
+          <button type="button" class="btn-secondary" @click="closeAddRoomDialog">Cancel</button>
+          <button type="submit" :aria-busy="addRoomSaving" :disabled="addRoomSaving">Add</button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -287,41 +285,6 @@ onMounted(() => load({}, true))
 </script>
 
 <style scoped>
-.rooms-view {
-  position: relative;
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.list-area {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.list-toolbar {
-  width: 100%;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-}
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
 .btn-add-type {
   display: inline-flex;
   align-items: center;
@@ -556,15 +519,6 @@ onMounted(() => load({}, true))
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.room-panel-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin: 0;
-  line-height: 1.3;
-}
-
 .room-panel-close {
   flex-shrink: 0;
   display: flex;
@@ -680,14 +634,6 @@ onMounted(() => load({}, true))
   max-width: 420px;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-subtle);
-}
-
-.dialog-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin: 0 0 var(--space-lg) 0;
 }
 
 .dialog form label {

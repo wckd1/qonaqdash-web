@@ -26,6 +26,9 @@
   --text-heading-size: 1.15rem;
   --text-heading-weight: 700;
   --text-heading-tracking: -0.02em;
+  --text-subheading-size: 1rem;
+  --text-subheading-weight: 700;
+  --text-subheading-tracking: -0.02em;
   --text-body-size: 0.9rem;
   --text-body-weight: 400;
   --text-label-size: 0.8125rem;
@@ -129,6 +132,63 @@
   --color-red: var(--status-canceled);
   --bg-base: var(--canvas);
   --border-light: var(--border-subtle);
+}
+
+/* Base heading styles: one h1 per page (page title), h2 for sections/panels. Design consistent across pages. */
+h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+  letter-spacing: var(--text-heading-tracking);
+  color: var(--ink-primary);
+  margin: 0 0 var(--space-md) 0;
+}
+h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-subheading-size);
+  font-weight: var(--text-subheading-weight);
+  letter-spacing: var(--text-subheading-tracking);
+  color: var(--ink-primary);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+/* Page layout: floating .page-header then content section. Breadcrumbs live above main in layout. */
+main .page-header {
+  margin: 0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+main > section {
+  background: var(--surface-1);
+  border-radius: var(--content-area-radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  padding: var(--content-area-padding);
+  box-sizing: border-box;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* List views: section wraps only table/states — no extra borders, clean content area */
+main > section.list-content {
+  border: none;
+  box-shadow: none;
+  padding: var(--space-md) 0 0;
+  background: transparent;
+}
+
+/* Side panels (list row → slide-in): rounded corners to match cards/panels (--radius-lg) */
+main .booking-panel,
+main .guest-panel,
+main .room-panel {
+  border-radius: var(--radius-lg);
 }
 
 /* Pico: remove default bottom margin on buttons (we control spacing in layout) */
@@ -295,10 +355,11 @@ label {
 }
 .form-section-preview .form-section-header {
   font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
+  font-size: var(--text-subheading-size);
+  font-weight: var(--text-subheading-weight);
+  letter-spacing: var(--text-subheading-tracking);
   color: var(--ink-primary);
-  margin: 0 0 var(--space-xs);
+  margin: 0 0 var(--space-sm);
 }
 .form-section-preview .form-section-desc {
   font-size: var(--text-body-size);
@@ -309,6 +370,90 @@ label {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+}
+
+/* Form view: dynamic form renderer (section groups, controls, arrays). Reusable by detail/form views. */
+.form-view-layout {
+  width: 100%;
+}
+.form-view-layout--group {
+  padding: var(--content-area-padding);
+  background: var(--surface-1);
+  border-radius: var(--content-area-radius);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-md);
+}
+.form-view-layout--group:last-child {
+  margin-bottom: 0;
+}
+.form-view-layout__fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm) var(--space-lg);
+  align-items: baseline;
+}
+.form-view-layout__fields > .form-view-layout {
+  grid-column: 1 / -1;
+}
+.form-view-layout__fields > .form-view-control--full-width {
+  grid-column: 1 / -1;
+}
+.form-view-layout--vertical {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.form-view-layout--horizontal {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+.form-view-control--full-width {
+  grid-column: 1 / -1;
+}
+.form-view-control__label {
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+  min-width: 0;
+}
+.form-view-control__value {
+  font-size: var(--text-body-size);
+  color: var(--ink-primary);
+  min-width: 0;
+}
+.form-view-array {
+  margin-bottom: var(--space-md);
+}
+.form-view-array__label {
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+  display: block;
+  margin-bottom: var(--space-sm);
+}
+.form-view-array__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.form-view-array__item {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm) var(--space-lg);
+  align-items: baseline;
+}
+.form-view-array__empty {
+  font-size: var(--text-body-size);
+  color: var(--ink-tertiary);
+  font-style: italic;
+  margin: 0;
 }
 
 /* Panel / card: elevated surface for content blocks. */

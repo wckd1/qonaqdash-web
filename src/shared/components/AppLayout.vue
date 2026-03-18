@@ -120,7 +120,7 @@
       <div class="breadcrumb-row">
         <Breadcrumbs />
       </div>
-      <main class="content">
+      <main class="main-inner">
         <router-view />
       </main>
     </div>
@@ -568,16 +568,16 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   margin-left: 60px;
 }
 
-.content {
+.main-inner {
+  position: relative;
   width: 100%;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: var(--space-md);
-  background: var(--surface-1);
-  border-radius: var(--content-area-radius);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-subtle);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 </style>

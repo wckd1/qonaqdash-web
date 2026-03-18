@@ -1,22 +1,23 @@
 <template>
-  <div class="booking-detail-view">
-    <header class="page-header">
-      <h1 class="page-title">{{ pageTitle }}</h1>
-    </header>
+  <header class="page-header">
+    <h1>{{ pageTitle }}</h1>
+  </header>
 
-    <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <p v-else-if="notFound" class="error-message">
-      Booking not found.
-      <router-link to="/bookings" class="inline-link">Back to bookings</router-link>
-    </p>
-    <template v-else-if="currentBooking">
-      <section class="detail-section" aria-labelledby="detail-heading">
-        <h2 id="detail-heading" class="section-title">Details</h2>
-        <p class="section-placeholder">Form will be added in P5.</p>
-      </section>
-    </template>
-    <div v-else class="loading-state">Loading…</div>
-  </div>
+  <p v-if="loadError" class="error-message">{{ loadError }}</p>
+  <p v-else-if="notFound" class="error-message">
+    Booking not found.
+    <router-link to="/bookings" class="inline-link">Back to bookings</router-link>
+  </p>
+  <template v-else-if="currentBooking">
+    <JsonFormView
+      v-if="bookingForm"
+      :schema="bookingForm.schema"
+      :uischema="bookingForm.uischema"
+      :data="bookingForm.data"
+    />
+    <p v-else class="section-placeholder">Details are loading.</p>
+  </template>
+  <div v-else class="loading-state">Loading…</div>
 </template>
 
 <script setup>
@@ -25,6 +26,8 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
+import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
+import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 
 const route = useRoute()
 const store = useBookingStore()
@@ -33,6 +36,9 @@ const { setItems: setBreadcrumb } = useBreadcrumb()
 
 const loadError = ref('')
 const notFound = ref(false)
+
+/** Normalized { schema, uischema, data } when GET /api/bookings/:id returned FormResponse. */
+const bookingForm = computed(() => normalizeBookingFormResponse(currentBooking.value ?? null))
 
 /** Guest name for title/breadcrumb from FormResponse (data.guest) or flat Booking (guest). */
 const guestDisplayName = computed(() => {
@@ -88,25 +94,6 @@ load()
 </script>
 
 <style scoped>
-.booking-detail-view {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.page-header {
-  margin: 0;
-}
-
-.page-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
 .error-message {
   color: var(--semantic-error);
   font-size: var(--text-body-size);
@@ -116,22 +103,6 @@ load()
 .inline-link {
   color: var(--brand-primary);
   margin-left: var(--space-xs);
-}
-
-.detail-section {
-  background: var(--surface-1);
-  border-radius: var(--content-area-radius);
-  padding: var(--content-area-padding);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-sm);
-}
-
-.section-title {
-  font-family: var(--font-display);
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  color: var(--ink-primary);
-  margin: 0 0 var(--space-md) 0;
 }
 
 .section-placeholder {

@@ -74,6 +74,9 @@
   --control-border: rgba(30, 41, 59, 0.15);
   --control-focus-ring: var(--brand-focus-ring);
 
+  /* ----- Overlay (modal backdrop) ----- */
+  --overlay-bg: rgba(30, 41, 59, 0.35);
+
   /* ----- Depth (subtle shadows) ----- */
   --shadow-sm: 0 1px 2px rgba(30, 41, 59, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(30, 41, 59, 0.07), 0 2px 4px -2px rgba(30, 41, 59, 0.05);
@@ -142,10 +145,220 @@ ul {
   margin-bottom: 0;
 }
 
+/* Pico: remove default bottom margin on form elements (we control spacing in layout) */
+input:not([type="checkbox"], [type="radio"]),
+select,
+textarea {
+  margin-bottom: 0;
+}
+
 /* Form input labels use body size for readability */
 label {
   font-size: var(--text-body-size);
   font-weight: var(--text-body-weight);
+}
+
+/* ----- Design system components (single source of truth: docs/design.html) ----- */
+
+/* Search bar: same look as Pico text input, standalone (never inside a form). */
+.search-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--pico-form-element-background-color);
+  border: var(--pico-border-width) solid var(--pico-form-element-border-color);
+  border-radius: var(--pico-border-radius);
+  overflow: hidden;
+  width: 100%;
+  margin-bottom: 0;
+  transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+}
+.search-bar-wrap:focus-within {
+  border-color: var(--pico-form-element-active-border-color);
+  box-shadow: 0 0 0 0.0625rem var(--pico-form-element-focus-color);
+}
+.search-bar-wrap .search-bar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--pico-form-element-spacing-horizontal);
+  color: var(--pico-form-element-placeholder-color);
+  flex-shrink: 0;
+}
+.search-bar-wrap .search-bar-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+.search-bar-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: var(--pico-line-height);
+  color: var(--pico-form-element-color);
+  margin-bottom: 0;
+}
+.search-bar-wrap input::placeholder {
+  color: var(--pico-form-element-placeholder-color);
+}
+.search-bar-wrap input:focus {
+  outline: none;
+  box-shadow: none;
+}
+.search-bar-wrap .search-bar-clear {
+  display: none;
+  flex-shrink: 0;
+  padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+  color: var(--pico-form-element-placeholder-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--pico-border-radius);
+  line-height: 1;
+}
+.search-bar-wrap .search-bar-clear:hover {
+  color: var(--pico-form-element-color);
+  background: var(--pico-form-element-selected-background-color);
+}
+.search-bar-wrap .search-bar-clear svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+.search-bar-wrap.has-value .search-bar-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Form section: CRM-style block (header, description, form grid). Uses content-area tokens. */
+.form-section-preview {
+  background: var(--surface-1);
+  border-radius: var(--content-area-radius);
+  padding: var(--content-area-padding);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-subtle);
+  width: 100%;
+}
+.form-section-preview .form-section-header {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+  color: var(--ink-primary);
+  margin: 0 0 var(--space-xs);
+}
+.form-section-preview .form-section-desc {
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
+  margin: 0 0 var(--space-md);
+}
+.form-section-preview .form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Panel / card: elevated surface for content blocks. */
+.panel {
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-subtle);
+  width: 100%;
+}
+.panel h4 {
+  font-family: var(--font-display);
+  color: var(--ink-primary);
+  margin: 0 0 var(--space-xs);
+}
+.panel p {
+  margin: 0;
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
+}
+
+/* Card (alias for design doc; app can use .panel) */
+.card-demo {
+  background: var(--surface-1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-subtle);
+  width: 100%;
+}
+.card-demo h4 {
+  font-family: var(--font-display);
+  color: var(--ink-primary);
+  margin: 0 0 var(--space-xs);
+}
+.card-demo p {
+  margin: 0;
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
+}
+
+/* Status chips: booking status badges for grid and side panels. */
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-micro) var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+}
+.status-chip--confirmed {
+  background: var(--semantic-info-bg);
+  color: var(--status-confirmed);
+  border: 1px solid rgba(42, 157, 143, 0.3);
+}
+.status-chip--checked-in {
+  background: var(--semantic-success-bg);
+  color: var(--status-checked-in);
+  border: 1px solid rgba(45, 138, 62, 0.3);
+}
+.status-chip--checked-out {
+  background: var(--surface-2);
+  color: var(--ink-tertiary);
+  border: 1px solid var(--border-subtle);
+}
+.status-chip--canceled {
+  background: var(--semantic-error-bg);
+  color: var(--status-canceled);
+  border: 1px solid rgba(229, 115, 115, 0.4);
+}
+
+/* Form feedback blocks (used in auth and other forms) */
+.form-error {
+  background: var(--semantic-error-bg);
+  border: 1px solid var(--border-emphasis);
+  color: var(--semantic-error);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-body-size);
+  margin-bottom: var(--space-md);
+}
+
+.invite-info {
+  background: var(--semantic-info-bg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-lg);
+  font-size: var(--text-body-size);
+  color: var(--ink-primary);
+}
+
+.invite-info strong {
+  color: var(--brand-primary);
 }
 
 /* Full-page background and base layout (no white strip; scroll only inside content area) */

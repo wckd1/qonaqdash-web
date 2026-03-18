@@ -65,13 +65,13 @@ defineProps({
 .auth-brand {
   width: 320px;
   flex-shrink: 0;
-  background: linear-gradient(160deg, #1a2332 0%, #162a2e 100%);
+  background: linear-gradient(160deg, var(--sidebar-bg) 0%, #162a2e 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: var(--space-block) 2.5rem;
+  padding: var(--space-block) var(--space-xl);
 }
 
 .brand-content {
@@ -106,7 +106,7 @@ defineProps({
 }
 
 .brand-tagline {
-  color: rgba(200, 214, 229, 0.5);
+  color: var(--sidebar-text-muted);
   font-size: var(--text-label-size);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -163,8 +163,8 @@ defineProps({
 
 .auth-form-header h2 {
   font-family: var(--font-display);
+  font-size: var(--text-heading-size);
   font-weight: var(--text-heading-weight);
-  font-size: 1.625rem;
   color: var(--ink-primary);
   margin-bottom: var(--space-micro);
 }
@@ -187,34 +187,11 @@ defineProps({
 .auth-footer :slotted(a) {
   color: var(--brand-primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: var(--text-label-weight);
 }
 
 .auth-footer :slotted(a:hover) {
   text-decoration: underline;
-}
-
-/* ---- Slotted content styles ---- */
-
-:slotted(.form-error) {
-  background: var(--semantic-error-bg);
-  border: 1px solid rgba(200, 90, 90, 0.2);
-  color: var(--semantic-error);
-  border-radius: var(--radius-lg);
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--text-body-size);
-  margin-bottom: var(--space-md);
-  animation: slideDown 0.25s ease-out;
-}
-
-:slotted(.invite-info) {
-  background: rgba(42, 157, 143, 0.06);
-  border: 1px solid rgba(42, 157, 143, 0.15);
-  border-radius: var(--radius-lg);
-  padding: var(--space-sm) var(--space-md);
-  margin-bottom: var(--space-lg);
-  font-size: var(--text-body-size);
-  color: var(--ink-primary);
 }
 
 /* ---- Animations ---- */
@@ -222,7 +199,7 @@ defineProps({
 @keyframes cardEnter {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.99);
+    transform: translateY(var(--space-md)) scale(0.99);
   }
   to {
     opacity: 1;
@@ -233,7 +210,7 @@ defineProps({
 @keyframes brandFadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(var(--space-sm));
   }
   to {
     opacity: 1;
@@ -250,17 +227,6 @@ defineProps({
   }
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .auth-card,
   .brand-logo,
@@ -270,9 +236,6 @@ defineProps({
     animation: none;
   }
 
-  :slotted(.form-error) {
-    animation: none;
-  }
 }
 
 /* ---- Mobile ---- */

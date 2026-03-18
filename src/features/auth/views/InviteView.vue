@@ -113,9 +113,3 @@ async function handleSubmit() {
   }
 }
 </script>
-
-<style scoped>
-.invite-info strong {
-  color: var(--brand-primary);
-}
-</style>

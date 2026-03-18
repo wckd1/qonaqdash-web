@@ -210,22 +210,22 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .collapse-btn:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
+  outline: var(--pico-outline-width) solid var(--brand-primary);
+  outline-offset: var(--pico-outline-width);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: var(--space-sm);
 }
 
 .brand-mark {
   width: 32px;
   height: 32px;
   min-width: 32px;
-  border: 1.5px solid rgba(42, 157, 143, 0.3);
-  background: rgba(42, 157, 143, 0.06);
+  border: var(--pico-border-width) solid rgba(42, 157, 143, 0.35);
+  background: var(--semantic-info-bg);
   color: var(--brand-primary);
   border-radius: var(--radius-lg);
   display: flex;
@@ -237,8 +237,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 400;
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
   color: var(--ink-primary);
 }
 
@@ -278,14 +278,14 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   padding: var(--space-sm) 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-micro);
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 0.625rem 1.125rem;
+  padding: var(--space-sm) var(--space-md);
   color: var(--sidebar-text);
   text-decoration: none;
   transition: background 0.15s ease, color 0.15s ease;
@@ -304,13 +304,13 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .nav-link:focus-visible {
   background: var(--sidebar-hover-bg);
   color: var(--ink-inverse);
-  box-shadow: inset 2px 0 0 var(--brand-primary);
+  box-shadow: inset var(--pico-border-width) 0 0 var(--brand-primary);
 }
 
 .nav-link.router-link-exact-active {
   background: var(--sidebar-active-bg);
   color: var(--brand-primary);
-  box-shadow: inset 3px 0 0 var(--brand-primary);
+  box-shadow: inset var(--radius-md) 0 0 var(--brand-primary);
 }
 
 .nav-icon {
@@ -332,14 +332,14 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .nav-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-micro);
 }
 
 .nav-group-label {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 0.625rem 1.125rem;
+  padding: var(--space-sm) var(--space-md);
   font-size: var(--text-caption-size);
   font-weight: var(--text-label-weight);
   color: var(--sidebar-text-muted);
@@ -354,11 +354,11 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .nav-sublink {
-  padding-left: 2.25rem;
+  padding-left: var(--space-lg);
 }
 
 .collapsed .nav-sublink {
-  padding-left: 1.125rem;
+  padding-left: var(--space-md);
 }
 
 /* ---- User area (sidebar bottom) ---- */
@@ -375,7 +375,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) 1.125rem;
+  padding: var(--space-sm) var(--space-md);
   cursor: pointer;
   border-top: 1px solid var(--sidebar-border);
   transition: background 0.15s ease;
@@ -383,11 +383,11 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .user-trigger:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--sidebar-hover-bg);
 }
 
 .user-trigger:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--sidebar-active-bg);
 }
 
 .collapsed .user-trigger {
@@ -400,7 +400,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   height: 34px;
   min-width: 34px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--sidebar-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -415,7 +415,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .user-info {
   display: flex;
   flex-direction: column;
-  gap: 0.0625rem;
+  gap: var(--space-micro);
   overflow: hidden;
   white-space: nowrap;
   transition: opacity 0.2s ease;
@@ -430,13 +430,13 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .user-name {
   font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
-  color: #e2e8f0;
+  color: var(--sidebar-text);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .user-role {
-  font-size: 0.6875rem;
+  font-size: var(--text-caption-size);
   color: var(--sidebar-text-muted);
   letter-spacing: 0.01em;
 }
@@ -445,19 +445,19 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .user-menu {
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + var(--space-xs));
   left: var(--space-xs);
   right: var(--space-xs);
   background: var(--sidebar-user-menu-bg);
   border: 1px solid var(--sidebar-border);
   border-radius: var(--radius-lg);
   padding: var(--space-micro);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
   z-index: 300;
 }
 
 .collapsed .user-menu {
-  left: calc(100% + 6px);
+  left: calc(100% + var(--space-xs));
   right: auto;
   bottom: 0;
   min-width: 180px;
@@ -468,9 +468,9 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: var(--space-sm);
   width: 100%;
-  padding: var(--space-xs) 0.625rem;
+  padding: var(--space-xs) var(--space-sm);
   font-size: var(--text-label-size);
   color: var(--sidebar-text);
   border-radius: var(--radius-md);
@@ -480,22 +480,22 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--sidebar-hover-bg);
   color: var(--ink-inverse);
 }
 
 .menu-item:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--sidebar-active-bg);
   color: var(--ink-inverse);
 }
 
 .menu-item--danger:hover {
-  background: rgba(229, 115, 115, 0.12);
+  background: var(--semantic-error-bg);
   color: var(--status-canceled);
 }
 
 .menu-item--danger:focus-visible {
-  background: rgba(229, 115, 115, 0.12);
+  background: var(--semantic-error-bg);
   color: var(--status-canceled);
 }
 

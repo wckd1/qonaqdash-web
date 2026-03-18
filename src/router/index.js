@@ -25,7 +25,7 @@ const routes = [
       {
         path: 'property',
         name: 'property',
-        component: () => import('@/features/property/views/PropertyView.vue'),
+        component: () => import('@/features/property/views/RoomsView.vue'),
       },
       { path: 'property/room-types', redirect: { name: 'property' } },
       { path: 'property/rooms', redirect: { name: 'property' } },

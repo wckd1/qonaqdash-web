@@ -6,10 +6,11 @@
 ## Architecture Decisions
 
 - **Project structure**: Feature-based — `src/features/{auth,property,guests,bookings}/` each with own views, stores, composables; shared code in `src/shared/` (api client, layouts, common components)
-- **CSS architecture**: `main.css` holds only `:root` design tokens (CSS variables); component styles are `<style scoped>`; shared layout wrappers use `:slotted()` to style slot content
+- **CSS architecture**: `main.css` holds `:root` design tokens and reusable component/utility styles (search bar, form section, status chips, panel, `.form-error`, `.invite-info`, etc.); [docs/design.html](docs/design.html) uses main.css and only adds doc-only layout (swatches, section headings). Component/view styles are `<style scoped>` and must use main.css (and Pico) tokens for colors, typography, spacing, borders, shadows—avoid custom hex/rgba/rem when a token exists.
 - **Token storage**: localStorage for both access and refresh tokens; migrate refresh to httpOnly cookie when backend refresh endpoint is added
 - **API client**: Axios with interceptors (auto-attach JWT, 401 redirect, error handling)
 - **Feature API modules**: Each feature has its own `api.js` (e.g., `src/features/auth/api.js`) encapsulating HTTP calls and response parsing — stores stay thin and call these modules
+- **API integration**: When implementing API integration, propose backend changes explicitly when they would help the frontend: (1) **Response shape** — if a different response model (e.g. structure, fields, pagination) would make the frontend simpler, faster, or avoid extra requests, state the proposed change and what the backend should return; (2) **Missing endpoints** — if the feature needs an endpoint that does not exist, propose it explicitly (method, path, request/response shape) and explain why it is required. Do not work around suboptimal or missing APIs in silence; document the proposed backend change and the reason.
 
 ## UI/UX Design Decisions
 
@@ -39,6 +40,8 @@
 
 - **Pinia state in views**: Use `storeToRefs(store)` when destructuring store state in components so the view stays reactive to async store updates (e.g. direct navigation vs. coming from another page that already loaded data).
 - **Sidebar active link**: Use CSS class `router-link-exact-active` (not `router-link-active`) for nav link styling when the root path is `/` and all app routes are its children—otherwise the home/dashboard link stays active on every page.
-- **Pico margin overrides**: In [main.css](src/assets/main.css) we override Pico’s default bottom margins (buttons, block elements, `details`) so the app controls spacing; add new Pico overrides there rather than in components.
+- **Pico margin overrides**: In [main.css](src/assets/main.css) we override Pico’s default bottom margins (buttons, block elements, `details`, form elements `input`/`select`/`textarea`) so the app controls spacing; add new Pico overrides there rather than in components.
+- **Pico focus ring**: Pico sets `--pico-outline-width: 0.0625rem` on text inputs; root is `0.125rem`. For custom input-like components (e.g. search bar) use `0.0625rem` in the focus box-shadow so the ring matches standard inputs.
+- **Feature vs view naming**: A feature (e.g. `property`) can have multiple views. Name the view after the screen: `RoomsView` for the Rooms screen, not `PropertyView`; reserve `PropertyView` or similar for a future “Hotel settings” or property-level screen. Route path can stay feature-level (`/property`).
 - **404 inside layout**: Use a catch-all child route under the main layout (`path: '/:pathMatch(.*)*'`) so unknown routes still render AppLayout with a NotFound view in the content area.
 - **Accordions (multiple open)**: Use native `<details>` without a controlled `:open` binding so each accordion opens and closes independently.

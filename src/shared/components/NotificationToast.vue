@@ -67,16 +67,16 @@ const { notifications, dismiss } = useNotification()
 .toast-close {
   all: unset;
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: var(--text-body-size);
   color: var(--ink-muted);
   line-height: 1;
-  padding: 0.125rem 0.25rem;
+  padding: var(--space-micro) var(--space-xs);
   border-radius: var(--radius-sm);
 }
 
 .toast-close:hover {
   color: var(--ink-secondary);
-  background: rgba(30, 41, 59, 0.05);
+  background: var(--surface-2);
 }
 
 .toast-enter-active {

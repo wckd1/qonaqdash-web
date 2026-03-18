@@ -23,7 +23,7 @@
 .not-found-title {
   font-family: var(--font-display);
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: var(--text-heading-weight);
   color: var(--ink-tertiary);
   margin: 0;
   line-height: 1;

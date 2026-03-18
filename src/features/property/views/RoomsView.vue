@@ -1,5 +1,5 @@
 <template>
-  <div class="property-view">
+  <div class="rooms-view">
     <header class="page-header">
       <h1 class="page-title">Rooms</h1>
       <button type="button" class="btn-add-type" @click="openAddTypeDialog" aria-label="Add room type">
@@ -202,7 +202,7 @@ onMounted(load)
 </script>
 
 <style scoped>
-.property-view {
+.rooms-view {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -241,7 +241,7 @@ onMounted(load)
 }
 
 .btn-add-type:hover {
-  background: rgba(42, 157, 143, 0.08);
+  background: var(--semantic-info-bg);
   color: var(--brand-primary-hover);
 }
 
@@ -266,7 +266,7 @@ onMounted(load)
 .accordion-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-micro);
 }
 
 .accordion {
@@ -302,14 +302,14 @@ onMounted(load)
 .accordion-title {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-micro);
   flex: 1;
   min-width: 0;
 }
 
 .accordion-title strong {
   font-size: var(--text-body-size);
-  font-weight: 600;
+  font-weight: var(--text-label-weight);
   color: var(--ink-primary);
 }
 
@@ -337,7 +337,7 @@ onMounted(load)
 .btn-add-room:hover {
   color: var(--brand-primary);
   border-color: var(--brand-primary);
-  background: rgba(42, 157, 143, 0.06);
+  background: var(--semantic-info-bg);
 }
 
 .accordion-body {
@@ -417,22 +417,22 @@ onMounted(load)
 
 .room-status-badge--confirmed {
   color: var(--status-confirmed);
-  background: rgba(45, 138, 122, 0.12);
+  background: var(--semantic-info-bg);
 }
 
 .room-status-badge--checked-in {
   color: var(--status-checked-in);
-  background: rgba(58, 155, 92, 0.12);
+  background: var(--semantic-success-bg);
 }
 
 .room-status-badge--checked-out {
   color: var(--status-checked-out);
-  background: rgba(100, 116, 139, 0.12);
+  background: var(--surface-2);
 }
 
 .room-status-badge--canceled {
   color: var(--status-canceled);
-  background: rgba(184, 92, 92, 0.12);
+  background: var(--semantic-error-bg);
 }
 
 .room-status-empty {
@@ -450,7 +450,7 @@ onMounted(load)
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(30, 41, 59, 0.35);
+  background: var(--overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -469,6 +469,7 @@ onMounted(load)
 }
 
 .dialog-title {
+  font-family: var(--font-display);
   font-size: var(--text-heading-size);
   font-weight: var(--text-heading-weight);
   color: var(--ink-primary);
@@ -489,7 +490,7 @@ onMounted(load)
 }
 
 .optional {
-  font-weight: 400;
+  font-weight: var(--text-body-weight);
   color: var(--ink-tertiary);
 }
 

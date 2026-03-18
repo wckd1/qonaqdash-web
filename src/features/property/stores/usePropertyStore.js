@@ -6,8 +6,11 @@ export const usePropertyStore = defineStore('property', () => {
   const roomTypes = ref([])
   const rooms = ref([])
 
-  async function fetchRoomTypes() {
-    roomTypes.value = await propertyApi.fetchRoomTypes()
+  /**
+   * @param {{ q?: string }} [params] - Optional search; when present, backend returns filtered room types.
+   */
+  async function fetchRoomTypes(params = {}) {
+    roomTypes.value = await propertyApi.fetchRoomTypes(params)
   }
 
   async function createRoomType(name, description = '') {
@@ -16,8 +19,11 @@ export const usePropertyStore = defineStore('property', () => {
     return created
   }
 
-  async function fetchRooms() {
-    rooms.value = await propertyApi.fetchRooms()
+  /**
+   * @param {{ q?: string }} [params] - Optional search; when present, backend returns filtered rooms (by number).
+   */
+  async function fetchRooms(params = {}) {
+    rooms.value = await propertyApi.fetchRooms(params)
   }
 
   async function createRoom(roomTypeId, number) {

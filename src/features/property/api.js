@@ -6,10 +6,14 @@ import api from '@/shared/api/client'
  */
 
 /**
+ * @param {{ q?: string }} [params] - Optional search query; backend filters by type name/description or room number (see backend-change-requests).
  * @returns {Promise<RoomType[]>}
  */
-export function fetchRoomTypes() {
-  return api.get('/api/property/room-types').then(({ data }) => data.room_types ?? data ?? [])
+export function fetchRoomTypes(params = {}) {
+  const config = params.q?.trim()
+    ? { params: { q: params.q.trim() } }
+    : {}
+  return api.get('/api/property/room-types', config).then(({ data }) => data.room_types ?? data ?? [])
 }
 
 /**
@@ -24,10 +28,14 @@ export function createRoomType(name, description = '') {
 }
 
 /**
+ * @param {{ q?: string }} [params] - Optional search query; backend filters by room number (see backend-change-requests).
  * @returns {Promise<Room[]>}
  */
-export function fetchRooms() {
-  return api.get('/api/property/rooms').then(({ data }) => data.rooms ?? data ?? [])
+export function fetchRooms(params = {}) {
+  const config = params.q?.trim()
+    ? { params: { q: params.q.trim() } }
+    : {}
+  return api.get('/api/property/rooms', config).then(({ data }) => data.rooms ?? data ?? [])
 }
 
 /**

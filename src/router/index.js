@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 
 const routes = [
   {
@@ -21,18 +22,39 @@ const routes = [
         path: '',
         name: 'home',
         component: () => import('@/views/HomeView.vue'),
+        meta: { breadcrumb: [] },
       },
       {
         path: 'property',
         name: 'property',
         component: () => import('@/features/property/views/RoomsView.vue'),
+        meta: { breadcrumb: [{ label: 'Rooms', path: null }] },
       },
       { path: 'property/room-types', redirect: { name: 'property' } },
       { path: 'property/rooms', redirect: { name: 'property' } },
       {
+        path: 'guests',
+        name: 'guests',
+        component: () => import('@/features/guests/views/GuestListView.vue'),
+        meta: { breadcrumb: [{ label: 'Guests', path: null }] },
+      },
+      {
+        path: 'guests/new',
+        name: 'guest-new',
+        component: () => import('@/features/guests/views/GuestNewView.vue'),
+        meta: { breadcrumb: [{ label: 'Guests', path: '/guests' }, { label: 'New guest', path: null }] },
+      },
+      {
+        path: 'guests/:id',
+        name: 'guest-detail',
+        component: () => import('@/features/guests/views/GuestDetailView.vue'),
+        meta: { breadcrumb: [{ label: 'Guests', path: '/guests' }, { label: 'Guest', path: null }] },
+      },
+      {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         component: () => import('@/shared/views/NotFoundView.vue'),
+        meta: { breadcrumb: [] },
       },
     ],
   },
@@ -56,6 +78,11 @@ router.beforeEach((to) => {
 
   if (to.path.startsWith('/auth/') && auth.isAuthenticated) {
     return { path: '/' }
+  }
+
+  const breadcrumb = to.matched.find((r) => r.meta.breadcrumb)?.meta?.breadcrumb
+  if (breadcrumb !== undefined) {
+    useBreadcrumb().setItems(breadcrumb)
   }
 })
 

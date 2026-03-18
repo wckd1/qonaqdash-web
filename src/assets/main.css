@@ -96,6 +96,12 @@
   --radius-md: 6px;
   --radius-lg: 8px;
 
+  /* ----- Form elements: input/select/textarea padding (used by Pico and search bar) ----- */
+  --form-element-padding-vertical: 12px;
+  --form-element-padding-horizontal: 18px;
+  --pico-form-element-spacing-vertical: var(--form-element-padding-vertical);
+  --pico-form-element-spacing-horizontal: var(--form-element-padding-horizontal);
+
   /* ----- Content area (main app content panel in AppLayout) ----- */
   --content-area-gap: var(--space-md);
   --content-area-radius: 18px;
@@ -152,6 +158,27 @@ textarea {
   margin-bottom: 0;
 }
 
+/* Pico: reduce nav li padding — vertical 8px (--space-xs) */
+nav li {
+  padding: var(--space-xs) var(--pico-nav-element-spacing-horizontal);
+}
+
+/* Form elements: our padding (12px vertical, 18px horizontal); inputs height = text + padding */
+input:not([type="checkbox"], [type="radio"]),
+select,
+textarea {
+  padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
+  box-sizing: border-box;
+}
+input:not([type="checkbox"], [type="radio"]),
+select {
+  min-height: unset;
+  line-height: 1.25;
+}
+textarea {
+  line-height: 1.25;
+}
+
 /* Form input labels use body size for readability */
 label {
   font-size: var(--text-body-size);
@@ -160,7 +187,7 @@ label {
 
 /* ----- Design system components (single source of truth: docs/design.html) ----- */
 
-/* Search bar: same look as Pico text input, standalone (never inside a form). */
+/* Search bar: compact standalone filter input (never inside a form). Uses --text-label-size. */
 .search-bar-wrap {
   display: flex;
   align-items: center;
@@ -181,25 +208,28 @@ label {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--pico-form-element-spacing-horizontal);
+  padding: 0 var(--form-element-padding-horizontal);
   color: var(--pico-form-element-placeholder-color);
   flex-shrink: 0;
 }
 .search-bar-wrap .search-bar-icon svg {
-  width: 1rem;
-  height: 1rem;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 .search-bar-wrap input {
   flex: 1;
   min-width: 0;
+  min-height: unset;
   border: none;
   background: transparent;
-  padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
-  font-size: 1rem;
+  padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
   font-family: inherit;
-  line-height: var(--pico-line-height);
+  line-height: 1.25;
   color: var(--pico-form-element-color);
   margin-bottom: 0;
+  box-sizing: border-box;
 }
 .search-bar-wrap input::placeholder {
   color: var(--pico-form-element-placeholder-color);
@@ -211,7 +241,7 @@ label {
 .search-bar-wrap .search-bar-clear {
   display: none;
   flex-shrink: 0;
-  padding: var(--pico-form-element-spacing-vertical) var(--pico-form-element-spacing-horizontal);
+  padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
   color: var(--pico-form-element-placeholder-color);
   background: transparent;
   border: none;
@@ -224,14 +254,34 @@ label {
   background: var(--pico-form-element-selected-background-color);
 }
 .search-bar-wrap .search-bar-clear svg {
-  width: 1rem;
-  height: 1rem;
+  width: 0.875rem;
+  height: 0.875rem;
   display: block;
 }
 .search-bar-wrap.has-value .search-bar-clear {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.search-bar-spinner-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
+}
+.search-bar-spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: search-spin 0.6s linear infinite;
+}
+@keyframes search-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Form section: CRM-style block (header, description, form grid). Uses content-area tokens. */

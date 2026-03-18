@@ -1,6 +1,7 @@
 <template>
   <div class="rooms-view">
-    <header class="page-header">
+    <div class="list-area">
+      <header class="page-header">
       <h1 class="page-title">Rooms</h1>
       <button type="button" class="btn-add-type" @click="openAddTypeDialog" aria-label="Add room type">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -12,14 +13,24 @@
     </header>
 
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <div v-else-if="loading" class="loading-state">Loading…</div>
+    <div v-else-if="initialLoading" class="loading-state">Loading…</div>
     <template v-else>
-      <p v-if="!roomTypes.length" class="empty-state">No room types yet. Click “Add type” to create one.</p>
+      <div v-if="roomTypes.length" class="list-toolbar">
+        <SearchBar
+          v-model="searchQuery"
+          placeholder="Search by type name, room number…"
+          aria-label="Search rooms"
+          :searching="searching"
+        />
+      </div>
+      <p v-if="!roomTypes.length && !searchQuery" class="empty-state">No room types yet. Click “Add type” to create one.</p>
+      <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">No rooms match your search.</p>
       <div v-else class="accordion-list">
         <details
           v-for="rt in roomTypes"
           :key="rt.id"
           class="accordion"
+          :open="!!searchQuery"
         >
           <summary class="accordion-header">
             <span class="accordion-title">
@@ -49,7 +60,13 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="room in roomsByType(rt.id)" :key="room.id">
+                  <tr
+                    v-for="room in roomsByType(rt.id)"
+                    :key="room.id"
+                    class="room-row"
+                    :class="{ 'room-row--selected': selectedRoom?.room?.id === room.id }"
+                    @click="openPanel(room, rt)"
+                  >
                     <td data-label="Number">{{ room.number }}</td>
                     <td data-label="Status" class="col-status">
                       <span v-if="room.status" class="room-status-badge" :class="statusBadgeClass(room.status)">{{ room.status }}</span>
@@ -64,6 +81,42 @@
         </details>
       </div>
     </template>
+    </div>
+
+    <Transition name="slide-panel">
+      <aside
+        v-if="selectedRoom"
+        class="room-panel"
+        role="dialog"
+        aria-labelledby="room-panel-title"
+      >
+        <div class="room-panel-header">
+          <h2 id="room-panel-title" class="room-panel-title">{{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}</h2>
+          <button
+            type="button"
+            class="room-panel-close"
+            aria-label="Close panel"
+            @click="closePanel"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="room-panel-body">
+          <dl class="room-panel-dl">
+            <dt>Room type</dt>
+            <dd>{{ selectedRoom.roomType?.name ?? '—' }}</dd>
+            <dt>Status</dt>
+            <dd>
+              <span v-if="selectedRoom.room?.status" class="room-status-badge" :class="statusBadgeClass(selectedRoom.room.status)">{{ selectedRoom.room.status }}</span>
+              <span v-else>—</span>
+            </dd>
+          </dl>
+        </div>
+      </aside>
+    </Transition>
 
     <!-- Add room type dialog -->
     <div v-if="addTypeOpen" class="dialog-backdrop" @click.self="closeAddTypeDialog">
@@ -106,15 +159,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+
+const DEBOUNCE_MS = 300
 
 const store = usePropertyStore()
 const { roomTypes, rooms } = storeToRefs(store)
 
-const loading = ref(true)
+const initialLoading = ref(true)
+const searching = ref(false)
 const loadError = ref('')
+const searchQuery = ref('')
+const selectedRoom = ref(null)
+let searchDebounceId = null
 
 const addTypeOpen = ref(false)
 const addTypeForm = ref({ name: '', description: '' })
@@ -127,6 +187,14 @@ const addRoomSaving = ref(false)
 
 function roomsByType(roomTypeId) {
   return rooms.value.filter((r) => r.room_type_id === roomTypeId)
+}
+
+function openPanel(room, roomType) {
+  selectedRoom.value = { room, roomType }
+}
+
+function closePanel() {
+  selectedRoom.value = null
 }
 
 /** @param {string} status */
@@ -185,27 +253,56 @@ async function submitAddRoom() {
   }
 }
 
-async function load() {
+/**
+ * @param {{ q?: string }} [params]
+ * @param {boolean} [isInitial] - If true, show full-page "Loading…"; otherwise show spinner in search bar.
+ */
+async function load(params = {}, isInitial = false) {
   loadError.value = ''
-  loading.value = true
+  if (isInitial) {
+    initialLoading.value = true
+  } else {
+    searching.value = true
+  }
   try {
-    await store.fetchRoomTypes()
-    await store.fetchRooms()
+    await store.fetchRoomTypes(params)
+    await store.fetchRooms(params)
   } catch (err) {
     loadError.value = err.response?.data?.error || 'Failed to load rooms.'
   } finally {
-    loading.value = false
+    initialLoading.value = false
+    searching.value = false
   }
 }
 
-onMounted(load)
+watch(searchQuery, (q) => {
+  if (searchDebounceId) clearTimeout(searchDebounceId)
+  searchDebounceId = setTimeout(() => {
+    searchDebounceId = null
+    load(q ? { q } : {})
+  }, DEBOUNCE_MS)
+})
+
+onMounted(() => load({}, true))
 </script>
 
 <style scoped>
 .rooms-view {
+  position: relative;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+}
+
+.list-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.list-toolbar {
+  width: 100%;
 }
 
 .page-header {
@@ -401,8 +498,125 @@ onMounted(load)
   background: var(--surface-2);
 }
 
-.room-table tbody tr {
+.room-row {
+  cursor: pointer;
   transition: background 0.12s ease;
+}
+
+.room-row:hover {
+  background: var(--surface-2);
+}
+
+.room-row--selected {
+  background: var(--semantic-info-bg);
+}
+
+.room-row--selected:hover {
+  background: var(--semantic-info-bg);
+}
+
+.room-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 60%;
+  min-width: 280px;
+  max-width: 720px;
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-shadow: -4px 0 20px rgba(30, 41, 59, 0.12);
+  z-index: 10;
+}
+
+.slide-panel-enter-active,
+.slide-panel-leave-active {
+  transition: transform 0.25s ease;
+}
+
+.slide-panel-enter-from,
+.slide-panel-leave-to {
+  transform: translateX(100%);
+}
+
+.slide-panel-enter-to,
+.slide-panel-leave-from {
+  transform: translateX(0);
+}
+
+.room-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.room-panel-title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+  color: var(--ink-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.room-panel-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--ink-tertiary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.room-panel-close:hover {
+  color: var(--ink-primary);
+  background: var(--surface-2);
+}
+
+.room-panel-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.room-panel-body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+.room-panel-dl {
+  margin: 0;
+  font-size: var(--text-body-size);
+}
+
+.room-panel-dl dt {
+  font-weight: var(--text-label-weight);
+  color: var(--ink-tertiary);
+  margin-top: var(--space-sm);
+  margin-bottom: var(--space-micro);
+}
+
+.room-panel-dl dt:first-child {
+  margin-top: 0;
+}
+
+.room-panel-dl dd {
+  margin: 0;
+  color: var(--ink-primary);
 }
 
 .room-status-badge {

@@ -10,7 +10,7 @@
 - **Token storage**: localStorage for both access and refresh tokens; migrate refresh to httpOnly cookie when backend refresh endpoint is added
 - **API client**: Axios with interceptors (auto-attach JWT, 401 redirect, error handling)
 - **Feature API modules**: Each feature has its own `api.js` (e.g., `src/features/auth/api.js`) encapsulating HTTP calls and response parsing — stores stay thin and call these modules
-- **API integration**: When implementing API integration, propose backend changes explicitly when they would help the frontend: (1) **Response shape** — if a different response model (e.g. structure, fields, pagination) would make the frontend simpler, faster, or avoid extra requests, state the proposed change and what the backend should return; (2) **Missing endpoints** — if the feature needs an endpoint that does not exist, propose it explicitly (method, path, request/response shape) and explain why it is required. Do not work around suboptimal or missing APIs in silence; document the proposed backend change and the reason.
+- **API integration**: When implementing API integration, propose backend changes explicitly when they would help the frontend: (1) **Response shape** — if a different response model (e.g. structure, fields, pagination) would make the frontend simpler, faster, or avoid extra requests, state the proposed change and what the backend should return; (2) **Missing endpoints** — if the feature needs an endpoint/parameter that does not exist, propose it explicitly (method, path, request/response shape) and explain why it is required. Do not work around suboptimal or missing APIs in silence. **All proposed backend changes must be listed in [docs/backend-change-requests.md](docs/backend-change-requests.md)** (endpoint, params, reason, frontend usage).
 
 ## UI/UX Design Decisions
 
@@ -24,6 +24,9 @@
 
 ## Conventions
 
+- **Feature planning and implementation**: Before implementing a feature or during feature planning, always refer to [docs/design.md](docs/design.md), [docs/design.html](docs/design.html), and [docs/requirements.md](docs/requirements.md) so implementation aligns with design system and requirements.
+- **Backend change requests**: Document all proposed API changes (new endpoints, new query params, response shape changes) in [docs/backend-change-requests.md](docs/backend-change-requests.md).
+- **Shared components**: If a component is reused in multiple places and can be moved to a shared component, extract it to `src/shared/` (or the appropriate shared location) and reuse it instead of duplicating. When extracting, keep the component style-light: use existing main.css classes and tokens only; remove the same styles from the feature views that previously owned them so main.css remains the single source of truth.
 - `docs/` directory contains design and requirements reference — excluded from builds
 - Don't create `.md` files unless explicitly requested
 - Don't bypass errors with workarounds — fix root causes
@@ -45,3 +48,4 @@
 - **Feature vs view naming**: A feature (e.g. `property`) can have multiple views. Name the view after the screen: `RoomsView` for the Rooms screen, not `PropertyView`; reserve `PropertyView` or similar for a future “Hotel settings” or property-level screen. Route path can stay feature-level (`/property`).
 - **404 inside layout**: Use a catch-all child route under the main layout (`path: '/:pathMatch(.*)*'`) so unknown routes still render AppLayout with a NotFound view in the content area.
 - **Accordions (multiple open)**: Use native `<details>` without a controlled `:open` binding so each accordion opens and closes independently.
+- **List-with-search parity**: When adding a new list view that has search, follow the same pattern as the reference feature (e.g. Guests): server-side search with `q`, debounced input, `initialLoading` vs `searching`, spinner in the search bar (no full-page loader). Document any needed API changes in [docs/backend-change-requests.md](docs/backend-change-requests.md). Do not implement client-side filtering when the project standard is server-side search.

@@ -37,7 +37,11 @@
           <span class="nav-label">Bookings</span>
         </router-link>
 
-        <router-link to="/guests" class="nav-link">
+        <router-link
+          to="/guests"
+          class="nav-link"
+          :class="{ 'nav-link--active': $route.path.startsWith('/guests') }"
+        >
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
             <circle cx="9" cy="7" r="4" />
@@ -109,6 +113,9 @@
     </aside>
 
     <div class="main-wrapper">
+      <div class="breadcrumb-row">
+        <Breadcrumbs />
+      </div>
       <main class="content">
         <router-view />
       </main>
@@ -120,6 +127,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import Breadcrumbs from '@/shared/components/Breadcrumbs.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -307,7 +315,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   box-shadow: inset var(--pico-border-width) 0 0 var(--brand-primary);
 }
 
-.nav-link.router-link-exact-active {
+.nav-link.router-link-exact-active,
+.nav-link.nav-link--active {
   background: var(--sidebar-active-bg);
   color: var(--brand-primary);
   box-shadow: inset var(--radius-md) 0 0 var(--brand-primary);
@@ -531,12 +540,24 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   margin-left: 220px;
   margin-top: 56px;
   height: calc(100vh - 56px);
-  padding: var(--content-area-gap);
+  padding: var(--space-sm);
   background: var(--canvas);
   transition: margin-left 0.25s ease;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  min-height: 0;
+}
+
+.breadcrumb-row {
+  flex-shrink: 0;
+  margin-bottom: var(--space-micro);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.breadcrumb-row :deep(.breadcrumbs) {
+  margin: 0;
 }
 
 .collapsed .main-wrapper {
@@ -548,7 +569,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--content-area-padding);
+  padding: var(--space-md);
   background: var(--surface-1);
   border-radius: var(--content-area-radius);
   box-shadow: var(--shadow-sm);

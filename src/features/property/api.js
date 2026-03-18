@@ -6,7 +6,7 @@ import api from '@/shared/api/client'
  */
 
 /**
- * @param {{ q?: string }} [params] - Optional search query; backend filters by type name/description or room number (see backend-change-requests).
+ * @param {{ q?: string }} [params] - Optional search query; backend filters by type name/description or room number.
  * @returns {Promise<RoomType[]>}
  */
 export function fetchRoomTypes(params = {}) {
@@ -28,7 +28,7 @@ export function createRoomType(name, description = '') {
 }
 
 /**
- * @param {{ q?: string }} [params] - Optional search query; backend filters by room number (see backend-change-requests).
+ * @param {{ q?: string }} [params] - Optional search query; backend filters by room number.
  * @returns {Promise<Room[]>}
  */
 export function fetchRooms(params = {}) {

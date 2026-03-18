@@ -15,8 +15,8 @@
       <div class="list-toolbar">
         <SearchBar
           v-model="searchQuery"
-          placeholder="Search by guest name or room…"
-          aria-label="Search by guest or room"
+          placeholder="Search by guest name…"
+          aria-label="Search by guest"
           :searching="searching"
         />
       </div>

@@ -8,7 +8,7 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * @param {{ q?: string, from?: string, to?: string }} [params]
-   * @returns {Promise<import('@/features/bookings/api').Booking[]>}
+   * @returns {Promise<import('@/features/bookings/api').BookingListItem[]>}
    */
   async function fetchBookings(params = {}) {
     bookings.value = await bookingsApi.fetchBookings(params)
@@ -17,12 +17,12 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').Booking>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
   async function fetchBooking(id) {
-    const booking = await bookingsApi.fetchBooking(id)
-    currentBooking.value = booking
-    return booking
+    const formResponse = await bookingsApi.fetchBooking(id)
+    currentBooking.value = formResponse
+    return formResponse
   }
 
   /**
@@ -36,7 +36,7 @@ export const useBookingStore = defineStore('bookings', () => {
   /**
    * @param {string} id
    * @param {import('@/features/bookings/api').CreateBookingPayload} payload
-   * @returns {Promise<import('@/features/bookings/api').Booking>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
    */
   async function updateBooking(id, payload) {
     const booking = await bookingsApi.updateBooking(id, payload)
@@ -46,7 +46,7 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').Booking>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
    */
   async function checkIn(id) {
     const booking = await bookingsApi.checkIn(id)
@@ -56,7 +56,7 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').Booking>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
    */
   async function checkOut(id) {
     const booking = await bookingsApi.checkOut(id)
@@ -66,7 +66,7 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').Booking>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
    */
   async function cancel(id) {
     const booking = await bookingsApi.cancel(id)

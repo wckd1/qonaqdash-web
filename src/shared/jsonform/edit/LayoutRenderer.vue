@@ -1,5 +1,14 @@
 <template>
-  <component :is="wrapperTag" :class="wrapperClass">
+  <GuestSectionWrapper
+    v-if="isGuestGroup"
+    :schema="schema"
+    :uischema="uischema"
+    :model-value="modelValue"
+    :errors-map="errorsMap"
+    :disabled="disabled"
+    @update:model-value="updateModel"
+  />
+  <component v-else :is="wrapperTag" :class="wrapperClass">
     <h2 v-if="groupLabel">{{ groupLabel }}</h2>
     <div v-if="isGroup" class="form-view-layout__fields">
       <component
@@ -36,6 +45,7 @@
 import { computed } from 'vue'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
+import GuestSectionWrapper from './GuestSectionWrapper.vue'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -49,6 +59,18 @@ const emit = defineEmits(['update:modelValue'])
 
 const layoutType = computed(() => props.uischema?.type)
 const isGroup = computed(() => layoutType.value === 'Group')
+/** Guest picker + typeahead: match by id or by injected controls under #/properties/guest/ */
+const isGuestGroup = computed(() => {
+  if (!isGroup.value) return false
+  if (props.uischema?.id === 'guest') return true
+  const els = props.uischema?.elements ?? []
+  return els.some(
+    (e) =>
+      e?.type === 'Control' &&
+      typeof e.scope === 'string' &&
+      e.scope.includes('/properties/guest/'),
+  )
+})
 const isVertical = computed(() => layoutType.value === 'VerticalLayout')
 const isHorizontal = computed(() => layoutType.value === 'HorizontalLayout')
 

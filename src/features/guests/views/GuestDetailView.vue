@@ -87,7 +87,7 @@ import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormResponse'
-import { fetchBookings } from '@/features/bookings/api'
+import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 
 const route = useRoute()
@@ -157,8 +157,7 @@ async function loadBookings() {
   bookingsLoadError.value = ''
   bookingsLoading.value = true
   try {
-    const list = await fetchBookings({ guest_id: id })
-    previousBookings.value = list.filter((b) => b.guest_id === id)
+    previousBookings.value = await fetchGuestBookings(id)
   } catch (err) {
     bookingsLoadError.value = err.response?.data?.error || 'Failed to load bookings.'
     previousBookings.value = []

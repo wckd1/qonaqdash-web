@@ -25,10 +25,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { fetchGuests } from '@/features/guests/api'
+import { fetchAvailableRooms } from '@/features/property/api'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
+
+provide('guestSearch', (q) => fetchGuests({ q }))
 
 const router = useRouter()
 const store = useBookingStore()
@@ -39,6 +43,31 @@ const bookingForm = ref(null)
 const formData = ref({})
 const errorsMap = ref({})
 const submitting = ref(false)
+const availableRooms = ref([])
+
+provide('availableRooms', availableRooms)
+
+watch(
+  () => [formData.value?.booking?.checkIn, formData.value?.booking?.checkOut],
+  async ([checkIn, checkOut]) => {
+    if (!checkIn || !checkOut) {
+      availableRooms.value = []
+      return
+    }
+    const from = new Date(checkIn)
+    const to = new Date(checkOut)
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      availableRooms.value = []
+      return
+    }
+    try {
+      availableRooms.value = await fetchAvailableRooms(from, to)
+    } catch {
+      availableRooms.value = []
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(async () => {
   loading.value = true

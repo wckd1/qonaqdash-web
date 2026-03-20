@@ -17,7 +17,7 @@
       <button
         type="button"
         :disabled="disabled"
-        @click="setLocalValue(uischema.options.action.value)"
+        @click="onActionClick"
       >
         {{ uischema.options.action.label }}
       </button>
@@ -32,7 +32,7 @@
           v-if="isSelect"
           :id="inputId"
           :value="selectValueForInput"
-          :disabled="disabled"
+          :disabled="effectiveDisabled"
           @change="onSelectChange"
         >
           <option
@@ -60,20 +60,33 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import ArrayRenderer from './ArrayRenderer.vue'
-import { scopeToPath, getValueByPath, setValueByPath, getSchemaEntry } from '../utils'
+import {
+  scopeToPath,
+  getValueByPath,
+  setValueByPath,
+  getSchemaEntry,
+  getDefaultObjectFromSchema,
+  getFilteredRoomSelectOptions,
+  buildRoomOneOfFromRooms,
+} from '../utils'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
   uischema: { type: Object, required: true },
   modelValue: { type: Object, default: () => ({}) },
   fullData: { type: Object, default: () => ({}) },
+  /** When inside ArrayRenderer (e.g. booking.rooms), index of current item for roomID filtering */
+  arrayItemIndex: { type: Number, default: undefined },
   errorsMap: { type: Object, default: () => ({}) },
   disabled: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+/** When provided by BookingFormView: rooms loaded from GET /api/property/rooms/available when checkIn/checkOut change */
+const availableRooms = inject('availableRooms', null)
 
 const path = computed(() => scopeToPath(props.uischema.scope))
 const schemaEntry = computed(() => getSchemaEntry(props.schema, path.value))
@@ -135,6 +148,22 @@ function setLocalValue(v) {
   localValue.value = v
 }
 
+/** For action button: normalize clear-guest (null/empty object) to default object from schema. */
+function onActionClick() {
+  let v = props.uischema.options?.action?.value
+  const pathLen = path.value?.length
+  const isGuestScope =
+    pathLen === 1 && path.value?.[0] === 'guest'
+  if (
+    isGuestScope &&
+    (v == null || (typeof v === 'object' && Object.keys(v).length === 0))
+  ) {
+    const guestSchema = getSchemaEntry(props.schema, path.value)
+    v = getDefaultObjectFromSchema(guestSchema)
+  }
+  setLocalValue(v)
+}
+
 function onInput(e) {
   const raw = e.target.value
   const entry = schemaEntry.value
@@ -160,6 +189,10 @@ function datetimeLocalToISO(localString) {
 
 function onSelectChange(e) {
   const raw = e.target.value
+  if (raw === '' && isRoomIDInRoomsArray.value) {
+    setLocalValue(null)
+    return
+  }
   if (isSelectOptionNull(raw)) {
     setLocalValue(null)
     return
@@ -199,23 +232,65 @@ const inputType = computed(() => {
 
 const isSelect = computed(() => {
   const entry = schemaEntry.value
-  return (
-    (Array.isArray(entry?.enum) && entry.enum.length > 0) ||
-    (Array.isArray(entry?.oneOf) && entry.oneOf.length > 0)
-  )
+  const hasEnum = Array.isArray(entry?.enum) && entry.enum.length > 0
+  const hasOneOf = Array.isArray(entry?.oneOf) && entry.oneOf.length > 0
+  /** Schema may ship empty oneOf for roomID; options come from GET /rooms/available after dates are set */
+  const roomIdUsesAvailableList =
+    path.value?.length === 1 &&
+    path.value[0] === 'roomID' &&
+    props.arrayItemIndex !== undefined &&
+    Array.isArray(props.fullData?.booking?.rooms) &&
+    (availableRooms?.value?.length > 0 || hasOneOf)
+  return hasEnum || hasOneOf || roomIdUsesAvailableList
 })
 
-/** Build options for select from enum or oneOf. For oneOf with roomID, filter by roomType when implemented. */
+/** True when this control is roomID inside booking.rooms array — then we filter options and may disable until roomType set */
+const isRoomIDInRoomsArray = computed(
+  () =>
+    path.value?.length === 1 &&
+    path.value[0] === 'roomID' &&
+    props.arrayItemIndex !== undefined &&
+    Array.isArray(props.fullData?.booking?.rooms),
+)
+
+/**
+ * When roomID in rooms array: disable until roomType is chosen.
+ * roomType may be oneOf with `const: null` ("Любой"); null is a valid choice — do not treat it as unset.
+ */
+const effectiveDisabled = computed(() => {
+  if (props.disabled) return true
+  if (!isRoomIDInRoomsArray.value) return false
+  const rt = props.modelValue?.roomType
+  if (rt === undefined || rt === '') return true
+  return false
+})
+
+/** Build options for select from enum or oneOf. For roomID in booking.rooms: use injected availableRooms when present (from dates), else schema oneOf; then filter by roomType and exclude selected. */
 const selectOptions = computed(() => {
   const entry = schemaEntry.value
   if (Array.isArray(entry?.enum)) {
     return entry.enum.map((v) => ({ value: v, label: String(v) }))
   }
-  if (Array.isArray(entry?.oneOf)) {
-    return entry.oneOf.map((opt) => ({
-      value: opt.const,
-      label: opt.title ?? String(opt.const ?? ''),
-    }))
+  if (Array.isArray(entry?.oneOf) || isRoomIDInRoomsArray.value) {
+    let oneOf = entry?.oneOf ?? []
+    if (isRoomIDInRoomsArray.value && availableRooms?.value?.length) {
+      const nullOpt = oneOf.filter((o) => o.const == null)
+      oneOf = buildRoomOneOfFromRooms(availableRooms.value, nullOpt.length ? nullOpt : undefined)
+    }
+    if (isRoomIDInRoomsArray.value && oneOf.length > 0) {
+      return getFilteredRoomSelectOptions(
+        props.fullData,
+        props.modelValue,
+        props.arrayItemIndex,
+        oneOf,
+      )
+    }
+    if (Array.isArray(entry?.oneOf)) {
+      return entry.oneOf.map((opt) => ({
+        value: opt.const,
+        label: opt.title ?? String(opt.const ?? ''),
+      }))
+    }
   }
   return []
 })

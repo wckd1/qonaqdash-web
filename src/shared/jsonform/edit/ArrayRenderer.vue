@@ -9,7 +9,7 @@
       >
         <div class="form-edit-array__item-fields">
           <ControlRenderer
-            v-for="(fieldSchema, key) in itemSchemaProperties"
+            v-for="[key, fieldSchema] in itemSchemaPropertiesOrdered"
             :key="key"
             :schema="itemSchema"
             :uischema="{
@@ -19,6 +19,7 @@
             }"
             :model-value="item"
             :full-data="fullDataForItem(index)"
+            :array-item-index="index"
             :errors-map="errorsMap"
             :disabled="disabled"
             @update:model-value="(val) => updateItem(index, val)"
@@ -74,6 +75,12 @@ const itemSchema = computed(() => {
 })
 
 const itemSchemaProperties = computed(() => itemSchema.value?.properties ?? {})
+
+/** Array of [key, fieldSchema] pairs preserving schema property order */
+const itemSchemaPropertiesOrdered = computed(() => {
+  const props = itemSchemaProperties.value
+  return Object.keys(props).map((key) => [key, props[key]])
+})
 
 const minItems = computed(() => schemaEntry.value?.minItems ?? 0)
 

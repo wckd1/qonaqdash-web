@@ -55,3 +55,12 @@ export function createGuest(data) {
 export function updateGuest(id, data) {
   return api.put(`/api/guests/${id}`, data).then(({ data: res }) => res)
 }
+
+/**
+ * All bookings for the given guest (e.g. "Previous bookings" on guest detail). Same shape as GET /api/bookings list.
+ * @param {string} guestId
+ * @returns {Promise<Array<{ id: string, guest_id: string, check_in: string, check_out: string, status: string, guest?: { first_name?: string, last_name?: string } }>>}
+ */
+export function fetchGuestBookings(guestId) {
+  return api.get(`/api/guests/${guestId}/bookings`).then(({ data }) => data ?? [])
+}

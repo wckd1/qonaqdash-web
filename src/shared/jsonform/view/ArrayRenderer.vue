@@ -8,7 +8,7 @@
         class="form-view-array__item"
       >
         <ControlRenderer
-          v-for="(fieldSchema, key) in itemSchemaProperties"
+          v-for="[key, fieldSchema] in itemSchemaPropertiesOrdered"
           :key="key"
           :schema="itemSchema"
           :uischema="{
@@ -49,6 +49,12 @@ const itemSchema = computed(() => {
 })
 
 const itemSchemaProperties = computed(() => itemSchema.value?.properties ?? {})
+
+/** Array of [key, fieldSchema] pairs preserving schema property order */
+const itemSchemaPropertiesOrdered = computed(() => {
+  const props = itemSchemaProperties.value
+  return Object.keys(props).map((key) => [key, props[key]])
+})
 
 const items = computed(() => {
   const value = getValueByPath(props.modelValue, path.value)

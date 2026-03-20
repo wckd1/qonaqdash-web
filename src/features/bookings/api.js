@@ -10,8 +10,8 @@ import api from '@/shared/api/client'
  */
 /**
  * GET /api/bookings/{id} returns FormResponse: schema, uischema, data (camelCase form data).
- * Backend may include status at root for display. Use for detail view and 409 re-fetch.
- * @typedef {{ schema?: unknown, uischema?: unknown, data?: { guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string }> } }, status?: string }} BookingFormResponse
+ * data.booking.rooms[] includes roomType, roomID and display fields roomType_title, roomID_title (per requirements §6).
+ * @typedef {{ schema?: unknown, uischema?: unknown, data?: { guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string, roomType_title?: string, roomID_title?: string }> } }, status?: string }} BookingFormResponse
  */
 /**
  * @typedef {{ guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking: { checkIn: string, checkOut: string, rooms: Array<{ roomType: string, roomID?: string }> } }} CreateBookingPayload
@@ -26,7 +26,7 @@ export function createBooking(body) {
 }
 
 /**
- * @param {{ q?: string, from?: string, to?: string, guest_id?: string }} [params] - Optional search, date filter, or guest_id (see backend-change-requests).
+ * @param {{ q?: string, from?: string, to?: string }} [params] - Optional search (guest name), date filter (YYYY-MM-DD).
  * @returns {Promise<BookingListItem[]>}
  */
 export function fetchBookings(params = {}) {
@@ -34,7 +34,6 @@ export function fetchBookings(params = {}) {
   if (params.q?.trim()) config.params.q = params.q.trim()
   if (params.from) config.params.from = params.from
   if (params.to) config.params.to = params.to
-  if (params.guest_id) config.params.guest_id = params.guest_id
   return api.get('/api/bookings', config).then(({ data }) => data.bookings ?? data ?? [])
 }
 

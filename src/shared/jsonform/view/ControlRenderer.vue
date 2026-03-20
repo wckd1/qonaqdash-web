@@ -37,6 +37,11 @@ const rawValue = computed(() => getValueByPath(props.modelValue, path.value))
 const displayValue = computed(() => {
   const val = rawValue.value
   const entry = schemaEntry.value
+  // Backend convention: property_id + _title for display (e.g. roomType_title, roomID_title in booking.rooms[])
+  if (path.value?.length === 1 && props.modelValue && typeof props.modelValue === 'object') {
+    const titleVal = props.modelValue[path.value[0] + '_title']
+    if (titleVal != null && titleVal !== '') return String(titleVal)
+  }
   if (entry?.oneOf && Array.isArray(entry.oneOf)) {
     const match = entry.oneOf.find((opt) => opt.const === val)
     return match?.title ?? String(val ?? '')

@@ -126,7 +126,10 @@
     "backToList": "Back to bookings",
     "detailsLoading": "Details are loading.",
     "concurrent": "Booking was modified concurrently. Please retry.",
-    "formSettingsTitle": "Booking settings"
+    "formSettingsTitle": "Booking settings",
+    "guestPickerTitle": "Matching guests",
+    "guestPickerClose": "Close guest suggestions",
+    "guestPickerSearching": "Searching…"
   },
   "rooms": {
     "addType": "Add type",

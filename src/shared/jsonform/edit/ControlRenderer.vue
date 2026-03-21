@@ -53,6 +53,8 @@
           :placeholder="placeholder"
           autocomplete="off"
           @input="onInput"
+          @focus="onTextInputFocus"
+          @blur="onTextInputBlur"
         />
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
       </div>
@@ -88,6 +90,9 @@ const emit = defineEmits(['update:modelValue'])
 
 /** When provided by BookingFormView: rooms loaded from GET /api/property/rooms/available when checkIn/checkOut change */
 const availableRooms = inject('availableRooms', null)
+
+/** Guest booking typeahead: anchor dropdown to the focused guest field (GuestSectionWrapper). */
+const guestPickerAnchor = inject('guestPickerAnchor', null)
 
 const path = computed(() => scopeToPath(props.uischema.scope))
 const schemaEntry = computed(() => getSchemaEntry(props.schema, path.value))
@@ -163,6 +168,16 @@ function onActionClick() {
     v = getDefaultObjectFromSchema(guestSchema)
   }
   setLocalValue(v)
+}
+
+function onTextInputFocus(e) {
+  if (!participatesInGuestPicker.value) return
+  guestPickerAnchor.setPickerAnchor(e.currentTarget)
+}
+
+function onTextInputBlur(e) {
+  if (!participatesInGuestPicker.value) return
+  guestPickerAnchor.clearPickerAnchor(e.currentTarget)
 }
 
 function onInput(e) {
@@ -243,6 +258,15 @@ const isSelect = computed(() => {
     Array.isArray(props.fullData?.booking?.rooms) &&
     (availableRooms?.value?.length > 0 || hasOneOf)
   return hasEnum || hasOneOf || roomIdUsesAvailableList
+})
+
+const participatesInGuestPicker = computed(() => {
+  if (!guestPickerAnchor) return false
+  const p = path.value
+  if (!Array.isArray(p) || p[0] !== 'guest' || p.length < 2) return false
+  if (isSelect.value) return false
+  if (schemaEntry.value?.type === 'array') return false
+  return true
 })
 
 /** True when this control is roomID inside booking.rooms array — then we filter options and may disable until roomType set */

@@ -126,7 +126,10 @@
     "backToList": "К списку бронирований",
     "detailsLoading": "Загрузка данных…",
     "concurrent": "Бронирование изменено другим пользователем. Повторите попытку.",
-    "formSettingsTitle": "Настройки формы бронирования"
+    "formSettingsTitle": "Настройки формы бронирования",
+    "guestPickerTitle": "Подходящие гости",
+    "guestPickerClose": "Закрыть подсказки по гостям",
+    "guestPickerSearching": "Поиск…"
   },
   "rooms": {
     "addType": "Добавить тип",

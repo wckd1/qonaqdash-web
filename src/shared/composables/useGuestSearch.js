@@ -8,7 +8,7 @@ const DEBOUNCE_MS = 300
  * @param {Record<string, unknown>} guest
  * @returns {string}
  */
-function buildQuery(guest) {
+export function buildGuestSearchQuery(guest) {
   if (!guest || typeof guest !== 'object') return ''
   const first = guest.firstName ?? guest.first_name
   const last = guest.lastName ?? guest.last_name
@@ -49,7 +49,7 @@ export function useGuestSearch(getFormData, searchGuests) {
 
   let debounceTimer = null
   watch(
-    () => buildQuery(getFormData()?.guest),
+    () => buildGuestSearchQuery(getFormData()?.guest),
     (newQuery) => {
       clearTimeout(debounceTimer)
       if (!newQuery || newQuery.length < GUEST_SEARCH_MIN_LENGTH) {
@@ -92,9 +92,18 @@ export function useGuestSearch(getFormData, searchGuests) {
     return next
   }
 
+  /** Close typeahead UI: cancel pending search, drop in-flight state and results. */
+  function dismiss() {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+    debouncing.value = false
+    loading.value = false
+    results.value = []
+  }
+
   /**
    * Wrap in reactive so template access like `searchContext.loading` unwraps refs
    * (plain objects with refs do not auto-unwrap in templates — Ref is always truthy).
    */
-  return reactive({ query, results, loading, debouncing, select })
+  return reactive({ query, results, loading, debouncing, select, dismiss })
 }

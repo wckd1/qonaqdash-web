@@ -180,6 +180,36 @@ main .page-header-actions .btn-secondary:hover:not(:disabled) {
   border-color: var(--border-emphasis);
 }
 
+/* Page header: primary outline CTA (e.g. New booking on Bookings list / Dashboard) */
+main .page-header .btn-add-booking {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--brand-primary);
+  background: transparent;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  text-decoration: none;
+}
+
+main .page-header .btn-add-booking:hover {
+  background: var(--semantic-info-bg);
+  color: var(--brand-primary-hover);
+}
+
+main .page-header .btn-add-booking .btn-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 /* Form/detail pages: main content area only as tall as content (no stretch). */
 .main-inner--fit-content {
   flex: 0 1 auto;

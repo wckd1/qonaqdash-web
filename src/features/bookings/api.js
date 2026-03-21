@@ -16,6 +16,20 @@ import api from '@/shared/api/client'
 /**
  * @typedef {{ guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking: { checkIn: string, checkOut: string, rooms: Array<{ roomType: string, roomID?: string }> } }} CreateBookingPayload
  */
+/**
+ * Row from GET /api/bookings/grid (denormalized; one row per booking × room).
+ * @typedef {{ booking_id: string, room_type_id: string, room_id: string | null, guest_id: string | null, guest_first_name?: string, guest_last_name?: string, check_in: string, check_out: string, status: string }} BookingGridEntry
+ */
+
+/**
+ * @param {{ from: string, to: string }} params - Inclusive range, YYYY-MM-DD.
+ * @returns {Promise<BookingGridEntry[]>}
+ */
+export function fetchBookingGrid(params) {
+  return api
+    .get('/api/bookings/grid', { params: { from: params.from, to: params.to } })
+    .then(({ data }) => (Array.isArray(data) ? data : data?.entries ?? data?.grid ?? []))
+}
 
 /**
  * @param {CreateBookingPayload} body

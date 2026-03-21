@@ -26,14 +26,15 @@
 
 <script setup>
 import { ref, onMounted, provide, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { fetchGuests } from '@/features/guests/api'
-import { fetchAvailableRooms } from '@/features/property/api'
+import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 
 provide('guestSearch', (q) => fetchGuests({ q }))
 
+const route = useRoute()
 const router = useRouter()
 const store = useBookingStore()
 
@@ -69,6 +70,27 @@ watch(
   { immediate: true },
 )
 
+async function mergeRouteQueryIntoForm() {
+  if (!formData.value?.booking) return
+  const q = route.query
+  const checkIn = typeof q.checkIn === 'string' ? q.checkIn : ''
+  const checkOut = typeof q.checkOut === 'string' ? q.checkOut : ''
+  const roomId = typeof q.roomId === 'string' ? q.roomId : ''
+  if (checkIn) formData.value.booking.checkIn = checkIn
+  if (checkOut) formData.value.booking.checkOut = checkOut
+  if (roomId) {
+    try {
+      const list = await fetchRooms()
+      const room = list.find((r) => r.id === roomId)
+      if (room?.room_type_id) {
+        formData.value.booking.rooms = [{ roomType: room.room_type_id, roomID: room.id }]
+      }
+    } catch {
+      /* keep existing rooms */
+    }
+  }
+}
+
 onMounted(async () => {
   loading.value = true
   loadError.value = ''
@@ -78,12 +100,21 @@ onMounted(async () => {
     if (!formData.value.guest) formData.value.guest = {}
     if (!formData.value.booking) formData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
     if (!Array.isArray(formData.value.booking.rooms)) formData.value.booking.rooms = []
+    await mergeRouteQueryIntoForm()
   } catch (err) {
     loadError.value = err.response?.data?.error ?? 'Failed to load form.'
   } finally {
     loading.value = false
   }
 })
+
+watch(
+  () => [route.query.checkIn, route.query.checkOut, route.query.roomId],
+  () => {
+    if (route.name !== 'booking-new' || !bookingForm.value) return
+    mergeRouteQueryIntoForm()
+  },
+)
 
 async function onSubmit() {
   errorsMap.value = {}

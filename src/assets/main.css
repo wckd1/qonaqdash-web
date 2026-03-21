@@ -429,6 +429,14 @@ label {
 .form-view-layout__fields > .form-view-control--full-width {
   grid-column: 1 / -1;
 }
+.form-view-layout__fields > .form-build-control {
+  grid-column: 1 / -1;
+}
+/* WYSIWYG: layout/group nodes are wrapped in .form-build-shell — span full grid like .form-view-layout. */
+.form-view-layout__fields > .form-build-shell {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
 .form-view-layout--vertical {
   display: flex;
   flex-direction: column;
@@ -439,9 +447,24 @@ label {
   flex-direction: row;
   gap: var(--space-md);
   flex-wrap: wrap;
+  align-items: stretch;
+}
+.form-view-layout--horizontal.form-view-layout--horizontal-empty {
+  flex-wrap: nowrap;
 }
 /* Children of horizontal layout share the row (do not force 100% width). */
 .form-view-layout--horizontal > .form-view-layout {
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
+}
+/* WYSIWYG build wraps each node in .form-build-shell; same flex behavior as .form-view-layout children. */
+.form-view-layout--horizontal > .form-build-shell {
+  width: auto;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.form-view-layout--horizontal > .form-build-control {
   width: auto;
   flex: 1 1 0;
   min-width: 0;

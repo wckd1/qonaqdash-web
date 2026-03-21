@@ -38,6 +38,15 @@ export function fetchGuestForm() {
 }
 
 /**
+ * Save organization guest form definition.
+ * @param {{ schema: object, uischema: object }} body
+ * @returns {Promise<{ schema?: object, uischema?: object, data?: object }>}
+ */
+export function updateGuestForm(body) {
+  return api.put('/api/guests/form', body).then(({ data }) => data)
+}
+
+/**
  * Creates a new guest. Body is flat camelCase (firstName, lastName, email, phone).
  * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
  * @returns {Promise<GuestDetailResponse>}

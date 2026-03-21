@@ -9,7 +9,7 @@
     @update:model-value="updateModel"
   />
   <component v-else :is="wrapperTag" :class="wrapperClass">
-    <h2 v-if="groupLabel">{{ groupLabel }}</h2>
+    <h2 v-if="isGroup && groupTitle">{{ groupTitle }}</h2>
     <div v-if="isGroup" class="form-view-layout__fields">
       <component
         v-for="(element, idx) in elements"
@@ -46,6 +46,7 @@ import { computed } from 'vue'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import GuestSectionWrapper from './GuestSectionWrapper.vue'
+import { resolveGroupTitle } from '../utils'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -83,11 +84,7 @@ const wrapperClass = computed(() => {
   return 'form-view-layout'
 })
 
-const groupLabel = computed(() => {
-  const label = props.uischema?.label
-  if (typeof label === 'string' && label.trim().length > 0) return label.trim()
-  return null
-})
+const groupTitle = computed(() => resolveGroupTitle(props.uischema))
 
 const elements = computed(() => props.uischema?.elements ?? [])
 

@@ -46,6 +46,15 @@ export function fetchBookingForm() {
 }
 
 /**
+ * Save organization booking form definition (schema + uischema; GET still merges room types).
+ * @param {{ schema: object, uischema: object }} body
+ * @returns {Promise<BookingFormResponse>}
+ */
+export function updateBookingForm(body) {
+  return api.put('/api/bookings/form', body).then(({ data }) => data)
+}
+
+/**
  * Single booking as FormResponse (schema, uischema, data). Use for detail view and 409 re-fetch.
  * @param {string} id
  * @returns {Promise<BookingFormResponse>}

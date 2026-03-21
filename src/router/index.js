@@ -25,13 +25,11 @@ const routes = [
         meta: { breadcrumb: [] },
       },
       {
-        path: 'property',
+        path: 'manage/rooms',
         name: 'property',
         component: () => import('@/features/property/views/RoomsView.vue'),
         meta: { breadcrumb: [{ label: 'Rooms', path: null }] },
       },
-      { path: 'property/room-types', redirect: { name: 'property' } },
-      { path: 'property/rooms', redirect: { name: 'property' } },
       {
         path: 'guests',
         name: 'guests',
@@ -67,6 +65,18 @@ const routes = [
         name: 'booking-detail',
         component: () => import('@/features/bookings/views/BookingDetailView.vue'),
         meta: { breadcrumb: [{ label: 'Bookings', path: '/bookings' }, { label: 'Booking', path: null }] },
+      },
+      {
+        path: 'manage/guests/form',
+        name: 'manage-guests-form',
+        component: () => import('@/features/guests/views/GuestFormSettingsView.vue'),
+        meta: { breadcrumb: [{ label: 'Guest form', path: null }] },
+      },
+      {
+        path: 'manage/bookings/form',
+        name: 'manage-bookings-form',
+        component: () => import('@/features/bookings/views/BookingFormSettingsView.vue'),
+        meta: { breadcrumb: [{ label: 'Booking form', path: null }] },
       },
       {
         path: '/:pathMatch(.*)*',

@@ -4,6 +4,42 @@
  */
 
 /**
+ * Fallback heading when a Group has no `label` (API often sends only `id`, e.g. main / booking / guest).
+ * @param {string | undefined} id
+ * @returns {string}
+ */
+export function humanizeGroupId(id) {
+  if (id == null || id === '') return 'Group'
+  const known = { main: 'Main', booking: 'Booking', guest: 'Guest' }
+  if (known[id]) return known[id]
+  return String(id)
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+/**
+ * `id` values assigned when adding a Group in the WYSIWYG builder (`field_<alnum>`).
+ * @param {unknown} id
+ * @returns {boolean}
+ */
+export function isGeneratedFormBuilderGroupId(id) {
+  return typeof id === 'string' && /^field_[a-z0-9]+$/i.test(id)
+}
+
+/**
+ * @param {{ label?: string, id?: string }} uischema - Group element
+ * @returns {string} Empty when there is no user `label` and the id is a builder-generated `field_*` or the core guest-form group `main` (do not show a fake "Main" title).
+ */
+export function resolveGroupTitle(uischema) {
+  const label = uischema?.label
+  if (typeof label === 'string' && label.trim()) return label.trim()
+  const id = uischema?.id
+  if (isGeneratedFormBuilderGroupId(id)) return ''
+  if (id === 'main') return ''
+  return humanizeGroupId(id)
+}
+
+/**
  * Convert JSONForms scope (JSON Pointer style) to path array.
  * @param {string} scope - e.g. "#/properties/guest/properties/firstName"
  * @returns {string[]} - e.g. ["guest", "firstName"]

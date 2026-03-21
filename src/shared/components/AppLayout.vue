@@ -30,7 +30,10 @@
         <router-link
           to="/bookings"
           class="nav-link"
-          :class="{ 'nav-link--active': $route.path.startsWith('/bookings') }"
+          :class="{
+            'nav-link--active':
+              $route.path.startsWith('/bookings') && !$route.path.startsWith('/manage/bookings'),
+          }"
         >
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -44,7 +47,10 @@
         <router-link
           to="/guests"
           class="nav-link"
-          :class="{ 'nav-link--active': $route.path.startsWith('/guests') }"
+          :class="{
+            'nav-link--active':
+              $route.path.startsWith('/guests') && !$route.path.startsWith('/manage/guests'),
+          }"
         >
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -55,9 +61,16 @@
           <span class="nav-label">Guests</span>
         </router-link>
 
-        <div class="nav-group">
-          <span class="nav-group-label">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="nav-group" :class="{ 'nav-group--open': settingsNavOpen }">
+          <button
+            type="button"
+            class="nav-group-trigger"
+            :aria-expanded="sidebarCollapsed ? undefined : settingsNavOpen"
+            :aria-label="settingsNavOpen ? 'Collapse Settings section' : 'Expand Settings section'"
+            aria-controls="sidebar-settings-items"
+            @click="toggleSettingsNav"
+          >
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="4" y1="21" x2="4" y2="14" />
               <line x1="4" y1="10" x2="4" y2="3" />
               <line x1="12" y1="21" x2="12" y2="12" />
@@ -69,14 +82,64 @@
               <line x1="17" y1="16" x2="23" y2="16" />
             </svg>
             <span class="nav-label">Settings</span>
-          </span>
-          <router-link to="/property" class="nav-link nav-sublink">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
+            <svg
+              class="nav-group-chevron"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
             </svg>
-            <span class="nav-label">Rooms</span>
-          </router-link>
+          </button>
+          <div
+            id="sidebar-settings-items"
+            v-show="settingsNavOpen || sidebarCollapsed"
+            class="nav-group__items"
+          >
+            <router-link
+              to="/manage/rooms"
+              class="nav-link nav-sublink"
+              :class="{ 'nav-link--active': $route.path === '/manage/rooms' }"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span class="nav-label">Rooms</span>
+            </router-link>
+            <router-link
+              to="/manage/guests/form"
+              class="nav-link nav-sublink"
+              :class="{ 'nav-link--active': $route.path.startsWith('/manage/guests') }"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <span class="nav-label">Guests</span>
+            </router-link>
+            <router-link
+              to="/manage/bookings/form"
+              class="nav-link nav-sublink"
+              :class="{ 'nav-link--active': $route.path.startsWith('/manage/bookings') }"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+              <span class="nav-label">Bookings</span>
+            </router-link>
+          </div>
         </div>
       </nav>
 
@@ -128,7 +191,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import Breadcrumbs from '@/shared/components/Breadcrumbs.vue'
@@ -140,12 +203,40 @@ const authStore = useAuthStore()
 /** Form/detail pages: main content height fits content instead of filling available space. */
 const isFormPage = computed(() => {
   const p = route.path
-  return p === '/guests/new' || p === '/bookings/new' || /^\/guests\/[^/]+$/.test(p) || /^\/bookings\/[^/]+$/.test(p)
+  return (
+    p === '/guests/new' ||
+    p === '/bookings/new' ||
+    p === '/manage/guests/form' ||
+    p === '/manage/bookings/form' ||
+    /^\/guests\/[^/]+$/.test(p) ||
+    /^\/bookings\/[^/]+$/.test(p)
+  )
 })
 const userAreaRef = ref(null)
 
 const sidebarCollapsed = ref(localStorage.getItem('sidebar_collapsed') === 'true')
 const userMenuOpen = ref(false)
+/** Settings subnav: closed by default; opens when visiting /manage/* or user toggles. */
+const settingsNavOpen = ref(false)
+
+function toggleSettingsNav() {
+  if (sidebarCollapsed.value) return
+  settingsNavOpen.value = !settingsNavOpen.value
+}
+
+watch(
+  () => route.path,
+  (p, oldP) => {
+    if (oldP === undefined) {
+      if (p.startsWith('/manage/')) settingsNavOpen.value = true
+      return
+    }
+    if (p.startsWith('/manage/') && !oldP.startsWith('/manage/')) {
+      settingsNavOpen.value = true
+    }
+  },
+  { immediate: true },
+)
 
 const userName = computed(() => {
   return authStore.user?.email || 'User'
@@ -355,21 +446,57 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   gap: var(--space-micro);
 }
 
-.nav-group-label {
+.nav-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-micro);
+}
+
+.nav-group-trigger {
+  all: unset;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  width: 100%;
   padding: var(--space-sm) var(--space-md);
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--sidebar-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
+  color: var(--sidebar-text);
   overflow: hidden;
   white-space: nowrap;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.collapsed .nav-group-label {
+.nav-group-trigger:hover {
+  background: var(--sidebar-hover-bg);
+  color: var(--ink-inverse);
+}
+
+.nav-group-trigger:focus-visible {
+  background: var(--sidebar-hover-bg);
+  color: var(--ink-inverse);
+  box-shadow: inset var(--pico-border-width) 0 0 var(--brand-primary);
+}
+
+.nav-group-chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.nav-group--open .nav-group-chevron {
+  transform: rotate(180deg);
+}
+
+.collapsed .nav-group-trigger {
+  display: none;
+}
+
+.collapsed .nav-group-chevron {
   display: none;
 }
 

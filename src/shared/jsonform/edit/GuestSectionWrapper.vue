@@ -1,6 +1,6 @@
 <template>
   <section class="form-view-layout form-view-layout--group guest-section-edit">
-    <h2 v-if="groupLabel">{{ groupLabel }}</h2>
+    <h2 v-if="groupTitle">{{ groupTitle }}</h2>
     <div class="form-view-layout__fields">
       <component
         v-for="(element, idx) in elements"
@@ -53,6 +53,7 @@ import { computed, inject } from 'vue'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { useGuestSearch } from '@/shared/composables/useGuestSearch'
+import { resolveGroupTitle } from '../utils'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -69,10 +70,7 @@ const searchContext = searchGuestsFn
   ? useGuestSearch(() => props.modelValue, searchGuestsFn)
   : null
 
-const groupLabel = computed(() => {
-  const label = props.uischema?.label
-  return typeof label === 'string' && label.trim().length > 0 ? label.trim() : null
-})
+const groupTitle = computed(() => resolveGroupTitle(props.uischema))
 
 const elements = computed(() => props.uischema?.elements ?? [])
 

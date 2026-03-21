@@ -26,12 +26,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchGuestForm, updateGuestForm } from '@/features/guests/api'
+import { updateGuestForm } from '@/features/guests/api'
+import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t } = useI18n()
 const { success, error: notifyError } = useNotification()
+const guestStore = useGuestStore()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -45,11 +47,14 @@ const hasLoaded = ref(false)
 
 const formReady = computed(() => hasLoaded.value && !loadError.value)
 
-async function loadForm() {
+/**
+ * @param {{ force?: boolean }} [opts]
+ */
+async function loadForm(opts = {}) {
   loading.value = true
   loadError.value = ''
   try {
-    const res = await fetchGuestForm()
+    const res = await guestStore.fetchGuestForm({ force: opts.force === true })
     schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? {}))
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? {}))
     formData.value = JSON.parse(JSON.stringify(res.data ?? {}))
@@ -62,11 +67,11 @@ async function loadForm() {
   }
 }
 
-onMounted(loadForm)
+onMounted(() => loadForm())
 
 async function onReset() {
   saveError.value = ''
-  await loadForm()
+  await loadForm({ force: true })
 }
 
 async function onSave() {
@@ -80,6 +85,7 @@ async function onSave() {
     schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? schemaDraft.value))
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? uischemaDraft.value))
     if (res.data) formData.value = JSON.parse(JSON.stringify(res.data))
+    guestStore.replaceGuestFormTemplate(res)
     success(t('formSettings.saved'))
   } catch (err) {
     const msg = err.response?.data?.error ?? t('formSettings.saveFailed')

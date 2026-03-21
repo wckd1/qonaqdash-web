@@ -26,12 +26,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchBookingForm, updateBookingForm } from '@/features/bookings/api'
+import { updateBookingForm } from '@/features/bookings/api'
+import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t } = useI18n()
 const { success, error: notifyError } = useNotification()
+const bookingStore = useBookingStore()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -53,11 +55,14 @@ function normalizeFormData(data) {
   return next
 }
 
-async function loadForm() {
+/**
+ * @param {{ force?: boolean }} [opts]
+ */
+async function loadForm(opts = {}) {
   loading.value = true
   loadError.value = ''
   try {
-    const res = await fetchBookingForm()
+    const res = await bookingStore.fetchBookingForm({ force: opts.force === true })
     schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? {}))
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? {}))
     formData.value = normalizeFormData(res.data)
@@ -70,11 +75,11 @@ async function loadForm() {
   }
 }
 
-onMounted(loadForm)
+onMounted(() => loadForm())
 
 async function onReset() {
   saveError.value = ''
-  await loadForm()
+  await loadForm({ force: true })
 }
 
 async function onSave() {
@@ -88,6 +93,7 @@ async function onSave() {
     schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? schemaDraft.value))
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? uischemaDraft.value))
     if (res.data) formData.value = normalizeFormData(res.data)
+    bookingStore.replaceBookingFormTemplate(res)
     success(t('formSettings.saved'))
   } catch (err) {
     const msg = err.response?.data?.error ?? t('formSettings.saveFailed')

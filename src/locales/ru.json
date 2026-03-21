@@ -167,6 +167,10 @@
     "loadingGrid": "Загрузка сетки…"
   },
   "jsonForm": {
+    "edit": {
+      "removeArrayItemAria": "Удалить эту строку",
+      "addArrayItemAria": "Добавить строку"
+    },
     "groups": {
       "generic": "Группа",
       "main": "Основное",

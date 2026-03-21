@@ -167,6 +167,10 @@
     "loadingGrid": "Loading grid…"
   },
   "jsonForm": {
+    "edit": {
+      "removeArrayItemAria": "Remove this row",
+      "addArrayItemAria": "Add another row"
+    },
     "groups": {
       "generic": "Group",
       "main": "Main",

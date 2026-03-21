@@ -2,9 +2,24 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as bookingsApi from '@/features/bookings/api'
 
+/**
+ * @param {{ schema?: object, uischema?: object, data?: object }} res
+ * @returns {{ schema: object, uischema: object, data: object }}
+ */
+function snapshotBookingForm(res) {
+  return {
+    schema: JSON.parse(JSON.stringify(res.schema ?? {})),
+    uischema: JSON.parse(JSON.stringify(res.uischema ?? {})),
+    data: JSON.parse(JSON.stringify(res.data ?? {})),
+  }
+}
+
 export const useBookingStore = defineStore('bookings', () => {
   const bookings = ref([])
   const currentBooking = ref(null)
+
+  /** Session cache for GET /api/bookings/form (blank form definition). */
+  const bookingFormTemplate = ref(null)
 
   /**
    * @param {{ q?: string, from?: string, to?: string }} [params]
@@ -17,10 +32,24 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * Blank form for create. Returns { schema, uischema, data }.
+   * @param {{ force?: boolean }} [options] - force=true always hits the network.
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
-  async function fetchBookingForm() {
-    return bookingsApi.fetchBookingForm()
+  async function fetchBookingForm(options = {}) {
+    if (!options.force && bookingFormTemplate.value != null) {
+      return JSON.parse(JSON.stringify(bookingFormTemplate.value))
+    }
+    const res = await bookingsApi.fetchBookingForm()
+    bookingFormTemplate.value = snapshotBookingForm(res)
+    return JSON.parse(JSON.stringify(bookingFormTemplate.value))
+  }
+
+  /**
+   * Call after a successful booking form PUT from settings.
+   * @param {{ schema?: object, uischema?: object, data?: object }} res
+   */
+  function replaceBookingFormTemplate(res) {
+    bookingFormTemplate.value = snapshotBookingForm(res)
   }
 
   /**
@@ -91,6 +120,7 @@ export const useBookingStore = defineStore('bookings', () => {
     currentBooking,
     fetchBookings,
     fetchBookingForm,
+    replaceBookingFormTemplate,
     fetchBooking,
     createBooking,
     updateBooking,

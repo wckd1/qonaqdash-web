@@ -2,9 +2,24 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as guestsApi from '@/features/guests/api'
 
+/**
+ * @param {{ schema?: object, uischema?: object, data?: object }} res
+ * @returns {{ schema: object, uischema: object, data: object }}
+ */
+function snapshotGuestForm(res) {
+  return {
+    schema: JSON.parse(JSON.stringify(res.schema ?? {})),
+    uischema: JSON.parse(JSON.stringify(res.uischema ?? {})),
+    data: JSON.parse(JSON.stringify(res.data ?? {})),
+  }
+}
+
 export const useGuestStore = defineStore('guests', () => {
   const guests = ref([])
   const currentGuest = ref(null)
+
+  /** Session cache for GET /api/guests/form (deep-cloned snapshots). */
+  const guestFormTemplate = ref(null)
 
   /**
    * @param {{ q?: string }} [params] - Optional search query for server-side filtering.
@@ -24,10 +39,24 @@ export const useGuestStore = defineStore('guests', () => {
   }
 
   /**
+   * @param {{ force?: boolean }} [options] - force=true always hits the network.
    * @returns {Promise<{ schema: object, uischema: object, data: object }>}
    */
-  async function fetchGuestForm() {
-    return guestsApi.fetchGuestForm()
+  async function fetchGuestForm(options = {}) {
+    if (!options.force && guestFormTemplate.value != null) {
+      return JSON.parse(JSON.stringify(guestFormTemplate.value))
+    }
+    const res = await guestsApi.fetchGuestForm()
+    guestFormTemplate.value = snapshotGuestForm(res)
+    return JSON.parse(JSON.stringify(guestFormTemplate.value))
+  }
+
+  /**
+   * Call after a successful form definition PUT from settings so the session cache matches the server.
+   * @param {{ schema?: object, uischema?: object, data?: object }} res
+   */
+  function replaceGuestFormTemplate(res) {
+    guestFormTemplate.value = snapshotGuestForm(res)
   }
 
   /**
@@ -59,6 +88,7 @@ export const useGuestStore = defineStore('guests', () => {
     fetchGuests,
     fetchGuest,
     fetchGuestForm,
+    replaceGuestFormTemplate,
     createGuest,
     updateGuest,
     clearCurrentGuest,

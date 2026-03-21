@@ -1,11 +1,6 @@
 <template>
   <template v-if="buildLeaf === 'synthetic'">
-    <template v-if="uischema.options?.action">
-      <div class="form-build-control form-build-control--action">
-        <span class="form-build-control__label">{{ actionLabel }}</span>
-        <span class="form-build-control__meta">{{ t('jsonForm.build.actionButton') }}</span>
-      </div>
-    </template>
+    <template v-if="uischema.options?.action"></template>
     <template v-else-if="schemaEntry?.type === 'array'">
       <div class="form-build-array">
         <div class="form-build-array__header">
@@ -37,17 +32,7 @@
     </template>
   </template>
 
-  <template v-else-if="uischema.options?.action">
-    <div class="form-build-control form-build-control--row form-build-control--action">
-      <div class="form-build-control__main">
-        <span class="form-build-control__label">{{ actionLabel }}</span>
-        <span class="form-build-control__meta">{{ t('jsonForm.build.actionButton') }}</span>
-      </div>
-      <div class="form-build-control__toolbar">
-        <span v-if="!canMutate" class="form-build-shell__locked" :title="t('jsonForm.build.locked')"><IconLock /></span>
-      </div>
-    </div>
-  </template>
+  <template v-else-if="uischema.options?.action"></template>
 
   <template v-else-if="schemaEntry?.type === 'array'">
     <div class="form-build-control form-build-control--row form-build-array form-build-array--tree">
@@ -187,11 +172,6 @@ const label = computed(
     path.value?.join('.') ||
     '',
 )
-
-const actionLabel = computed(() => {
-  void locale.value
-  return props.uischema.options?.action?.label || t('jsonForm.build.action')
-})
 
 const isRequired = computed(() => {
   if (!path.value?.length) return false
@@ -374,10 +354,6 @@ function onDelete() {
   color: var(--ink-tertiary);
   font-size: var(--text-caption-size);
   font-family: ui-monospace, monospace;
-}
-
-.form-build-control--action .form-build-control__meta {
-  font-style: italic;
 }
 
 .form-build-array {

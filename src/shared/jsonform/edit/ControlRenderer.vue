@@ -13,9 +13,10 @@
   </template>
 
   <template v-else-if="uischema.options?.action">
-    <div class="form-edit-control form-edit-control--full-width">
+    <div class="form-edit-control form-edit-control--full-width form-edit-control--action">
       <button
         type="button"
+        class="form-edit-control__action-btn"
         :disabled="disabled"
         @click="onActionClick"
       >

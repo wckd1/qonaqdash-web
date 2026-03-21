@@ -1,55 +1,65 @@
 <template>
-  <div class="form-view-array">
-    <label v-if="label" class="form-view-array__label">{{ label }}</label>
+  <div class="form-view-array form-edit-array">
+    <h2 v-if="label" class="form-edit-array__title">{{ label }}</h2>
     <div class="form-view-array__list">
       <div
         v-for="(item, index) in items"
         :key="index"
         class="form-edit-array__item"
       >
-        <div class="form-edit-array__item-fields">
-          <ControlRenderer
-            v-for="[key, fieldSchema] in itemSchemaPropertiesOrdered"
-            :key="key"
-            :schema="itemSchema"
-            :uischema="{
-              type: 'Control',
-              scope: '#/properties/' + key,
-              label: String(fieldSchema?.title || key),
-            }"
-            :model-value="item"
-            :full-data="fullDataForItem(index)"
-            :array-item-index="index"
-            :errors-map="errorsMap"
-            :disabled="disabled"
-            @update:model-value="(val) => updateItem(index, val)"
-          />
+        <div class="form-edit-array__item-inner">
+          <div class="form-edit-array__item-fields">
+            <ControlRenderer
+              v-for="[key, fieldSchema] in itemSchemaPropertiesOrdered"
+              :key="key"
+              :schema="itemSchema"
+              :uischema="{
+                type: 'Control',
+                scope: '#/properties/' + key,
+                label: String(fieldSchema?.title || key),
+              }"
+              :model-value="item"
+              :full-data="fullDataForItem(index)"
+              :array-item-index="index"
+              :errors-map="errorsMap"
+              :disabled="disabled"
+              @update:model-value="(val) => updateItem(index, val)"
+            />
+          </div>
+          <div
+            v-if="canRemove && !disabled"
+            class="form-edit-array__item-toolbar"
+          >
+            <button
+              type="button"
+              class="form-edit-icon-btn form-edit-icon-btn--danger"
+              :title="t('jsonForm.build.remove')"
+              :aria-label="t('jsonForm.edit.removeArrayItemAria')"
+              @click="removeItem(index)"
+            >
+              <IconTrash />
+            </button>
+          </div>
         </div>
-        <button
-          v-if="canRemove && !disabled"
-          type="button"
-          class="form-edit-array__remove"
-          :title="'Remove'"
-          @click="removeItem(index)"
-        >
-          Remove
-        </button>
       </div>
     </div>
     <button
       v-if="!disabled"
       type="button"
       class="form-edit-array__add"
+      :aria-label="t('jsonForm.edit.addArrayItemAria')"
       @click="addItem"
     >
-      Add
+      {{ t('common.add') }}
     </button>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ControlRenderer from './ControlRenderer.vue'
+import IconTrash from '../build/icons/IconTrash.vue'
 import { scopeToPath, getValueByPath, setValueByPath, getSchemaEntry } from '../utils'
 
 const props = defineProps({
@@ -61,6 +71,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const { t } = useI18n()
 
 const path = computed(() => scopeToPath(props.uischema.scope))
 const schemaEntry = computed(() => {

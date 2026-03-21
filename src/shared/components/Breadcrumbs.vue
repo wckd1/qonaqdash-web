@@ -1,10 +1,10 @@
 <template>
-  <nav v-if="hasTrail" class="breadcrumbs" aria-label="Breadcrumb">
+  <nav v-if="hasTrail" class="breadcrumbs" :aria-label="t('breadcrumb.navLabel')">
     <router-link
       v-if="backHref"
       :to="backHref"
       class="breadcrumbs-back"
-      aria-label="Go back"
+      :aria-label="t('breadcrumb.goBack')"
     >
       <svg class="breadcrumbs-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 12H5" />
@@ -26,9 +26,9 @@
           :to="segment.path"
           class="breadcrumbs-link"
         >
-          {{ segment.label }}
+          {{ breadcrumbLabel(segment) }}
         </router-link>
-        <span v-else class="breadcrumbs-text">{{ segment.label }}</span>
+        <span v-else class="breadcrumbs-text">{{ breadcrumbLabel(segment) }}</span>
       </li>
     </ol>
   </nav>
@@ -36,9 +36,16 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 
+const { t } = useI18n()
 const { items } = useBreadcrumb()
+
+function breadcrumbLabel(segment) {
+  if (segment?.labelKey) return t(segment.labelKey)
+  return segment?.label ?? ''
+}
 
 /** Path to current: all segments except the last (current page is not shown). */
 const trail = computed(() => {

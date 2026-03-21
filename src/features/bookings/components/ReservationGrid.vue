@@ -5,11 +5,11 @@
       ref="cellMenuEl"
       class="reservation-cell-menu"
       role="menu"
-      aria-label="Grid cell actions"
+      :aria-label="t('grid.cellMenuAria')"
       :style="{ top: `${cellMenu.y}px`, left: `${cellMenu.x}px` }"
     >
       <button type="button" class="reservation-cell-menu-item" role="menuitem" @click="onPickCreateBooking">
-        Create booking
+        {{ t('grid.createBooking') }}
       </button>
     </div>
   </Teleport>
@@ -31,7 +31,7 @@
             :class="{ 'reservation-grid-head--today': isSameDay(day, today) }"
           >
             <span class="reservation-grid-head-day">{{ format(day, 'd') }}</span>
-            <span class="reservation-grid-head-mon">{{ format(day, 'MMM', { locale: enUS }) }}</span>
+            <span class="reservation-grid-head-mon">{{ format(day, 'MMM', { locale: dateFnsLocale }) }}</span>
           </div>
 
           <template v-for="row in gridRows" :key="row.key">
@@ -55,7 +55,7 @@
                     `${row.room.id}-${startOfDay(day).getTime()}`,
                   ),
                 }"
-                :aria-label="`Room ${row.room.number}, ${formatLocalYmd(day)} — select or open actions`"
+                :aria-label="cellAriaLabel(row.room.number, day)"
                 @mousedown.left.prevent="onCellMouseDown($event, row.room.id, day)"
                 @mouseenter="onCellMouseEnter(row.room.id, day)"
                 @contextmenu.prevent="openCellMenuFromContext($event, row.room.id, day)"
@@ -90,10 +90,13 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { format, startOfDay, isSameDay } from 'date-fns'
-import { enUS } from 'date-fns/locale'
 import { listDaysInclusive, formatLocalYmd } from '@/features/bookings/utils/gridDates'
+import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
 
 const props = defineProps({
   /** Sorted room rows (Y-axis). */
@@ -107,6 +110,12 @@ const props = defineProps({
 })
 
 const router = useRouter()
+
+const { t, locale } = useI18n()
+
+const settingsStore = useSettingsStore()
+const { locale: appLocale } = storeToRefs(settingsStore)
+const dateFnsLocale = computed(() => dateFnsLocaleForApp(appLocale.value))
 
 const emit = defineEmits(['select-booking'])
 
@@ -153,13 +162,19 @@ const days = computed(() => listDaysInclusive(props.rangeFrom, props.rangeTo))
  * Body rows: type section headers + room rows (rooms must already be sorted by type).
  * @returns {Array<{ kind: 'type-header', key: string, title: string } | { kind: 'room', key: string, room: object }>}
  */
+function cellAriaLabel(roomNumber, day) {
+  void locale.value
+  return t('grid.cellAria', { number: roomNumber, date: formatLocalYmd(day) })
+}
+
 const gridRows = computed(() => {
+  void locale.value
   const rows = []
   let prevTypeKey = undefined
   for (const room of props.rooms) {
     const tid = room.room_type_id ?? '__none__'
     if (tid !== prevTypeKey) {
-      const name = (room.room_type_name && String(room.room_type_name).trim()) || 'Other'
+      const name = (room.room_type_name && String(room.room_type_name).trim()) || t('rooms.otherType')
       rows.push({ kind: 'type-header', key: `th-${tid}`, title: name })
       prevTypeKey = tid
     }
@@ -233,6 +248,7 @@ function statusClass(status) {
 }
 
 const barLayouts = computed(() => {
+  void locale.value
   const cw = colWidth.value
   if (!cw || !props.rooms.length) return []
 
@@ -254,7 +270,7 @@ const barLayouts = computed(() => {
     const top = rowTop + 4
     const fn = (e.guest_first_name || '').trim()
     const ln = (e.guest_last_name || '').trim()
-    const label = [fn, ln].filter(Boolean).join(' ') || 'Booking'
+    const label = [fn, ln].filter(Boolean).join(' ') || t('grid.barFallback')
     layouts.push({
       key: `${e.booking_id}-${rid}-${e.check_in}`,
       bookingId: e.booking_id,
@@ -273,7 +289,7 @@ const barLayouts = computed(() => {
       top,
       label,
       statusClass: statusClass(e.status),
-      ariaLabel: `Booking ${label}, ${e.status}`,
+      ariaLabel: t('grid.barAria', { label, status: e.status }),
     })
   }
   return layouts

@@ -1,14 +1,14 @@
 <template>
-  <AuthLayout title="Sign in to QonaqDash" subtitle="Enter your credentials to continue">
+  <AuthLayout :title="t('auth.login.title')" :subtitle="t('auth.login.subtitle')">
     <div v-if="formError" class="form-error">{{ formError }}</div>
 
     <form @submit.prevent="handleSubmit">
       <label>
-        Email
+        {{ t('auth.login.email') }}
         <input
           v-model="email"
           type="email"
-          placeholder="you@example.com"
+          :placeholder="t('auth.login.emailPlaceholder')"
           autocomplete="email"
           required
           :disabled="loading"
@@ -16,11 +16,11 @@
       </label>
 
       <label>
-        Password
+        {{ t('auth.login.password') }}
         <input
           v-model="password"
           type="password"
-          placeholder="Your password"
+          :placeholder="t('auth.login.passwordPlaceholder')"
           autocomplete="current-password"
           required
           :disabled="loading"
@@ -28,7 +28,7 @@
       </label>
 
       <button type="submit" :aria-busy="loading" :disabled="loading">
-        {{ loading ? 'Signing in…' : 'Sign in' }}
+        {{ loading ? t('auth.login.signingIn') : t('auth.login.signIn') }}
       </button>
     </form>
   </AuthLayout>
@@ -36,10 +36,12 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -60,9 +62,9 @@ async function handleSubmit() {
   } catch (err) {
     if (err.response) {
       const msg = err.response.data?.error
-      formError.value = msg || 'Invalid email or password. Please try again.'
+      formError.value = msg || t('auth.login.errorInvalid')
     } else {
-      formError.value = 'Unable to reach the server. Please check your connection.'
+      formError.value = t('auth.login.errorNetwork')
     }
   } finally {
     loading.value = false

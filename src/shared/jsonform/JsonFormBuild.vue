@@ -19,7 +19,7 @@
     @click.self="addingParent = null"
   >
     <article class="form-build-modal">
-      <h3 id="form-build-add-title" class="form-build-modal__title">Add element</h3>
+      <h3 id="form-build-add-title" class="form-build-modal__title">{{ t('jsonForm.build.modalAddTitle') }}</h3>
       <div class="form-build-modal__list">
         <button
           v-for="t in addTypeOptions"
@@ -32,7 +32,7 @@
         </button>
       </div>
       <footer class="form-build-modal__footer">
-        <button type="button" class="btn-secondary" @click="addingParent = null">Cancel</button>
+        <button type="button" class="btn-secondary" @click="addingParent = null">{{ t('common.cancel') }}</button>
       </footer>
     </article>
   </div>
@@ -46,43 +46,43 @@
     @click.self="closeConfigure"
   >
     <article class="form-build-modal form-build-modal--wide">
-      <h3 id="form-build-cfg-title" class="form-build-modal__title">Field settings</h3>
+      <h3 id="form-build-cfg-title" class="form-build-modal__title">{{ t('jsonForm.build.modalFieldSettingsTitle') }}</h3>
       <label>
-        Label
+        {{ t('jsonForm.build.fieldLabel') }}
         <input v-model="fieldSettings.label" type="text" />
       </label>
       <label>
-        Type
+        {{ t('jsonForm.build.fieldType') }}
         <select v-model="fieldSettings.type">
-          <option value="Text">Text</option>
-          <option value="Email">Email</option>
-          <option value="Date">Date / date-time</option>
-          <option value="Number">Number</option>
-          <option value="Enum">Dropdown (enum)</option>
+          <option value="Text">{{ t('jsonForm.build.typeText') }}</option>
+          <option value="Email">{{ t('jsonForm.build.typeEmail') }}</option>
+          <option value="Date">{{ t('jsonForm.build.typeDate') }}</option>
+          <option value="Number">{{ t('jsonForm.build.typeNumber') }}</option>
+          <option value="Enum">{{ t('jsonForm.build.typeEnum') }}</option>
         </select>
       </label>
       <label v-if="fieldSettings.type === 'Enum'">
-        Options (comma-separated)
+        {{ t('jsonForm.build.optionsComma') }}
         <input v-model="fieldSettings.options" type="text" />
       </label>
       <label class="form-build-modal__check">
         <input v-model="fieldSettings.required" type="checkbox" />
-        Required
+        {{ t('jsonForm.build.requiredField') }}
       </label>
       <label v-if="fieldSettings.type !== 'Enum'">
-        Default value
+        {{ t('jsonForm.build.defaultValue') }}
         <input v-model="defaultString" type="text" />
       </label>
       <label v-else>
-        Default value
+        {{ t('jsonForm.build.defaultValue') }}
         <select v-model="defaultString">
-          <option value="">(none)</option>
+          <option value="">{{ t('jsonForm.build.defaultNone') }}</option>
           <option v-for="opt in enumOptionList" :key="opt" :value="opt">{{ opt }}</option>
         </select>
       </label>
       <footer class="form-build-modal__footer">
-        <button type="button" class="btn-secondary" @click="closeConfigure">Cancel</button>
-        <button type="button" @click="saveConfigure">Save</button>
+        <button type="button" class="btn-secondary" @click="closeConfigure">{{ t('common.cancel') }}</button>
+        <button type="button" @click="saveConfigure">{{ t('common.save') }}</button>
       </footer>
     </article>
   </div>
@@ -90,6 +90,7 @@
 
 <script setup>
 import { computed, provide } from 'vue'
+import { useI18n } from 'vue-i18n'
 import LayoutRenderer from './build/LayoutRenderer.vue'
 import {
   addBuildChild,
@@ -114,6 +115,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:data', 'update:schema', 'update:uischema'])
+
+const { t } = useI18n()
 
 const rootUischema = computed(() => {
   const ui = props.uischema
@@ -143,13 +146,13 @@ const addTypeOptions = computed(() => {
 function addTypeLabel(type) {
   switch (type) {
     case 'VerticalLayout':
-      return 'Vertical layout'
+      return t('jsonForm.build.verticalLayout')
     case 'HorizontalLayout':
-      return 'Horizontal layout'
+      return t('jsonForm.build.horizontalLayout')
     case 'Group':
-      return 'Group'
+      return t('jsonForm.build.addTypeGroup')
     case 'Field':
-      return 'Field'
+      return t('jsonForm.build.addTypeField')
     default:
       return type
   }

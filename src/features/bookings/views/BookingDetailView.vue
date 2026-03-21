@@ -6,26 +6,26 @@
       type="button"
       @click="startEdit"
     >
-      Edit
+      {{ t('common.edit') }}
     </button>
     <div v-else-if="bookingId && bookingForm && editing" class="page-header-actions">
       <button type="button" :disabled="submitting" @click="onSave">
-        {{ submitting ? 'Saving…' : 'Save' }}
+        {{ submitting ? t('common.saving') : t('common.save') }}
       </button>
       <button type="button" class="btn-secondary" :disabled="submitting" @click="cancelEdit">
-        Cancel
+        {{ t('common.cancel') }}
       </button>
     </div>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-else-if="notFound" class="error-message">
-    Booking not found.
-    <router-link to="/bookings" class="inline-link">Back to bookings</router-link>
+    {{ t('bookings.notFound') }}
+    <router-link to="/bookings" class="inline-link">{{ t('bookings.backToList') }}</router-link>
   </p>
   <p v-else-if="concurrentError" class="error-message">
     {{ concurrentError }}
-    <button type="button" @click="load">Retry</button>
+    <button type="button" @click="load">{{ t('common.retry') }}</button>
   </p>
   <template v-else-if="currentBooking">
     <template v-if="bookingForm">
@@ -45,21 +45,24 @@
         />
       </template>
     </template>
-    <p v-else class="section-placeholder">Details are loading.</p>
+    <p v-else class="section-placeholder">{{ t('bookings.detailsLoading') }}</p>
   </template>
-  <div v-else class="loading-state">Loading…</div>
+  <div v-else class="loading-state">{{ t('common.loading') }}</div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const store = useBookingStore()
 const { currentBooking } = storeToRefs(store)
@@ -98,9 +101,10 @@ const guestDisplayName = computed(() => {
 })
 
 const pageTitle = computed(() => {
-  if (!currentBooking.value) return 'Booking'
+  void locale.value
+  if (!currentBooking.value) return t('pageTitle.booking')
   const name = guestDisplayName.value
-  return name ? `Booking — ${name}` : 'Booking'
+  return name ? t('pageTitle.bookingWithGuest', { name }) : t('pageTitle.booking')
 })
 
 async function load() {
@@ -116,7 +120,7 @@ async function load() {
       store.clearCurrentBooking()
       notFound.value = true
     } else {
-      loadError.value = err.response?.data?.error || 'Failed to load booking.'
+      loadError.value = err.response?.data?.error || t('bookings.detailLoadFailed')
     }
   }
 }
@@ -161,10 +165,10 @@ async function onSave() {
     editing.value = false
   } catch (err) {
     if (err.response?.status === 409) {
-      concurrentError.value = err.response?.data?.error ?? 'Booking was modified concurrently. Please retry.'
+      concurrentError.value = err.response?.data?.error ?? t('bookings.concurrent')
       await load()
     } else {
-      const msg = err.response?.data?.error ?? 'Failed to save booking.'
+      const msg = err.response?.data?.error ?? t('bookings.saveFailed')
       errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
     }
   } finally {
@@ -173,10 +177,14 @@ async function onSave() {
 }
 
 watch(
-  pageTitle,
-  (title) => {
-    if (title && currentBooking.value) {
-      setBreadcrumb([{ label: 'Bookings', path: '/bookings' }, { label: title, path: null }])
+  [pageTitle, locale],
+  () => {
+    document.title = formatDocumentTitle(pageTitle.value)
+    if (pageTitle.value && currentBooking.value) {
+      setBreadcrumb([
+        { labelKey: 'nav.bookings', path: '/bookings' },
+        { label: pageTitle.value, path: null },
+      ])
     }
   },
   { immediate: true },

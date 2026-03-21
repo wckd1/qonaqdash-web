@@ -10,7 +10,7 @@
         <div class="brand-content">
           <div class="brand-logo">Q</div>
           <div class="brand-name">QonaqDash</div>
-          <p class="brand-tagline">Hospitality, simplified</p>
+          <p class="brand-tagline">{{ t('auth.tagline') }}</p>
         </div>
       </aside>
 
@@ -31,6 +31,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: '' },

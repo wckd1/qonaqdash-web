@@ -1,32 +1,32 @@
 <template>
   <div class="dashboard-page">
     <header class="page-header">
-      <h1>Dashboard</h1>
+      <h1>{{ t('dashboard.title') }}</h1>
       <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19" />
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
-        New booking
+        {{ t('dashboard.newBooking') }}
       </router-link>
     </header>
 
-    <div class="dashboard-range-bar" role="toolbar" aria-label="Reservation grid range">
+    <div class="dashboard-range-bar" role="toolbar" :aria-label="t('dashboard.rangeToolbar')">
       <div class="dashboard-range-sector dashboard-range-sector--preset">
         <label class="dashboard-range-field">
-          <span class="dashboard-range-field-label">Range</span>
+          <span class="dashboard-range-field-label">{{ t('dashboard.range') }}</span>
           <select class="dashboard-preset-select" :value="activePreset ?? ''" @change="onPresetSelect">
-            <option value="" disabled hidden>Custom</option>
-            <option value="7">7 days</option>
-            <option value="14">14 days</option>
-            <option value="30">30 days</option>
+            <option value="" disabled hidden>{{ t('dashboard.presetCustom') }}</option>
+            <option value="7">{{ t('dashboard.presetDays', { count: 7 }) }}</option>
+            <option value="14">{{ t('dashboard.presetDays', { count: 14 }) }}</option>
+            <option value="30">{{ t('dashboard.presetDays', { count: 30 }) }}</option>
           </select>
         </label>
       </div>
       <span class="dashboard-range-vr" aria-hidden="true" />
       <div class="dashboard-range-sector dashboard-range-sector--dates">
         <label class="dashboard-date-inline">
-          <span class="dashboard-date-inline-label">From</span>
+          <span class="dashboard-date-inline-label">{{ t('dashboard.from') }}</span>
           <input
             v-model="fromStr"
             class="dashboard-date-input"
@@ -37,7 +37,7 @@
         </label>
         <span class="dashboard-range-sep" aria-hidden="true">–</span>
         <label class="dashboard-date-inline">
-          <span class="dashboard-date-inline-label">To</span>
+          <span class="dashboard-date-inline-label">{{ t('dashboard.to') }}</span>
           <input
             v-model="toStr"
             class="dashboard-date-input"
@@ -49,15 +49,15 @@
       </div>
       <span class="dashboard-range-vr" aria-hidden="true" />
       <div class="dashboard-range-sector dashboard-range-sector--today">
-        <button type="button" class="dashboard-today" @click="jumpToday">Today</button>
+        <button type="button" class="dashboard-today" @click="jumpToday">{{ t('dashboard.today') }}</button>
       </div>
     </div>
 
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
     <p v-else-if="!loading && sortedRooms.length === 0" class="dashboard-empty">
-      No rooms yet. Add rooms under Settings to see the reservation grid.
+      {{ t('dashboard.emptyRooms') }}
     </p>
-    <p v-else-if="loading" class="loading-state">Loading grid…</p>
+    <p v-else-if="loading" class="loading-state">{{ t('dashboard.loadingGrid') }}</p>
     <ReservationGrid
       v-else
       :rooms="sortedRooms"
@@ -72,6 +72,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { addDays, startOfDay, startOfToday, subDays } from 'date-fns'
@@ -84,6 +85,7 @@ import { parseLocalYmd, formatLocalYmd } from '@/features/bookings/utils/gridDat
 const STORAGE_PRESET = 'qonaqdash.dashboard.gridPreset'
 const STORAGE_CUSTOM = 'qonaqdash.dashboard.gridCustomRange'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const propertyStore = usePropertyStore()
@@ -173,7 +175,7 @@ const rangeToDate = computed(() => {
 async function loadGridData() {
   loadError.value = ''
   if (!isValidRange(fromStr.value, toStr.value)) {
-    loadError.value = 'Invalid date range.'
+    loadError.value = t('dashboard.invalidRange')
     gridEntries.value = []
     return
   }
@@ -183,7 +185,7 @@ async function loadGridData() {
     gridEntries.value = await fetchBookingGrid({ from: fromStr.value, to: toStr.value })
   } catch (err) {
     gridEntries.value = []
-    loadError.value = err.response?.data?.error ?? 'Failed to load dashboard.'
+    loadError.value = err.response?.data?.error ?? t('dashboard.loadFailed')
   } finally {
     loading.value = false
   }
@@ -237,13 +239,13 @@ function applyPreset(n) {
 function onDateFieldChange() {
   loadError.value = ''
   if (!isValidYmd(fromStr.value) || !isValidYmd(toStr.value)) {
-    loadError.value = 'Enter valid dates.'
+    loadError.value = t('dashboard.validDatesHint')
     return
   }
   const fromD = parseLocalYmd(fromStr.value)
   const toD = parseLocalYmd(toStr.value)
   if (Number.isNaN(fromD.getTime()) || Number.isNaN(toD.getTime())) {
-    loadError.value = 'Enter valid dates.'
+    loadError.value = t('dashboard.validDatesHint')
     return
   }
   if (toD < fromD) {

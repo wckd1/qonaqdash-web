@@ -2,8 +2,8 @@ import { ref } from 'vue'
 
 /**
  * Shared breadcrumb state for the layout. Routes or views set items via setItems().
- * Each item: { label: string, path?: string | null }. path null/absent = current page (not shown in trail).
- * @typedef {{ label: string, path?: string | null }} BreadcrumbItem
+ * Each item: `labelKey` (i18n path) or raw `label` for dynamic text; `path` null/absent = current page (not shown in trail).
+ * @typedef {{ label?: string, labelKey?: string, path?: string | null }} BreadcrumbItem
  */
 const items = ref([])
 

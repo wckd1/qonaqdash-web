@@ -3,7 +3,7 @@
     <template v-if="uischema.options?.action">
       <div class="form-build-control form-build-control--action">
         <span class="form-build-control__label">{{ actionLabel }}</span>
-        <span class="form-build-control__meta">action button</span>
+        <span class="form-build-control__meta">{{ t('jsonForm.build.actionButton') }}</span>
       </div>
     </template>
     <template v-else-if="schemaEntry?.type === 'array'">
@@ -41,10 +41,10 @@
     <div class="form-build-control form-build-control--row form-build-control--action">
       <div class="form-build-control__main">
         <span class="form-build-control__label">{{ actionLabel }}</span>
-        <span class="form-build-control__meta">action button</span>
+        <span class="form-build-control__meta">{{ t('jsonForm.build.actionButton') }}</span>
       </div>
       <div class="form-build-control__toolbar">
-        <span v-if="!canMutate" class="form-build-shell__locked" title="Locked"><IconLock /></span>
+        <span v-if="!canMutate" class="form-build-shell__locked" :title="t('jsonForm.build.locked')"><IconLock /></span>
       </div>
     </div>
   </template>
@@ -62,8 +62,8 @@
               v-if="canMutate"
               type="button"
               class="form-build-icon-btn"
-              title="Configure"
-              aria-label="Configure field"
+              :title="t('jsonForm.build.configure')"
+              :aria-label="t('jsonForm.build.configureFieldAria')"
               @click="onConfigure"
             >
               <IconCog />
@@ -72,13 +72,13 @@
               v-if="canDelete"
               type="button"
               class="form-build-icon-btn form-build-icon-btn--danger"
-              title="Remove"
-              aria-label="Remove field"
+              :title="t('jsonForm.build.remove')"
+              :aria-label="t('jsonForm.build.removeFieldAria')"
               @click="onDelete"
             >
               <IconTrash />
             </button>
-            <span v-if="!canMutate" class="form-build-shell__locked" title="Locked"><IconLock /></span>
+            <span v-if="!canMutate" class="form-build-shell__locked" :title="t('jsonForm.build.locked')"><IconLock /></span>
           </div>
         </div>
         <div v-if="itemSchemaPropertiesOrdered.length > 0" class="form-build-array-items">
@@ -111,8 +111,8 @@
           v-if="canMutate"
           type="button"
           class="form-build-icon-btn"
-          title="Configure"
-          aria-label="Configure field"
+          :title="t('jsonForm.build.configure')"
+          :aria-label="t('jsonForm.build.configureFieldAria')"
           @click="onConfigure"
         >
           <IconCog />
@@ -121,13 +121,13 @@
           v-if="canDelete"
           type="button"
           class="form-build-icon-btn form-build-icon-btn--danger"
-          title="Remove"
-          aria-label="Remove field"
+          :title="t('jsonForm.build.remove')"
+          :aria-label="t('jsonForm.build.removeFieldAria')"
           @click="onDelete"
         >
           <IconTrash />
         </button>
-        <span v-if="!canMutate" class="form-build-shell__locked" title="Locked"><IconLock /></span>
+        <span v-if="!canMutate" class="form-build-shell__locked" :title="t('jsonForm.build.locked')"><IconLock /></span>
       </div>
     </div>
   </template>
@@ -135,6 +135,7 @@
 
 <script setup>
 import { computed, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ControlRenderer from './ControlRenderer.vue'
 import { scopeToPath, getSchemaEntry } from '../utils'
 import { canMutateBuildNode } from './buildChangability'
@@ -154,6 +155,7 @@ const props = defineProps({
   buildLeaf: { type: String, default: 'tree' },
 })
 
+const { t, te, locale } = useI18n()
 const formBuild = inject('jsonFormBuild', null)
 
 const variant = computed(() => (formBuild ? formBuild.variant : 'guest'))
@@ -186,7 +188,10 @@ const label = computed(
     '',
 )
 
-const actionLabel = computed(() => props.uischema.options?.action?.label || 'Action')
+const actionLabel = computed(() => {
+  void locale.value
+  return props.uischema.options?.action?.label || t('jsonForm.build.action')
+})
 
 const isRequired = computed(() => {
   if (!path.value?.length) return false
@@ -197,7 +202,53 @@ const isRequired = computed(() => {
   return Array.isArray(required) && required.includes(fieldName)
 })
 
+/** Map JSON Schema type/format token to `jsonForm.build.schemaType.*` key suffix. */
+function schemaTypeKeySuffix(token) {
+  const s = String(token).trim()
+  if (s === 'date-time') return 'dateTime'
+  return s
+}
+
+function translateTypeToken(token) {
+  const trimmed = String(token).trim()
+  if (!trimmed) return token
+  const suffix = schemaTypeKeySuffix(trimmed)
+  const path = `jsonForm.build.schemaType.${suffix}`
+  return te(path) ? t(path) : trimmed
+}
+
+function translateUnionTypeString(s) {
+  if (!s.includes(' | ')) return translateTypeToken(s)
+  return s.split(' | ').map((x) => translateTypeToken(x)).join(' | ')
+}
+
+/** Human-readable type line for builder (aligned with field type dropdown labels). */
+function translateSchemaTypeDisplay(typeStr) {
+  const m = typeStr.match(/^array<(.+)>$/i)
+  if (m) {
+    const inner = translateUnionTypeString(m[1])
+    return t('jsonForm.build.schemaType.arrayOf', { item: inner })
+  }
+  return translateUnionTypeString(typeStr)
+}
+
+function translateSchemaMetaPart(part) {
+  if (part === 'required') return t('jsonForm.build.meta.required')
+  if (part === 'dropdown') return t('jsonForm.build.meta.dropdown')
+  if (part === 'pattern') return t('jsonForm.build.meta.pattern')
+  let m = part.match(/^min: (.+)$/)
+  if (m) return t('jsonForm.build.meta.minColon', { n: m[1] })
+  m = part.match(/^max: (.+)$/)
+  if (m) return t('jsonForm.build.meta.maxColon', { n: m[1] })
+  m = part.match(/^minItems: (.+)$/)
+  if (m) return t('jsonForm.build.meta.minItems', { n: m[1] })
+  m = part.match(/^maxItems: (.+)$/)
+  if (m) return t('jsonForm.build.meta.maxItems', { n: m[1] })
+  return part
+}
+
 const descriptionText = computed(() => {
+  void locale.value
   const parts = []
   const entry = schemaEntry.value
   if (!entry) return ''
@@ -205,13 +256,13 @@ const descriptionText = computed(() => {
   if (entry.format) {
     typeStr = entry.format
   } else if (Array.isArray(entry.type)) {
-    typeStr = entry.type.filter((t) => t !== 'null').join(' | ')
+    typeStr = entry.type.filter((x) => x !== 'null').join(' | ')
   } else if (entry.type === 'array') {
     const items = entry.items
     if (Array.isArray(items) && items.length > 0) {
       const itemType = items[0]?.type
       if (Array.isArray(itemType)) {
-        const filtered = itemType.filter((t) => t !== 'null')
+        const filtered = itemType.filter((x) => x !== 'null')
         typeStr =
           filtered.length > 0 && filtered[0] !== 'object' ? `array<${filtered.join(' | ')}>` : 'array'
       } else {
@@ -219,7 +270,7 @@ const descriptionText = computed(() => {
       }
     } else if (items?.type) {
       if (Array.isArray(items.type)) {
-        const filtered = items.type.filter((t) => t !== 'null')
+        const filtered = items.type.filter((x) => x !== 'null')
         typeStr =
           filtered.length > 0 && filtered[0] !== 'object' ? `array<${filtered.join(' | ')}>` : 'array'
       } else {
@@ -229,7 +280,7 @@ const descriptionText = computed(() => {
       typeStr = 'array'
     }
   }
-  parts.push(typeStr)
+  parts.push(translateSchemaTypeDisplay(typeStr))
   if (isRequired.value) parts.push('required')
   if (entry.minLength != null) parts.push(`min: ${entry.minLength}`)
   if (entry.maxLength != null) parts.push(`max: ${entry.maxLength}`)
@@ -240,7 +291,7 @@ const descriptionText = computed(() => {
   if (entry.pattern) parts.push('pattern')
   if (Array.isArray(entry.enum) && entry.enum.length > 0) parts.push('dropdown')
   if (Array.isArray(entry.oneOf) && entry.oneOf.length > 0) parts.push('dropdown')
-  return parts.join(' | ')
+  return parts.map(translateSchemaMetaPart).join(' | ')
 })
 
 function onConfigure() {

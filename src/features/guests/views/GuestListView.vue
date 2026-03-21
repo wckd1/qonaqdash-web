@@ -1,36 +1,36 @@
 <template>
   <header class="page-header">
-    <h1>Guests</h1>
+    <h1>{{ t('nav.guests') }}</h1>
     <router-link :to="{ name: 'guest-new' }" class="btn-add-guest">
       <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      New guest
+      {{ t('guests.newGuest') }}
     </router-link>
   </header>
 
   <SearchBar
     v-model="searchQuery"
-    placeholder="Search by name, email, phone…"
-    aria-label="Search guests"
+    :placeholder="t('guests.searchPlaceholder')"
+    :aria-label="t('guests.searchAria')"
     :searching="searching"
   />
 
   <section class="list-content">
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
-      <div v-else-if="initialLoading" class="loading-state">Loading…</div>
+      <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
       <template v-else>
-        <p v-if="!guests.length && !searchQuery" class="empty-state">No guests yet.</p>
-        <p v-else-if="!guests.length && searchQuery" class="empty-state">No guests match your search.</p>
+        <p v-if="!guests.length && !searchQuery" class="empty-state">{{ t('guests.empty') }}</p>
+        <p v-else-if="!guests.length && searchQuery" class="empty-state">{{ t('guests.emptySearch') }}</p>
         <div v-else-if="guests.length" class="guest-table-wrap">
           <table class="guest-table" role="grid">
             <thead>
               <tr>
-                <th scope="col">First name</th>
-                <th scope="col">Last name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Phone</th>
+                <th scope="col">{{ t('fields.firstName') }}</th>
+                <th scope="col">{{ t('fields.lastName') }}</th>
+                <th scope="col">{{ t('fields.email') }}</th>
+                <th scope="col">{{ t('fields.phone') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -41,10 +41,10 @@
                 :class="{ 'guest-row--selected': selectedGuest?.id === guest.id }"
                 @click="openPanel(guest)"
               >
-                <td data-label="First name">{{ guest.first_name ?? '—' }}</td>
-                <td data-label="Last name">{{ guest.last_name ?? '—' }}</td>
-                <td data-label="Email">{{ guest.email ?? '—' }}</td>
-                <td data-label="Phone">{{ guest.phone ?? '—' }}</td>
+                <td :data-label="t('fields.firstName')">{{ guest.first_name ?? '—' }}</td>
+                <td :data-label="t('fields.lastName')">{{ guest.last_name ?? '—' }}</td>
+                <td :data-label="t('fields.email')">{{ guest.email ?? '—' }}</td>
+                <td :data-label="t('fields.phone')">{{ guest.phone ?? '—' }}</td>
               </tr>
             </tbody>
           </table>
@@ -64,7 +64,7 @@
         <button
           type="button"
           class="guest-panel-close"
-          aria-label="Close panel"
+          :aria-label="t('common.closePanel')"
           @click="closePanel"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,9 +75,9 @@
       </div>
       <div class="guest-panel-body">
         <dl class="guest-panel-dl">
-          <dt>Email</dt>
+          <dt>{{ t('fields.email') }}</dt>
           <dd>{{ selectedGuest.email ?? '—' }}</dd>
-          <dt>Phone</dt>
+          <dt>{{ t('fields.phone') }}</dt>
           <dd>{{ selectedGuest.phone ?? '—' }}</dd>
         </dl>
       </div>
@@ -87,7 +87,7 @@
           class="btn-open-full-page"
           @click="closePanel"
         >
-          Open Full Page
+          {{ t('common.openFullPage') }}
         </router-link>
       </div>
     </aside>
@@ -96,12 +96,14 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 
 const DEBOUNCE_MS = 300
 
+const { t, locale } = useI18n()
 const store = useGuestStore()
 const { guests } = storeToRefs(store)
 
@@ -113,10 +115,11 @@ const selectedGuest = ref(null)
 let searchDebounceId = null
 
 const guestPanelTitle = computed(() => {
+  void locale.value
   if (!selectedGuest.value) return ''
   const first = selectedGuest.value.first_name ?? ''
   const last = selectedGuest.value.last_name ?? ''
-  return [first, last].filter(Boolean).join(' ') || 'Guest'
+  return [first, last].filter(Boolean).join(' ') || t('pageTitle.guest')
 })
 
 function openPanel(guest) {
@@ -141,7 +144,7 @@ async function load(params = {}, isInitial = false) {
   try {
     await store.fetchGuests(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || 'Failed to load guests.'
+    loadError.value = err.response?.data?.error || t('guests.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

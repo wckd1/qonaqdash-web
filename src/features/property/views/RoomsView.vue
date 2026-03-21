@@ -1,29 +1,29 @@
 <template>
   <header class="page-header">
-    <h1>Rooms</h1>
-    <button type="button" class="btn-add-type" @click="openAddTypeDialog" aria-label="Add room type">
+    <h1>{{ t('nav.rooms') }}</h1>
+    <button type="button" class="btn-add-type" @click="openAddTypeDialog" :aria-label="t('rooms.addTypeAria')">
       <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      Add type
+      {{ t('rooms.addType') }}
     </button>
   </header>
 
   <SearchBar
     v-if="roomTypes.length"
     v-model="searchQuery"
-    placeholder="Search by type name, room number…"
-    aria-label="Search rooms"
+    :placeholder="t('rooms.searchPlaceholder')"
+    :aria-label="t('rooms.searchAria')"
     :searching="searching"
   />
 
   <section class="list-content">
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <div v-else-if="initialLoading" class="loading-state">Loading…</div>
+    <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
     <template v-else>
-      <p v-if="!roomTypes.length && !searchQuery" class="empty-state">No room types yet. Click “Add type” to create one.</p>
-      <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">No rooms match your search.</p>
+      <p v-if="!roomTypes.length && !searchQuery" class="empty-state">{{ t('rooms.empty') }}</p>
+      <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">{{ t('rooms.emptySearch') }}</p>
       <div v-else class="accordion-list">
         <details
           v-for="rt in roomTypes"
@@ -40,13 +40,13 @@
               type="button"
               class="btn-add-room"
               @click.stop="openAddRoomDialog(rt)"
-              :aria-label="`Add room to ${rt.name}`"
+              :aria-label="t('rooms.addRoomAria', { name: rt.name })"
             >
               <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Add room
+              {{ t('rooms.addRoom') }}
             </button>
           </summary>
           <div class="accordion-body">
@@ -54,8 +54,8 @@
               <table class="room-table" role="grid">
                 <thead>
                   <tr>
-                    <th scope="col">Number</th>
-                    <th scope="col" class="col-status">Status</th>
+                    <th scope="col">{{ t('fields.number') }}</th>
+                    <th scope="col" class="col-status">{{ t('fields.status') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -66,8 +66,8 @@
                     :class="{ 'room-row--selected': selectedRoom?.room?.id === room.id }"
                     @click="openPanel(room, rt)"
                   >
-                    <td data-label="Number">{{ room.number }}</td>
-                    <td data-label="Status" class="col-status">
+                    <td :data-label="t('fields.number')">{{ room.number }}</td>
+                    <td :data-label="t('fields.status')" class="col-status">
                       <span v-if="room.status" class="room-status-badge" :class="statusBadgeClass(room.status)">{{ room.status }}</span>
                       <span v-else class="room-status-empty">—</span>
                     </td>
@@ -75,7 +75,7 @@
                 </tbody>
               </table>
             </div>
-            <p v-else class="room-list-empty">No rooms in this type.</p>
+            <p v-else class="room-list-empty">{{ t('rooms.emptyInType') }}</p>
           </div>
         </details>
       </div>
@@ -94,7 +94,7 @@
           <button
             type="button"
             class="room-panel-close"
-            aria-label="Close panel"
+            :aria-label="t('common.closePanel')"
             @click="closePanel"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -105,9 +105,9 @@
         </div>
         <div class="room-panel-body">
           <dl class="room-panel-dl">
-            <dt>Room type</dt>
+            <dt>{{ t('fields.roomType') }}</dt>
             <dd>{{ selectedRoom.roomType?.name ?? '—' }}</dd>
-            <dt>Status</dt>
+            <dt>{{ t('fields.status') }}</dt>
             <dd>
               <span v-if="selectedRoom.room?.status" class="room-status-badge" :class="statusBadgeClass(selectedRoom.room.status)">{{ selectedRoom.room.status }}</span>
               <span v-else>—</span>
@@ -120,19 +120,19 @@
   <!-- Add room type dialog -->
   <div v-if="addTypeOpen" class="dialog-backdrop" @click.self="closeAddTypeDialog">
     <div class="dialog" role="dialog" aria-labelledby="add-type-title">
-      <h2 id="add-type-title">Add room type</h2>
+      <h2 id="add-type-title">{{ t('rooms.addTypeTitle') }}</h2>
       <form @submit.prevent="submitAddType">
         <label>
-          Name
-          <input v-model="addTypeForm.name" type="text" placeholder="e.g. Double" required :disabled="addTypeSaving" />
+          {{ t('fields.name') }}
+          <input v-model="addTypeForm.name" type="text" :placeholder="t('rooms.namePlaceholder')" required :disabled="addTypeSaving" />
         </label>
         <label>
-          Description <span class="optional">(optional)</span>
-          <input v-model="addTypeForm.description" type="text" placeholder="Short description" :disabled="addTypeSaving" />
+          {{ t('fields.description') }} <span class="optional">{{ t('common.optional') }}</span>
+          <input v-model="addTypeForm.description" type="text" :placeholder="t('rooms.descPlaceholder')" :disabled="addTypeSaving" />
         </label>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" @click="closeAddTypeDialog">Cancel</button>
-          <button type="submit" :aria-busy="addTypeSaving" :disabled="addTypeSaving">Add</button>
+          <button type="button" class="btn-secondary" @click="closeAddTypeDialog">{{ t('common.cancel') }}</button>
+          <button type="submit" :aria-busy="addTypeSaving" :disabled="addTypeSaving">{{ t('common.add') }}</button>
         </div>
       </form>
     </div>
@@ -141,15 +141,15 @@
   <!-- Add room dialog -->
   <div v-if="addRoomOpen" class="dialog-backdrop" @click.self="closeAddRoomDialog">
     <div class="dialog" role="dialog" aria-labelledby="add-room-title">
-      <h2 id="add-room-title">Add room to {{ addRoomType?.name }}</h2>
+      <h2 id="add-room-title">{{ t('rooms.addRoomTitle', { name: addRoomType?.name ?? '' }) }}</h2>
       <form @submit.prevent="submitAddRoom">
         <label>
-          Room number
-          <input v-model="addRoomForm.number" type="text" placeholder="e.g. 101" required :disabled="addRoomSaving" />
+          {{ t('fields.roomNumber') }}
+          <input v-model="addRoomForm.number" type="text" :placeholder="t('rooms.numberPlaceholder')" required :disabled="addRoomSaving" />
         </label>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" @click="closeAddRoomDialog">Cancel</button>
-          <button type="submit" :aria-busy="addRoomSaving" :disabled="addRoomSaving">Add</button>
+          <button type="button" class="btn-secondary" @click="closeAddRoomDialog">{{ t('common.cancel') }}</button>
+          <button type="submit" :aria-busy="addRoomSaving" :disabled="addRoomSaving">{{ t('common.add') }}</button>
         </div>
       </form>
     </div>
@@ -158,12 +158,14 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 
 const DEBOUNCE_MS = 300
 
+const { t } = useI18n()
 const store = usePropertyStore()
 const { roomTypes, rooms } = storeToRefs(store)
 
@@ -266,7 +268,7 @@ async function load(params = {}, isInitial = false) {
     await store.fetchRoomTypes(params)
     await store.fetchRooms(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || 'Failed to load rooms.'
+    loadError.value = err.response?.data?.error || t('rooms.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

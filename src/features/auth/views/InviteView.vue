@@ -1,26 +1,32 @@
 <template>
-  <AuthLayout title="Accept Invitation" subtitle="Set your password to get started">
+  <AuthLayout :title="t('auth.invite.title')" :subtitle="t('auth.invite.subtitle')">
     <div v-if="loadError" class="form-error">{{ loadError }}</div>
 
     <template v-else-if="inviteLoading">
-      <p aria-busy="true">Loading invitation…</p>
+      <p aria-busy="true">{{ t('auth.invite.loading') }}</p>
     </template>
 
     <template v-else-if="invite">
       <div class="invite-info">
-        You've been invited to <strong>{{ invite.organization_name }}</strong>
-        as <strong>{{ invite.email }}</strong>
+        <i18n-t keypath="auth.invite.summary" tag="span">
+          <template #org>
+            <strong>{{ invite.organization_name }}</strong>
+          </template>
+          <template #email>
+            <strong>{{ invite.email }}</strong>
+          </template>
+        </i18n-t>
       </div>
 
       <div v-if="formError" class="form-error">{{ formError }}</div>
 
       <form @submit.prevent="handleSubmit">
         <label>
-          Password
+          {{ t('auth.invite.password') }}
           <input
             v-model="password"
             type="password"
-            placeholder="Create a password"
+            :placeholder="t('auth.invite.passwordPlaceholder')"
             autocomplete="new-password"
             required
             minlength="8"
@@ -29,11 +35,11 @@
         </label>
 
         <label>
-          Confirm password
+          {{ t('auth.invite.confirmPassword') }}
           <input
             v-model="confirmPassword"
             type="password"
-            placeholder="Confirm your password"
+            :placeholder="t('auth.invite.confirmPasswordPlaceholder')"
             autocomplete="new-password"
             required
             minlength="8"
@@ -42,24 +48,27 @@
         </label>
 
         <button type="submit" :aria-busy="submitting" :disabled="submitting">
-          {{ submitting ? 'Setting up…' : 'Set password & sign in' }}
+          {{ submitting ? t('auth.invite.submitting') : t('auth.invite.submit') }}
         </button>
       </form>
     </template>
 
     <template #footer>
-      Already have an account? <router-link :to="{ name: 'login' }">Sign in</router-link>
+      {{ t('auth.invite.footerPrompt') }}
+      <router-link :to="{ name: 'login' }">{{ t('auth.invite.footerSignIn') }}</router-link>
     </template>
   </AuthLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { fetchInvite } from '@/features/auth/api'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -79,9 +88,9 @@ onMounted(async () => {
   } catch (err) {
     if (err.response) {
       const msg = err.response.data?.error
-      loadError.value = msg || 'This invitation link is invalid or has expired.'
+      loadError.value = msg || t('auth.invite.loadErrorInvalid')
     } else {
-      loadError.value = 'Unable to reach the server. Please check your connection.'
+      loadError.value = t('auth.login.errorNetwork')
     }
   } finally {
     inviteLoading.value = false
@@ -92,7 +101,7 @@ async function handleSubmit() {
   formError.value = ''
 
   if (password.value !== confirmPassword.value) {
-    formError.value = 'Passwords do not match.'
+    formError.value = t('auth.invite.passwordMismatch')
     return
   }
 
@@ -104,9 +113,9 @@ async function handleSubmit() {
   } catch (err) {
     if (err.response) {
       const msg = err.response.data?.error
-      formError.value = msg || 'Failed to complete invitation. Please try again.'
+      formError.value = msg || t('auth.invite.submitError')
     } else {
-      formError.value = 'Unable to reach the server. Please check your connection.'
+      formError.value = t('auth.login.errorNetwork')
     }
   } finally {
     submitting.value = false

@@ -1,18 +1,18 @@
 <template>
   <header class="page-header">
-    <h1>New booking</h1>
+    <h1>{{ t('pageTitle.bookingNew') }}</h1>
     <button
       v-if="bookingForm"
       type="button"
       :disabled="submitting"
       @click="onSubmit"
     >
-      {{ submitting ? 'Saving…' : 'Save' }}
+      {{ submitting ? t('common.saving') : t('common.save') }}
     </button>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
-  <div v-else-if="loading" class="loading-state">Loading…</div>
+  <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
   <template v-else-if="bookingForm">
     <JsonFormEdit
       :schema="bookingForm.schema"
@@ -26,6 +26,7 @@
 
 <script setup>
 import { ref, onMounted, provide, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { fetchGuests } from '@/features/guests/api'
@@ -34,6 +35,7 @@ import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 
 provide('guestSearch', (q) => fetchGuests({ q }))
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useBookingStore()
@@ -102,7 +104,7 @@ onMounted(async () => {
     if (!Array.isArray(formData.value.booking.rooms)) formData.value.booking.rooms = []
     await mergeRouteQueryIntoForm()
   } catch (err) {
-    loadError.value = err.response?.data?.error ?? 'Failed to load form.'
+    loadError.value = err.response?.data?.error ?? t('bookings.formLoadFailed')
   } finally {
     loading.value = false
   }
@@ -123,7 +125,7 @@ async function onSubmit() {
     await store.createBooking(formData.value)
     router.push('/bookings')
   } catch (err) {
-    const msg = err.response?.data?.error ?? 'Failed to create booking.'
+    const msg = err.response?.data?.error ?? t('bookings.createFailed')
     if (err.response?.data?.errors && typeof err.response.data.errors === 'object') {
       errorsMap.value = err.response.data.errors
     } else {

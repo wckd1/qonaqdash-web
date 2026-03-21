@@ -1,18 +1,18 @@
 <template>
   <header class="page-header">
-    <h1>New guest</h1>
+    <h1>{{ t('pageTitle.guestNew') }}</h1>
     <button
       v-if="guestForm"
       type="button"
       :disabled="submitting"
       @click="onSubmit"
     >
-      {{ submitting ? 'Saving…' : 'Save' }}
+      {{ submitting ? t('common.saving') : t('common.save') }}
     </button>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
-  <div v-else-if="loading" class="loading-state">Loading…</div>
+  <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
   <template v-else-if="guestForm">
     <JsonFormEdit
       :schema="guestForm.schema"
@@ -26,11 +26,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { guestToForm } from '@/shared/jsonform/normalizeFormResponse'
 
+const { t } = useI18n()
 const router = useRouter()
 const store = useGuestStore()
 
@@ -48,7 +50,7 @@ onMounted(async () => {
     guestForm.value = await store.fetchGuestForm()
     formData.value = { ...(guestForm.value.data ?? {}) }
   } catch (err) {
-    loadError.value = err.response?.data?.error ?? 'Failed to load form.'
+    loadError.value = err.response?.data?.error ?? t('guests.formLoadFailed')
     guestForm.value = guestToForm({})
     formData.value = { ...guestForm.value.data }
   } finally {
@@ -63,7 +65,7 @@ async function onSubmit() {
     await store.createGuest(formData.value)
     router.push('/guests')
   } catch (err) {
-    const msg = err.response?.data?.error ?? 'Failed to save guest.'
+    const msg = err.response?.data?.error ?? t('guests.saveFailed')
     if (err.response?.data?.errors) {
       errorsMap.value = err.response.data.errors
     } else {

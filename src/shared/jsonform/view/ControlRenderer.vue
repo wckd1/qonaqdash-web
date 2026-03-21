@@ -51,7 +51,7 @@ const displayValue = computed(() => {
   }
   if (val != null && typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
     const format = entry?.format === 'date-time' ? 'date-time' : 'date'
-    return formatDateTime(val, 'ru-RU', { type: format })
+    return formatDateTime(val, undefined, { type: format })
   }
   return String(val ?? '')
 })

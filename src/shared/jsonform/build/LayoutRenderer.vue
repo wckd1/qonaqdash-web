@@ -16,7 +16,7 @@
           class="form-build-icon-btn"
           :disabled="!canToggleLayoutDirection"
           :title="layoutToggleTitle"
-          aria-label="Switch layout direction"
+          :aria-label="t('jsonForm.build.layoutSwitchAria')"
           @click="onToggleLayout"
         >
           <IconSwitchLayout :horizontal="isHorizontal" />
@@ -25,13 +25,13 @@
           v-if="canDeleteSelf"
           type="button"
           class="form-build-icon-btn form-build-icon-btn--danger"
-          title="Remove"
-          aria-label="Remove layout"
+          :title="t('jsonForm.build.remove')"
+          :aria-label="t('jsonForm.build.removeLayoutAria')"
           @click="onDeleteSelf"
         >
           <IconTrash />
         </button>
-        <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" title="Locked">
+        <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('jsonForm.build.locked')">
           <IconLock />
         </span>
       </div>
@@ -53,8 +53,8 @@
                   <button
                     type="button"
                     class="form-build-icon-btn"
-                    title="Edit group title"
-                    aria-label="Edit group title"
+                    :title="t('jsonForm.build.editGroupTitle')"
+                    :aria-label="t('jsonForm.build.editGroupTitle')"
                     @click="startTitleEdit"
                   >
                     <IconPencil />
@@ -62,12 +62,12 @@
                 </div>
                 <div v-else class="form-build-group-title-edit-row">
                   <label class="form-build-group-label-edit form-build-group-label-edit--grow">
-                    <span class="visually-hidden">Group title</span>
+                    <span class="visually-hidden">{{ t('jsonForm.build.groupTitleHidden') }}</span>
                     <input
                       ref="titleInputRef"
                       v-model="groupLabelModel"
                       type="text"
-                      :placeholder="GROUP_TITLE_PLACEHOLDER"
+                      :placeholder="titlePlaceholder"
                       @blur="onTitleBlur"
                       @keydown.enter.prevent="onTitleConfirm"
                       @keydown.escape.prevent="cancelTitleEdit"
@@ -76,8 +76,8 @@
                   <button
                     type="button"
                     class="form-build-icon-btn form-build-icon-btn--confirm"
-                    title="Save title"
-                    aria-label="Save group title"
+                    :title="t('jsonForm.build.saveTitle')"
+                    :aria-label="t('jsonForm.build.saveGroupTitleAria')"
                     @mousedown.prevent
                     @click="onTitleConfirm"
                   >
@@ -85,7 +85,7 @@
                   </button>
                 </div>
                 <p class="form-build-shell__guest-note">
-                  Guest fields come from Guest form settings. This block is read-only here.
+                  {{ t('jsonForm.build.guestBannerNote') }}
                 </p>
               </div>
             </template>
@@ -100,8 +100,8 @@
                 <button
                   type="button"
                   class="form-build-icon-btn"
-                  title="Edit group title"
-                  aria-label="Edit group title"
+                  :title="t('jsonForm.build.editGroupTitle')"
+                  :aria-label="t('jsonForm.build.editGroupTitle')"
                   @click="startTitleEdit"
                 >
                   <IconPencil />
@@ -109,12 +109,12 @@
               </div>
               <div v-else class="form-build-group-title-edit-row">
                 <label class="form-build-group-label-edit form-build-group-label-edit--grow">
-                  <span class="visually-hidden">Group title</span>
+                  <span class="visually-hidden">{{ t('jsonForm.build.groupTitleHidden') }}</span>
                   <input
                     ref="titleInputRef"
                     v-model="groupLabelModel"
                     type="text"
-                    :placeholder="GROUP_TITLE_PLACEHOLDER"
+                    :placeholder="titlePlaceholder"
                     @blur="onTitleBlur"
                     @keydown.enter.prevent="onTitleConfirm"
                     @keydown.escape.prevent="cancelTitleEdit"
@@ -123,8 +123,8 @@
                 <button
                   type="button"
                   class="form-build-icon-btn form-build-icon-btn--confirm"
-                  title="Save title"
-                  aria-label="Save group title"
+                  :title="t('jsonForm.build.saveTitle')"
+                  :aria-label="t('jsonForm.build.saveGroupTitleAria')"
                   @mousedown.prevent
                   @click="onTitleConfirm"
                 >
@@ -132,7 +132,7 @@
                 </button>
               </div>
               <p v-if="isGuestMainInfoNote" class="form-build-shell__guest-note">
-                This group is included in the booking form when create a booking.
+                {{ t('jsonForm.build.guestMainNote') }}
               </p>
             </template>
           </div>
@@ -141,13 +141,13 @@
               v-if="canDeleteSelf"
               type="button"
               class="form-build-icon-btn form-build-icon-btn--danger"
-              title="Remove group"
-              aria-label="Remove group"
+              :title="t('jsonForm.build.removeGroup')"
+              :aria-label="t('jsonForm.build.removeGroupAria')"
               @click="onDeleteSelf"
             >
               <IconTrash />
             </button>
-            <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" title="Locked">
+            <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('jsonForm.build.locked')">
               <IconLock />
             </span>
           </div>
@@ -186,7 +186,7 @@
         class="form-build-add-child form-build-add-child--in-group"
         @click="onAddChild"
       >
-        Add element
+        {{ t('jsonForm.build.addElement') }}
       </button>
     </section>
 
@@ -229,21 +229,21 @@
         v-if="showAddChild && isHorizontal && elements.length === 0"
         type="button"
         class="form-build-add-child form-build-add-child--horizontal-empty"
-        title="Add element to this row"
-        aria-label="Add element to this row"
+        :title="t('jsonForm.build.addElementToRow')"
+        :aria-label="t('jsonForm.build.addElementToRowAria')"
         @click="onAddChild"
       >
-        Add element
+        {{ t('jsonForm.build.addElement') }}
       </button>
       <button
         v-if="showAddChild && isHorizontal && elements.length === 1"
         type="button"
         class="form-build-add-child form-build-add-child--horizontal-tail"
-        title="Add next in this row"
-        aria-label="Add element to the end of this row"
+        :title="t('jsonForm.build.addNextInRow')"
+        :aria-label="t('jsonForm.build.addToEndOfRowAria')"
         @click="onAddChild"
       >
-        Add element
+        {{ t('jsonForm.build.addElement') }}
       </button>
     </div>
 
@@ -253,13 +253,14 @@
       class="form-build-add-child"
       @click="onAddChild"
     >
-      Add element
+      {{ t('jsonForm.build.addElement') }}
     </button>
   </div>
 </template>
 
 <script setup>
 import { computed, inject, ref, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { canMutateBuildNode, isGuestImmutableBuildGroup } from './buildChangability'
@@ -271,7 +272,7 @@ import IconSwitchLayout from './icons/IconSwitchLayout.vue'
 import IconPencil from './icons/IconPencil.vue'
 import IconCheck from './icons/IconCheck.vue'
 
-const GROUP_TITLE_PLACEHOLDER = 'Set title'
+const { t, locale } = useI18n()
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -329,10 +330,16 @@ const wrapperClass = computed(() => {
 
 const resolvedGroupTitle = computed(() => resolveGroupTitle(props.uischema))
 
+const titlePlaceholder = computed(() => {
+  void locale.value
+  return t('jsonForm.build.setTitlePlaceholder')
+})
+
 /** Shown next to pencil when the group has no user-defined title (builder). */
-const buildGroupHeadingText = computed(
-  () => resolvedGroupTitle.value || GROUP_TITLE_PLACEHOLDER,
-)
+const buildGroupHeadingText = computed(() => {
+  void locale.value
+  return resolvedGroupTitle.value || t('jsonForm.build.setTitlePlaceholder')
+})
 
 const buildGroupHeadingMuted = computed(() => !resolvedGroupTitle.value)
 
@@ -350,7 +357,10 @@ const groupLabelModel = computed({
   },
 })
 
-const layoutBadge = computed(() => (isHorizontal.value ? 'Horizontal layout' : 'Vertical layout'))
+const layoutBadge = computed(() => {
+  void locale.value
+  return isHorizontal.value ? t('jsonForm.build.horizontalLayout') : t('jsonForm.build.verticalLayout')
+})
 
 const elements = computed(() => props.uischema?.elements ?? [])
 
@@ -385,16 +395,17 @@ const canToggleLayoutDirection = computed(() => {
 })
 
 const layoutToggleTitle = computed(() => {
+  void locale.value
   if (!canMutateNode.value) return ''
   if (
     isVertical.value &&
     elements.value.length > MAX_HORIZONTAL_LAYOUT_CHILDREN
   ) {
-    return `Horizontal layout allows at most ${MAX_HORIZONTAL_LAYOUT_CHILDREN} elements. Remove one to switch.`
+    return t('jsonForm.build.layoutMaxChildren', { max: MAX_HORIZONTAL_LAYOUT_CHILDREN })
   }
   return isVertical.value
-    ? 'Switch to horizontal layout'
-    : 'Switch to vertical layout'
+    ? t('jsonForm.build.layoutSwitchHorizontal')
+    : t('jsonForm.build.layoutSwitchVertical')
 })
 
 function updateModel(val) {
@@ -584,7 +595,7 @@ function cancelTitleEdit() {
 }
 
 .form-build-shell__guest-note {
-  margin: 0;
+  margin: var(--space-sm) var(--space-xs);
   font-size: var(--text-body-size);
   color: var(--ink-secondary);
 }

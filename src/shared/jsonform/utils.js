@@ -3,15 +3,22 @@
  * See docs/custom-jsonform-renderer.md §5.
  */
 
+import { i18n } from '@/i18n'
+import { intlLocaleFromAppLocale } from '@/shared/i18n/resolveLocale'
+
 /**
  * Fallback heading when a Group has no `label` (API often sends only `id`, e.g. main / booking / guest).
  * @param {string | undefined} id
  * @returns {string}
  */
 export function humanizeGroupId(id) {
-  if (id == null || id === '') return 'Group'
-  const known = { main: 'Main', booking: 'Booking', guest: 'Guest' }
-  if (known[id]) return known[id]
+  if (id == null || id === '') return i18n.global.t('jsonForm.groups.generic')
+  const knownKeys = {
+    main: 'jsonForm.groups.main',
+    booking: 'jsonForm.groups.booking',
+    guest: 'jsonForm.groups.guest',
+  }
+  if (knownKeys[id]) return i18n.global.t(knownKeys[id])
   return String(id)
     .replace(/[-_]+/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase())
@@ -178,14 +185,19 @@ export function getFilteredRoomSelectOptions(fullData, rowItem, currentIndex, on
 /**
  * Format ISO date-time string for display (locale-aware). Date-only uses format "date".
  * @param {string} isoString - ISO 8601 date or date-time (e.g. 2026-03-15 or 2026-03-15T14:00:00Z)
- * @param {string} [locale='ru-RU']
+ * @param {string} [localeOverride] - BCP 47 tag for Intl; defaults to active app locale (vue-i18n).
  * @param {{ type: 'date' | 'date-time' }} [options] - schema format: date = DD.MM.YYYY, date-time = DD.MM.YYYY HH:mm
  * @returns {string} Formatted string or original if not parseable
  */
-export function formatDateTime(isoString, locale = 'ru-RU', options = { type: 'date-time' }) {
+export function formatDateTime(isoString, localeOverride, options = { type: 'date-time' }) {
   if (isoString == null || typeof isoString !== 'string') return String(isoString ?? '')
   const date = new Date(isoString)
   if (Number.isNaN(date.getTime())) return isoString
+  const locale =
+    localeOverride ??
+    intlLocaleFromAppLocale(
+      /** @type {'en' | 'ru'} */ (i18n.global.locale.value),
+    )
   if (options.type === 'date') {
     return new Intl.DateTimeFormat(locale, {
       day: '2-digit',

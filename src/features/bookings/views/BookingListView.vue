@@ -1,36 +1,36 @@
 <template>
   <header class="page-header">
-    <h1>Bookings</h1>
+    <h1>{{ t('nav.bookings') }}</h1>
     <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
       <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      New booking
+      {{ t('bookings.newBooking') }}
     </router-link>
   </header>
 
   <SearchBar
     v-model="searchQuery"
-    placeholder="Search by guest name…"
-    aria-label="Search by guest"
+    :placeholder="t('bookings.searchPlaceholder')"
+    :aria-label="t('bookings.searchAria')"
     :searching="searching"
   />
 
   <section class="list-content">
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <div v-else-if="initialLoading" class="loading-state">Loading…</div>
+    <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
     <template v-else>
-      <p v-if="!bookings.length && !searchQuery" class="empty-state">No bookings yet.</p>
-      <p v-else-if="!bookings.length && searchQuery" class="empty-state">No bookings match your search.</p>
+      <p v-if="!bookings.length && !searchQuery" class="empty-state">{{ t('bookings.empty') }}</p>
+      <p v-else-if="!bookings.length && searchQuery" class="empty-state">{{ t('bookings.emptySearch') }}</p>
       <div v-else-if="bookings.length" class="booking-table-wrap">
         <table class="booking-table" role="grid">
           <thead>
             <tr>
-              <th scope="col">Guest</th>
-              <th scope="col">Check-in</th>
-              <th scope="col">Check-out</th>
-              <th scope="col">Status</th>
+              <th scope="col">{{ t('fields.guest') }}</th>
+              <th scope="col">{{ t('fields.checkIn') }}</th>
+              <th scope="col">{{ t('fields.checkOut') }}</th>
+              <th scope="col">{{ t('fields.status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -41,10 +41,10 @@
               :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
               @click="openPanel(booking)"
             >
-              <td data-label="Guest">{{ bookingGuestName(booking) }}</td>
-              <td data-label="Check-in">{{ formatDate(booking.check_in) }}</td>
-              <td data-label="Check-out">{{ formatDate(booking.check_out) }}</td>
-              <td data-label="Status">
+              <td :data-label="t('fields.guest')">{{ bookingGuestName(booking) }}</td>
+              <td :data-label="t('fields.checkIn')">{{ formatDate(booking.check_in) }}</td>
+              <td :data-label="t('fields.checkOut')">{{ formatDate(booking.check_out) }}</td>
+              <td :data-label="t('fields.status')">
                 <BookingStatusBadge :status="booking.status" />
               </td>
             </tr>
@@ -59,6 +59,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
@@ -67,6 +68,7 @@ import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 
 const DEBOUNCE_MS = 300
 
+const { t } = useI18n()
 const store = useBookingStore()
 const { bookings } = storeToRefs(store)
 
@@ -119,7 +121,7 @@ async function load(params = {}, isInitial = false) {
   try {
     await store.fetchBookings(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || 'Failed to load bookings.'
+    loadError.value = err.response?.data?.error || t('bookings.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

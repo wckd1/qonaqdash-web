@@ -11,7 +11,7 @@
         <button
           type="button"
           class="booking-panel-close"
-          aria-label="Close panel"
+          :aria-label="t('common.closePanel')"
           @click="emit('close')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -22,13 +22,13 @@
       </div>
       <div class="booking-panel-body">
         <dl class="booking-panel-dl">
-          <dt>Guest</dt>
+          <dt>{{ t('fields.guest') }}</dt>
           <dd>{{ bookingGuestName(booking) }}</dd>
-          <dt>Check-in</dt>
+          <dt>{{ t('fields.checkIn') }}</dt>
           <dd>{{ formatDate(booking.check_in) }}</dd>
-          <dt>Check-out</dt>
+          <dt>{{ t('fields.checkOut') }}</dt>
           <dd>{{ formatDate(booking.check_out) }}</dd>
-          <dt>Status</dt>
+          <dt>{{ t('fields.status') }}</dt>
           <dd>
             <BookingStatusBadge :status="booking.status" />
           </dd>
@@ -40,7 +40,7 @@
           class="btn-open-full-page"
           @click="emit('close')"
         >
-          Open Full Page
+          {{ t('common.openFullPage') }}
         </router-link>
       </div>
     </aside>
@@ -49,7 +49,10 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
+
+const { t, locale } = useI18n()
 
 const props = defineProps({
   /**
@@ -82,10 +85,11 @@ function formatDate(iso) {
 }
 
 const bookingPanelTitle = computed(() => {
+  void locale.value
   const b = props.booking
   if (!b) return ''
   const name = bookingGuestName(b)
-  return name ? `Booking — ${name}` : 'Booking'
+  return name ? t('pageTitle.bookingWithGuest', { name }) : t('pageTitle.booking')
 })
 </script>
 

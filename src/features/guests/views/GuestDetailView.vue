@@ -6,22 +6,22 @@
       type="button"
       @click="editing = true"
     >
-      Edit
+      {{ t('common.edit') }}
     </button>
     <div v-else-if="guestId && guestForm && editing" class="page-header-actions">
       <button type="button" :disabled="submitting" @click="onSave">
-        {{ submitting ? 'Saving…' : 'Save' }}
+        {{ submitting ? t('common.saving') : t('common.save') }}
       </button>
       <button type="button" class="btn-secondary" :disabled="submitting" @click="cancelEdit">
-        Cancel
+        {{ t('common.cancel') }}
       </button>
     </div>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-else-if="notFound" class="error-message">
-    Guest not found.
-    <router-link to="/guests" class="inline-link">Back to guests</router-link>
+    {{ t('guests.notFound') }}
+    <router-link to="/guests" class="inline-link">{{ t('guests.backToList') }}</router-link>
   </p>
   <template v-else-if="currentGuest">
     <div class="guest-detail-body">
@@ -44,29 +44,29 @@
       </template>
 
       <section v-if="guestId" class="previous-bookings" aria-labelledby="previous-bookings-heading">
-      <h2 id="previous-bookings-heading">Bookings</h2>
+      <h2 id="previous-bookings-heading">{{ t('guests.bookingsHeading') }}</h2>
       <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
-      <div v-else-if="bookingsLoading" class="loading-state">Loading…</div>
-      <p v-else-if="!previousBookings.length" class="empty-state">No bookings.</p>
+      <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
+      <p v-else-if="!previousBookings.length" class="empty-state">{{ t('guests.noBookings') }}</p>
       <div v-else class="booking-table-wrap">
         <table class="booking-table" role="grid">
           <thead>
             <tr>
-              <th scope="col">Check-in</th>
-              <th scope="col">Check-out</th>
-              <th scope="col">Status</th>
+              <th scope="col">{{ t('fields.checkIn') }}</th>
+              <th scope="col">{{ t('fields.checkOut') }}</th>
+              <th scope="col">{{ t('fields.status') }}</th>
               <th scope="col"></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="b in previousBookings" :key="b.id" class="booking-row">
-              <td data-label="Check-in">{{ formatDate(b.check_in) }}</td>
-              <td data-label="Check-out">{{ formatDate(b.check_out) }}</td>
-              <td data-label="Status">
+              <td :data-label="t('fields.checkIn')">{{ formatDate(b.check_in) }}</td>
+              <td :data-label="t('fields.checkOut')">{{ formatDate(b.check_out) }}</td>
+              <td :data-label="t('fields.status')">
                 <BookingStatusBadge :status="b.status" />
               </td>
               <td>
-                <router-link :to="{ name: 'booking-detail', params: { id: b.id } }" class="link-booking">View</router-link>
+                <router-link :to="{ name: 'booking-detail', params: { id: b.id } }" class="link-booking">{{ t('common.view') }}</router-link>
               </td>
             </tr>
           </tbody>
@@ -75,13 +75,15 @@
       </section>
     </div>
   </template>
-  <div v-else class="loading-state">Loading…</div>
+  <div v-else class="loading-state">{{ t('common.loading') }}</div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
@@ -90,6 +92,7 @@ import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormRespo
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const store = useGuestStore()
 const { currentGuest } = storeToRefs(store)
@@ -124,13 +127,14 @@ function formatDate(iso) {
  * Guest name from API: response has "data" with "firstName" and "lastName" (camelCase).
  */
 const guestDisplayName = computed(() => {
+  void locale.value
   const g = currentGuest.value
-  if (!g) return 'Guest'
+  if (!g) return t('pageTitle.guest')
   const data = g.data ?? g
   const first = data.firstName ?? data.first_name ?? ''
   const last = data.lastName ?? data.last_name ?? ''
   const parts = [first, last].filter(Boolean)
-  return parts.length ? parts.join(' ') : 'Guest'
+  return parts.length ? parts.join(' ') : (data.email || t('pageTitle.guest'))
 })
 
 async function load() {
@@ -146,7 +150,7 @@ async function load() {
       store.clearCurrentGuest()
       notFound.value = true
     } else {
-      loadError.value = err.response?.data?.error || 'Failed to load guest.'
+      loadError.value = err.response?.data?.error || t('guests.guestLoadFailed')
     }
   }
 }
@@ -159,7 +163,7 @@ async function loadBookings() {
   try {
     previousBookings.value = await fetchGuestBookings(id)
   } catch (err) {
-    bookingsLoadError.value = err.response?.data?.error || 'Failed to load bookings.'
+    bookingsLoadError.value = err.response?.data?.error || t('guests.bookingsLoadFailed')
     previousBookings.value = []
   } finally {
     bookingsLoading.value = false
@@ -191,7 +195,7 @@ async function onSave() {
     await store.updateGuest(guestId.value, editFormData.value)
     editing.value = false
   } catch (err) {
-    const msg = err.response?.data?.error ?? 'Failed to save.'
+    const msg = err.response?.data?.error ?? t('guests.saveEditFailed')
     errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
   } finally {
     submitting.value = false
@@ -207,10 +211,14 @@ watch(currentGuest, (guest) => {
 }, { immediate: true })
 
 watch(
-  guestDisplayName,
-  (name) => {
-    if (name && currentGuest.value) {
-      setBreadcrumb([{ label: 'Guests', path: '/guests' }, { label: name, path: null }])
+  [guestDisplayName, locale],
+  () => {
+    document.title = formatDocumentTitle(guestDisplayName.value)
+    if (guestDisplayName.value && currentGuest.value) {
+      setBreadcrumb([
+        { labelKey: 'nav.guests', path: '/guests' },
+        { label: guestDisplayName.value, path: null },
+      ])
     }
   },
   { immediate: true },

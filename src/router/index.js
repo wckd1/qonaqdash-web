@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
+import { applyDocumentTitleFromRoute } from '@/shared/i18n/documentTitle'
 
 const routes = [
   {
@@ -22,61 +23,75 @@ const routes = [
         path: '',
         name: 'home',
         component: () => import('@/views/HomeView.vue'),
-        meta: { breadcrumb: [{ label: 'Dashboard', path: null }] },
+        meta: { breadcrumb: [{ labelKey: 'nav.dashboard', path: null }] },
       },
       {
         path: 'manage/rooms',
         name: 'property',
         component: () => import('@/features/property/views/RoomsView.vue'),
-        meta: { breadcrumb: [{ label: 'Rooms', path: null }] },
+        meta: { breadcrumb: [{ labelKey: 'nav.rooms', path: null }] },
       },
       {
         path: 'guests',
         name: 'guests',
         component: () => import('@/features/guests/views/GuestListView.vue'),
-        meta: { breadcrumb: [{ label: 'Guests', path: null }] },
+        meta: { breadcrumb: [{ labelKey: 'nav.guests', path: null }] },
       },
       {
         path: 'guests/new',
         name: 'guest-new',
         component: () => import('@/features/guests/views/GuestNewView.vue'),
-        meta: { breadcrumb: [{ label: 'Guests', path: '/guests' }, { label: 'New guest', path: null }] },
+        meta: {
+          breadcrumb: [{ labelKey: 'nav.guests', path: '/guests' }, { labelKey: 'pageTitle.guestNew', path: null }],
+        },
       },
       {
         path: 'guests/:id',
         name: 'guest-detail',
         component: () => import('@/features/guests/views/GuestDetailView.vue'),
-        meta: { breadcrumb: [{ label: 'Guests', path: '/guests' }, { label: 'Guest', path: null }] },
+        meta: {
+          breadcrumb: [{ labelKey: 'nav.guests', path: '/guests' }, { labelKey: 'pageTitle.guest', path: null }],
+        },
       },
       {
         path: 'bookings',
         name: 'bookings',
         component: () => import('@/features/bookings/views/BookingListView.vue'),
-        meta: { breadcrumb: [{ label: 'Bookings', path: null }] },
+        meta: { breadcrumb: [{ labelKey: 'nav.bookings', path: null }] },
       },
       {
         path: 'bookings/new',
         name: 'booking-new',
         component: () => import('@/features/bookings/views/BookingFormView.vue'),
-        meta: { breadcrumb: [{ label: 'Bookings', path: '/bookings' }, { label: 'New booking', path: null }] },
+        meta: {
+          breadcrumb: [
+            { labelKey: 'nav.bookings', path: '/bookings' },
+            { labelKey: 'pageTitle.bookingNew', path: null },
+          ],
+        },
       },
       {
         path: 'bookings/:id',
         name: 'booking-detail',
         component: () => import('@/features/bookings/views/BookingDetailView.vue'),
-        meta: { breadcrumb: [{ label: 'Bookings', path: '/bookings' }, { label: 'Booking', path: null }] },
+        meta: {
+          breadcrumb: [
+            { labelKey: 'nav.bookings', path: '/bookings' },
+            { labelKey: 'pageTitle.booking', path: null },
+          ],
+        },
       },
       {
         path: 'manage/guests/form',
         name: 'manage-guests-form',
         component: () => import('@/features/guests/views/GuestFormSettingsView.vue'),
-        meta: { breadcrumb: [{ label: 'Guest form', path: null }] },
+        meta: { breadcrumb: [{ labelKey: 'pageTitle.guestFormSettings', path: null }] },
       },
       {
         path: 'manage/bookings/form',
         name: 'manage-bookings-form',
         component: () => import('@/features/bookings/views/BookingFormSettingsView.vue'),
-        meta: { breadcrumb: [{ label: 'Booking form', path: null }] },
+        meta: { breadcrumb: [{ labelKey: 'pageTitle.bookingFormSettings', path: null }] },
       },
       {
         path: '/:pathMatch(.*)*',
@@ -112,6 +127,10 @@ router.beforeEach((to) => {
   if (breadcrumb !== undefined) {
     useBreadcrumb().setItems(breadcrumb)
   }
+})
+
+router.afterEach((to) => {
+  applyDocumentTitleFromRoute(to)
 })
 
 export default router

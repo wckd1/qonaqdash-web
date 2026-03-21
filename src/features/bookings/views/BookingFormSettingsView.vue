@@ -1,19 +1,19 @@
 <template>
   <header class="page-header">
-    <h1>Booking Settings</h1>
+    <h1>{{ t('bookings.formSettingsTitle') }}</h1>
     <div class="page-header-actions">
       <button type="button" class="btn-secondary" :disabled="loading || saving" @click="onReset">
-        Reset
+        {{ t('common.reset') }}
       </button>
       <button type="button" :disabled="loading || saving || !formReady" @click="onSave">
-        {{ saving ? 'Saving…' : 'Save' }}
+        {{ saving ? t('common.saving') : t('common.save') }}
       </button>
     </div>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-if="saveError" class="error-message">{{ saveError }}</p>
-  <div v-else-if="loading" class="loading-state">Loading form schema…</div>
+  <div v-else-if="loading" class="loading-state">{{ t('formSettings.loadingSchema') }}</div>
   <JsonFormBuild
     v-else-if="formReady"
     v-model:schema="schemaDraft"
@@ -25,10 +25,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchBookingForm, updateBookingForm } from '@/features/bookings/api'
 import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
+const { t } = useI18n()
 const { success, error: notifyError } = useNotification()
 
 const loading = ref(true)
@@ -61,7 +63,7 @@ async function loadForm() {
     formData.value = normalizeFormData(res.data)
     hasLoaded.value = true
   } catch (err) {
-    loadError.value = err.response?.data?.error ?? 'Failed to load form schema.'
+    loadError.value = err.response?.data?.error ?? t('formSettings.loadFailed')
     hasLoaded.value = false
   } finally {
     loading.value = false
@@ -86,9 +88,9 @@ async function onSave() {
     schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? schemaDraft.value))
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? uischemaDraft.value))
     if (res.data) formData.value = normalizeFormData(res.data)
-    success('Form saved.')
+    success(t('formSettings.saved'))
   } catch (err) {
-    const msg = err.response?.data?.error ?? 'Failed to save form.'
+    const msg = err.response?.data?.error ?? t('formSettings.saveFailed')
     saveError.value = msg
     notifyError(msg)
   } finally {

@@ -2,7 +2,7 @@
   <div class="app-layout" :class="{ collapsed: sidebarCollapsed }">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="collapse-btn" @click="toggleSidebar" aria-label="Toggle sidebar">
+        <button class="collapse-btn" @click="toggleSidebar" :aria-label="t('layout.toggleSidebar')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="20" height="20">
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="12" x2="15" y2="12" />
@@ -35,7 +35,7 @@
             <rect width="7" height="9" x="14" y="12" rx="1" />
             <rect width="7" height="5" x="3" y="16" rx="1" />
           </svg>
-          <span class="nav-label">Dashboard</span>
+          <span class="nav-label">{{ t('nav.dashboard') }}</span>
         </router-link>
 
         <router-link
@@ -52,7 +52,7 @@
             <line x1="8" y1="2" x2="8" y2="6" />
             <line x1="3" y1="10" x2="21" y2="10" />
           </svg>
-          <span class="nav-label">Bookings</span>
+          <span class="nav-label">{{ t('nav.bookings') }}</span>
         </router-link>
 
         <router-link
@@ -69,7 +69,7 @@
             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
           </svg>
-          <span class="nav-label">Guests</span>
+          <span class="nav-label">{{ t('nav.guests') }}</span>
         </router-link>
 
         <div class="nav-group" :class="{ 'nav-group--open': settingsNavOpen }">
@@ -77,7 +77,7 @@
             type="button"
             class="nav-group-trigger"
             :aria-expanded="sidebarCollapsed ? undefined : settingsNavOpen"
-            :aria-label="settingsNavOpen ? 'Collapse Settings section' : 'Expand Settings section'"
+            :aria-label="settingsNavOpen ? t('layout.collapseSettings') : t('layout.expandSettings')"
             aria-controls="sidebar-settings-items"
             @click="toggleSettingsNav"
           >
@@ -92,7 +92,7 @@
               <line x1="9" y1="8" x2="15" y2="8" />
               <line x1="17" y1="16" x2="23" y2="16" />
             </svg>
-            <span class="nav-label">Settings</span>
+            <span class="nav-label">{{ t('nav.settings') }}</span>
             <svg
               class="nav-group-chevron"
               viewBox="0 0 24 24"
@@ -122,7 +122,7 @@
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span class="nav-label">Rooms</span>
+              <span class="nav-label">{{ t('nav.rooms') }}</span>
             </router-link>
             <router-link
               to="/manage/guests/form"
@@ -135,7 +135,7 @@
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-              <span class="nav-label">Guests</span>
+              <span class="nav-label">{{ t('nav.guestForm') }}</span>
             </router-link>
             <router-link
               to="/manage/bookings/form"
@@ -148,7 +148,7 @@
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              <span class="nav-label">Bookings</span>
+              <span class="nav-label">{{ t('nav.bookingForm') }}</span>
             </router-link>
           </div>
         </div>
@@ -164,7 +164,7 @@
           </div>
           <div class="user-info">
             <span class="user-name">{{ userName }}</span>
-            <span class="user-role">Administrator</span>
+            <span class="user-role">{{ t('layout.administrator') }}</span>
           </div>
         </button>
 
@@ -175,7 +175,7 @@
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
-              Profile
+              {{ t('layout.profile') }}
             </button>
             <button class="menu-item menu-item--danger" @click="logout">
               <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -183,7 +183,7 @@
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Log out
+              {{ t('layout.logout') }}
             </button>
           </div>
         </Transition>
@@ -203,10 +203,12 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import Breadcrumbs from '@/shared/components/Breadcrumbs.vue'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()

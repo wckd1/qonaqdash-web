@@ -25,53 +25,53 @@
   </p>
   <template v-else-if="currentGuest">
     <div class="guest-detail-body">
-      <template v-if="guestForm">
-        <JsonFormView
-          v-if="!editing"
-          :schema="guestForm.schema"
-          :uischema="guestForm.uischema"
-          :data="guestForm.data"
-        />
-        <template v-else>
-          <JsonFormEdit
+      <div class="guest-detail-form">
+        <template v-if="guestForm">
+          <JsonFormView
+            v-if="!editing"
             :schema="guestForm.schema"
             :uischema="guestForm.uischema"
-            :data="editFormData"
-            :errors-map="errorsMap"
-            @update:data="editFormData = $event"
+            :data="guestForm.data"
           />
+          <template v-else>
+            <JsonFormEdit
+              :schema="guestForm.schema"
+              :uischema="guestForm.uischema"
+              :data="editFormData"
+              :errors-map="errorsMap"
+              @update:data="editFormData = $event"
+            />
+          </template>
         </template>
-      </template>
-
+        <p v-else class="section-placeholder">{{ t('guests.detailsLoading') }}</p>
+      </div>
       <section v-if="guestId" class="previous-bookings" aria-labelledby="previous-bookings-heading">
       <h2 id="previous-bookings-heading">{{ t('guests.bookingsHeading') }}</h2>
       <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
       <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
       <p v-else-if="!previousBookings.length" class="empty-state">{{ t('guests.noBookings') }}</p>
-      <div v-else class="booking-table-wrap">
-        <table class="booking-table" role="grid">
-          <thead>
-            <tr>
-              <th scope="col">{{ t('fields.checkIn') }}</th>
-              <th scope="col">{{ t('fields.checkOut') }}</th>
-              <th scope="col">{{ t('fields.status') }}</th>
-              <th scope="col"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="b in previousBookings" :key="b.id" class="booking-row">
-              <td :data-label="t('fields.checkIn')">{{ formatDate(b.check_in) }}</td>
-              <td :data-label="t('fields.checkOut')">{{ formatDate(b.check_out) }}</td>
-              <td :data-label="t('fields.status')">
-                <BookingStatusBadge :status="b.status" />
-              </td>
-              <td>
-                <router-link :to="{ name: 'booking-detail', params: { id: b.id } }" class="link-booking">{{ t('common.view') }}</router-link>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <table v-else class="list-table" role="grid">
+        <thead>
+          <tr>
+            <th scope="col">{{ t('fields.checkIn') }}</th>
+            <th scope="col">{{ t('fields.checkOut') }}</th>
+            <th scope="col">{{ t('fields.status') }}</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="b in previousBookings" :key="b.id">
+            <td :data-label="t('fields.checkIn')">{{ formatDate(b.check_in) }}</td>
+            <td :data-label="t('fields.checkOut')">{{ formatDate(b.check_out) }}</td>
+            <td :data-label="t('fields.status')">
+              <BookingStatusBadge :status="b.status" />
+            </td>
+            <td>
+              <router-link :to="{ name: 'booking-detail', params: { id: b.id } }" class="link-booking">{{ t('common.view') }}</router-link>
+            </td>
+          </tr>
+        </tbody>
+      </table>
       </section>
     </div>
   </template>
@@ -85,7 +85,6 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormResponse'
@@ -96,8 +95,6 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const store = useGuestStore()
 const { currentGuest } = storeToRefs(store)
-const { setItems: setBreadcrumb } = useBreadcrumb()
-
 const loadError = ref('')
 const notFound = ref(false)
 const editing = ref(false)
@@ -214,12 +211,6 @@ watch(
   [guestDisplayName, locale],
   () => {
     document.title = formatDocumentTitle(guestDisplayName.value)
-    if (guestDisplayName.value && currentGuest.value) {
-      setBreadcrumb([
-        { labelKey: 'nav.guests', path: '/guests' },
-        { label: guestDisplayName.value, path: null },
-      ])
-    }
   },
   { immediate: true },
 )
@@ -228,6 +219,39 @@ load()
 </script>
 
 <style scoped>
+/* Scroll column under `main.app-main--fit-content`: flex + min-height so long content scrolls inside main. */
+.guest-detail-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--space-md);
+  padding: 0 var(--space-md) var(--space-md);
+  box-sizing: border-box;
+  position: relative;
+}
+
+.guest-detail-form {
+  flex: 0 0 auto;
+  order: 0;
+  min-width: 0;
+  width: 100%;
+}
+
+/* JSONForm root: single scroll on `.guest-detail-body`, not nested viewport */
+:deep(.form-content__viewport) {
+  flex: 0 1 auto;
+  overflow: visible;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+
 .error-message {
   color: var(--semantic-error);
   font-size: var(--text-body-size);
@@ -239,30 +263,22 @@ load()
   margin-left: var(--space-xs);
 }
 
+.section-placeholder {
+  color: var(--ink-tertiary);
+  font-size: var(--text-body-size);
+  margin: 0;
+}
+
 .loading-state {
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
 }
 
-.guest-detail-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
-.guest-detail-body > :first-child {
-  flex-shrink: 0;
-}
-
-.guest-detail-body > .previous-bookings {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
 .previous-bookings {
+  flex: 0 0 auto;
+  order: 1;
+  min-width: 0;
+  width: 100%;
   padding: var(--content-area-padding);
   background: var(--surface-1);
   border-radius: var(--content-area-radius);
@@ -274,34 +290,6 @@ load()
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
   margin: 0;
-}
-
-.booking-table-wrap {
-  overflow-x: auto;
-}
-
-.booking-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-body-size);
-}
-
-.booking-table th {
-  text-align: left;
-  padding: var(--space-xs) var(--space-sm);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.booking-table td {
-  padding: var(--space-xs) var(--space-sm);
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--ink-primary);
-}
-
-.booking-row:hover {
-  background: var(--surface-2);
 }
 
 .link-booking {

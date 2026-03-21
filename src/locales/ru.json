@@ -9,6 +9,7 @@
     "bookingForm": "Бронирования"
   },
   "layout": {
+    "brandHome": "На панель",
     "toggleSidebar": "Свернуть или развернуть боковую панель",
     "expandSettings": "Развернуть раздел «Настройки»",
     "collapseSettings": "Свернуть раздел «Настройки»",
@@ -75,6 +76,8 @@
     "view": "Открыть",
     "closePanel": "Закрыть панель",
     "openFullPage": "Открыть страницу",
+    "clearSearch": "Очистить поиск",
+    "dismissToast": "Закрыть",
     "add": "Добавить",
     "optional": "(необязательно)"
   },
@@ -104,6 +107,7 @@
     "formLoadFailed": "Не удалось загрузить форму.",
     "saveFailed": "Не удалось сохранить гостя.",
     "notFound": "Гость не найден.",
+    "detailsLoading": "Загрузка данных…",
     "backToList": "К списку гостей",
     "bookingsHeading": "Бронирования",
     "noBookings": "Нет бронирований.",
@@ -148,10 +152,6 @@
     "descPlaceholder": "Краткое описание",
     "numberPlaceholder": "напр. 101",
     "otherType": "Другое"
-  },
-  "breadcrumb": {
-    "navLabel": "Навигационная цепочка",
-    "goBack": "Назад"
   },
   "dashboard": {
     "title": "Панель",

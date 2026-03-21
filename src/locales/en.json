@@ -9,6 +9,7 @@
     "bookingForm": "Bookings"
   },
   "layout": {
+    "brandHome": "Go to dashboard",
     "toggleSidebar": "Toggle sidebar",
     "expandSettings": "Expand Settings section",
     "collapseSettings": "Collapse Settings section",
@@ -75,6 +76,8 @@
     "view": "View",
     "closePanel": "Close panel",
     "openFullPage": "Open full page",
+    "clearSearch": "Clear search",
+    "dismissToast": "Dismiss",
     "add": "Add",
     "optional": "(optional)"
   },
@@ -104,6 +107,7 @@
     "formLoadFailed": "Failed to load form.",
     "saveFailed": "Failed to save guest.",
     "notFound": "Guest not found.",
+    "detailsLoading": "Details are loading.",
     "backToList": "Back to guests",
     "bookingsHeading": "Bookings",
     "noBookings": "No bookings.",
@@ -148,10 +152,6 @@
     "descPlaceholder": "Short description",
     "numberPlaceholder": "e.g. 101",
     "otherType": "Other"
-  },
-  "breadcrumb": {
-    "navLabel": "Breadcrumb",
-    "goBack": "Go back"
   },
   "dashboard": {
     "title": "Dashboard",

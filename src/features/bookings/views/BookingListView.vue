@@ -1,7 +1,7 @@
 <template>
   <header class="page-header">
     <h1>{{ t('nav.bookings') }}</h1>
-    <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
+    <router-link :to="{ name: 'booking-new' }" class="btn-add-outline">
       <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
@@ -18,43 +18,42 @@
   />
 
   <section class="list-content">
-    <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
-    <template v-else>
-      <p v-if="!bookings.length && !searchQuery" class="empty-state">{{ t('bookings.empty') }}</p>
-      <p v-else-if="!bookings.length && searchQuery" class="empty-state">{{ t('bookings.emptySearch') }}</p>
-      <div v-else-if="bookings.length" class="booking-table-wrap">
-        <table class="booking-table" role="grid">
-          <thead>
-            <tr>
-              <th scope="col">{{ t('fields.guest') }}</th>
-              <th scope="col">{{ t('fields.checkIn') }}</th>
-              <th scope="col">{{ t('fields.checkOut') }}</th>
-              <th scope="col">{{ t('fields.status') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="booking in bookings"
-              :key="booking.id"
-              class="booking-row"
-              :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
-              @click="openPanel(booking)"
-            >
-              <td :data-label="t('fields.guest')">{{ bookingGuestName(booking) }}</td>
-              <td :data-label="t('fields.checkIn')">{{ formatDate(booking.check_in) }}</td>
-              <td :data-label="t('fields.checkOut')">{{ formatDate(booking.check_out) }}</td>
-              <td :data-label="t('fields.status')">
-                <BookingStatusBadge :status="booking.status" />
-              </td>
-            </tr>
-          </tbody>
+    <div class="list-content__viewport">
+      <p v-if="loadError" class="error-message">{{ loadError }}</p>
+      <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
+      <template v-else>
+        <p v-if="!bookings.length && !searchQuery" class="empty-state">{{ t('bookings.empty') }}</p>
+        <p v-else-if="!bookings.length && searchQuery" class="empty-state">{{ t('bookings.emptySearch') }}</p>
+        <table v-else-if="bookings.length" class="list-table" role="grid">
+            <thead>
+              <tr>
+                <th scope="col">{{ t('fields.guest') }}</th>
+                <th scope="col">{{ t('fields.checkIn') }}</th>
+                <th scope="col">{{ t('fields.checkOut') }}</th>
+                <th scope="col">{{ t('fields.status') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="booking in bookings"
+                :key="booking.id"
+                class="booking-row"
+                :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
+                @click="openPanel(booking)"
+              >
+                <td :data-label="t('fields.guest')">{{ bookingGuestName(booking) }}</td>
+                <td :data-label="t('fields.checkIn')">{{ formatDate(booking.check_in) }}</td>
+                <td :data-label="t('fields.checkOut')">{{ formatDate(booking.check_out) }}</td>
+                <td :data-label="t('fields.status')">
+                  <BookingStatusBadge :status="booking.status" />
+                </td>
+              </tr>
+            </tbody>
         </table>
-      </div>
-    </template>
+      </template>
+    </div>
+    <BookingSidePanel :booking="selectedBooking" @close="closePanel" />
   </section>
-
-  <BookingSidePanel :booking="selectedBooking" @close="closePanel" />
 </template>
 
 <script setup>
@@ -138,71 +137,3 @@ watch(searchQuery, (q) => {
 
 onMounted(() => load({}, true))
 </script>
-
-<style scoped>
-.error-message {
-  color: var(--semantic-error);
-  font-size: var(--text-body-size);
-  margin: 0;
-}
-
-.loading-state,
-.empty-state {
-  color: var(--ink-tertiary);
-  font-size: var(--text-body-size);
-  margin: 0;
-}
-
-.booking-table-wrap {
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-1);
-}
-
-.booking-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-body-size);
-}
-
-.booking-table thead {
-  background: var(--surface-2);
-}
-
-.booking-table th {
-  text-align: left;
-  font-size: var(--text-label-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-secondary);
-  padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.booking-table td {
-  padding: var(--space-sm) var(--space-md);
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--ink-primary);
-}
-
-.booking-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.booking-row {
-  cursor: pointer;
-  transition: background 0.12s ease;
-}
-
-.booking-row:hover {
-  background: var(--surface-2);
-}
-
-.booking-row--selected {
-  background: var(--semantic-info-bg);
-}
-
-.booking-row--selected:hover {
-  background: var(--semantic-info-bg);
-}
-</style>

@@ -1,14 +1,15 @@
 <template>
-  <LayoutRenderer
-    v-if="rootUischema"
-    :schema="schema"
-    :uischema="rootUischema"
-    :model-value="data"
-    :parent-uischema="null"
-    :element-index="-1"
-    :guest-subtree-locked="false"
-    @update:model-value="onModelUpdate"
-  />
+  <div v-if="rootUischema" class="form-content__viewport">
+    <LayoutRenderer
+      :schema="schema"
+      :uischema="rootUischema"
+      :model-value="data"
+      :parent-uischema="null"
+      :element-index="-1"
+      :guest-subtree-locked="false"
+      @update:model-value="onModelUpdate"
+    />
+  </div>
 
   <div
     v-if="addingParent"

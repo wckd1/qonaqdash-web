@@ -1,10 +1,11 @@
 <template>
-  <LayoutRenderer
-    v-if="rootUischema"
-    :schema="schema"
-    :uischema="rootUischema"
-    :model-value="data"
-  />
+  <div v-if="rootUischema" class="form-content__viewport">
+    <LayoutRenderer
+      :schema="schema"
+      :uischema="rootUischema"
+      :model-value="data"
+    />
+  </div>
 </template>
 
 <script setup>

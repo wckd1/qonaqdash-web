@@ -1,16 +1,16 @@
 <template>
-  <div class="dashboard-page">
-    <header class="page-header">
-      <h1>{{ t('dashboard.title') }}</h1>
-      <router-link :to="{ name: 'booking-new' }" class="btn-add-booking">
-        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        {{ t('dashboard.newBooking') }}
-      </router-link>
-    </header>
+  <header class="page-header">
+    <h1 id="dashboard-title">{{ t('dashboard.title') }}</h1>
+    <router-link :to="{ name: 'booking-new' }" class="btn-add-outline">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+      {{ t('dashboard.newBooking') }}
+    </router-link>
+  </header>
 
+  <section class="dashboard-toolbar">
     <div class="dashboard-range-bar" role="toolbar" :aria-label="t('dashboard.rangeToolbar')">
       <div class="dashboard-range-sector dashboard-range-sector--preset">
         <label class="dashboard-range-field">
@@ -52,22 +52,26 @@
         <button type="button" class="dashboard-today" @click="jumpToday">{{ t('dashboard.today') }}</button>
       </div>
     </div>
+  </section>
 
-    <p v-if="loadError" class="error-message">{{ loadError }}</p>
-    <p v-else-if="!loading && sortedRooms.length === 0" class="dashboard-empty">
-      {{ t('dashboard.emptyRooms') }}
-    </p>
-    <p v-else-if="loading" class="loading-state">{{ t('dashboard.loadingGrid') }}</p>
-    <ReservationGrid
-      v-else
-      :rooms="sortedRooms"
-      :entries="gridEntries"
-      :range-from="rangeFromDate"
-      :range-to="rangeToDate"
-      @select-booking="selectedBooking = $event"
-    />
+  <section class="dashboard-body" aria-labelledby="dashboard-title">
+    <div class="dashboard-body__viewport">
+      <p v-if="loadError" class="error-message">{{ loadError }}</p>
+      <p v-else-if="!loading && sortedRooms.length === 0" class="dashboard-empty">
+        {{ t('dashboard.emptyRooms') }}
+      </p>
+      <p v-else-if="loading" class="loading-state">{{ t('dashboard.loadingGrid') }}</p>
+      <ReservationGrid
+        v-else
+        :rooms="sortedRooms"
+        :entries="gridEntries"
+        :range-from="rangeFromDate"
+        :range-to="rangeToDate"
+        @select-booking="selectedBooking = $event"
+      />
+    </div>
     <BookingSidePanel :booking="selectedBooking" @close="selectedBooking = null" />
-  </div>
+  </section>
 </template>
 
 <script setup>
@@ -192,7 +196,7 @@ async function loadGridData() {
 }
 
 function syncRouteQuery() {
-  router.replace({ path: '/', query: { from: fromStr.value, to: toStr.value } })
+  router.replace({ name: 'dashboard', query: { from: fromStr.value, to: toStr.value } })
 }
 
 function syncActivePresetFromRange() {
@@ -285,7 +289,7 @@ onMounted(() => {
 watch(
   () => [route.query.from, route.query.to],
   ([qf, qt]) => {
-    if (route.name !== 'home') return
+    if (route.name !== 'dashboard') return
     if (typeof qf === 'string' && typeof qt === 'string' && isValidRange(qf, qt)) {
       if (qf !== fromStr.value || qt !== toStr.value) {
         fromStr.value = qf
@@ -298,199 +302,3 @@ watch(
   },
 )
 </script>
-
-<style scoped>
-.dashboard-page {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--content-area-gap);
-}
-
-.dashboard-range-bar {
-  --dashboard-control-h: 2.25rem;
-
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-shrink: 0;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.dashboard-range-sector {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-.dashboard-range-sector--dates {
-  display: flex;
-  align-items: center;
-  flex: 1 1 auto;
-  min-width: min(100%, 20rem);
-  flex-wrap: nowrap;
-  gap: var(--space-sm);
-}
-
-.dashboard-range-field {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin: 0;
-}
-
-.dashboard-range-field-label {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-tertiary);
-}
-
-.dashboard-preset-select {
-  box-sizing: border-box;
-  margin: 0;
-  min-height: var(--dashboard-control-h);
-  height: var(--dashboard-control-h);
-  padding: 0 var(--space-sm);
-  padding-inline-end: 1.75rem;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  font-family: var(--font-body);
-  line-height: 1.2;
-  color: var(--ink-primary);
-  background: var(--pico-form-element-background-color);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  min-width: 6.5rem;
-  max-width: 100%;
-}
-
-.dashboard-preset-select:hover {
-  border-color: var(--border-emphasis);
-}
-
-.dashboard-preset-select:focus {
-  border-color: var(--border-focus);
-  outline: none;
-  box-shadow: 0 0 0 0.0625rem var(--border-focus);
-}
-
-.dashboard-range-vr {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 1.375rem;
-  background: var(--border-subtle);
-}
-
-.dashboard-today {
-  margin: 0;
-  flex: 0 0 auto;
-  min-height: var(--dashboard-control-h);
-  padding: 0 var(--space-sm);
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  line-height: 1;
-  color: var(--ink-secondary);
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
-}
-
-.dashboard-today:hover {
-  color: var(--ink-primary);
-  border-color: var(--border-emphasis);
-  background: var(--pico-card-background-color);
-}
-
-.dashboard-date-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin: 0;
-  min-width: 0;
-}
-
-.dashboard-date-inline-label {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-tertiary);
-}
-
-.dashboard-date-input {
-  box-sizing: border-box;
-  margin: 0;
-  min-height: var(--dashboard-control-h);
-  height: var(--dashboard-control-h);
-  padding: 0 0.5rem;
-  /* Reserve space for native calendar icon (Chrome / Safari) */
-  padding-inline-end: 1.85rem;
-  font-size: var(--text-caption-size);
-  font-family: var(--font-body);
-  line-height: 1.2;
-  color: var(--ink-primary);
-  background: var(--pico-form-element-background-color);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  min-width: 10.5rem;
-  max-width: 100%;
-}
-
-.dashboard-date-input:hover {
-  border-color: var(--border-emphasis);
-}
-
-.dashboard-date-input:focus {
-  border-color: var(--border-focus);
-  outline: none;
-  box-shadow: 0 0 0 0.0625rem var(--border-focus);
-}
-
-.dashboard-date-input::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.55;
-  margin-inline-start: 0.125rem;
-}
-
-.dashboard-range-sep {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  color: var(--ink-tertiary);
-  user-select: none;
-  line-height: var(--dashboard-control-h);
-}
-
-.error-message {
-  color: var(--semantic-error);
-  font-size: var(--text-body-size);
-  margin: 0;
-}
-
-.loading-state {
-  color: var(--ink-tertiary);
-  font-size: var(--text-body-size);
-  margin: 0;
-}
-
-.dashboard-empty {
-  color: var(--ink-secondary);
-  font-size: var(--text-body-size);
-  margin: 0;
-}
-</style>

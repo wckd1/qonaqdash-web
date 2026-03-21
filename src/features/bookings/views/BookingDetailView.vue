@@ -57,7 +57,6 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
-import { useBreadcrumb } from '@/shared/composables/useBreadcrumb'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
@@ -66,8 +65,6 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const store = useBookingStore()
 const { currentBooking } = storeToRefs(store)
-const { setItems: setBreadcrumb } = useBreadcrumb()
-
 const loadError = ref('')
 const notFound = ref(false)
 const concurrentError = ref('')
@@ -88,7 +85,7 @@ const canEdit = computed(() => {
 /** Normalized { schema, uischema, data } when GET /api/bookings/:id returned FormResponse. */
 const bookingForm = computed(() => normalizeBookingFormResponse(currentBooking.value ?? null))
 
-/** Guest name for title/breadcrumb from FormResponse (data.guest) or flat Booking (guest). */
+/** Title line from FormResponse (data.guest) or flat Booking (guest). */
 const guestDisplayName = computed(() => {
   const b = currentBooking.value
   if (!b) return ''
@@ -180,12 +177,6 @@ watch(
   [pageTitle, locale],
   () => {
     document.title = formatDocumentTitle(pageTitle.value)
-    if (pageTitle.value && currentBooking.value) {
-      setBreadcrumb([
-        { labelKey: 'nav.bookings', path: '/bookings' },
-        { label: pageTitle.value, path: null },
-      ])
-    }
   },
   { immediate: true },
 )

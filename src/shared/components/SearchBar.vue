@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="search-bar-wrap"
-    :class="{ 'has-value': modelValue && !searching }"
-  >
+  <search :class="{ 'has-value': modelValue && !searching }">
     <span class="search-bar-icon" aria-hidden="true">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8" />
@@ -24,7 +21,7 @@
       v-else-if="modelValue"
       type="button"
       class="search-bar-clear"
-      aria-label="Clear search"
+      :aria-label="t('common.clearSearch')"
       @click="emit('update:modelValue', '')"
     >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -32,10 +29,12 @@
         <path d="m6 6 12 12" />
       </svg>
     </button>
-  </div>
+  </search>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
 defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: 'Search…' },
@@ -44,6 +43,7 @@ defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+const { t } = useI18n()
 
 function onInput(e) {
   emit('update:modelValue', (e.target.value ?? '').trim())

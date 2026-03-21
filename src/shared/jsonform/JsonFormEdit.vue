@@ -1,13 +1,14 @@
 <template>
-  <LayoutRenderer
-    v-if="rootUischema"
-    :schema="schema"
-    :uischema="rootUischema"
-    :model-value="data"
-    :errors-map="errorsMap"
-    :disabled="disabled"
-    @update:model-value="onModelUpdate"
-  />
+  <div v-if="rootUischema" class="form-content__viewport">
+    <LayoutRenderer
+      :schema="schema"
+      :uischema="rootUischema"
+      :model-value="data"
+      :errors-map="errorsMap"
+      :disabled="disabled"
+      @update:model-value="onModelUpdate"
+    />
+  </div>
 </template>
 
 <script setup>

@@ -1,14 +1,19 @@
 <template>
   <header class="page-header">
     <h1>{{ guestDisplayName }}</h1>
-    <button
-      v-if="guestId && guestForm && !editing"
-      type="button"
-      class="btn-secondary"
-      @click="editing = true"
-    >
-      {{ t('common.edit') }}
-    </button>
+    <div v-if="guestId && guestForm && !editing" class="page-header-actions">
+      <button
+        type="button"
+        class="btn-secondary guest-detail-block-btn"
+        :disabled="removing"
+        @click="openBlockConfirm"
+      >
+        {{ t('guests.block') }}
+      </button>
+      <button type="button" class="btn-secondary" @click="editing = true">
+        {{ t('common.edit') }}
+      </button>
+    </div>
     <div v-else-if="guestId && guestForm && editing" class="page-header-actions">
       <button type="button" :disabled="submitting" @click="onSave">
         {{ submitting ? t('common.saving') : t('common.save') }}
@@ -77,12 +82,41 @@
     </div>
   </template>
   <div v-else class="loading-state">{{ t('common.loading') }}</div>
+
+  <Teleport to="body">
+    <div
+      v-if="blockConfirmOpen"
+      class="dialog-backdrop"
+      role="presentation"
+      @click.self="closeBlockConfirm"
+    >
+      <div class="dialog" role="dialog" :aria-labelledby="blockDialogTitleId" aria-modal="true">
+        <h2 :id="blockDialogTitleId" class="guest-block-dialog-title">
+          {{ t('guests.confirmBlockTitle') }}
+        </h2>
+        <p class="guest-block-dialog-body">{{ t('guests.confirmBlockBody') }}</p>
+        <div class="dialog-actions">
+          <button type="button" class="btn-secondary" :disabled="removing" @click="closeBlockConfirm">
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            class="booking-lifecycle-action booking-lifecycle-action--cancel"
+            :disabled="removing"
+            @click="confirmBlock"
+          >
+            {{ removing ? t('common.loading') : t('guests.block') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
@@ -93,10 +127,13 @@ import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import { formatApiError } from '@/shared/i18n/apiError'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
+import { useNotification } from '@/shared/composables/useNotification'
 
 const { t, locale } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const store = useGuestStore()
+const { success } = useNotification()
 const { currentGuest, guestFormTemplate } = storeToRefs(store)
 const loadError = ref('')
 const notFound = ref(false)
@@ -104,6 +141,9 @@ const editing = ref(false)
 const editFormData = ref({})
 const errorsMap = ref({})
 const submitting = ref(false)
+const blockConfirmOpen = ref(false)
+const removing = ref(false)
+const blockDialogTitleId = useId()
 
 const guestId = computed(() => route.params.id || null)
 
@@ -232,11 +272,37 @@ watch(
   { immediate: true },
 )
 
+function openBlockConfirm() {
+  blockConfirmOpen.value = true
+}
+
+function closeBlockConfirm() {
+  if (removing.value) return
+  blockConfirmOpen.value = false
+}
+
+async function confirmBlock() {
+  const id = guestId.value
+  if (!id) return
+  removing.value = true
+  try {
+    await store.deleteGuest(id)
+    await store.fetchGuests({})
+    success(t('guests.blockSuccess'))
+    blockConfirmOpen.value = false
+    await router.replace({ name: 'guests' })
+  } catch {
+    /* Global API interceptor surfaces error toast. */
+  } finally {
+    removing.value = false
+  }
+}
+
 load()
 </script>
 
 <style scoped>
-/* Scroll column under `main.app-main--fit-content`: flex + min-height so long content scrolls inside main. */
+/* Scroll column: flex + min-height so long content scrolls inside main. */
 .guest-detail-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -292,9 +358,10 @@ load()
 }
 
 .previous-bookings {
-  flex: 0 0 auto;
+  flex: auto;
   order: 1;
   min-width: 0;
+  min-height: 0;
   width: 100%;
   padding: var(--content-area-padding);
   background: var(--surface-1);
@@ -317,5 +384,26 @@ load()
 
 .link-booking:hover {
   text-decoration: underline;
+}
+
+.guest-detail-block-btn {
+  border-color: color-mix(in srgb, var(--semantic-error) 45%, var(--border-subtle));
+  color: var(--semantic-error);
+}
+
+.guest-detail-block-btn:hover:not(:disabled) {
+  border-color: var(--semantic-error);
+  background: var(--semantic-error-bg);
+}
+
+.guest-block-dialog-title {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-heading-size);
+}
+
+.guest-block-dialog-body {
+  margin: 0 0 var(--space-lg);
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
 }
 </style>

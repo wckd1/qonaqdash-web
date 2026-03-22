@@ -78,6 +78,15 @@ export function updateGuest(id, data) {
 }
 
 /**
+ * Soft-deletes the guest. **Response:** `204 No Content`.
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export function deleteGuest(id) {
+  return api.delete(`/api/guests/${id}`).then(() => undefined)
+}
+
+/**
  * All bookings for the given guest (e.g. "Previous bookings" on guest detail). Same shape as GET /api/bookings list.
  * @param {string} guestId
  * @returns {Promise<Array<{ id: string, guest_id: string, check_in: string, check_out: string, status: string, guest?: { first_name?: string, last_name?: string } }>>}

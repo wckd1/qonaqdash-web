@@ -68,7 +68,7 @@
       </button>
     </template>
 
-    <Teleport to="main">
+    <Teleport to="body">
       <div
         v-if="pending"
         class="dialog-backdrop"

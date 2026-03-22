@@ -11,19 +11,24 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { normalizeBookingStatus } from '@/features/bookings/bookingStatus'
 
 const props = defineProps({
   /** API status: confirmed | checked_in | checked_out | canceled */
   status: { type: String, default: '' },
 })
 
+const { t, te } = useI18n()
+
 const label = computed(() => {
-  const s = (props.status || '').toLowerCase()
-  if (s === 'confirmed') return 'Confirmed'
-  if (s === 'checked_in') return 'Checked in'
-  if (s === 'checked_out') return 'Checked out'
-  if (s === 'canceled' || s === 'cancelled') return 'Canceled'
-  return props.status || '—'
+  const raw = (props.status || '').trim()
+  const n = normalizeBookingStatus(raw)
+  if (n) {
+    const path = `bookings.statusChip.${n}`
+    if (te(path)) return t(path)
+  }
+  return raw || '—'
 })
 
 const chipClass = computed(() => {

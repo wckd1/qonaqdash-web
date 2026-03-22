@@ -94,6 +94,24 @@ export const useGuestStore = defineStore('guests', () => {
     return updated
   }
 
+  /**
+   * @param {string} id
+   */
+  async function deleteGuest(id) {
+    await guestsApi.deleteGuest(id)
+    guests.value = guests.value.filter((g) => g.id !== id)
+    const cg = currentGuest.value
+    if (cg && typeof cg === 'object') {
+      const top = 'id' in cg ? cg.id : undefined
+      const nested =
+        cg.data && typeof cg.data === 'object' && cg.data !== null && 'id' in cg.data
+          ? cg.data.id
+          : undefined
+      const curId = typeof top === 'string' ? top : typeof nested === 'string' ? nested : null
+      if (curId === id) currentGuest.value = null
+    }
+  }
+
   function clearCurrentGuest() {
     currentGuest.value = null
   }
@@ -110,6 +128,7 @@ export const useGuestStore = defineStore('guests', () => {
     replaceGuestFormTemplate,
     createGuest,
     updateGuest,
+    deleteGuest,
     clearCurrentGuest,
   }
 })

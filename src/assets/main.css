@@ -2189,7 +2189,12 @@ main .room-list-empty {
   color: var(--ink-tertiary);
 }
 
-main .dialog-backdrop {
+/*
+ * Modals: global selectors so `Teleport to="body"` works. `main.app-main` uses
+ * `container-type: inline-size`, which establishes a fixed-position containing block;
+ * children with `position: fixed` would otherwise be clipped to main’s box.
+ */
+.dialog-backdrop {
   position: fixed;
   inset: 0;
   background: var(--overlay-bg);
@@ -2200,7 +2205,7 @@ main .dialog-backdrop {
   padding: var(--space-lg);
 }
 
-main .dialog {
+.dialog {
   background: var(--surface-1);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
@@ -2210,16 +2215,16 @@ main .dialog {
   border: 1px solid var(--border-subtle);
 }
 
-main .dialog form label {
+.dialog form label {
   display: block;
   margin-bottom: var(--space-md);
 }
 
-main .dialog form label:last-of-type {
+.dialog form label:last-of-type {
   margin-bottom: 0;
 }
 
-main .dialog form .dialog-actions {
+.dialog form .dialog-actions {
   margin-top: var(--space-xl);
 }
 
@@ -2228,13 +2233,13 @@ main .optional {
   color: var(--ink-tertiary);
 }
 
-main .dialog-actions {
+.dialog .dialog-actions {
   display: flex;
   gap: var(--space-sm);
   justify-content: flex-end;
 }
 
-main .dialog .btn-secondary {
+.dialog .btn-secondary {
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--text-label-size);
   color: var(--ink-secondary);
@@ -2244,7 +2249,7 @@ main .dialog .btn-secondary {
   cursor: pointer;
 }
 
-main .dialog .btn-secondary:hover {
+.dialog .btn-secondary:hover {
   color: var(--ink-primary);
   border-color: var(--border-emphasis);
 }

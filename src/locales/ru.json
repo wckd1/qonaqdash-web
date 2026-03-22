@@ -142,7 +142,11 @@
     "noBookings": "Нет бронирований.",
     "bookingsLoadFailed": "Не удалось загрузить бронирования.",
     "saveEditFailed": "Не удалось сохранить.",
-    "formSettingsTitle": "Настройки формы гостя"
+    "formSettingsTitle": "Настройки формы гостя",
+    "block": "Заблокировать",
+    "confirmBlockTitle": "Заблокировать этого гостя?",
+    "confirmBlockBody": "Он пропадёт из списка гостей и его нельзя будет привязать к новым бронированиям. В уже созданных бронированиях имя сохранится.",
+    "blockSuccess": "Гость заблокирован."
   },
   "bookings": {
     "newBooking": "Новое бронирование",
@@ -176,7 +180,13 @@
     "confirmCancelBody": "Бронирование получит статус «Отменено». Его по-прежнему можно открыть в списке.",
     "statusActionSuccess": "Бронирование обновлено.",
     "lifecycleToolbarAria": "Действия со статусом бронирования",
-    "openGuestProfile": "Открыть профиль"
+    "openGuestProfile": "Открыть профиль",
+    "statusChip": {
+      "confirmed": "Подтверждено",
+      "checked_in": "Заселён",
+      "checked_out": "Выселён",
+      "canceled": "Отменено"
+    }
   },
   "rooms": {
     "addType": "Добавить тип",

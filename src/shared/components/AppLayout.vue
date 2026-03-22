@@ -221,7 +221,10 @@ const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const { accountEmail } = storeToRefs(settingsStore)
 
-/** Form/detail pages: main content height fits content instead of filling available space. */
+/**
+ * Short form / settings pages: main height fits content (no tall empty column).
+ * Full guest/booking detail uses fill height + inner scroll (e.g. `.guest-detail-body`).
+ */
 const isFormPage = computed(() => {
   const p = route.path
   return (
@@ -230,9 +233,7 @@ const isFormPage = computed(() => {
     p === '/manage/guests/form' ||
     p === '/manage/bookings/form' ||
     p === '/manage/hotel' ||
-    p === '/profile' ||
-    /^\/guests\/[^/]+\/details$/.test(p) ||
-    /^\/bookings\/[^/]+\/details$/.test(p)
+    p === '/profile'
   )
 })
 const userAreaRef = ref(null)

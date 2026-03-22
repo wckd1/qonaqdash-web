@@ -142,7 +142,11 @@
     "noBookings": "No bookings.",
     "bookingsLoadFailed": "Failed to load bookings.",
     "saveEditFailed": "Failed to save.",
-    "formSettingsTitle": "Guest settings"
+    "formSettingsTitle": "Guest settings",
+    "block": "Block",
+    "confirmBlockTitle": "Block this guest?",
+    "confirmBlockBody": "They will be hidden from the guest list and you will not be able to link them to new bookings. Existing bookings will still show their name.",
+    "blockSuccess": "Guest blocked."
   },
   "bookings": {
     "newBooking": "New booking",
@@ -176,7 +180,13 @@
     "confirmCancelBody": "The booking will be marked as canceled. You can still open it from the list.",
     "statusActionSuccess": "Booking updated.",
     "lifecycleToolbarAria": "Booking status actions",
-    "openGuestProfile": "Open profile"
+    "openGuestProfile": "Open profile",
+    "statusChip": {
+      "confirmed": "Confirmed",
+      "checked_in": "Checked in",
+      "checked_out": "Checked out",
+      "canceled": "Canceled"
+    }
   },
   "rooms": {
     "addType": "Add type",

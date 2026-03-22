@@ -1,59 +1,74 @@
 /**
  * Normalize API response to { schema, uischema, data } for JsonFormView.
- * Backend may return FormResponse (schema, uischema, data) or plain entity.
+ * Schema and uischema always come from the API (or cached runtime GET …/form), never from the client.
  */
 
 /**
- * Build minimal guest form when backend returns plain guest object instead of FormResponse.
- * @param {Record<string, unknown>} guest - e.g. { id, first_name, last_name, email, phone }
- * @returns {{ schema: object, uischema: object, data: object }}
+ * @param {string} camelKey
+ * @returns {string}
  */
-export function guestToForm(guest) {
-  const data = {
-    firstName: guest.firstName ?? guest.first_name ?? '',
-    lastName: guest.lastName ?? guest.last_name ?? '',
-    email: guest.email ?? '',
-    phone: guest.phone ?? '',
+function camelToSnake(camelKey) {
+  return camelKey.replace(/[A-Z]/g, (ch) => `_${ch.toLowerCase()}`)
+}
+
+/**
+ * Fill template `data` from API payload: only keys already in `templateData` are written.
+ * Values are taken from `payload.data` if present, else the payload root; each key also tries a snake_case alias.
+ * @param {Record<string, unknown> | null | undefined} apiPayload
+ * @param {Record<string, unknown>} [templateData]
+ * @returns {Record<string, unknown>}
+ */
+export function overlayTemplateDataFromPayload(apiPayload, templateData = {}) {
+  const base = { ...templateData }
+  if (!apiPayload || typeof apiPayload !== 'object') return base
+
+  const src =
+    apiPayload.data != null && typeof apiPayload.data === 'object' && !Array.isArray(apiPayload.data)
+      ? /** @type {Record<string, unknown>} */ (apiPayload.data)
+      : /** @type {Record<string, unknown>} */ (apiPayload)
+
+  for (const key of Object.keys(base)) {
+    if (Object.prototype.hasOwnProperty.call(src, key) && src[key] !== undefined) {
+      base[key] = src[key]
+      continue
+    }
+    const snake = camelToSnake(key)
+    if (snake !== key && Object.prototype.hasOwnProperty.call(src, snake) && src[snake] !== undefined) {
+      base[key] = src[snake]
+    }
   }
+  return base
+}
+
+/**
+ * @param {Record<string, unknown> | null | undefined} response - API FormResponse
+ * @returns {{ schema: object, uischema: object, data: object } | null}
+ */
+export function normalizeGuestFormResponse(response) {
+  if (!response?.schema || !response?.uischema) return null
   return {
-    schema: {
-      type: 'object',
-      properties: {
-        lastName: { type: 'string', title: 'Last name' },
-        firstName: { type: 'string', title: 'First name' },
-        phone: { type: 'string', title: 'Phone' },
-        email: { type: 'string', title: 'Email', format: 'email' },
-      },
-    },
-    uischema: {
-      type: 'Group',
-      id: 'main',
-      label: 'Details',
-      elements: [
-        { type: 'Control', scope: '#/properties/lastName', label: 'Last name' },
-        { type: 'Control', scope: '#/properties/firstName', label: 'First name' },
-        { type: 'Control', scope: '#/properties/phone', label: 'Phone' },
-        { type: 'Control', scope: '#/properties/email', label: 'Email' },
-      ],
-    },
-    data,
+    schema: response.schema,
+    uischema: response.uischema,
+    data: response.data ?? {},
   }
 }
 
 /**
- * @param {Record<string, unknown>} response - API response (FormResponse or plain guest)
- * @returns {{ schema: object, uischema: object, data: object } | null} - null if not enough to render
+ * Guest detail: full FormResponse from GET /api/guests/:id, or runtime template + entity merge.
+ * @param {Record<string, unknown> | null | undefined} guestEntity
+ * @param {{ schema?: object, uischema?: object, data?: object } | null} template - e.g. store guestFormTemplate
+ * @returns {{ schema: object, uischema: object, data: object } | null}
  */
-export function normalizeGuestFormResponse(response) {
-  if (!response) return null
-  if (response.schema && response.uischema) {
-    return {
-      schema: response.schema,
-      uischema: response.uischema,
-      data: response.data ?? {},
-    }
+export function composeGuestFormFromEntity(guestEntity, template) {
+  if (!guestEntity) return null
+  const fromApi = normalizeGuestFormResponse(guestEntity)
+  if (fromApi) return fromApi
+  if (!template?.schema || !template?.uischema) return null
+  return {
+    schema: template.schema,
+    uischema: template.uischema,
+    data: overlayTemplateDataFromPayload(guestEntity, template.data ?? {}),
   }
-  return guestToForm(response)
 }
 
 /**

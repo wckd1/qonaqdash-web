@@ -12,7 +12,7 @@
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
     <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
     <template v-else>
-      <p v-if="validationError" class="form-error">{{ validationError }}</p>
+      <p v-if="validationError" class="form-field-error">{{ validationError }}</p>
       <section class="panel profile-view__section">
         <h2 class="profile-view__heading">{{ t('profile.accountSection') }}</h2>
         <label>

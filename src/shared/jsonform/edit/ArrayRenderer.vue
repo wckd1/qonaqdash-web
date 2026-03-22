@@ -18,6 +18,7 @@
                 scope: '#/properties/' + key,
                 label: String(fieldSchema?.title || key),
               }"
+              :error-scope="errorScopeForItem(index, key)"
               :model-value="item"
               :full-data="fullDataForItem(index)"
               :array-item-index="index"
@@ -61,7 +62,7 @@ import { useI18n } from 'vue-i18n'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import ControlRenderer from './ControlRenderer.vue'
 import IconTrash from '../build/icons/IconTrash.vue'
-import { scopeToPath, getValueByPath, setValueByPath, getSchemaEntry } from '../utils'
+import { scopeToPath, pathToScope, getValueByPath, setValueByPath, getSchemaEntry } from '../utils'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -117,6 +118,11 @@ const label = computed(() =>
 
 function fullDataForItem(index) {
   return props.modelValue
+}
+
+/** Full scope for errorsMap / AJV instance paths (item uischema stays `#/properties/<key>` for value + schema). */
+function errorScopeForItem(index, key) {
+  return pathToScope([...path.value, String(index), key])
 }
 
 function addItem() {

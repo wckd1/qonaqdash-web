@@ -59,6 +59,16 @@ export function scopeToPath(scope) {
 }
 
 /**
+ * Build JSONForms scope from a data path (inverse of {@link scopeToPath}).
+ * @param {string[]} segments - e.g. ["guest", "firstName"] or ["booking", "rooms", "0", "roomID"]
+ * @returns {string} e.g. "#/properties/guest/properties/firstName"
+ */
+export function pathToScope(segments) {
+  if (!segments?.length) return ''
+  return '#' + segments.map((s) => `/properties/${String(s)}`).join('')
+}
+
+/**
  * Read value at path (array of keys).
  * @param {Record<string, unknown>} obj
  * @param {string[]} path

@@ -51,7 +51,7 @@ const routes = [
       {
         path: 'bookings/new',
         name: 'booking-new',
-        component: () => import('@/features/bookings/views/BookingFormView.vue'),
+        component: () => import('@/features/bookings/views/BookingNewView.vue'),
       },
       {
         path: 'bookings/:id',

@@ -829,7 +829,7 @@ main.app-main > search.has-value .search-bar-clear {
   border: 1px solid rgba(229, 115, 115, 0.4);
 }
 
-/* Form feedback blocks (used in auth and other forms) */
+/* Form-level error callouts (auth banners, page-level alerts) */
 .form-error {
   background: var(--semantic-error-bg);
   border: 1px solid var(--border-emphasis);
@@ -838,6 +838,14 @@ main.app-main > search.has-value .search-bar-clear {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-body-size);
   margin-bottom: var(--space-md);
+}
+
+/* Inline validation under a single control (JSON Form, profile fields) */
+.form-field-error {
+  color: var(--semantic-error);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-caption-weight);
+  margin: var(--space-sm) 0 0 0;
 }
 
 .invite-info {

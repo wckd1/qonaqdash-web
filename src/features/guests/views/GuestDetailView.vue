@@ -87,15 +87,16 @@ import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
-import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormResponse'
+import { composeGuestFormFromEntity } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import { formatApiError } from '@/shared/i18n/apiError'
+import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const store = useGuestStore()
-const { currentGuest } = storeToRefs(store)
+const { currentGuest, guestFormTemplate } = storeToRefs(store)
 const loadError = ref('')
 const notFound = ref(false)
 const editing = ref(false)
@@ -105,8 +106,10 @@ const submitting = ref(false)
 
 const guestId = computed(() => route.params.id || null)
 
-/** Normalized { schema, uischema, data } for JsonFormView (backend FormResponse or plain guest). */
-const guestForm = computed(() => normalizeGuestFormResponse(currentGuest.value ?? null))
+/** Schema/uischema from API FormResponse or runtime GET /guests/form; data merged from entity when needed. */
+const guestForm = computed(() =>
+  composeGuestFormFromEntity(currentGuest.value ?? null, guestFormTemplate.value),
+)
 
 const previousBookings = ref([])
 const bookingsLoading = ref(false)
@@ -143,6 +146,10 @@ async function load() {
   notFound.value = false
   try {
     await store.fetchGuest(id)
+    const g = currentGuest.value
+    if (g && !(g.schema && g.uischema)) {
+      await store.fetchGuestForm()
+    }
   } catch (err) {
     if (err.response?.status === 404) {
       store.clearCurrentGuest()
@@ -188,6 +195,14 @@ function cancelEdit() {
 async function onSave() {
   if (!guestId.value) return
   errorsMap.value = {}
+  const { valid, errorsMap: clientErrors } = validateJsonFormData(
+    guestForm.value?.schema ?? {},
+    editFormData.value,
+  )
+  if (!valid) {
+    errorsMap.value = clientErrors
+    return
+  }
   submitting.value = true
   try {
     await store.updateGuest(guestId.value, editFormData.value)

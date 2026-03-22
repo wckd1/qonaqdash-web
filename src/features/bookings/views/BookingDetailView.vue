@@ -61,6 +61,7 @@ import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 import { formatApiError } from '@/shared/i18n/apiError'
+import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -159,6 +160,14 @@ async function onSave() {
   if (!bookingId.value) return
   errorsMap.value = {}
   concurrentError.value = ''
+  const { valid, errorsMap: clientErrors } = validateJsonFormData(
+    bookingForm.value?.schema ?? {},
+    editFormData.value,
+  )
+  if (!valid) {
+    errorsMap.value = clientErrors
+    return
+  }
   submitting.value = true
   try {
     const payload = JSON.parse(JSON.stringify(editFormData.value))

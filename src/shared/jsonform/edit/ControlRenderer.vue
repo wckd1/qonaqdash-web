@@ -57,7 +57,7 @@
           @focus="onTextInputFocus"
           @blur="onTextInputBlur"
         />
-        <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
+        <p v-if="errorMessage" class="form-field-error">{{ errorMessage }}</p>
       </div>
     </div>
   </template>
@@ -86,6 +86,11 @@ const props = defineProps({
   fullData: { type: Object, default: () => ({}) },
   /** When inside ArrayRenderer (e.g. booking.rooms), index of current item for roomID filtering */
   arrayItemIndex: { type: Number, default: undefined },
+  /**
+   * JSONForms scope for errorsMap when uischema.scope is item-relative (e.g. `#/properties/roomType`)
+   * but AJV keys use the full path (`#/properties/booking/properties/rooms/...`).
+   */
+  errorScope: { type: String, default: '' },
   errorsMap: { type: Object, default: () => ({}) },
   disabled: { type: Boolean, default: false },
 })
@@ -101,7 +106,7 @@ const branchDisabled = computed(() => {
   return props.disabled || ruleState.value.disabled
 })
 
-/** When provided by BookingFormView: rooms loaded from GET /api/property/rooms/available when checkIn/checkOut change */
+/** When provided by BookingNewView: rooms from GET /api/property/rooms/available when checkIn/checkOut change */
 const availableRooms = inject('availableRooms', null)
 
 /** Guest booking typeahead: anchor dropdown to the focused guest field (GuestSectionWrapper). */
@@ -343,9 +348,11 @@ const selectOptions = computed(() => {
   return []
 })
 
-const scopeStr = computed(() => props.uischema.scope || '')
+const scopeStrForErrors = computed(
+  () => props.errorScope || props.uischema.scope || '',
+)
 const errorMessage = computed(() => {
-  const errs = props.errorsMap?.[scopeStr.value]
+  const errs = props.errorsMap?.[scopeStrForErrors.value]
   return Array.isArray(errs) && errs.length > 0 ? errs[0] : null
 })
 </script>

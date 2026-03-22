@@ -101,6 +101,8 @@ export const useGuestStore = defineStore('guests', () => {
   return {
     guests,
     currentGuest,
+    /** Cached GET /api/guests/form — used to render guest detail when GET /guests/:id is not a FormResponse */
+    guestFormTemplate,
     fetchGuests,
     fetchGuest,
     fetchGuestForm,

@@ -38,7 +38,7 @@
                 v-for="booking in bookings"
                 :key="booking.id"
                 class="booking-row"
-                :class="{ 'booking-row--selected': selectedBooking?.id === booking.id }"
+                :class="{ 'booking-row--selected': selectedBookingId === booking.id }"
                 @click="openPanel(booking)"
               >
                 <td :data-label="t('fields.guest')">{{ bookingGuestName(booking) }}</td>
@@ -57,8 +57,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
@@ -69,6 +70,8 @@ import { formatApiError } from '@/shared/i18n/apiError'
 const DEBOUNCE_MS = 300
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const store = useBookingStore()
 const { bookings } = storeToRefs(store)
 
@@ -76,8 +79,18 @@ const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-const selectedBooking = ref(null)
 let searchDebounceId = null
+
+const selectedBookingId = computed(() => {
+  const id = route.params.id
+  return typeof id === 'string' && id ? id : null
+})
+
+const selectedBooking = computed(() => {
+  const id = selectedBookingId.value
+  if (!id) return null
+  return bookings.value.find((b) => b.id === id) ?? { id }
+})
 
 function bookingGuestName(booking) {
   if (!booking) return '—'
@@ -100,11 +113,16 @@ function formatDate(iso) {
 }
 
 function openPanel(booking) {
-  selectedBooking.value = booking
+  const id = booking.id
+  if (route.params.id) {
+    router.replace({ name: 'bookings', params: { id } })
+  } else {
+    router.push({ name: 'bookings', params: { id } })
+  }
 }
 
 function closePanel() {
-  selectedBooking.value = null
+  router.push('/bookings')
 }
 
 /**

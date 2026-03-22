@@ -577,6 +577,28 @@ main.app-main > search.has-value .search-bar-clear {
   flex: 1 1 0;
   min-width: 0;
 }
+
+/* JsonFormView `compact` root (side panels): scroll stays on panel body; stack horizontal rows vertically */
+.jsonform-view-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  overflow: visible;
+  padding: 0;
+  box-sizing: border-box;
+}
+.jsonform-view-root--compact .form-view-layout--horizontal {
+  flex-direction: column;
+}
+.jsonform-view-root--compact .form-view-layout--horizontal > * {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .form-view-control--full-width {
   grid-column: 1 / -1;
 }

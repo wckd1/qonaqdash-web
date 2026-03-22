@@ -127,6 +127,7 @@ const toStr = ref('')
 const loading = ref(true)
 const loadError = ref('')
 const gridEntries = ref([])
+/** Grid selection: panel stays on dashboard (no navigation to bookings list). */
 const selectedBooking = ref(null)
 
 function isValidYmd(s) {

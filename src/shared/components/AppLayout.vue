@@ -217,8 +217,8 @@ const isFormPage = computed(() => {
     p === '/manage/guests/form' ||
     p === '/manage/bookings/form' ||
     p === '/profile' ||
-    /^\/guests\/[^/]+$/.test(p) ||
-    /^\/bookings\/[^/]+$/.test(p)
+    /^\/guests\/[^/]+\/details$/.test(p) ||
+    /^\/bookings\/[^/]+\/details$/.test(p)
   )
 })
 const userAreaRef = ref(null)

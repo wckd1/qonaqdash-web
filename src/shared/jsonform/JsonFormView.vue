@@ -1,5 +1,5 @@
 <template>
-  <div v-if="rootUischema" class="form-content__viewport">
+  <div v-if="rootUischema" :class="rootClass">
     <LayoutRenderer
       :schema="schema"
       :uischema="rootUischema"
@@ -19,7 +19,15 @@ const props = defineProps({
   uischema: { type: [Object, Array], default: () => ({}) },
   /** Form data (camelCase) to display */
   data: { type: Object, default: () => ({}) },
+  /**
+   * Side panels / narrow hosts: use alternate root (no main flex hook) and stack HorizontalLayouts vertically via CSS.
+   */
+  compact: { type: Boolean, default: false },
 })
+
+const rootClass = computed(() =>
+  props.compact ? 'jsonform-view-root jsonform-view-root--compact' : 'form-content__viewport',
+)
 
 const rootUischema = computed(() => {
   const ui = props.uischema

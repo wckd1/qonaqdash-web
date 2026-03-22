@@ -38,7 +38,7 @@
                 v-for="guest in guests"
                 :key="guest.id"
                 class="guest-row"
-                :class="{ 'guest-row--selected': selectedGuest?.id === guest.id }"
+                :class="{ 'guest-row--selected': selectedGuestId === guest.id }"
                 @click="openPanel(guest)"
               >
                 <td :data-label="t('fields.firstName')">{{ guest.first_name ?? '—' }}</td>
@@ -55,8 +55,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import GuestSidePanel from '@/features/guests/components/GuestSidePanel.vue'
@@ -66,6 +67,8 @@ import { formatApiError } from '@/shared/i18n/apiError'
 const DEBOUNCE_MS = 300
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const store = useGuestStore()
 const { guests } = storeToRefs(store)
 
@@ -73,15 +76,31 @@ const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-const selectedGuest = ref(null)
 let searchDebounceId = null
 
+const selectedGuestId = computed(() => {
+  const id = route.params.id
+  return typeof id === 'string' && id ? id : null
+})
+
+/** Minimal row or `{ id }` when deep-linking before list row is present */
+const selectedGuest = computed(() => {
+  const id = selectedGuestId.value
+  if (!id) return null
+  return guests.value.find((g) => g.id === id) ?? { id }
+})
+
 function openPanel(guest) {
-  selectedGuest.value = guest
+  const id = guest.id
+  if (route.params.id) {
+    router.replace({ name: 'guests', params: { id } })
+  } else {
+    router.push({ name: 'guests', params: { id } })
+  }
 }
 
 function closePanel() {
-  selectedGuest.value = null
+  router.push('/guests')
 }
 
 /**

@@ -29,24 +29,19 @@ const routes = [
         component: () => import('@/features/property/views/RoomsView.vue'),
       },
       {
-        path: 'guests',
-        name: 'guests',
-        component: () => import('@/features/guests/views/GuestListView.vue'),
-      },
-      {
         path: 'guests/new',
         name: 'guest-new',
         component: () => import('@/features/guests/views/GuestNewView.vue'),
       },
       {
-        path: 'guests/:id',
+        path: 'guests/:id/details',
         name: 'guest-detail',
         component: () => import('@/features/guests/views/GuestDetailView.vue'),
       },
       {
-        path: 'bookings',
-        name: 'bookings',
-        component: () => import('@/features/bookings/views/BookingListView.vue'),
+        path: 'guests/:id?',
+        name: 'guests',
+        component: () => import('@/features/guests/views/GuestListView.vue'),
       },
       {
         path: 'bookings/new',
@@ -54,9 +49,14 @@ const routes = [
         component: () => import('@/features/bookings/views/BookingNewView.vue'),
       },
       {
-        path: 'bookings/:id',
+        path: 'bookings/:id/details',
         name: 'booking-detail',
         component: () => import('@/features/bookings/views/BookingDetailView.vue'),
+      },
+      {
+        path: 'bookings/:id?',
+        name: 'bookings',
+        component: () => import('@/features/bookings/views/BookingListView.vue'),
       },
       {
         path: 'manage/guests/form',

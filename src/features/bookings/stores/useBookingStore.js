@@ -45,11 +45,28 @@ export const useBookingStore = defineStore('bookings', () => {
   }
 
   /**
-   * Call after a successful booking form PUT from settings.
+   * Form definition for manage → booking form (JSONForm build). Always hits GET …/form/schema.
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
+   */
+  async function fetchBookingFormSchema() {
+    const res = await bookingsApi.fetchBookingFormSchema()
+    return {
+      schema: JSON.parse(JSON.stringify(res.schema ?? {})),
+      uischema: JSON.parse(JSON.stringify(res.uischema ?? {})),
+      data: JSON.parse(JSON.stringify(res.data ?? {})),
+    }
+  }
+
+  /**
+   * After a successful PUT …/form/schema from settings: drop cached GET …/form so create flow refetches;
+   * if the response includes schema + uischema, optionally re-seed the runtime template.
    * @param {{ schema?: object, uischema?: object, data?: object }} res
    */
   function replaceBookingFormTemplate(res) {
-    bookingFormTemplate.value = snapshotBookingForm(res)
+    bookingFormTemplate.value = null
+    if (res?.schema != null && res?.uischema != null) {
+      bookingFormTemplate.value = snapshotBookingForm(res)
+    }
   }
 
   /**
@@ -120,6 +137,7 @@ export const useBookingStore = defineStore('bookings', () => {
     currentBooking,
     fetchBookings,
     fetchBookingForm,
+    fetchBookingFormSchema,
     replaceBookingFormTemplate,
     fetchBooking,
     createBooking,

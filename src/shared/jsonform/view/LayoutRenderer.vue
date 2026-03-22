@@ -1,5 +1,5 @@
 <template>
-  <component :is="wrapperTag" :class="wrapperClass">
+  <component v-if="!ruleState.hidden" :is="wrapperTag" :class="wrapperClass">
     <h2 v-if="isGroup && groupTitle">{{ groupTitle }}</h2>
     <div v-if="isGroup" class="form-view-layout__fields">
       <component
@@ -29,12 +29,15 @@ import { computed } from 'vue'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { resolveGroupTitle } from '../utils'
+import { evaluateRule } from '../useJsonFormRules'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
   uischema: { type: Object, required: true },
   modelValue: { type: Object, default: () => ({}) },
 })
+
+const ruleState = computed(() => evaluateRule(props.uischema, props.modelValue))
 
 const layoutType = computed(() => props.uischema?.type)
 const isGroup = computed(() => layoutType.value === 'Group')

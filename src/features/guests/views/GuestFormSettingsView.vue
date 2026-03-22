@@ -26,7 +26,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { updateGuestForm } from '@/features/guests/api'
+import { updateGuestFormSchema } from '@/features/guests/api'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
@@ -47,14 +47,11 @@ const hasLoaded = ref(false)
 
 const formReady = computed(() => hasLoaded.value && !loadError.value)
 
-/**
- * @param {{ force?: boolean }} [opts]
- */
-async function loadForm(opts = {}) {
+async function loadForm() {
   loading.value = true
   loadError.value = ''
   try {
-    const res = await guestStore.fetchGuestForm({ force: opts.force === true })
+    const res = await guestStore.fetchGuestFormSchema()
     schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? {}))
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? {}))
     formData.value = JSON.parse(JSON.stringify(res.data ?? {}))
@@ -71,14 +68,14 @@ onMounted(() => loadForm())
 
 async function onReset() {
   saveError.value = ''
-  await loadForm({ force: true })
+  await loadForm()
 }
 
 async function onSave() {
   saving.value = true
   saveError.value = ''
   try {
-    const res = await updateGuestForm({
+    const res = await updateGuestFormSchema({
       schema: schemaDraft.value,
       uischema: uischemaDraft.value,
     })

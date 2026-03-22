@@ -1,6 +1,5 @@
 /**
  * Path and schema helpers for custom JSONForm renderers.
- * See docs/custom-jsonform-renderer.md §5.
  */
 
 import { i18n } from '@/i18n'

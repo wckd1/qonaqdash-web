@@ -1,4 +1,5 @@
 <template>
+  <template v-if="!ruleState.hidden">
   <template v-if="schemaEntry?.type === 'array'">
     <div class="form-edit-control form-edit-control--full-width">
       <ArrayRenderer
@@ -6,7 +7,7 @@
         :uischema="uischema"
         :model-value="modelValue"
         :errors-map="errorsMap"
-        :disabled="disabled"
+        :disabled="branchDisabled"
         @update:model-value="emit('update:modelValue', $event)"
       />
     </div>
@@ -17,7 +18,7 @@
       <button
         type="button"
         class="form-edit-control__action-btn"
-        :disabled="disabled"
+        :disabled="branchDisabled"
         @click="onActionClick"
       >
         {{ uischema.options.action.label }}
@@ -49,7 +50,7 @@
           :id="inputId"
           :value="inputDisplayValue"
           :type="inputType"
-          :disabled="disabled"
+          :disabled="effectiveDisabled"
           :placeholder="placeholder"
           autocomplete="off"
           @input="onInput"
@@ -59,6 +60,7 @@
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
       </div>
     </div>
+  </template>
   </template>
 </template>
 
@@ -74,6 +76,7 @@ import {
   getFilteredRoomSelectOptions,
   buildRoomOneOfFromRooms,
 } from '../utils'
+import { evaluateRule } from '../useJsonFormRules'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -87,6 +90,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+/** Root form model for `rule.condition.scope` (e.g. #/properties/id); falls back to modelValue when unset. */
+const ruleModel = computed(() => props.fullData ?? props.modelValue)
+const ruleState = computed(() => evaluateRule(props.uischema, ruleModel.value))
+/** Action controls ignore parent/group DISABLE and DISABLE/ENABLE rule effects so e.g. Clear selection stays clickable inside a disabled guest block. */
+const branchDisabled = computed(() => {
+  if (props.uischema.options?.action) return false
+  return props.disabled || ruleState.value.disabled
+})
 
 /** When provided by BookingFormView: rooms loaded from GET /api/property/rooms/available when checkIn/checkOut change */
 const availableRooms = inject('availableRooms', null)
@@ -166,6 +178,12 @@ function onActionClick() {
   ) {
     const guestSchema = getSchemaEntry(props.schema, path.value)
     v = getDefaultObjectFromSchema(guestSchema)
+    const next = JSON.parse(JSON.stringify(ruleModel.value ?? {}))
+    setValueByPath(next, path.value, v)
+    if (!next.guest || typeof next.guest !== 'object') next.guest = {}
+    next.guest.id = null
+    emit('update:modelValue', next)
+    return
   }
   setLocalValue(v)
 }
@@ -283,7 +301,7 @@ const isRoomIDInRoomsArray = computed(
  * roomType may be oneOf with `const: null` ("Любой"); null is a valid choice — do not treat it as unset.
  */
 const effectiveDisabled = computed(() => {
-  if (props.disabled) return true
+  if (branchDisabled.value) return true
   if (!isRoomIDInRoomsArray.value) return false
   const rt = props.modelValue?.roomType
   if (rt === undefined || rt === '') return true

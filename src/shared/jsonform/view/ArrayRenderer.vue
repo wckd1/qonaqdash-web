@@ -17,6 +17,7 @@
             label: String(fieldSchema?.title || key),
           }"
           :model-value="item"
+          :full-data="modelValue"
         />
       </div>
     </div>

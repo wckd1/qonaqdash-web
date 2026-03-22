@@ -26,7 +26,7 @@ export function fetchGuest(id) {
 }
 
 /**
- * Returns guest form schema for create (empty data). Use for new-guest page.
+ * Runtime blank guest form (create / CRM). GET /api/guests/form
  * @returns {Promise<{ schema: object, uischema: object, data: object }>}
  */
 export function fetchGuestForm() {
@@ -38,12 +38,24 @@ export function fetchGuestForm() {
 }
 
 /**
- * Save organization guest form definition.
- * @param {{ schema: object, uischema: object }} body
+ * Stored definition for JSONForm builder (manage). GET /api/guests/form/schema
+ * @returns {Promise<{ schema: object, uischema: object, data: object }>}
+ */
+export function fetchGuestFormSchema() {
+  return api.get('/api/guests/form/schema').then(({ data }) => ({
+    schema: data.schema ?? {},
+    uischema: data.uischema ?? {},
+    data: data.data ?? {},
+  }))
+}
+
+/**
+ * Save guest form definition from builder. PUT /api/guests/form/schema
+ * @param {{ schema: object, uischema: object, data?: object }} body
  * @returns {Promise<{ schema?: object, uischema?: object, data?: object }>}
  */
-export function updateGuestForm(body) {
-  return api.put('/api/guests/form', body).then(({ data }) => data)
+export function updateGuestFormSchema(body) {
+  return api.put('/api/guests/form/schema', body).then(({ data }) => data)
 }
 
 /**

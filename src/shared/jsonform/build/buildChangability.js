@@ -1,5 +1,5 @@
 /**
- * Build-mode (WYSIWYG) changability per docs/custom-jsonform-renderer.md §4.1, §4.5.
+ * Build-mode (WYSIWYG) changability for JsonFormBuild (which nodes can be mutated).
  */
 
 /**

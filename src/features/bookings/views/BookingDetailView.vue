@@ -126,6 +126,7 @@ watch(editing, (isEdit) => {
   if (isEdit && bookingForm.value) {
     editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
     if (!editFormData.value.guest) editFormData.value.guest = {}
+    if (editFormData.value.guest.id === undefined) editFormData.value.guest.id = null
     if (!editFormData.value.booking) editFormData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
     if (!Array.isArray(editFormData.value.booking.rooms)) editFormData.value.booking.rooms = []
     errorsMap.value = {}
@@ -147,6 +148,7 @@ function cancelEdit() {
   if (bookingForm.value) {
     editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
     if (!editFormData.value.guest) editFormData.value.guest = {}
+    if (editFormData.value.guest.id === undefined) editFormData.value.guest.id = null
     if (!editFormData.value.booking) editFormData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
     if (!Array.isArray(editFormData.value.booking.rooms)) editFormData.value.booking.rooms = []
   }
@@ -158,7 +160,9 @@ async function onSave() {
   concurrentError.value = ''
   submitting.value = true
   try {
-    await store.updateBooking(bookingId.value, editFormData.value)
+    const payload = JSON.parse(JSON.stringify(editFormData.value))
+    delete payload.id
+    await store.updateBooking(bookingId.value, payload)
     editing.value = false
   } catch (err) {
     if (err.response?.status === 409) {

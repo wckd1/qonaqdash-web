@@ -375,7 +375,7 @@ label {
   font-weight: var(--text-body-weight);
 }
 
-/* ----- Design system components (single source of truth: docs/design.html) ----- */
+/* ----- Design system components ----- */
 
 /* Search bar: `<search>` in app content (list/filter). Uses --text-label-size. */
 main.app-main > search {

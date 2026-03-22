@@ -1,14 +1,15 @@
 <template>
-  <GuestSectionWrapper
-    v-if="isGuestGroup"
-    :schema="schema"
-    :uischema="uischema"
-    :model-value="modelValue"
-    :errors-map="errorsMap"
-    :disabled="disabled"
-    @update:model-value="updateModel"
-  />
-  <component v-else :is="wrapperTag" :class="wrapperClass">
+  <template v-if="!ruleState.hidden">
+    <GuestSectionWrapper
+      v-if="isGuestGroup"
+      :schema="schema"
+      :uischema="uischema"
+      :model-value="modelValue"
+      :errors-map="errorsMap"
+      :disabled="effectiveDisabled"
+      @update:model-value="updateModel"
+    />
+    <component v-else :is="wrapperTag" :class="wrapperClass">
     <h2 v-if="isGroup && groupTitle">{{ groupTitle }}</h2>
     <div v-if="isGroup" class="form-view-layout__fields">
       <component
@@ -20,7 +21,7 @@
         :model-value="modelValue"
         :full-data="modelValue"
         :errors-map="errorsMap"
-        :disabled="disabled"
+        :disabled="effectiveDisabled"
         @update:model-value="updateModel"
       />
     </div>
@@ -34,11 +35,12 @@
         :model-value="modelValue"
         :full-data="modelValue"
         :errors-map="errorsMap"
-        :disabled="disabled"
+        :disabled="effectiveDisabled"
         @update:model-value="updateModel"
       />
     </template>
   </component>
+  </template>
 </template>
 
 <script setup>
@@ -47,6 +49,7 @@ import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import GuestSectionWrapper from './GuestSectionWrapper.vue'
 import { resolveGroupTitle } from '../utils'
+import { evaluateRule } from '../useJsonFormRules'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
@@ -57,6 +60,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+
+const ruleState = computed(() => evaluateRule(props.uischema, props.modelValue))
+const effectiveDisabled = computed(() => props.disabled || ruleState.value.disabled)
 
 const layoutType = computed(() => props.uischema?.type)
 const isGroup = computed(() => layoutType.value === 'Group')

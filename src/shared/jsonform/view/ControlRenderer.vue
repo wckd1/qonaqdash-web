@@ -1,4 +1,5 @@
 <template>
+  <template v-if="!ruleState.hidden">
   <div
     v-if="schemaEntry?.type === 'array'"
     class="form-view-control--full-width"
@@ -14,20 +15,26 @@
     <span class="form-view-control__label">{{ label }}:</span>
     <span class="form-view-control__value">{{ displayValue }}</span>
   </template>
+  </template>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import ArrayRenderer from './ArrayRenderer.vue'
 import { scopeToPath, getValueByPath, getSchemaEntry, formatDateTime } from '../utils'
+import { evaluateRule } from '../useJsonFormRules'
 
 const props = defineProps({
   schema: { type: Object, default: () => ({}) },
   uischema: { type: Object, required: true },
   modelValue: { type: Object, default: () => ({}) },
+  /** Root form model for rule conditions when this control edits a nested slice (e.g. array item). */
+  fullData: { type: Object, default: undefined },
 })
 
 const ctrl = props.uischema
+const ruleModel = computed(() => props.fullData ?? props.modelValue)
+const ruleState = computed(() => evaluateRule(ctrl, ruleModel.value))
 const path = computed(() => scopeToPath(ctrl.scope))
 const schemaEntry = computed(() => getSchemaEntry(props.schema, path.value))
 const label = computed(() => ctrl.label || schemaEntry.value?.title || path.value?.join('.') || '')

@@ -18,7 +18,7 @@ export const useGuestStore = defineStore('guests', () => {
   const guests = ref([])
   const currentGuest = ref(null)
 
-  /** Session cache for GET /api/guests/form (deep-cloned snapshots). */
+  /** Session cache for GET /api/guests/form (runtime blank form). */
   const guestFormTemplate = ref(null)
 
   /**
@@ -52,11 +52,27 @@ export const useGuestStore = defineStore('guests', () => {
   }
 
   /**
-   * Call after a successful form definition PUT from settings so the session cache matches the server.
+   * Manage → guest form (JSONForm build). Always hits GET …/form/schema.
+   * @returns {Promise<{ schema: object, uischema: object, data: object }>}
+   */
+  async function fetchGuestFormSchema() {
+    const res = await guestsApi.fetchGuestFormSchema()
+    return {
+      schema: JSON.parse(JSON.stringify(res.schema ?? {})),
+      uischema: JSON.parse(JSON.stringify(res.uischema ?? {})),
+      data: JSON.parse(JSON.stringify(res.data ?? {})),
+    }
+  }
+
+  /**
+   * After PUT …/form/schema from settings: invalidate runtime GET …/form cache; re-seed if response is complete.
    * @param {{ schema?: object, uischema?: object, data?: object }} res
    */
   function replaceGuestFormTemplate(res) {
-    guestFormTemplate.value = snapshotGuestForm(res)
+    guestFormTemplate.value = null
+    if (res?.schema != null && res?.uischema != null) {
+      guestFormTemplate.value = snapshotGuestForm(res)
+    }
   }
 
   /**
@@ -88,6 +104,7 @@ export const useGuestStore = defineStore('guests', () => {
     fetchGuests,
     fetchGuest,
     fetchGuestForm,
+    fetchGuestFormSchema,
     replaceGuestFormTemplate,
     createGuest,
     updateGuest,

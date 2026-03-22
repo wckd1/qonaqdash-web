@@ -100,6 +100,7 @@ onMounted(async () => {
     bookingForm.value = await store.fetchBookingForm()
     formData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
     if (!formData.value.guest) formData.value.guest = {}
+    if (formData.value.guest.id === undefined) formData.value.guest.id = null
     if (!formData.value.booking) formData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
     if (!Array.isArray(formData.value.booking.rooms)) formData.value.booking.rooms = []
     await mergeRouteQueryIntoForm()
@@ -122,7 +123,9 @@ async function onSubmit() {
   errorsMap.value = {}
   submitting.value = true
   try {
-    await store.createBooking(formData.value)
+    const payload = JSON.parse(JSON.stringify(formData.value))
+    delete payload.id
+    await store.createBooking(payload)
     router.push('/bookings')
   } catch (err) {
     const msg = err.response?.data?.error ?? t('bookings.createFailed')

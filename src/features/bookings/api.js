@@ -10,10 +10,11 @@ import api from '@/shared/api/client'
  */
 /**
  * GET /api/bookings/{id} returns FormResponse: schema, uischema, data (camelCase form data).
- * data.booking.rooms[] includes roomType, roomID and display fields roomType_title, roomID_title (per requirements §6).
+ * data.booking.rooms[] includes roomType, roomID and display fields roomType_title, roomID_title.
  * @typedef {{ schema?: unknown, uischema?: unknown, data?: { guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string, roomType_title?: string, roomID_title?: string }> } }, status?: string }} BookingFormResponse
  */
 /**
+ * Create/update booking body: `{ guest, booking }` only. Link an existing guest with `guest.id`; omit any top-level `id`.
  * @typedef {{ guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking: { checkIn: string, checkOut: string, rooms: Array<{ roomType: string, roomID?: string }> } }} CreateBookingPayload
  */
 /**
@@ -52,7 +53,7 @@ export function fetchBookings(params = {}) {
 }
 
 /**
- * Blank booking form for create. Returns schema, uischema, and empty or default data.
+ * Booking form for create/edit runtime: schema, uischema, template data (GET /api/bookings/form).
  * @returns {Promise<BookingFormResponse>}
  */
 export function fetchBookingForm() {
@@ -60,12 +61,20 @@ export function fetchBookingForm() {
 }
 
 /**
- * Save organization booking form definition (schema + uischema; GET still merges room types).
- * @param {{ schema: object, uischema: object }} body
+ * Stored form definition for JSONForm builder (manage). GET /api/bookings/form/schema
  * @returns {Promise<BookingFormResponse>}
  */
-export function updateBookingForm(body) {
-  return api.put('/api/bookings/form', body).then(({ data }) => data)
+export function fetchBookingFormSchema() {
+  return api.get('/api/bookings/form/schema').then(({ data }) => data)
+}
+
+/**
+ * Save booking form definition from builder. PUT /api/bookings/form/schema
+ * @param {{ schema: object, uischema: object, data?: object }} body
+ * @returns {Promise<BookingFormResponse>}
+ */
+export function updateBookingFormSchema(body) {
+  return api.put('/api/bookings/form/schema', body).then(({ data }) => data)
 }
 
 /**

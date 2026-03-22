@@ -44,7 +44,7 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   /**
-   * Load user preferences from the API once `GET /api/me/settings` exists (see docs/backend-change-requests.md).
+   * Load user preferences from the API when the account/settings endpoint is integrated.
    * Assign non-locale fields from the response to `userSettings` always.
    *
    * **Locale merge rule** (implement only here; use `hasPinnedLocale()` from `@/shared/i18n/resolveLocale`):

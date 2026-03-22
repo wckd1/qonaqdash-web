@@ -1,6 +1,16 @@
 import { i18n } from '@/i18n'
 
 /**
+ * @param {unknown} data - `response.data`
+ * @returns {string | null}
+ */
+export function getApiErrorCode(data) {
+  const e = data?.error
+  if (typeof e === 'object' && e !== null && typeof e.code === 'string') return e.code
+  return null
+}
+
+/**
  * Human-readable message for API error payloads (legacy string or §9.1 object).
  * @param {unknown} payload - `response.data.error`
  * @returns {string}

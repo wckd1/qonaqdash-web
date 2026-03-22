@@ -65,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     orgId,
     hotelId,
     userId,
+    setTokens,
     login,
     completeInvite,
     logout,

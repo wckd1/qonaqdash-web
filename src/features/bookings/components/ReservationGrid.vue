@@ -14,6 +14,24 @@
     </div>
   </Teleport>
 
+  <Teleport to="body">
+    <div
+      v-if="barMenu"
+      ref="barMenuEl"
+      class="reservation-cell-menu reservation-bar-menu"
+      role="menu"
+      :aria-label="t('grid.barMenuAria')"
+      :style="{ top: `${barMenu.y}px`, left: `${barMenu.x}px` }"
+    >
+      <BookingStatusActions
+        :booking-id="barMenu.bookingId"
+        :status="barMenu.status"
+        layout="menu"
+        @updated="onBarBookingStatusUpdated"
+      />
+    </div>
+  </Teleport>
+
   <div class="reservation-grid-root" :class="{ 'reservation-grid-root--selecting': selectPointerDown }">
     <div class="reservation-grid-scroll">
       <div class="reservation-grid-stage">
@@ -79,6 +97,7 @@
             }"
             :aria-label="bar.ariaLabel"
             @click.stop="onBarClick(bar)"
+            @contextmenu.prevent.stop="openBarMenuFromContext($event, bar)"
           >
             <span class="reservation-bar-text">{{ bar.label }}</span>
           </button>
@@ -97,6 +116,7 @@ import { format, startOfDay, isSameDay } from 'date-fns'
 import { listDaysInclusive, formatLocalYmd } from '@/features/bookings/utils/gridDates'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
+import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 
 const props = defineProps({
   /** Sorted room rows (Y-axis). */
@@ -117,7 +137,7 @@ const settingsStore = useSettingsStore()
 const { locale: appLocale } = storeToRefs(settingsStore)
 const dateFnsLocale = computed(() => dateFnsLocaleForApp(appLocale.value))
 
-const emit = defineEmits(['select-booking'])
+const emit = defineEmits(['select-booking', 'booking-updated'])
 
 const headerHeight = 52
 const cellHeight = 64
@@ -129,6 +149,9 @@ const gridRef = ref(null)
 const gridInnerWidth = ref(0)
 const cellMenu = ref(null)
 const cellMenuEl = ref(null)
+/** @type {import('vue').Ref<{ x: number, y: number, bookingId: string, status: string } | null>} */
+const barMenu = ref(null)
+const barMenuEl = ref(null)
 
 /** True while primary button is held after starting a cell drag-select. */
 const selectPointerDown = ref(false)
@@ -299,6 +322,45 @@ function onBarClick(bar) {
   emit('select-booking', bar.panelBooking)
 }
 
+function closeBarMenu() {
+  barMenu.value = null
+}
+
+function openBarMenuAt(x, y, bookingId, status) {
+  closeCellMenu()
+  barMenu.value = {
+    x,
+    y,
+    bookingId,
+    status: status ?? '',
+  }
+  nextTick(() => {
+    const el = barMenuEl.value
+    const state = barMenu.value
+    if (!el || !state) return
+    const rect = el.getBoundingClientRect()
+    let nx = state.x
+    let ny = state.y
+    const pad = 8
+    if (nx + rect.width > window.innerWidth - pad) nx = Math.max(pad, window.innerWidth - rect.width - pad)
+    if (ny + rect.height > window.innerHeight - pad) ny = Math.max(pad, window.innerHeight - rect.height - pad)
+    if (nx < pad) nx = pad
+    if (ny < pad) ny = pad
+    barMenu.value = { ...state, x: nx, y: ny }
+  })
+}
+
+function openBarMenuFromContext(event, bar) {
+  cancelDragSelect()
+  closeCellMenu()
+  openBarMenuAt(event.clientX, event.clientY, bar.bookingId, bar.panelBooking?.status)
+}
+
+function onBarBookingStatusUpdated() {
+  closeBarMenu()
+  emit('booking-updated')
+}
+
 function closeCellMenu() {
   cellMenu.value = null
 }
@@ -310,6 +372,7 @@ function cancelDragSelect() {
 }
 
 function openCellMenuAt(x, y, roomId, rangeFirst, rangeLast) {
+  closeBarMenu()
   cellMenu.value = {
     roomId,
     rangeFirst,
@@ -336,6 +399,7 @@ function openCellMenuAt(x, y, roomId, rangeFirst, rangeLast) {
 function openCellMenuFromContext(event, roomId, day) {
   cancelDragSelect()
   closeCellMenu()
+  closeBarMenu()
   const d = startOfDay(day)
   openCellMenuAt(event.clientX, event.clientY, roomId, d, d)
 }
@@ -343,6 +407,7 @@ function openCellMenuFromContext(event, roomId, day) {
 function onCellMouseDown(event, roomId, day) {
   if (event.button !== 0) return
   closeCellMenu()
+  closeBarMenu()
   selectPointerDown.value = true
   const d = startOfDay(day)
   dragSelectState.value = { roomId, startDay: d, endDay: d }
@@ -373,6 +438,7 @@ function onPickCreateBooking() {
   if (!cellMenu.value) return
   const { roomId, rangeFirst, rangeLast } = cellMenu.value
   closeCellMenu()
+  closeBarMenu()
   goToNewBooking(roomId, rangeFirst, rangeLast)
 }
 
@@ -407,10 +473,15 @@ function goToNewBooking(roomId, firstDay, lastDay) {
 }
 
 function onDocumentPointerDown(event) {
-  if (!cellMenu.value) return
-  const el = cellMenuEl.value
-  if (el?.contains(event.target)) return
-  closeCellMenu()
+  const t = /** @type {Node | null} */ (event.target)
+  if (cellMenu.value) {
+    const el = cellMenuEl.value
+    if (!el?.contains(t)) closeCellMenu()
+  }
+  if (barMenu.value) {
+    const el = barMenuEl.value
+    if (!el?.contains(t)) closeBarMenu()
+  }
 }
 
 function onDocumentKeydown(event) {
@@ -420,6 +491,7 @@ function onDocumentKeydown(event) {
       return
     }
     closeCellMenu()
+    closeBarMenu()
   }
 }
 
@@ -448,6 +520,7 @@ watch(
 
 onBeforeUnmount(() => {
   cancelDragSelect()
+  closeBarMenu()
   document.removeEventListener('pointerdown', onDocumentPointerDown, true)
   document.removeEventListener('keydown', onDocumentKeydown)
   if (ro) {

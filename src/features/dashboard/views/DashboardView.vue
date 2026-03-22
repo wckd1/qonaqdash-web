@@ -91,6 +91,7 @@
         :range-from="rangeFromDate"
         :range-to="rangeToDate"
         @select-booking="selectedBooking = $event"
+        @booking-updated="onGridBookingUpdated"
       />
     </div>
     <BookingSidePanel :booking="selectedBooking" @close="selectedBooking = null" />
@@ -129,6 +130,24 @@ const loadError = ref('')
 const gridEntries = ref([])
 /** Grid selection: panel stays on dashboard (no navigation to bookings list). */
 const selectedBooking = ref(null)
+
+async function onGridBookingUpdated() {
+  await loadGridData()
+  const sel = selectedBooking.value
+  if (!sel?.id) return
+  const entry = gridEntries.value.find((e) => e.booking_id === sel.id)
+  if (!entry) return
+  selectedBooking.value = {
+    ...sel,
+    status: entry.status,
+    check_in: entry.check_in,
+    check_out: entry.check_out,
+    guest: {
+      first_name: entry.guest_first_name ?? '',
+      last_name: entry.guest_last_name ?? '',
+    },
+  }
+}
 
 function isValidYmd(s) {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)

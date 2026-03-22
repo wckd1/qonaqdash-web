@@ -52,7 +52,7 @@
         </table>
       </template>
     </div>
-    <BookingSidePanel :booking="selectedBooking" @close="closePanel" />
+    <BookingSidePanel :booking="selectedBooking" @close="closePanel" @booking-updated="refreshBookings" />
   </section>
 </template>
 
@@ -129,6 +129,11 @@ function closePanel() {
  * @param {{ q?: string }} [params]
  * @param {boolean} [isInitial]
  */
+function refreshBookings() {
+  const q = searchQuery.value.trim()
+  return load(q ? { q } : {})
+}
+
 async function load(params = {}, isInitial = false) {
   loadError.value = ''
   if (isInitial) {

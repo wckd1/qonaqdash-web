@@ -30,3 +30,40 @@ export function getBookingStatusFromResponse(bookingResponse) {
 export function bookingStatusAllowsEdit(status) {
   return status === 'confirmed' || status === 'checked_in'
 }
+
+/**
+ * Normalize API / UI status strings for comparisons (snake_case, US spelling for canceled).
+ *
+ * @param {string | undefined | null} status
+ * @returns {string | undefined}
+ */
+export function normalizeBookingStatus(status) {
+  if (status == null || status === '') return undefined
+  let s = String(status).trim().toLowerCase().replace(/-/g, '_')
+  if (s === 'cancelled') s = 'canceled'
+  return s
+}
+
+/**
+ * @param {string | undefined} status
+ * @returns {boolean}
+ */
+export function bookingStatusAllowsCheckIn(status) {
+  return normalizeBookingStatus(status) === 'confirmed'
+}
+
+/**
+ * @param {string | undefined} status
+ * @returns {boolean}
+ */
+export function bookingStatusAllowsCheckOut(status) {
+  return normalizeBookingStatus(status) === 'checked_in'
+}
+
+/**
+ * @param {string | undefined} status
+ * @returns {boolean}
+ */
+export function bookingStatusAllowsCancel(status) {
+  return normalizeBookingStatus(status) === 'confirmed'
+}

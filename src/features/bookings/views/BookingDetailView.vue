@@ -1,13 +1,11 @@
 <template>
   <header class="page-header">
     <h1>{{ pageTitle }}</h1>
-    <button
-      v-if="bookingId && bookingForm && canEdit && !editing"
-      type="button"
-      @click="startEdit"
-    >
-      {{ t('common.edit') }}
-    </button>
+    <div v-if="bookingId && bookingForm && !editing" class="page-header-actions">
+      <button v-if="canEdit" type="button" class="btn-secondary" @click="startEdit">
+        {{ t('common.edit') }}
+      </button>
+    </div>
     <div v-else-if="bookingId && bookingForm && editing" class="page-header-actions">
       <button type="button" :disabled="submitting" @click="onSave">
         {{ submitting ? t('common.saving') : t('common.save') }}
@@ -17,6 +15,13 @@
       </button>
     </div>
   </header>
+
+  <BookingStatusActions
+    v-if="bookingId && bookingForm && !editing"
+    :booking-id="bookingId"
+    :status="getBookingStatusFromResponse(currentBooking)"
+    detail-inset
+  />
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-else-if="notFound" class="error-message">
@@ -63,6 +68,7 @@ import {
   getBookingStatusFromResponse,
   bookingStatusAllowsEdit,
 } from '@/features/bookings/bookingStatus'
+import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'

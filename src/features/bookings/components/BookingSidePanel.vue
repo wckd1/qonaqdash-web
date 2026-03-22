@@ -19,6 +19,12 @@
           </svg>
         </button>
       </div>
+      <BookingStatusActions
+        v-if="panelStatusActionsVisible"
+        :booking-id="props.booking.id"
+        :status="panelBookingStatus"
+        @updated="onBookingStatusMutation"
+      />
       <div class="booking-panel-body">
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
         <p v-else-if="notFound" class="error-message">{{ t('bookings.notFound') }}</p>
@@ -51,6 +57,8 @@ import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchBooking } from '@/features/bookings/api'
 import { formatApiError } from '@/shared/i18n/apiError'
+import { getBookingStatusFromResponse } from '@/features/bookings/bookingStatus'
+import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 
 const { t, locale } = useI18n()
 
@@ -62,7 +70,7 @@ const props = defineProps({
   booking: { type: Object, default: null },
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'booking-updated'])
 
 const detailEntity = ref(null)
 const loading = ref(false)
@@ -72,6 +80,19 @@ const notFound = ref(false)
 let loadSeq = 0
 
 const bookingForm = computed(() => normalizeBookingFormResponse(detailEntity.value ?? null))
+
+const panelBookingStatus = computed(
+  () => getBookingStatusFromResponse(detailEntity.value) ?? props.booking?.status,
+)
+
+const panelStatusActionsVisible = computed(
+  () =>
+    !!props.booking?.id &&
+    !loading.value &&
+    !loadError.value &&
+    !notFound.value &&
+    !!bookingForm.value,
+)
 
 function bookingGuestNameFromList(b) {
   if (!b) return ''
@@ -102,6 +123,21 @@ const bookingPanelTitle = computed(() => {
   const name = bookingGuestNameFromList(b)
   return name ? t('pageTitle.bookingWithGuest', { name }) : t('pageTitle.booking')
 })
+
+async function onBookingStatusMutation() {
+  const id = props.booking?.id
+  if (!id) return
+  const seq = loadSeq
+  try {
+    const entity = await fetchBooking(id)
+    if (seq !== loadSeq) return
+    detailEntity.value = entity
+    emit('booking-updated')
+  } catch (err) {
+    if (seq !== loadSeq) return
+    loadError.value = formatApiError(err.response?.data?.error) || t('bookings.detailLoadFailed')
+  }
+}
 
 watch(
   () => props.booking?.id,

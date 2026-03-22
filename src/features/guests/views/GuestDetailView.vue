@@ -4,6 +4,7 @@
     <button
       v-if="guestId && guestForm && !editing"
       type="button"
+      class="btn-secondary"
       @click="editing = true"
     >
       {{ t('common.edit') }}

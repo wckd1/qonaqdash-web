@@ -164,7 +164,19 @@
     "guestPickerClose": "Close guest suggestions",
     "guestPickerSearching": "Searching…",
     "formGuestInfo": "Guest information",
-    "formBookingDetails": "Booking details"
+    "formBookingDetails": "Booking details",
+    "actionCheckIn": "Check in",
+    "actionCheckOut": "Check out",
+    "actionCancelBooking": "Cancel booking",
+    "confirmCheckInTitle": "Check in guest?",
+    "confirmCheckInBody": "This booking will move to checked-in status.",
+    "confirmCheckOutTitle": "Check out guest?",
+    "confirmCheckOutBody": "This booking will be marked as checked out.",
+    "confirmCancelTitle": "Cancel this booking?",
+    "confirmCancelBody": "The booking will be marked as canceled. You can still open it from the list.",
+    "statusActionSuccess": "Booking updated.",
+    "lifecycleToolbarAria": "Booking status actions",
+    "openGuestProfile": "Open profile"
   },
   "rooms": {
     "addType": "Add type",
@@ -324,7 +336,8 @@
     "createBooking": "Create booking",
     "cellAria": "Room {number}, {date} — select or open actions",
     "barFallback": "Booking",
-    "barAria": "Booking {label}, {status}"
+    "barAria": "Booking {label}, {status}",
+    "barMenuAria": "Booking actions"
   },
   "formSettings": {
     "loadingSchema": "Loading form schema…",

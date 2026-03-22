@@ -164,7 +164,19 @@
     "guestPickerClose": "Закрыть подсказки по гостям",
     "guestPickerSearching": "Поиск…",
     "formGuestInfo": "Информация о госте",
-    "formBookingDetails": "Детали бронирования"
+    "formBookingDetails": "Детали бронирования",
+    "actionCheckIn": "Заселить",
+    "actionCheckOut": "Выселить",
+    "actionCancelBooking": "Отменить бронирование",
+    "confirmCheckInTitle": "Заселить гостя?",
+    "confirmCheckInBody": "Статус бронирования сменится на «Заселён».",
+    "confirmCheckOutTitle": "Выселить гостя?",
+    "confirmCheckOutBody": "Бронирование будет отмечено как завершённое (выезд).",
+    "confirmCancelTitle": "Отменить бронирование?",
+    "confirmCancelBody": "Бронирование получит статус «Отменено». Его по-прежнему можно открыть в списке.",
+    "statusActionSuccess": "Бронирование обновлено.",
+    "lifecycleToolbarAria": "Действия со статусом бронирования",
+    "openGuestProfile": "Открыть профиль"
   },
   "rooms": {
     "addType": "Добавить тип",
@@ -324,7 +336,8 @@
     "createBooking": "Создать бронирование",
     "cellAria": "Комната {number}, {date} — выделить или открыть действия",
     "barFallback": "Бронирование",
-    "barAria": "Бронирование {label}, {status}"
+    "barAria": "Бронирование {label}, {status}",
+    "barMenuAria": "Действия с бронированием"
   },
   "formSettings": {
     "loadingSchema": "Загрузка схемы формы…",

@@ -17,6 +17,8 @@ function snapshotBookingForm(res) {
 export const useBookingStore = defineStore('bookings', () => {
   const bookings = ref([])
   const currentBooking = ref(null)
+  /** Booking id last loaded into `currentBooking` (detail route); lifecycle PUTs refresh it only when this matches. */
+  const currentBookingId = ref(null)
 
   /** Session cache for GET /api/bookings/form (blank form definition). */
   const bookingFormTemplate = ref(null)
@@ -71,11 +73,16 @@ export const useBookingStore = defineStore('bookings', () => {
 
   /**
    * @param {string} id
+   * @param {{ setAsCurrent?: boolean }} [options] - setAsCurrent=false when refreshing another id without switching detail context.
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
-  async function fetchBooking(id) {
+  async function fetchBooking(id, options = {}) {
+    const setAsCurrent = options.setAsCurrent !== false
     const formResponse = await bookingsApi.fetchBooking(id)
-    currentBooking.value = formResponse
+    if (setAsCurrent) {
+      currentBookingId.value = id
+      currentBooking.value = formResponse
+    }
     return formResponse
   }
 
@@ -94,8 +101,10 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function updateBooking(id, payload) {
     await bookingsApi.updateBooking(id, payload)
-    const formResponse = await bookingsApi.fetchBooking(id)
-    currentBooking.value = formResponse
+    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    if (currentBookingId.value === id) {
+      currentBooking.value = formResponse
+    }
     return formResponse
   }
 
@@ -105,8 +114,10 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function checkIn(id) {
     await bookingsApi.checkIn(id)
-    const formResponse = await bookingsApi.fetchBooking(id)
-    currentBooking.value = formResponse
+    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    if (currentBookingId.value === id) {
+      currentBooking.value = formResponse
+    }
     return formResponse
   }
 
@@ -116,8 +127,10 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function checkOut(id) {
     await bookingsApi.checkOut(id)
-    const formResponse = await bookingsApi.fetchBooking(id)
-    currentBooking.value = formResponse
+    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    if (currentBookingId.value === id) {
+      currentBooking.value = formResponse
+    }
     return formResponse
   }
 
@@ -127,13 +140,16 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function cancel(id) {
     await bookingsApi.cancel(id)
-    const formResponse = await bookingsApi.fetchBooking(id)
-    currentBooking.value = formResponse
+    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    if (currentBookingId.value === id) {
+      currentBooking.value = formResponse
+    }
     return formResponse
   }
 
   function clearCurrentBooking() {
     currentBooking.value = null
+    currentBookingId.value = null
   }
 
   return {

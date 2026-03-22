@@ -175,15 +175,22 @@ main .page-header-actions {
   display: flex;
   gap: var(--space-sm);
 }
+/* Secondary actions in header (Edit, Cancel): include direct children — not only `.page-header-actions`. */
+main .page-header button.btn-secondary,
 main .page-header-actions .btn-secondary {
   font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
   color: var(--ink-secondary);
   background: var(--pico-form-element-background-color);
   border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: none;
 }
+main .page-header button.btn-secondary:hover:not(:disabled),
 main .page-header-actions .btn-secondary:hover:not(:disabled) {
   color: var(--ink-primary);
   border-color: var(--border-emphasis);
+  background: var(--control-bg);
 }
 
 /* Page header: primary outline CTA (New guest / booking / room type, dashboard, etc.) */
@@ -525,6 +532,34 @@ main.app-main > search.has-value .search-bar-clear {
 .form-view-layout--group:last-child {
   margin-bottom: 0;
 }
+
+/* JSONForm view: guest group — full-width CTA below fields when `data.guest.id` is set */
+main .guest-section-view__profile-cta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: var(--space-xl);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  text-align: center;
+  color: var(--brand-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+main .guest-section-view__profile-cta:hover {
+  background: var(--semantic-info-bg);
+  border-color: var(--border-emphasis);
+  color: var(--brand-primary-hover);
+}
+
 .form-view-layout__fields {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -851,6 +886,158 @@ main.app-main > search.has-value .search-bar-clear {
   background: var(--semantic-error-bg);
   color: var(--status-canceled);
   border: 1px solid rgba(229, 115, 115, 0.4);
+}
+
+/* Booking lifecycle toolbar: same strip on booking detail and booking side panel (below title row). */
+main .booking-lifecycle-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--canvas) 55%, var(--pico-card-background-color));
+  flex-shrink: 0;
+}
+
+main .booking-panel .booking-lifecycle-toolbar {
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+/* Booking full-page detail: inset + radius to match content cards (e.g. guest “previous bookings” block). */
+main.app-main--fit-content .booking-lifecycle-toolbar.booking-detail-toolbar {
+  margin-left: var(--content-area-padding);
+  margin-right: var(--content-area-padding);
+  border-radius: var(--content-area-radius);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+main .booking-lifecycle-action {
+  margin: 0;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+main .booking-lifecycle-action:focus {
+  outline: none;
+}
+
+main .booking-lifecycle-action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.125rem color-mix(in srgb, var(--brand-primary) 35%, transparent);
+}
+
+main .booking-lifecycle-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Colors align with booking status chips: check-in → checked-in, check-out → checked-out, cancel → canceled. */
+main .booking-lifecycle-action--check-in {
+  background: var(--semantic-success-bg);
+  color: var(--status-checked-in);
+  border-color: rgba(45, 138, 62, 0.35);
+}
+
+main .booking-lifecycle-action--check-in:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--status-checked-in) 14%, var(--semantic-success-bg));
+  border-color: color-mix(in srgb, var(--status-checked-in) 45%, var(--border-default));
+}
+
+main .booking-lifecycle-action--check-out {
+  background: var(--surface-2);
+  color: var(--ink-secondary);
+  border-color: var(--border-subtle);
+}
+
+main .booking-lifecycle-action--check-out:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--status-checked-out) 12%, var(--surface-2));
+  color: var(--status-checked-out);
+  border-color: color-mix(in srgb, var(--status-checked-out) 28%, var(--border-default));
+}
+
+main .booking-lifecycle-action--cancel {
+  background: var(--semantic-error-bg);
+  color: var(--status-canceled);
+  border-color: rgba(229, 115, 115, 0.4);
+}
+
+main .booking-lifecycle-action--cancel:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--status-canceled) 12%, var(--semantic-error-bg));
+  border-color: color-mix(in srgb, var(--status-canceled) 35%, var(--border-emphasis));
+}
+
+/* Grid / popover menu (teleported under body): same accents as toolbar. Not under `main` selector. */
+.booking-lifecycle-menu-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  padding-left: calc(var(--space-md) - 3px);
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  text-align: left;
+  color: var(--ink-primary);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.booking-lifecycle-menu-item:focus {
+  outline: none;
+}
+
+.booking-lifecycle-menu-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 0.0625rem var(--border-focus);
+}
+
+.booking-lifecycle-menu-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.booking-lifecycle-menu-item--check-in {
+  border-left-color: var(--status-checked-in);
+}
+
+.booking-lifecycle-menu-item--check-in:hover:not(:disabled) {
+  background: var(--semantic-success-bg);
+  color: var(--status-checked-in);
+}
+
+.booking-lifecycle-menu-item--check-out {
+  border-left-color: var(--status-checked-out);
+}
+
+.booking-lifecycle-menu-item--check-out:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--status-checked-out) 10%, var(--surface-2));
+  color: var(--status-checked-out);
+}
+
+.booking-lifecycle-menu-item--cancel {
+  border-left-color: var(--status-canceled);
+}
+
+.booking-lifecycle-menu-item--cancel:hover:not(:disabled) {
+  background: var(--semantic-error-bg);
+  color: var(--status-canceled);
 }
 
 /* Form-level error callouts (auth banners, page-level alerts) */

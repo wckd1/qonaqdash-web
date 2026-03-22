@@ -155,6 +155,103 @@ export function buildRoomOneOfFromRooms(rooms, nullOption) {
 }
 
 /**
+ * Union of GET …/rooms/available rows and any `booking.rooms[].roomID` already chosen in the form
+ * (so client AJV allows the same IDs the UI can show, including before fetch completes or as orphan rows).
+ *
+ * @param {Array<{ id: string, number?: string, room_type_id?: string, room_type_name?: string }>} [availableRooms]
+ * @param {Record<string, unknown>} [formData] - `{ booking: { rooms: [{ roomType, roomID, roomID_title?, roomType_title? }] } }`
+ * @returns {Array<{ id: string, number?: string, room_type_id?: string, room_type_name?: string }>}
+ */
+export function mergeAvailableRoomsWithFormRoomAssignments(availableRooms, formData) {
+  const list = Array.isArray(availableRooms) ? availableRooms : []
+  /** @type {Map<string, { id: string, number?: string, room_type_id?: string, room_type_name?: string }>} */
+  const byId = new Map()
+  for (const r of list) {
+    const id = r?.id != null ? String(r.id) : ''
+    if (!id) continue
+    byId.set(id, { ...r, id })
+  }
+  const rows = formData?.booking?.rooms
+  if (!Array.isArray(rows)) return [...byId.values()]
+  for (const row of rows) {
+    const id = row?.roomID
+    if (id == null || id === '') continue
+    const key = String(id)
+    if (byId.has(key)) continue
+    const rt = row?.roomType
+    byId.set(key, {
+      id: key,
+      number:
+        typeof row?.roomID_title === 'string' && row.roomID_title.trim() !== ''
+          ? row.roomID_title
+          : key,
+      room_type_id: rt != null && rt !== '' ? String(rt) : '',
+      room_type_name:
+        typeof row?.roomType_title === 'string' && row.roomType_title.trim() !== ''
+          ? row.roomType_title
+          : undefined,
+    })
+  }
+  return [...byId.values()]
+}
+
+/**
+ * Deep-clone a root booking JSON Schema and align `booking.rooms[].roomID` oneOf with
+ * {@link buildRoomOneOfFromRooms} so AJV matches the room select (dynamic options from /rooms/available).
+ * @param {Record<string, unknown>} schema - Root form schema
+ * @param {Array<{ id: string, number?: string, room_type_id?: string, room_type_name?: string }>} [availableRooms]
+ * @param {Record<string, unknown>} [formData] - Current form payload; merges chosen `roomID`s into allowed oneOf for validation
+ * @returns {Record<string, unknown>}
+ */
+export function bookingSchemaWithAvailableRoomIds(schema, availableRooms, formData) {
+  const cloned =
+    schema && typeof schema === 'object'
+      ? /** @type {Record<string, unknown>} */ (JSON.parse(JSON.stringify(schema)))
+      : {}
+  const merged = mergeAvailableRoomsWithFormRoomAssignments(availableRooms, formData)
+  if (merged.length === 0) return cloned
+
+  const roomsEntry = cloned.properties?.booking?.properties?.rooms
+  if (!roomsEntry || typeof roomsEntry !== 'object' || !roomsEntry.items) return cloned
+  let items = roomsEntry.items
+  if (Array.isArray(items)) items = items[0]
+  if (!items || typeof items !== 'object') return cloned
+  const roomIdProp = items.properties?.roomID
+  if (!roomIdProp || typeof roomIdProp !== 'object') return cloned
+
+  const existingOneOf = Array.isArray(roomIdProp.oneOf) ? roomIdProp.oneOf : []
+  const nullOpt = existingOneOf.filter((o) => o && (o.const == null || o.const === undefined))
+  if ('enum' in roomIdProp) delete roomIdProp.enum
+  roomIdProp.oneOf = buildRoomOneOfFromRooms(merged, nullOpt.length ? nullOpt : undefined)
+  return cloned
+}
+
+/**
+ * Room assigned to this row may be absent from GET …/rooms/available (still occupied by this booking).
+ * @param {{ value: string | null, label: string }[]} mapped
+ * @param {Record<string, unknown>} rowItem
+ * @returns {{ value: string | null, label: string }[]}
+ */
+function mergeAssignedRoomIntoSelectOptions(mapped, rowItem) {
+  const assignedId = rowItem?.roomID
+  if (assignedId == null || assignedId === '') return mapped
+  const hasAssigned = mapped.some((o) => o.value === assignedId)
+  if (hasAssigned) return mapped
+  const title =
+    typeof rowItem?.roomID_title === 'string' && rowItem.roomID_title.trim() !== ''
+      ? rowItem.roomID_title
+      : String(assignedId)
+  const nullIdx = mapped.findIndex((o) => o.value === null || o.value === '')
+  const insertAt = nullIdx >= 0 ? nullIdx + 1 : 0
+  const next = [...mapped]
+  next.splice(insertAt, 0, {
+    value: assignedId,
+    label: resolveFormCatalogString(title),
+  })
+  return next
+}
+
+/**
  * Filter room oneOf options for a single row in booking.rooms: by roomType and exclude already-selected room IDs in other rows.
  * @param {Record<string, unknown>} fullData - Full form data (has booking.rooms)
  * @param {Record<string, unknown>} rowItem - Current row (roomType, roomID)
@@ -163,26 +260,41 @@ export function buildRoomOneOfFromRooms(rooms, nullOption) {
  * @returns {{ value: string | null, label: string }[]}
  */
 export function getFilteredRoomSelectOptions(fullData, rowItem, currentIndex, oneOf) {
-  const rooms = fullData?.booking?.rooms
-  if (!Array.isArray(rooms) || !Array.isArray(oneOf) || oneOf.length === 0) {
-    return oneOf.map((opt) => ({
+  if (!Array.isArray(oneOf)) return []
+
+  const mapOneOf = () =>
+    oneOf.map((opt) => ({
+      value: opt.const ?? null,
+      label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
+    }))
+
+  const currentRoomType = rowItem?.roomType
+  const roomTypeUnset = currentRoomType == null || currentRoomType === ''
+  if (roomTypeUnset) {
+    const placeholders = oneOf.filter((opt) => opt.const == null || opt.const === undefined)
+    return placeholders.map((opt) => ({
       value: opt.const ?? null,
       label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
     }))
   }
-  const currentRoomType = rowItem?.roomType
+
+  const rooms = fullData?.booking?.rooms
+  if (!Array.isArray(rooms) || oneOf.length === 0) {
+    return mergeAssignedRoomIntoSelectOptions(mapOneOf(), rowItem)
+  }
+
   const selectedInOtherRows = new Set(
     rooms
       .filter((_, idx) => idx !== currentIndex)
       .map((r) => r?.roomID)
       .filter((id) => id != null),
   )
-  return oneOf
+  /** @type {{ value: string | null, label: string }[]} */
+  const mapped = oneOf
     .filter(
       (opt) =>
         (opt.const == null || opt.const === rowItem?.roomID || !selectedInOtherRows.has(opt.const)) &&
-        (!currentRoomType ||
-          opt.roomType === undefined ||
+        (opt.roomType === undefined ||
           opt.roomType === currentRoomType ||
           opt.roomTypeName === currentRoomType),
     )
@@ -190,6 +302,8 @@ export function getFilteredRoomSelectOptions(fullData, rowItem, currentIndex, on
       value: opt.const ?? null,
       label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
     }))
+
+  return mergeAssignedRoomIntoSelectOptions(mapped, rowItem)
 }
 
 /**

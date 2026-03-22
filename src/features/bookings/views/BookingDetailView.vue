@@ -51,17 +51,26 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { fetchGuests } from '@/features/guests/api'
+import { fetchAvailableRooms } from '@/features/property/api'
+import {
+  getBookingStatusFromResponse,
+  bookingStatusAllowsEdit,
+} from '@/features/bookings/bookingStatus'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 import { formatApiError } from '@/shared/i18n/apiError'
+import { bookingSchemaWithAvailableRoomIds } from '@/shared/jsonform/utils'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
+
+provide('guestSearch', (q) => fetchGuests({ q }))
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -74,14 +83,16 @@ const editing = ref(false)
 const editFormData = ref({})
 const errorsMap = ref({})
 const submitting = ref(false)
+const availableRooms = ref([])
+
+provide('availableRooms', availableRooms)
 
 const bookingId = computed(() => route.params.id ?? null)
 
-/** Edit only when status is confirmed. */
+/** Edit when API allows PUT (confirmed or checked_in). */
 const canEdit = computed(() => {
-  const b = currentBooking.value
-  const status = b?.status ?? b?.data?.status
-  return status === 'confirmed'
+  const status = getBookingStatusFromResponse(currentBooking.value)
+  return bookingStatusAllowsEdit(status)
 })
 
 /** Normalized { schema, uischema, data } when GET /api/bookings/:id returned FormResponse. */
@@ -135,6 +146,34 @@ watch(editing, (isEdit) => {
   }
 })
 
+watch(
+  () =>
+    editing.value
+      ? [editFormData.value?.booking?.checkIn, editFormData.value?.booking?.checkOut]
+      : [null, null],
+  async ([checkIn, checkOut]) => {
+    if (!checkIn || !checkOut) {
+      availableRooms.value = []
+      return
+    }
+    const from = new Date(checkIn)
+    const to = new Date(checkOut)
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      availableRooms.value = []
+      return
+    }
+    try {
+      const id = typeof route.params.id === 'string' ? route.params.id : ''
+      availableRooms.value = await fetchAvailableRooms(from, to, {
+        excludeBookingId: id || undefined,
+      })
+    } catch {
+      availableRooms.value = []
+    }
+  },
+  { immediate: true },
+)
+
 watch(() => route.params.id, (newId) => {
   if (newId) load()
   editing.value = false
@@ -160,10 +199,14 @@ async function onSave() {
   if (!bookingId.value) return
   errorsMap.value = {}
   concurrentError.value = ''
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(
+  const forValidate = JSON.parse(JSON.stringify(editFormData.value))
+  delete forValidate.status
+  const schemaForValidate = bookingSchemaWithAvailableRoomIds(
     bookingForm.value?.schema ?? {},
-    editFormData.value,
+    availableRooms.value,
+    forValidate,
   )
+  const { valid, errorsMap: clientErrors } = validateJsonFormData(schemaForValidate, forValidate)
   if (!valid) {
     errorsMap.value = clientErrors
     return
@@ -172,6 +215,7 @@ async function onSave() {
   try {
     const payload = JSON.parse(JSON.stringify(editFormData.value))
     delete payload.id
+    delete payload.status
     await store.updateBooking(bookingId.value, payload)
     editing.value = false
   } catch (err) {

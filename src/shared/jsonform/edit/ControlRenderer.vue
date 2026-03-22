@@ -231,6 +231,28 @@ function datetimeLocalToISO(localString) {
   return date.toISOString()
 }
 
+function normalizeRoomTypeForCompare(v) {
+  if (v == null || v === '') return ''
+  return String(v)
+}
+
+function roomTypeSelectionChanged(prev, next) {
+  return normalizeRoomTypeForCompare(prev) !== normalizeRoomTypeForCompare(next)
+}
+
+/** When room type changes, clear roomID so we do not keep a room from the previous type (not in filtered list). */
+function applyRoomsRowRoomTypeSelect(newVal) {
+  const prev = props.modelValue?.roomType
+  if (!roomTypeSelectionChanged(prev, newVal)) {
+    setLocalValue(newVal)
+    return
+  }
+  const nextRow = JSON.parse(JSON.stringify(props.modelValue))
+  setValueByPath(nextRow, path.value, newVal)
+  nextRow.roomID = null
+  emit('update:modelValue', nextRow)
+}
+
 function onSelectChange(e) {
   const raw = e.target.value
   if (raw === '' && isRoomIDInRoomsArray.value) {
@@ -238,12 +260,23 @@ function onSelectChange(e) {
     return
   }
   if (isSelectOptionNull(raw)) {
-    setLocalValue(null)
+    if (isRoomTypeInRoomsArray.value) {
+      applyRoomsRowRoomTypeSelect(null)
+    } else {
+      setLocalValue(null)
+    }
     return
   }
   if (inputType.value === 'number') {
     const n = raw === '' ? undefined : Number(raw)
-    setLocalValue(Number.isNaN(n) ? raw : n)
+    const newVal = Number.isNaN(n) ? raw : n
+    if (isRoomTypeInRoomsArray.value) {
+      applyRoomsRowRoomTypeSelect(newVal)
+    } else {
+      setLocalValue(newVal)
+    }
+  } else if (isRoomTypeInRoomsArray.value) {
+    applyRoomsRowRoomTypeSelect(raw)
   } else {
     setLocalValue(raw)
   }
@@ -306,16 +339,24 @@ const isRoomIDInRoomsArray = computed(
     Array.isArray(props.fullData?.booking?.rooms),
 )
 
+/** True when this control is roomType inside booking.rooms — changing type must clear roomID for that row */
+const isRoomTypeInRoomsArray = computed(
+  () =>
+    path.value?.length === 1 &&
+    path.value[0] === 'roomType' &&
+    props.arrayItemIndex !== undefined &&
+    Array.isArray(props.fullData?.booking?.rooms),
+)
+
 /**
- * When roomID in rooms array: disable until roomType is chosen.
- * roomType may be oneOf with `const: null` ("Любой"); null is a valid choice — do not treat it as unset.
+ * When roomID in rooms array: disable until a concrete room type UUID is chosen.
+ * `null` / empty means "not chosen" (including schema "any type" — do not list all rooms until a type is picked).
  */
 const effectiveDisabled = computed(() => {
   if (branchDisabled.value) return true
   if (!isRoomIDInRoomsArray.value) return false
   const rt = props.modelValue?.roomType
-  if (rt === undefined || rt === '') return true
-  return false
+  return rt == null || rt === ''
 })
 
 /** Build options for select from enum or oneOf. For roomID in booking.rooms: use injected availableRooms when present (from dates), else schema oneOf; then filter by roomType and exclude selected. */
@@ -326,6 +367,15 @@ const selectOptions = computed(() => {
   }
   if (Array.isArray(entry?.oneOf) || isRoomIDInRoomsArray.value) {
     let oneOf = entry?.oneOf ?? []
+    const rt = props.modelValue?.roomType
+    const roomTypeUnset = isRoomIDInRoomsArray.value && (rt == null || rt === '')
+    if (roomTypeUnset) {
+      const nullOpts = oneOf.filter((o) => o.const == null || o.const === undefined)
+      return nullOpts.map((opt) => ({
+        value: opt.const ?? null,
+        label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
+      }))
+    }
     if (isRoomIDInRoomsArray.value && availableRooms?.value?.length) {
       const nullOpt = oneOf.filter((o) => o.const == null)
       oneOf = buildRoomOneOfFromRooms(availableRooms.value, nullOpt.length ? nullOpt : undefined)

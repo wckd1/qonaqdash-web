@@ -54,9 +54,10 @@ export function createRoom(roomTypeId, number) {
  * Backend returns rooms that can be assigned; frontend uses this to populate roomID options when checkIn/checkOut change.
  * @param {Date | string | null} from - Start date (inclusive)
  * @param {Date | string | null} to - End date (exclusive)
+ * @param {{ excludeBookingId?: string }} [options] - With both dates set, pass booking id to send query `exclude` (rooms occupied only by that booking stay available; ignored without `from`+`to` per API).
  * @returns {Promise<Room[]>}
  */
-export function fetchAvailableRooms(from, to) {
+export function fetchAvailableRooms(from, to, options = {}) {
   const params = {}
   if (from != null) {
     const d = typeof from === 'string' ? new Date(from) : from
@@ -73,6 +74,15 @@ export function fetchAvailableRooms(from, to) {
       const month = String(d.getMonth() + 1).padStart(2, '0')
       params.to = `${day}.${month}.${d.getFullYear()}`
     }
+  }
+  const ex = options.excludeBookingId
+  if (
+    params.from &&
+    params.to &&
+    typeof ex === 'string' &&
+    ex.trim() !== ''
+  ) {
+    params.exclude = ex.trim()
   }
   return api
     .get('/api/property/rooms/available', { params })

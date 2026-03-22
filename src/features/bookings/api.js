@@ -11,7 +11,7 @@ import api from '@/shared/api/client'
 /**
  * GET /api/bookings/{id} returns FormResponse: schema, uischema, data (camelCase form data).
  * data.booking.rooms[] includes roomType, roomID and display fields roomType_title, roomID_title.
- * @typedef {{ schema?: unknown, uischema?: unknown, data?: { guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string, roomType_title?: string, roomID_title?: string }> } }, status?: string }} BookingFormResponse
+ * @typedef {{ schema?: unknown, uischema?: unknown, data?: { status?: string, guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string, roomType_title?: string, roomID_title?: string }> } }, status?: string }} BookingFormResponse
  */
 /**
  * Create/update booking body: `{ guest, booking }` only. Link an existing guest with `guest.id`; omit any top-level `id`.

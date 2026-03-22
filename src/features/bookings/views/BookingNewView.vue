@@ -33,6 +33,7 @@ import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import { formatApiError } from '@/shared/i18n/apiError'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
+import { bookingSchemaWithAvailableRoomIds } from '@/shared/jsonform/utils'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 
 provide('guestSearch', (q) => fetchGuests({ q }))
@@ -123,10 +124,12 @@ watch(
 
 async function onSubmit() {
   errorsMap.value = {}
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(
+  const schemaForValidate = bookingSchemaWithAvailableRoomIds(
     bookingForm.value?.schema ?? {},
+    availableRooms.value,
     formData.value,
   )
+  const { valid, errorsMap: clientErrors } = validateJsonFormData(schemaForValidate, formData.value)
   if (!valid) {
     errorsMap.value = clientErrors
     return

@@ -90,42 +90,46 @@ export const useBookingStore = defineStore('bookings', () => {
   /**
    * @param {string} id
    * @param {import('@/features/bookings/api').CreateBookingPayload} payload
-   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
   async function updateBooking(id, payload) {
-    const booking = await bookingsApi.updateBooking(id, payload)
-    currentBooking.value = booking
-    return booking
+    await bookingsApi.updateBooking(id, payload)
+    const formResponse = await bookingsApi.fetchBooking(id)
+    currentBooking.value = formResponse
+    return formResponse
   }
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
   async function checkIn(id) {
-    const booking = await bookingsApi.checkIn(id)
-    currentBooking.value = booking
-    return booking
+    await bookingsApi.checkIn(id)
+    const formResponse = await bookingsApi.fetchBooking(id)
+    currentBooking.value = formResponse
+    return formResponse
   }
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
   async function checkOut(id) {
-    const booking = await bookingsApi.checkOut(id)
-    currentBooking.value = booking
-    return booking
+    await bookingsApi.checkOut(id)
+    const formResponse = await bookingsApi.fetchBooking(id)
+    currentBooking.value = formResponse
+    return formResponse
   }
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/bookings/api').BookingFlat>}
+   * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
   async function cancel(id) {
-    const booking = await bookingsApi.cancel(id)
-    currentBooking.value = booking
-    return booking
+    await bookingsApi.cancel(id)
+    const formResponse = await bookingsApi.fetchBooking(id)
+    currentBooking.value = formResponse
+    return formResponse
   }
 
   function clearCurrentBooking() {

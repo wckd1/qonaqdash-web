@@ -14,7 +14,7 @@
 
 ## Feature Implementation
 
-- **Backend contract**: Implement against **[docs/requirements.md](docs/requirements.md)** as the shipped API and integration contract.
+- **Backend contract**: Implement against **[docs/requirements.md](docs/requirements.md)** as the shipped API and integration contract. **Do not edit `requirements.md` in this repo** — it is maintained by the backend; propose API changes only via **[docs/backend-change-requests.md](docs/backend-change-requests.md)** until they appear in requirements.
 - **Design reference**: Align with **[docs/design.md](docs/design.md)** and **[docs/design.html](docs/design.html)** plus tokens in `main.css`. If implementation changes a design decision (sidebar, tokens, patterns), update **both** `docs/design.md` and `docs/design.html` so docs stay authoritative.
 - **Backend coordination**: **[docs/backend-change-requests.md](docs/backend-change-requests.md)** is the queue for **outstanding** proposals to the backend team. Keep it accurate: add new items when needed; remove or shrink entries once they are reflected in `docs/requirements.md`.
 - **UI work — `/frontend-design` and `/interface-design`**: Use both skills when designing or building UI. **Before treating UI as done**, apply their checks as hard requirements, not optional polish — for example: intent and palette/depth tied to design tokens (not random values); interface-design **swap / squint / signature / token** tests; frontend-design coherence (hierarchy, motion, accessibility). If a check fails, fix the UI before shipping.

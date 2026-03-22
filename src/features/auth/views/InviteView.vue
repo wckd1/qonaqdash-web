@@ -67,6 +67,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { fetchInvite } from '@/features/auth/api'
+import { formatApiError } from '@/shared/i18n/apiError'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
 const { t } = useI18n()
@@ -89,7 +90,7 @@ onMounted(async () => {
     invite.value = await fetchInvite(route.params.token)
   } catch (err) {
     if (err.response) {
-      const msg = err.response.data?.error
+      const msg = formatApiError(err.response.data?.error)
       loadError.value = msg || t('auth.invite.loadErrorInvalid')
     } else {
       loadError.value = t('auth.login.errorNetwork')
@@ -115,7 +116,7 @@ async function handleSubmit() {
     router.push('/')
   } catch (err) {
     if (err.response) {
-      const msg = err.response.data?.error
+      const msg = formatApiError(err.response.data?.error)
       formError.value = msg || t('auth.invite.submitError')
     } else {
       formError.value = t('auth.login.errorNetwork')

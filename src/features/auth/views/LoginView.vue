@@ -38,6 +38,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
+import { formatApiError } from '@/shared/i18n/apiError'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
@@ -64,7 +65,7 @@ async function handleSubmit() {
     router.push(redirect)
   } catch (err) {
     if (err.response) {
-      const msg = err.response.data?.error
+      const msg = formatApiError(err.response.data?.error)
       formError.value = msg || t('auth.login.errorInvalid')
     } else {
       formError.value = t('auth.login.errorNetwork')

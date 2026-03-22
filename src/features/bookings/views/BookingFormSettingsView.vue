@@ -28,6 +28,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { updateBookingFormSchema } from '@/features/bookings/api'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { formatApiError } from '@/shared/i18n/apiError'
 import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
@@ -66,7 +67,7 @@ async function loadForm() {
     formData.value = normalizeFormData(res.data)
     hasLoaded.value = true
   } catch (err) {
-    loadError.value = err.response?.data?.error ?? t('formSettings.loadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('formSettings.loadFailed')
     hasLoaded.value = false
   } finally {
     loading.value = false
@@ -94,7 +95,7 @@ async function onSave() {
     bookingStore.replaceBookingFormTemplate(res)
     success(t('formSettings.saved'))
   } catch (err) {
-    const msg = err.response?.data?.error ?? t('formSettings.saveFailed')
+    const msg = formatApiError(err.response?.data?.error) || t('formSettings.saveFailed')
     saveError.value = msg
     notifyError(msg)
   } finally {

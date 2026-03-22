@@ -64,6 +64,7 @@ import SearchBar from '@/shared/components/SearchBar.vue'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { formatApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 300
 
@@ -120,7 +121,7 @@ async function load(params = {}, isInitial = false) {
   try {
     await store.fetchBookings(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || t('bookings.loadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('bookings.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

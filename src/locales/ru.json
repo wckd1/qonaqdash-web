@@ -112,7 +112,9 @@
     "name": "Название",
     "description": "Описание",
     "roomType": "Тип номера",
-    "roomNumber": "Номер комнаты"
+    "roomNumber": "Номер комнаты",
+    "rooms": "Номера",
+    "any": "Любой"
   },
   "guests": {
     "newGuest": "Новый гость",
@@ -151,7 +153,9 @@
     "formSettingsTitle": "Настройки формы бронирования",
     "guestPickerTitle": "Подходящие гости",
     "guestPickerClose": "Закрыть подсказки по гостям",
-    "guestPickerSearching": "Поиск…"
+    "guestPickerSearching": "Поиск…",
+    "formGuestInfo": "Информация о госте",
+    "formBookingDetails": "Детали бронирования"
   },
   "rooms": {
     "addType": "Добавить тип",
@@ -280,5 +284,81 @@
     "loadFailed": "Не удалось загрузить схему формы.",
     "saveFailed": "Не удалось сохранить форму.",
     "saved": "Форма сохранена."
+  },
+  "errors": {
+    "common": {
+      "internal_server_error": "Что-то пошло не так. Попробуйте снова.",
+      "request_body_required": "Требуется тело запроса.",
+      "invalid_request_payload": "Неверный формат запроса.",
+      "unauthorized": "Не авторизован.",
+      "missing_organization_context": "Отсутствует контекст организации.",
+      "missing_hotel_context": "Отсутствует контекст отеля.",
+      "invalid_booking_id": "Неверный идентификатор бронирования.",
+      "invalid_guest_id": "Неверный идентификатор гостя.",
+      "invalid_room_id": "Неверный идентификатор номера.",
+      "schema_uischema_required": "Требуются схема и UI-схема.",
+      "auth_header_missing": "Не указан заголовок авторизации.",
+      "auth_header_invalid": "Неверный формат заголовка авторизации.",
+      "jwt_expired": "Сессия истекла. Войдите снова.",
+      "jwt_invalid": "Недействительный или просроченный токен."
+    },
+    "iam": {
+      "invite_token_expired": "Срок действия приглашения истёк.",
+      "invite_token_invalid": "Ссылка приглашения недействительна.",
+      "invalid_credentials": "Неверная почта или пароль. Попробуйте снова.",
+      "registration_not_completed": "Регистрация не завершена.",
+      "user_already_registered": "Пользователь уже зарегистрирован.",
+      "invite_already_used": "Это приглашение уже использовано.",
+      "provision_conflict": "Организация или пользователь уже существует.",
+      "email_already_in_use": "Эта почта уже занята.",
+      "current_password_incorrect": "Неверный текущий пароль.",
+      "current_password_required": "Для нового пароля нужен текущий пароль.",
+      "invalid_email": "Неверная электронная почта.",
+      "unknown_setting_key": "Неизвестный ключ настройки.",
+      "invalid_setting_value": "Неверное значение настройки.",
+      "user_not_found": "Пользователь не найден.",
+      "provision_fields_required": "Укажите название организации, отеля и email пользователя.",
+      "password_required": "Требуется пароль.",
+      "email_password_required": "Требуются email и пароль.",
+      "secret_key_missing": "Требуется секретный ключ.",
+      "secret_key_invalid": "Неверный секретный ключ."
+    },
+    "guest": {
+      "not_found": "Гость не найден.",
+      "invalid_data_format": "Неверный формат данных.",
+      "form_missing_core": "В форме должны быть имя, фамилия, телефон, почта и группа main.",
+      "contact_required": "Укажите хотя бы почту или телефон.",
+      "first_name_required": "Требуется имя.",
+      "last_name_required": "Требуется фамилия."
+    },
+    "booking": {
+      "not_found": "Бронирование не найдено.",
+      "overbooking": "Нет свободных номеров на выбранный тип и даты.",
+      "concurrent_modification": "Бронирование изменено другим пользователем. Повторите попытку.",
+      "invalid_status_transition": "Недопустимое изменение статуса.",
+      "check_in_required_before_check_out": "Перед выездом нужно заселить гостя.",
+      "invalid_data_format": "Неверный формат данных.",
+      "dates_required": "Укажите даты заезда и выезда.",
+      "rooms_required": "Нужна хотя бы одна комната.",
+      "room_type_required_each_room": "Для каждой комнаты укажите тип.",
+      "form_missing_booking_group": "В форме должна быть группа бронирования и элементы управления.",
+      "guest_information_required": "Требуются данные гостя.",
+      "grid_invalid_from_date": "Неверная дата «с» (формат ГГГГ-ММ-ДД).",
+      "grid_invalid_to_date": "Неверная дата «по» (формат ГГГГ-ММ-ДД).",
+      "grid_from_before_to": "Дата «с» должна быть раньше «по».",
+      "grid_from_to_required": "Укажите параметры from и to."
+    },
+    "property": {
+      "room_not_found": "Номер не найден.",
+      "room_type_already_exists": "Тип номера уже существует.",
+      "room_already_exists": "Номер уже существует.",
+      "room_type_name_required": "Укажите название.",
+      "room_type_id_required": "Укажите тип номера.",
+      "room_number_required": "Укажите номер комнаты.",
+      "list_from_to_both_or_neither": "Укажите обе даты для фильтрации или не указывайте ни одной.",
+      "list_invalid_from_date": "Неверная дата «с» (формат дд.ММ.гггг).",
+      "list_invalid_to_date": "Неверная дата «по» (формат дд.ММ.гггг).",
+      "list_to_before_from": "Дата «по» не может быть раньше «с»."
+    }
   }
 }

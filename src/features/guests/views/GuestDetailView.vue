@@ -90,6 +90,7 @@ import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeGuestFormResponse } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
+import { formatApiError } from '@/shared/i18n/apiError'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -147,7 +148,7 @@ async function load() {
       store.clearCurrentGuest()
       notFound.value = true
     } else {
-      loadError.value = err.response?.data?.error || t('guests.guestLoadFailed')
+      loadError.value = formatApiError(err.response?.data?.error) || t('guests.guestLoadFailed')
     }
   }
 }
@@ -160,7 +161,7 @@ async function loadBookings() {
   try {
     previousBookings.value = await fetchGuestBookings(id)
   } catch (err) {
-    bookingsLoadError.value = err.response?.data?.error || t('guests.bookingsLoadFailed')
+    bookingsLoadError.value = formatApiError(err.response?.data?.error) || t('guests.bookingsLoadFailed')
     previousBookings.value = []
   } finally {
     bookingsLoading.value = false
@@ -192,7 +193,7 @@ async function onSave() {
     await store.updateGuest(guestId.value, editFormData.value)
     editing.value = false
   } catch (err) {
-    const msg = err.response?.data?.error ?? t('guests.saveEditFailed')
+    const msg = formatApiError(err.response?.data?.error) || t('guests.saveEditFailed')
     errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
   } finally {
     submitting.value = false

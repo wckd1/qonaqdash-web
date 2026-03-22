@@ -58,6 +58,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import ControlRenderer from './ControlRenderer.vue'
 import IconTrash from '../build/icons/IconTrash.vue'
 import { scopeToPath, getValueByPath, setValueByPath, getSchemaEntry } from '../utils'
@@ -110,8 +111,8 @@ const items = computed({
 
 const canRemove = computed(() => items.value.length > minItems.value)
 
-const label = computed(
-  () => props.uischema.label || schemaEntry.value?.title || '',
+const label = computed(() =>
+  resolveFormCatalogString(props.uischema.label || schemaEntry.value?.title || ''),
 )
 
 function fullDataForItem(index) {

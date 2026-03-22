@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { formatApiError } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const TOKEN_KEY = 'access_token'
@@ -42,12 +43,28 @@ api.interceptors.response.use(
       return Promise.reject(err)
     }
 
-    if (status === 409) {
-      showError(data?.error || 'Conflict: the resource was modified. Please retry.')
+    const url = String(err.config?.url || '')
+    const method = String(err.config?.method || '').toLowerCase()
+    /** Login, invite fetch, invite-complete: inline errors only, no global toast. */
+    if (method === 'get' && /\/api\/auth\/invite\//.test(url)) {
+      return Promise.reject(err)
+    }
+    if (
+      method === 'post' &&
+      (url.includes('/api/auth/login') || /\/api\/auth\/invite\/[^/]+$/.test(url))
+    ) {
       return Promise.reject(err)
     }
 
-    const message = data?.error || `Request failed (${status})`
+    if (status === 409) {
+      showError(
+        formatApiError(data?.error) ||
+          'Conflict: the resource was modified. Please retry.',
+      )
+      return Promise.reject(err)
+    }
+
+    const message = formatApiError(data?.error) || `Request failed (${status})`
     showError(message)
     return Promise.reject(err)
   },

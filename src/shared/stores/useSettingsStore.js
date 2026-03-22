@@ -1,3 +1,4 @@
+import { formatApiError } from '@/shared/i18n/apiError'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { i18n } from '@/i18n'
@@ -71,7 +72,8 @@ export const useSettingsStore = defineStore('settings', () => {
       }
       return data
     } catch (e) {
-      error.value = e?.response?.data?.error ?? e?.message ?? 'Failed to load account'
+      error.value =
+        formatApiError(e?.response?.data?.error) || e?.message || 'Failed to load account'
       throw e
     } finally {
       loading.value = false

@@ -68,6 +68,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as authApi from '@/features/auth/api'
+import { formatApiError } from '@/shared/i18n/apiError'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 
 const { t } = useI18n()
@@ -119,7 +120,7 @@ async function load() {
     currentPassword.value = ''
     newPassword.value = ''
   } catch (err) {
-    loadError.value = err.response?.data?.error || t('profile.loadError')
+    loadError.value = formatApiError(err.response?.data?.error) || t('profile.loadError')
   } finally {
     loading.value = false
   }

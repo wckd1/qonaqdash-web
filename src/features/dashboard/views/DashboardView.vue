@@ -85,6 +85,7 @@ import { fetchBookingGrid } from '@/features/bookings/api'
 import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
 import { parseLocalYmd, formatLocalYmd } from '@/features/bookings/utils/gridDates'
+import { formatApiError } from '@/shared/i18n/apiError'
 
 const STORAGE_PRESET = 'qonaqdash.dashboard.gridPreset'
 const STORAGE_CUSTOM = 'qonaqdash.dashboard.gridCustomRange'
@@ -189,7 +190,7 @@ async function loadGridData() {
     gridEntries.value = await fetchBookingGrid({ from: fromStr.value, to: toStr.value })
   } catch (err) {
     gridEntries.value = []
-    loadError.value = err.response?.data?.error ?? t('dashboard.loadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('dashboard.loadFailed')
   } finally {
     loading.value = false
   }

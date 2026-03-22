@@ -31,6 +31,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
+import { formatApiError } from '@/shared/i18n/apiError'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 
 provide('guestSearch', (q) => fetchGuests({ q }))
@@ -105,7 +106,7 @@ onMounted(async () => {
     if (!Array.isArray(formData.value.booking.rooms)) formData.value.booking.rooms = []
     await mergeRouteQueryIntoForm()
   } catch (err) {
-    loadError.value = err.response?.data?.error ?? t('bookings.formLoadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('bookings.formLoadFailed')
   } finally {
     loading.value = false
   }
@@ -128,7 +129,7 @@ async function onSubmit() {
     await store.createBooking(payload)
     router.push('/bookings')
   } catch (err) {
-    const msg = err.response?.data?.error ?? t('bookings.createFailed')
+    const msg = formatApiError(err.response?.data?.error) || t('bookings.createFailed')
     if (err.response?.data?.errors && typeof err.response.data.errors === 'object') {
       errorsMap.value = err.response.data.errors
     } else {

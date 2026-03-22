@@ -61,6 +61,7 @@ import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import GuestSidePanel from '@/features/guests/components/GuestSidePanel.vue'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
+import { formatApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 300
 
@@ -97,7 +98,7 @@ async function load(params = {}, isInitial = false) {
   try {
     await store.fetchGuests(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || t('guests.loadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('guests.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

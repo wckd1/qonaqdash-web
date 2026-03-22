@@ -112,7 +112,9 @@
     "name": "Name",
     "description": "Description",
     "roomType": "Room type",
-    "roomNumber": "Room number"
+    "roomNumber": "Room number",
+    "rooms": "Rooms",
+    "any": "Any"
   },
   "guests": {
     "newGuest": "New guest",
@@ -151,7 +153,9 @@
     "formSettingsTitle": "Booking settings",
     "guestPickerTitle": "Matching guests",
     "guestPickerClose": "Close guest suggestions",
-    "guestPickerSearching": "Searching…"
+    "guestPickerSearching": "Searching…",
+    "formGuestInfo": "Guest information",
+    "formBookingDetails": "Booking details"
   },
   "rooms": {
     "addType": "Add type",
@@ -280,5 +284,81 @@
     "loadFailed": "Failed to load form schema.",
     "saveFailed": "Failed to save form.",
     "saved": "Form saved."
+  },
+  "errors": {
+    "common": {
+      "internal_server_error": "Something went wrong. Please try again.",
+      "request_body_required": "Request body is required.",
+      "invalid_request_payload": "Invalid request payload.",
+      "unauthorized": "Unauthorized.",
+      "missing_organization_context": "Missing organization context.",
+      "missing_hotel_context": "Missing hotel context.",
+      "invalid_booking_id": "Invalid booking id.",
+      "invalid_guest_id": "Invalid guest id.",
+      "invalid_room_id": "Invalid room id.",
+      "schema_uischema_required": "Schema and UI schema are required.",
+      "auth_header_missing": "No authorization header is provided.",
+      "auth_header_invalid": "Invalid authorization header format.",
+      "jwt_expired": "Your session has expired. Please sign in again.",
+      "jwt_invalid": "Invalid or expired token."
+    },
+    "iam": {
+      "invite_token_expired": "This invitation link has expired.",
+      "invite_token_invalid": "This invitation link is invalid.",
+      "invalid_credentials": "Invalid email or password. Please try again.",
+      "registration_not_completed": "Registration is not completed.",
+      "user_already_registered": "User is already registered.",
+      "invite_already_used": "This invitation has already been used.",
+      "provision_conflict": "Organization or user already exists.",
+      "email_already_in_use": "This email is already in use.",
+      "current_password_incorrect": "Current password is incorrect.",
+      "current_password_required": "Current password is required to set a new password.",
+      "invalid_email": "Invalid email.",
+      "unknown_setting_key": "Unknown setting key.",
+      "invalid_setting_value": "Invalid setting value.",
+      "user_not_found": "User not found.",
+      "provision_fields_required": "Organization name, hotel name, and user email are required.",
+      "password_required": "Password is required.",
+      "email_password_required": "Email and password are required.",
+      "secret_key_missing": "Secret key is required.",
+      "secret_key_invalid": "Invalid secret key."
+    },
+    "guest": {
+      "not_found": "Guest not found.",
+      "invalid_data_format": "Invalid data format.",
+      "form_missing_core": "The form must include first name, last name, phone, email, and the main group.",
+      "contact_required": "At least one of email or phone is required.",
+      "first_name_required": "First name is required.",
+      "last_name_required": "Last name is required."
+    },
+    "booking": {
+      "not_found": "Booking not found.",
+      "overbooking": "No room availability for the requested type and dates.",
+      "concurrent_modification": "Booking was modified concurrently. Please retry.",
+      "invalid_status_transition": "Invalid status transition.",
+      "check_in_required_before_check_out": "Booking must be checked in before check out.",
+      "invalid_data_format": "Invalid data format.",
+      "dates_required": "Check-in and check-out dates are required.",
+      "rooms_required": "At least one room is required.",
+      "room_type_required_each_room": "Room type is required for each room.",
+      "form_missing_booking_group": "Form must contain required booking group and controls.",
+      "guest_information_required": "Guest information is required.",
+      "grid_invalid_from_date": "Invalid from date (use YYYY-MM-DD).",
+      "grid_invalid_to_date": "Invalid to date (use YYYY-MM-DD).",
+      "grid_from_before_to": "From date must be before to date.",
+      "grid_from_to_required": "From and to query parameters are required."
+    },
+    "property": {
+      "room_not_found": "Room not found.",
+      "room_type_already_exists": "Room type already exists.",
+      "room_already_exists": "Room already exists.",
+      "room_type_name_required": "Name is required.",
+      "room_type_id_required": "Room type id is required.",
+      "room_number_required": "Room number is required.",
+      "list_from_to_both_or_neither": "Provide both from and to dates for filtering, or omit both.",
+      "list_invalid_from_date": "Invalid from date (use dd.MM.yyyy).",
+      "list_invalid_to_date": "Invalid to date (use dd.MM.yyyy).",
+      "list_to_before_from": "To date must not be before from date."
+    }
   }
 }

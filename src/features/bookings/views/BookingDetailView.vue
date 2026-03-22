@@ -60,6 +60,7 @@ import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
+import { formatApiError } from '@/shared/i18n/apiError'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -117,7 +118,7 @@ async function load() {
       store.clearCurrentBooking()
       notFound.value = true
     } else {
-      loadError.value = err.response?.data?.error || t('bookings.detailLoadFailed')
+      loadError.value = formatApiError(err.response?.data?.error) || t('bookings.detailLoadFailed')
     }
   }
 }
@@ -166,10 +167,11 @@ async function onSave() {
     editing.value = false
   } catch (err) {
     if (err.response?.status === 409) {
-      concurrentError.value = err.response?.data?.error ?? t('bookings.concurrent')
+      concurrentError.value =
+        formatApiError(err.response?.data?.error) || t('bookings.concurrent')
       await load()
     } else {
-      const msg = err.response?.data?.error ?? t('bookings.saveFailed')
+      const msg = formatApiError(err.response?.data?.error) || t('bookings.saveFailed')
       errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
     }
   } finally {

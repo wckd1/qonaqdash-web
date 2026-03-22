@@ -3,6 +3,7 @@
  */
 
 import { i18n } from '@/i18n'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { intlLocaleFromAppLocale } from '@/shared/i18n/resolveLocale'
 
 /**
@@ -38,7 +39,7 @@ export function isGeneratedFormBuilderGroupId(id) {
  */
 export function resolveGroupTitle(uischema) {
   const label = uischema?.label
-  if (typeof label === 'string' && label.trim()) return label.trim()
+  if (typeof label === 'string' && label.trim()) return resolveFormCatalogString(label.trim())
   const id = uischema?.id
   if (isGeneratedFormBuilderGroupId(id)) return ''
   if (id === 'main') return ''
@@ -156,7 +157,7 @@ export function getFilteredRoomSelectOptions(fullData, rowItem, currentIndex, on
   if (!Array.isArray(rooms) || !Array.isArray(oneOf) || oneOf.length === 0) {
     return oneOf.map((opt) => ({
       value: opt.const ?? null,
-      label: opt.title ?? String(opt.const ?? ''),
+      label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
     }))
   }
   const currentRoomType = rowItem?.roomType
@@ -177,7 +178,7 @@ export function getFilteredRoomSelectOptions(fullData, rowItem, currentIndex, on
     )
     .map((opt) => ({
       value: opt.const ?? null,
-      label: opt.title ?? String(opt.const ?? ''),
+      label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
     }))
 }
 

@@ -161,6 +161,7 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { formatApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 300
 
@@ -267,7 +268,7 @@ async function load(params = {}, isInitial = false) {
     await store.fetchRoomTypes(params)
     await store.fetchRooms(params)
   } catch (err) {
-    loadError.value = err.response?.data?.error || t('rooms.loadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('rooms.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

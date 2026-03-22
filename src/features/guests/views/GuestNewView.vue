@@ -29,6 +29,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
+import { formatApiError } from '@/shared/i18n/apiError'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { guestToForm } from '@/shared/jsonform/normalizeFormResponse'
 
@@ -50,7 +51,7 @@ onMounted(async () => {
     guestForm.value = await store.fetchGuestForm()
     formData.value = { ...(guestForm.value.data ?? {}) }
   } catch (err) {
-    loadError.value = err.response?.data?.error ?? t('guests.formLoadFailed')
+    loadError.value = formatApiError(err.response?.data?.error) || t('guests.formLoadFailed')
     guestForm.value = guestToForm({})
     formData.value = { ...guestForm.value.data }
   } finally {
@@ -65,7 +66,7 @@ async function onSubmit() {
     await store.createGuest(formData.value)
     router.push('/guests')
   } catch (err) {
-    const msg = err.response?.data?.error ?? t('guests.saveFailed')
+    const msg = formatApiError(err.response?.data?.error) || t('guests.saveFailed')
     if (err.response?.data?.errors) {
       errorsMap.value = err.response.data.errors
     } else {

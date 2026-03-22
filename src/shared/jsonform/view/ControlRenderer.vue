@@ -21,6 +21,7 @@
 <script setup>
 import { computed } from 'vue'
 import ArrayRenderer from './ArrayRenderer.vue'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { scopeToPath, getValueByPath, getSchemaEntry, formatDateTime } from '../utils'
 import { evaluateRule } from '../useJsonFormRules'
 
@@ -37,7 +38,11 @@ const ruleModel = computed(() => props.fullData ?? props.modelValue)
 const ruleState = computed(() => evaluateRule(ctrl, ruleModel.value))
 const path = computed(() => scopeToPath(ctrl.scope))
 const schemaEntry = computed(() => getSchemaEntry(props.schema, path.value))
-const label = computed(() => ctrl.label || schemaEntry.value?.title || path.value?.join('.') || '')
+const label = computed(() =>
+  resolveFormCatalogString(
+    ctrl.label || schemaEntry.value?.title || path.value?.join('.') || '',
+  ),
+)
 
 const rawValue = computed(() => getValueByPath(props.modelValue, path.value))
 
@@ -51,7 +56,7 @@ const displayValue = computed(() => {
   }
   if (entry?.oneOf && Array.isArray(entry.oneOf)) {
     const match = entry.oneOf.find((opt) => opt.const === val)
-    return match?.title ?? String(val ?? '')
+    return resolveFormCatalogString(match?.title ?? String(val ?? ''))
   }
   if (entry?.enum && Array.isArray(entry.enum)) {
     return String(val ?? '')

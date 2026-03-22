@@ -28,6 +28,7 @@
 <script setup>
 import { computed } from 'vue'
 import ControlRenderer from './ControlRenderer.vue'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { scopeToPath, getValueByPath, getSchemaEntry } from '../utils'
 
 const props = defineProps({
@@ -62,5 +63,7 @@ const items = computed(() => {
   return Array.isArray(value) ? value : []
 })
 
-const label = computed(() => ctrl.label || schemaEntry.value?.title || '')
+const label = computed(() =>
+  resolveFormCatalogString(ctrl.label || schemaEntry.value?.title || ''),
+)
 </script>

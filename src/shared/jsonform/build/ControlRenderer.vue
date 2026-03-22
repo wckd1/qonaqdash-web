@@ -122,6 +122,7 @@
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ControlRenderer from './ControlRenderer.vue'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { scopeToPath, getSchemaEntry } from '../utils'
 import { canMutateBuildNode } from './buildChangability'
 import IconTrash from './icons/IconTrash.vue'
@@ -165,12 +166,13 @@ const itemSchemaPropertiesOrdered = computed(() => {
   return Object.keys(p).map((key) => [key, p[key]])
 })
 
-const label = computed(
-  () =>
+const label = computed(() =>
+  resolveFormCatalogString(
     props.uischema.label ||
-    schemaEntry.value?.title ||
-    path.value?.join('.') ||
-    '',
+      schemaEntry.value?.title ||
+      path.value?.join('.') ||
+      '',
+  ),
 )
 
 const isRequired = computed(() => {

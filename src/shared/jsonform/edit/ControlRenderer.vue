@@ -21,7 +21,7 @@
         :disabled="branchDisabled"
         @click="onActionClick"
       >
-        {{ uischema.options.action.label }}
+        {{ actionButtonLabel }}
       </button>
     </div>
   </template>
@@ -67,6 +67,7 @@
 <script setup>
 import { computed, inject } from 'vue'
 import ArrayRenderer from './ArrayRenderer.vue'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import {
   scopeToPath,
   getValueByPath,
@@ -108,15 +109,19 @@ const guestPickerAnchor = inject('guestPickerAnchor', null)
 
 const path = computed(() => scopeToPath(props.uischema.scope))
 const schemaEntry = computed(() => getSchemaEntry(props.schema, path.value))
-const label = computed(
-  () =>
+const label = computed(() =>
+  resolveFormCatalogString(
     props.uischema.label ||
-    schemaEntry.value?.title ||
-    path.value?.join('.') ||
-    '',
+      schemaEntry.value?.title ||
+      path.value?.join('.') ||
+      '',
+  ),
+)
+const actionButtonLabel = computed(() =>
+  resolveFormCatalogString(props.uischema.options?.action?.label ?? ''),
 )
 const inputId = computed(() => `jsonform-edit-${path.value?.join('-') || 'ctrl'}`)
-const placeholder = computed(() => schemaEntry.value?.title ?? '')
+const placeholder = computed(() => resolveFormCatalogString(schemaEntry.value?.title ?? ''))
 
 const localValue = computed({
   get() {
@@ -312,7 +317,7 @@ const effectiveDisabled = computed(() => {
 const selectOptions = computed(() => {
   const entry = schemaEntry.value
   if (Array.isArray(entry?.enum)) {
-    return entry.enum.map((v) => ({ value: v, label: String(v) }))
+    return entry.enum.map((v) => ({ value: v, label: resolveFormCatalogString(String(v)) }))
   }
   if (Array.isArray(entry?.oneOf) || isRoomIDInRoomsArray.value) {
     let oneOf = entry?.oneOf ?? []
@@ -331,7 +336,7 @@ const selectOptions = computed(() => {
     if (Array.isArray(entry?.oneOf)) {
       return entry.oneOf.map((opt) => ({
         value: opt.const,
-        label: opt.title ?? String(opt.const ?? ''),
+        label: resolveFormCatalogString(opt.title ?? String(opt.const ?? '')),
       }))
     }
   }

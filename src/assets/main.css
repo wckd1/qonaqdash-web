@@ -253,6 +253,8 @@ main.app-main > section.list-content > .list-content__viewport {
 /* Dashboard: `.dashboard-body__viewport` scrolls; booking panel is a sibling (same idea as lists). */
 main.app-main > section.dashboard-toolbar {
   flex: 0 0 auto;
+  width: 100%;
+  box-sizing: border-box;
   background: transparent;
   border: none;
   box-shadow: none;
@@ -1605,12 +1607,15 @@ main .btn-open-full-page:hover {
 /* ----- Dashboard range toolbar ----- */
 .dashboard-range-bar {
   --dashboard-control-h: 2.25rem;
+  --dashboard-range-cluster-gap: var(--space-md);
 
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-sm);
-  flex-shrink: 0;
+  column-gap: var(--dashboard-range-cluster-gap);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   padding: var(--space-sm) var(--space-md);
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);
@@ -1620,20 +1625,17 @@ main .btn-open-full-page:hover {
   -webkit-overflow-scrolling: touch;
 }
 
-.dashboard-range-sector {
+.dashboard-range-cluster {
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
   min-width: 0;
 }
 
-.dashboard-range-sector--dates {
-  display: flex;
-  align-items: center;
-  flex: 1 1 auto;
-  min-width: min(100%, 20rem);
-  flex-wrap: nowrap;
-  gap: var(--space-sm);
+.dashboard-range-cluster--start {
+  justify-content: flex-start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .dashboard-range-field {
@@ -1641,6 +1643,7 @@ main .btn-open-full-page:hover {
   align-items: center;
   gap: var(--space-xs);
   margin: 0;
+  max-width: 100%;
 }
 
 .dashboard-range-field-label {
@@ -1648,6 +1651,29 @@ main .btn-open-full-page:hover {
   font-size: var(--text-caption-size);
   font-weight: var(--text-label-weight);
   color: var(--ink-tertiary);
+}
+
+.dashboard-range-cluster--center {
+  justify-content: center;
+}
+
+.dashboard-range-cluster--end {
+  justify-content: flex-end;
+}
+
+.dashboard-range-sector {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dashboard-range-sector--nav-dates {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: var(--space-sm);
 }
 
 .dashboard-preset-select {
@@ -1680,13 +1706,6 @@ main .btn-open-full-page:hover {
   box-shadow: 0 0 0 0.0625rem var(--border-focus);
 }
 
-.dashboard-range-vr {
-  flex: 0 0 auto;
-  width: 1px;
-  height: 1.375rem;
-  background: var(--border-subtle);
-}
-
 .dashboard-today {
   margin: 0;
   flex: 0 0 auto;
@@ -1712,19 +1731,44 @@ main .btn-open-full-page:hover {
   background: var(--pico-card-background-color);
 }
 
-.dashboard-date-inline {
+.dashboard-range-nav {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
+  justify-content: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
   margin: 0;
-  min-width: 0;
+  width: var(--dashboard-control-h);
+  min-width: var(--dashboard-control-h);
+  height: var(--dashboard-control-h);
+  padding: 0;
+  color: var(--ink-secondary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
-.dashboard-date-inline-label {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-tertiary);
+.dashboard-range-nav:hover {
+  color: var(--ink-primary);
+  border-color: var(--border-emphasis);
+  background: var(--pico-card-background-color);
+}
+
+.dashboard-range-nav:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.dashboard-range-nav-icon {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 .dashboard-date-input {

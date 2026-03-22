@@ -359,6 +359,8 @@ select,
 textarea {
   padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
   box-sizing: border-box;
+  font-size: var(--text-label-size);
+  font-family: inherit;
 }
 input:not([type="checkbox"], [type="radio"]),
 select {
@@ -418,9 +420,7 @@ main.app-main > search input {
   border: none;
   background: transparent;
   padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
-  font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
-  font-family: inherit;
   line-height: 1.25;
   color: var(--pico-form-element-color);
   margin-bottom: 0;
@@ -640,8 +640,6 @@ main.app-main > search.has-value .search-bar-clear {
 .form-edit-control__input-wrap {
   min-width: 0;
 }
-.form-edit-control__input-wrap input,
-.form-edit-control__input-wrap select,
 .form-edit-control__input-wrap button {
   font-size: var(--text-label-size);
 }

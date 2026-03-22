@@ -69,6 +69,11 @@ const routes = [
         component: () => import('@/features/bookings/views/BookingFormSettingsView.vue'),
       },
       {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/features/auth/views/ProfileView.vue'),
+      },
+      {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         component: () => import('@/shared/views/NotFoundView.vue'),

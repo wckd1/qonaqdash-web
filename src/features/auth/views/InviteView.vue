@@ -65,6 +65,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { fetchInvite } from '@/features/auth/api'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
@@ -72,6 +73,7 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 
 const invite = ref(null)
 const inviteLoading = ref(true)
@@ -109,6 +111,7 @@ async function handleSubmit() {
 
   try {
     await authStore.completeInvite(route.params.token, password.value)
+    void settingsStore.fetchUserSettings().catch(() => {})
     router.push('/')
   } catch (err) {
     if (err.response) {

@@ -30,7 +30,11 @@ api.interceptors.response.use(
 
     if (status === 401) {
       const isAuthRequest = err.config?.url?.startsWith('/api/auth/')
-      if (!isAuthRequest) {
+      /** Wrong current password on profile update — must not clear session. */
+      const isAccountPut =
+        String(err.config?.method || '').toLowerCase() === 'put' &&
+        String(err.config?.url || '').includes('/api/account')
+      if (!isAuthRequest && !isAccountPut) {
         localStorage.removeItem(TOKEN_KEY)
         localStorage.removeItem(REFRESH_TOKEN_KEY)
         window.location.href = '/auth/login'

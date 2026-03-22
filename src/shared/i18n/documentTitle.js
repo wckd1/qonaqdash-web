@@ -25,6 +25,7 @@ const ROUTE_TITLE_KEYS = {
   'booking-detail': 'pageTitle.booking',
   'manage-guests-form': 'pageTitle.guestFormSettings',
   'manage-bookings-form': 'pageTitle.bookingFormSettings',
+  profile: 'pageTitle.profile',
   'not-found': 'pageTitle.notFound',
 }
 

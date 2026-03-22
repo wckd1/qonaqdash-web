@@ -20,3 +20,19 @@ export function fetchInvite(token) {
   return api.get(`/api/auth/invite/${token}`)
     .then(({ data }) => data)
 }
+
+/**
+ * @returns {Promise<{ account: { email: string }, settings: { locale: 'en' | 'ru' | null } }>}
+ */
+export function fetchAccount() {
+  return api.get('/api/account').then(({ data }) => data)
+}
+
+/**
+ * Partial update — omit keys you do not want to change.
+ * @param {Record<string, unknown>} body
+ * @returns {Promise<{ account: { email: string }, settings: { locale: 'en' | 'ru' | null } }>}
+ */
+export function updateAccount(body) {
+  return api.put('/api/account', body).then(({ data }) => data)
+}

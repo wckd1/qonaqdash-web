@@ -1,15 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { i18n } from '@/i18n'
+import * as authApi from '@/features/auth/api'
 import {
   LOCALE_STORAGE_KEY,
   SUPPORTED_LOCALES,
   normalizeLocale,
   resolveInitialLocale,
+  hasPinnedLocale,
 } from '@/shared/i18n/resolveLocale'
 
 export const useSettingsStore = defineStore('settings', () => {
   const locale = ref(resolveInitialLocale())
+  /** From last `GET /api/account` — for sidebar / profile. */
+  const accountEmail = ref(null)
   const userSettings = ref(null)
   const loading = ref(false)
   const error = ref(null)
@@ -44,20 +48,39 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   /**
-   * Load user preferences from the API when the account/settings endpoint is integrated.
-   * Assign non-locale fields from the response to `userSettings` always.
+   * `GET /api/account` — updates `accountEmail`, `userSettings`, and optionally UI locale.
    *
-   * **Locale merge rule** (implement only here; use `hasPinnedLocale()` from `@/shared/i18n/resolveLocale`):
-   * 1. If the user pinned a language (`hasPinnedLocale()`), do **not** change `locale` from the server; UI stays on the pin.
-   * 2. Else if the response includes a supported `locale` / `language` field → `setLocale(code, { persist: false })`.
-   * 3. Else leave `locale` as already set from boot (`resolveInitialLocale()`).
+   * **Locale merge rule:**
+   * 1. Pinned device language (`hasPinnedLocale()`) → do not change `locale` from the server.
+   * 2. Else if `settings.locale` is `en` or `ru` → `setLocale(code, { persist: false })`.
+   * 3. Else leave `locale` as already set from boot.
    */
   async function fetchUserSettings() {
-    return Promise.resolve(null)
+    loading.value = true
+    error.value = null
+    try {
+      const data = await authApi.fetchAccount()
+      accountEmail.value = data?.account?.email ?? null
+      const settings = data?.settings && typeof data.settings === 'object' ? { ...data.settings } : {}
+      userSettings.value = Object.keys(settings).length ? settings : null
+      if (!hasPinnedLocale()) {
+        const loc = settings.locale
+        if (loc === 'en' || loc === 'ru') {
+          setLocale(loc, { persist: false })
+        }
+      }
+      return data
+    } catch (e) {
+      error.value = e?.response?.data?.error ?? e?.message ?? 'Failed to load account'
+      throw e
+    } finally {
+      loading.value = false
+    }
   }
 
   return {
     locale,
+    accountEmail,
     userSettings,
     loading,
     error,

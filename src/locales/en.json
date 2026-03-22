@@ -63,7 +63,25 @@
     "bookingWithGuest": "Booking — {name}",
     "guestFormSettings": "Guest form",
     "bookingFormSettings": "Booking form",
+    "profile": "Profile",
     "notFound": "Page not found"
+  },
+  "profile": {
+    "title": "Profile",
+    "accountSection": "Account",
+    "email": "Email",
+    "passwordSection": "Change password",
+    "passwordHint": "Leave blank to keep your current password.",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "currentPasswordRequired": "Enter your current password to set a new one.",
+    "settingsSection": "Settings",
+    "languageHint": "Interface language. The device language is used by default.",
+    "language": "Language",
+    "languageUnset": "Not set (follow device)",
+    "languageEn": "English",
+    "languageRu": "Russian",
+    "loadError": "Could not load your profile. Please try again."
   },
   "common": {
     "loading": "Loading…",

@@ -198,11 +198,15 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
+const { accountEmail } = storeToRefs(settingsStore)
 
 /** Form/detail pages: main content height fits content instead of filling available space. */
 const isFormPage = computed(() => {
@@ -212,6 +216,7 @@ const isFormPage = computed(() => {
     p === '/bookings/new' ||
     p === '/manage/guests/form' ||
     p === '/manage/bookings/form' ||
+    p === '/profile' ||
     /^\/guests\/[^/]+$/.test(p) ||
     /^\/bookings\/[^/]+$/.test(p)
   )
@@ -248,7 +253,7 @@ watch(
 )
 
 const userName = computed(() => {
-  return authStore.user?.email || 'User'
+  return accountEmail.value || authStore.user?.email || 'User'
 })
 
 function toggleSidebar() {
@@ -268,6 +273,7 @@ function handleClickOutside(e) {
 
 function handleProfile() {
   userMenuOpen.value = false
+  router.push({ name: 'profile' })
 }
 
 function logout() {

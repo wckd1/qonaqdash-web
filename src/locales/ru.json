@@ -63,7 +63,25 @@
     "bookingWithGuest": "Бронирование — {name}",
     "guestFormSettings": "Форма гостя",
     "bookingFormSettings": "Форма бронирования",
+    "profile": "Профиль",
     "notFound": "Страница не найдена"
+  },
+  "profile": {
+    "title": "Профиль",
+    "accountSection": "Аккаунт",
+    "email": "Эл. почта",
+    "passwordSection": "Смена пароля",
+    "passwordHint": "Оставьте поля пустыми, чтобы не менять пароль.",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "currentPasswordRequired": "Введите текущий пароль, чтобы задать новый.",
+    "settingsSection": "Настройки",
+    "languageHint": "Язык интерфейса. По умолчанию используется язык устройства.",
+    "language": "Язык",
+    "languageUnset": "Не задан (как на устройстве)",
+    "languageEn": "English",
+    "languageRu": "Русский",
+    "loadError": "Не удалось загрузить профиль. Попробуйте снова."
   },
   "common": {
     "loading": "Загрузка…",

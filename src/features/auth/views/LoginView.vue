@@ -39,12 +39,14 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 
 const email = ref('')
 const password = ref('')
@@ -57,6 +59,7 @@ async function handleSubmit() {
 
   try {
     await authStore.login(email.value, password.value)
+    void settingsStore.fetchUserSettings().catch(() => {})
     const redirect = route.query.redirect || '/'
     router.push(redirect)
   } catch (err) {

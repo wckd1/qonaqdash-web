@@ -111,6 +111,19 @@
           </summary>
           <div id="sidebar-settings-items" class="nav-group__items">
             <router-link
+              to="/manage/hotel"
+              class="nav-link nav-sublink"
+              :class="{ 'nav-link--active': $route.path === '/manage/hotel' }"
+            >
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+                <path d="M6 12h4v10H6z" />
+                <path d="M14 12h4v10h-4z" />
+                <path d="M6 12V8h12v4" />
+              </svg>
+              <span class="nav-label">{{ t('nav.hotel') }}</span>
+            </router-link>
+            <router-link
               to="/manage/rooms"
               class="nav-link nav-sublink"
               :class="{ 'nav-link--active': $route.path === '/manage/rooms' }"
@@ -216,6 +229,7 @@ const isFormPage = computed(() => {
     p === '/bookings/new' ||
     p === '/manage/guests/form' ||
     p === '/manage/bookings/form' ||
+    p === '/manage/hotel' ||
     p === '/profile' ||
     /^\/guests\/[^/]+\/details$/.test(p) ||
     /^\/bookings\/[^/]+\/details$/.test(p)

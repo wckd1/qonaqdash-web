@@ -24,6 +24,11 @@ const routes = [
         component: () => import('@/features/dashboard/views/DashboardView.vue'),
       },
       {
+        path: 'manage/hotel',
+        name: 'manage-hotel',
+        component: () => import('@/features/property/views/HotelSettingsView.vue'),
+      },
+      {
         path: 'manage/rooms',
         name: 'property',
         component: () => import('@/features/property/views/RoomsView.vue'),

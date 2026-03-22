@@ -5,6 +5,7 @@
     "guests": "Guests",
     "settings": "Settings",
     "rooms": "Rooms",
+    "hotel": "Hotel",
     "guestForm": "Guests",
     "bookingForm": "Bookings"
   },
@@ -54,6 +55,7 @@
     "invite": "Accept invitation",
     "dashboard": "Dashboard",
     "rooms": "Rooms",
+    "hotelSettings": "Hotel",
     "guests": "Guests",
     "guestNew": "New guest",
     "guest": "Guest",
@@ -65,6 +67,13 @@
     "bookingFormSettings": "Booking form",
     "profile": "Profile",
     "notFound": "Page not found"
+  },
+  "hotel": {
+    "title": "Hotel",
+    "profileSection": "Hotel profile",
+    "displayName": "Display name",
+    "nameHint": "This name is shown to staff in the app and may appear on printed or exported materials.",
+    "loadError": "Could not load hotel profile. Please try again."
   },
   "profile": {
     "title": "Profile",
@@ -387,6 +396,8 @@
       "grid_from_to_required": "From and to query parameters are required."
     },
     "property": {
+      "hotel_not_found": "Hotel not found for your account. Contact support if this persists.",
+      "hotel_name_required": "Hotel name is required.",
       "room_not_found": "Room not found.",
       "room_type_already_exists": "Room type already exists.",
       "room_already_exists": "Room already exists.",

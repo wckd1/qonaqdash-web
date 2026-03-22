@@ -16,6 +16,7 @@ export function formatDocumentTitle(pagePart) {
 /** @type {Record<string, string>} */
 const ROUTE_TITLE_KEYS = {
   dashboard: 'pageTitle.dashboard',
+  'manage-hotel': 'pageTitle.hotelSettings',
   property: 'pageTitle.rooms',
   guests: 'pageTitle.guests',
   'guest-new': 'pageTitle.guestNew',

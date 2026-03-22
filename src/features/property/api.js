@@ -1,6 +1,26 @@
 import api from '@/shared/api/client'
 
 /**
+ * @typedef {{ id: string, name: string }} Hotel
+ */
+
+/**
+ * Current JWT hotel profile (display name).
+ * @returns {Promise<Hotel>}
+ */
+export function fetchHotel() {
+  return api.get('/api/property/hotel').then(({ data }) => data)
+}
+
+/**
+ * @param {string} name - Display name (trimmed server-side; required non-empty).
+ * @returns {Promise<Hotel>}
+ */
+export function updateHotel(name) {
+  return api.put('/api/property/hotel', { name }).then(({ data }) => data)
+}
+
+/**
  * @typedef {{ id: string, name: string, description?: string }} RoomType
  * @typedef {{ id: string, number: string, room_type_id: string, room_type_name?: string, status?: string }} Room
  */

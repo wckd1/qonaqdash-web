@@ -195,16 +195,32 @@
     "addRoomAria": "Add room to {name}",
     "searchPlaceholder": "Search by type name, room number…",
     "searchAria": "Search rooms",
+    "panelToolbarAria": "Room actions",
     "empty": "No room types yet. Click “Add type” to create one.",
     "emptySearch": "No rooms match your search.",
     "emptyInType": "No rooms in this type.",
     "loadFailed": "Failed to load rooms.",
     "addTypeTitle": "Add room type",
     "addRoomTitle": "Add room to {name}",
+    "editTypeTitle": "Edit room type",
+    "editRoomTitle": "Edit room",
     "namePlaceholder": "e.g. Double",
     "descPlaceholder": "Short description",
     "numberPlaceholder": "e.g. 101",
-    "otherType": "Other"
+    "otherType": "Other",
+    "removeTypeFromCatalog": "Remove",
+    "removeTypeAria": "Remove room type {name}",
+    "removeRoomFromCatalog": "Remove",
+    "removeRoomAria": "Remove room {number}",
+    "confirmRemoveTypeTitle": "Remove this room type?",
+    "confirmRemoveTypeBody": "“{name}” will be hidden from lists. Existing bookings can still show this type name.",
+    "confirmRemoveRoomTitle": "Remove this room?",
+    "confirmRemoveRoomBody": "Room {number} will be hidden from lists and availability. Existing bookings can still show this number.",
+    "roomStatus": {
+      "available": "Available",
+      "maintenance": "Maintenance",
+      "out_of_order": "Out of order"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -366,6 +382,7 @@
       "invalid_booking_id": "Invalid booking id.",
       "invalid_guest_id": "Invalid guest id.",
       "invalid_room_id": "Invalid room id.",
+      "invalid_room_type_id": "Invalid room type id.",
       "schema_uischema_required": "Schema and UI schema are required.",
       "auth_header_missing": "No authorization header is provided.",
       "auth_header_invalid": "Invalid authorization header format.",
@@ -430,7 +447,11 @@
       "list_from_to_both_or_neither": "Provide both from and to dates for filtering, or omit both.",
       "list_invalid_from_date": "Invalid from date (use dd.MM.yyyy).",
       "list_invalid_to_date": "Invalid to date (use dd.MM.yyyy).",
-      "list_to_before_from": "To date must not be before from date."
+      "list_to_before_from": "To date must not be before from date.",
+      "room_type_not_found": "Room type not found.",
+      "room_type_in_use": "This type still has rooms. Remove or reassign those rooms first.",
+      "invalid_room_status": "Invalid room status.",
+      "room_status_required": "Room status is required."
     }
   }
 }

@@ -48,6 +48,29 @@ export function createRoomType(name, description = '') {
 }
 
 /**
+ * @param {string} id
+ * @param {{ name: string, description?: string }} body
+ * @returns {Promise<RoomType>}
+ */
+export function updateRoomType(id, body) {
+  return api
+    .put(`/api/property/room-types/${id}`, {
+      name: body.name,
+      description: body.description || undefined,
+    })
+    .then(({ data }) => data)
+}
+
+/**
+ * Soft-deletes the room type (allowed only when no active rooms use it).
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export function deleteRoomType(id) {
+  return api.delete(`/api/property/room-types/${id}`).then(() => undefined)
+}
+
+/**
  * @param {{ q?: string }} [params] - Optional search query; backend filters by room number.
  * @returns {Promise<Room[]>}
  */
@@ -67,6 +90,30 @@ export function createRoom(roomTypeId, number) {
   return api
     .post('/api/property/rooms', { room_type_id: roomTypeId, number })
     .then(({ data }) => data)
+}
+
+/**
+ * @param {string} id
+ * @param {{ room_type_id: string, number: string, status: string }} body
+ * @returns {Promise<Room>}
+ */
+export function updateRoom(id, body) {
+  return api
+    .put(`/api/property/rooms/${id}`, {
+      room_type_id: body.room_type_id,
+      number: body.number,
+      status: body.status,
+    })
+    .then(({ data }) => data)
+}
+
+/**
+ * Soft-deletes the room (hidden from list / availability; historical references keep resolving).
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export function deleteRoom(id) {
+  return api.delete(`/api/property/rooms/${id}`).then(() => undefined)
 }
 
 /**

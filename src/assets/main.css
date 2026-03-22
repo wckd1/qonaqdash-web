@@ -900,7 +900,8 @@ main .booking-lifecycle-toolbar {
   flex-shrink: 0;
 }
 
-main .booking-panel .booking-lifecycle-toolbar {
+main .booking-panel .booking-lifecycle-toolbar,
+main .room-panel .booking-lifecycle-toolbar {
   padding-left: var(--space-lg);
   padding-right: var(--space-lg);
 }
@@ -2084,6 +2085,41 @@ main .accordion-desc {
   color: var(--ink-tertiary);
 }
 
+main .accordion-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-micro);
+  flex-shrink: 0;
+}
+
+main .btn-room-type-action {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-micro) var(--space-xs);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-tertiary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+main .btn-room-type-action:hover {
+  color: var(--ink-primary);
+  border-color: var(--border-emphasis);
+  background: var(--surface-1);
+}
+
+main .btn-room-type-action--danger:hover {
+  color: var(--semantic-error);
+  border-color: color-mix(in srgb, var(--semantic-error) 35%, var(--border-default));
+  background: var(--semantic-error-bg);
+}
+
 main .btn-add-room {
   display: inline-flex;
   align-items: center;
@@ -2156,26 +2192,50 @@ main .room-status-badge {
   color: var(--ink-secondary);
   background: var(--control-bg);
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
 }
 
+/* Borders align with `.status-chip--*` (booking status badges). */
 main .room-status-badge--confirmed {
   color: var(--status-confirmed);
   background: var(--semantic-info-bg);
+  border: 1px solid rgba(42, 157, 143, 0.3);
 }
 
 main .room-status-badge--checked-in {
   color: var(--status-checked-in);
   background: var(--semantic-success-bg);
+  border: 1px solid rgba(45, 138, 62, 0.3);
 }
 
 main .room-status-badge--checked-out {
   color: var(--status-checked-out);
   background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
 }
 
 main .room-status-badge--canceled {
   color: var(--status-canceled);
   background: var(--semantic-error-bg);
+  border: 1px solid rgba(229, 115, 115, 0.4);
+}
+
+main .room-status-badge--available {
+  color: var(--semantic-success);
+  background: var(--semantic-success-bg);
+  border: 1px solid rgba(45, 138, 62, 0.3);
+}
+
+main .room-status-badge--maintenance {
+  color: var(--semantic-warning);
+  background: var(--semantic-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--semantic-warning) 38%, var(--border-default));
+}
+
+main .room-status-badge--out-of-order {
+  color: var(--semantic-error);
+  background: var(--semantic-error-bg);
+  border: 1px solid rgba(229, 115, 115, 0.4);
 }
 
 main .room-status-empty {

@@ -537,6 +537,7 @@ onBeforeUnmount(() => {
   min-width: 11rem;
   padding: var(--space-xs);
   margin: 0;
+  overflow: hidden;
   background: var(--pico-card-background-color);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -554,7 +555,7 @@ onBeforeUnmount(() => {
   color: var(--ink-primary);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   cursor: pointer;
 }
 
@@ -564,8 +565,8 @@ onBeforeUnmount(() => {
 }
 
 .reservation-cell-menu-item:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+  outline: var(--pico-outline-width) solid var(--border-focus);
+  outline-offset: calc(-1 * var(--pico-outline-width));
 }
 
 .reservation-cell-menu-item:hover {

@@ -126,6 +126,36 @@
   --sidebar-user-menu-bg: #232f3e;
 }
 
+/*
+ * Pico v2 default theme sets --pico-primary-background (and siblings) on
+ * :root:not([data-theme=dark]) / [data-theme=light] with higher specificity than plain :root,
+ * so our --pico-primary: var(--brand-primary) alone does not recolor buttons. Map full primary stack to brand.
+ */
+[data-theme='light'],
+:root:not([data-theme='dark']) {
+  --pico-primary: var(--brand-primary);
+  --pico-primary-background: var(--brand-primary);
+  --pico-primary-border: var(--brand-primary);
+  --pico-primary-underline: rgba(42, 157, 143, 0.45);
+  --pico-primary-hover: var(--brand-primary-hover);
+  --pico-primary-hover-background: var(--brand-primary-hover);
+  --pico-primary-hover-border: var(--brand-primary-hover);
+  --pico-primary-hover-underline: var(--brand-primary-hover);
+  --pico-primary-focus: var(--brand-focus-ring);
+}
+
+[data-theme='dark'] {
+  --pico-primary: var(--brand-primary);
+  --pico-primary-background: var(--brand-primary);
+  --pico-primary-border: var(--brand-primary);
+  --pico-primary-underline: rgba(42, 157, 143, 0.5);
+  --pico-primary-hover: var(--brand-primary-hover);
+  --pico-primary-hover-background: var(--brand-primary-hover);
+  --pico-primary-hover-border: var(--brand-primary-hover);
+  --pico-primary-hover-underline: var(--brand-primary-hover);
+  --pico-primary-focus: var(--brand-focus-ring);
+}
+
 /* Base heading styles: one h1 per page (page title), h2 for sections/panels. Design consistent across pages. */
 h1 {
   font-family: var(--font-display);
@@ -144,7 +174,7 @@ h2 {
   margin: 0 0 var(--space-lg) 0;
 }
 
-/* Page layout: each route renders <header class="page-header"> (pinned) then route content. List/grid: outer section positions the shell; `.list-content__viewport` / `.dashboard-body__viewport` scroll; list/dashboard slide-panels are fixed full main-column height. Forms use `main > .form-content__viewport`. Guest detail column: `GuestDetailView.vue` scoped styles. */
+/* Page layout: each route renders <header class="page-header"> (pinned) then route content. List/grid: outer section positions the shell; `.list-content__viewport` scrolls; list slide-panels are fixed full main-column height. Forms use `main > .form-content__viewport`. Dashboard grid chrome is scoped in `DashboardView.vue`. Detail column layouts: view scoped styles. */
 main .page-header {
   margin: 0;
   padding-left: var(--space-md);
@@ -167,9 +197,14 @@ main .page-header-actions {
   display: flex;
   gap: var(--space-sm);
 }
-/* Secondary actions in header (Edit, Cancel): include direct children — not only `.page-header-actions`. */
-main .page-header button.btn-secondary,
-main .page-header-actions .btn-secondary {
+/*
+ * Secondary actions (Edit, Cancel, dialog dismiss, form builders): light surface + neutral border.
+ * Not Pico `.secondary` (slate filled). Same look in header, body, dialogs, auth.
+ */
+main.app-main .btn-secondary,
+main.auth-page .btn-secondary,
+main.ds-page .btn-secondary,
+.dialog .btn-secondary {
   font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
   color: var(--ink-secondary);
@@ -177,9 +212,16 @@ main .page-header-actions .btn-secondary {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   box-shadow: none;
+  cursor: pointer;
+  transition:
+    background-color var(--pico-transition),
+    border-color var(--pico-transition),
+    color var(--pico-transition);
 }
-main .page-header button.btn-secondary:hover:not(:disabled),
-main .page-header-actions .btn-secondary:hover:not(:disabled) {
+main.app-main .btn-secondary:hover:not(:disabled),
+main.auth-page .btn-secondary:hover:not(:disabled),
+main.ds-page .btn-secondary:hover:not(:disabled),
+.dialog .btn-secondary:hover:not(:disabled) {
   color: var(--ink-primary);
   border-color: var(--border-emphasis);
   background: var(--control-bg);
@@ -222,7 +264,7 @@ main .page-header .btn-icon {
 }
 
 /*
- * List views: `section.list-content` does not scroll (position + overflow hidden; guest/booking/room panels are fixed to the viewport).
+ * List views: `section.list-content` does not scroll (position + overflow hidden; side panels are fixed to the viewport).
  * `.list-content__viewport` is the scroll subtree so the table scrolls independently of the panel.
  */
 main.app-main > section.list-content {
@@ -247,43 +289,6 @@ main.app-main > section.list-content > .list-content__viewport {
   display: flex;
   flex-direction: column;
   gap: var(--content-area-gap);
-}
-
-/* Dashboard: `.dashboard-body__viewport` scrolls; booking panel is a sibling (same idea as lists). */
-main.app-main > section.dashboard-toolbar {
-  flex: 0 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0 var(--space-md);
-  overflow: visible;
-}
-
-main.app-main > section.dashboard-body {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  gap: var(--content-area-gap);
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0 var(--space-md) var(--space-md);
-  box-sizing: border-box;
-}
-
-main.app-main > section.dashboard-body > .dashboard-body__viewport {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--content-area-gap);
-  overflow-y: auto;
 }
 
 /* Form routes: JSONForm root scrolls here (see JsonFormEdit / JsonFormView / JsonFormBuild) */
@@ -327,6 +332,23 @@ main.app-main > .section-placeholder {
 [type="reset"],
 [type="submit"] {
   margin-bottom: 0;
+}
+
+/*
+ * Button typography: Pico defaults to font-size 1rem on buttons; app uses label scale everywhere
+ * (same as .page-header actions and .btn-add-outline — see design.html Buttons).
+ */
+main.app-main
+  :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
+main.app-main input[type='file']::file-selector-button,
+main.auth-page
+  :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
+main.auth-page input[type='file']::file-selector-button,
+main.ds-page
+  :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
+.dialog :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']) {
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
 }
 
 /* Pico: remove default bottom margin on block elements (we control spacing in layout) */
@@ -402,20 +424,28 @@ main.app-main > search:focus-within {
   border-color: var(--pico-form-element-active-border-color);
   box-shadow: 0 0 0 0.0625rem var(--pico-form-element-focus-color);
 }
+/*
+ * Pico targets [role=search] (native <search> maps to role search): `[role=search] > * { flex: 1 1 auto }`
+ * applies to the icon wrapper too — it steals width. Only the text field should grow.
+ */
+main.app-main > search > *:not(input) {
+  flex: 0 0 auto;
+}
 main.app-main > search .search-bar-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 var(--form-element-padding-horizontal);
   color: var(--pico-form-element-placeholder-color);
-  flex-shrink: 0;
 }
 main.app-main > search .search-bar-icon svg {
+  display: block;
+  flex-shrink: 0;
   width: 0.875rem;
   height: 0.875rem;
 }
 main.app-main > search input {
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
   min-height: unset;
   border: none;
@@ -436,7 +466,6 @@ main.app-main > search input:focus {
 }
 main.app-main > search .search-bar-clear {
   display: none;
-  flex-shrink: 0;
   padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
   color: var(--pico-form-element-placeholder-color);
   background: transparent;
@@ -525,8 +554,8 @@ main.app-main > search.has-value .search-bar-clear {
   margin-bottom: 0;
 }
 
-/* JSONForm view: guest group — full-width CTA below fields when `data.guest.id` is set */
-main .guest-section-view__profile-cta {
+/* JSONForm view: entity group — full-width profile CTA below fields when linked record id is set */
+main .form-entity-section__profile-cta {
   display: block;
   width: 100%;
   box-sizing: border-box;
@@ -546,7 +575,7 @@ main .guest-section-view__profile-cta {
     color 0.15s ease;
 }
 
-main .guest-section-view__profile-cta:hover {
+main .form-entity-section__profile-cta:hover {
   background: var(--semantic-info-bg);
   border-color: var(--border-emphasis);
   color: var(--brand-primary-hover);
@@ -880,8 +909,8 @@ main .guest-section-view__profile-cta:hover {
   border: 1px solid rgba(229, 115, 115, 0.4);
 }
 
-/* Booking lifecycle toolbar: same strip on booking detail and booking side panel (below title row). */
-main .booking-lifecycle-toolbar {
+/* Context action toolbar: horizontal strip under panel titles or page header (status-style actions). */
+main .action-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -892,22 +921,24 @@ main .booking-lifecycle-toolbar {
   flex-shrink: 0;
 }
 
-main .booking-panel .booking-lifecycle-toolbar,
-main .room-panel .booking-lifecycle-toolbar {
+main .side-panel .action-toolbar {
   padding-left: var(--space-lg);
   padding-right: var(--space-lg);
 }
 
-/* Booking full-page detail: inset + radius to match content cards (e.g. guest “previous bookings” block). */
-main.app-main--fit-content .booking-lifecycle-toolbar.booking-detail-toolbar {
+/*
+ * Full-page strip with horizontal inset (booking detail, short form routes, etc.).
+ * Corner radius matches `.action-toolbar__btn` (--radius-md).
+ */
+main .action-toolbar.action-toolbar--inset {
   margin-left: var(--content-area-padding);
   margin-right: var(--content-area-padding);
-  border-radius: var(--content-area-radius);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
 }
 
-main .booking-lifecycle-action {
+main .action-toolbar__btn {
   margin: 0;
   padding: var(--space-xs) var(--space-md);
   font-size: var(--text-label-size);
@@ -922,118 +953,130 @@ main .booking-lifecycle-action {
     box-shadow 0.15s ease;
 }
 
-main .booking-lifecycle-action:focus {
+main .action-toolbar__btn:focus {
   outline: none;
 }
 
-main .booking-lifecycle-action:focus-visible {
+main .action-toolbar__btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 0.125rem color-mix(in srgb, var(--brand-primary) 35%, transparent);
 }
 
-main .booking-lifecycle-action:disabled {
+main .action-toolbar__btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Colors align with booking status chips: check-in → checked-in, check-out → checked-out, cancel → canceled. */
-main .booking-lifecycle-action--check-in {
+main .action-toolbar__btn--check-in {
   background: var(--semantic-success-bg);
   color: var(--status-checked-in);
   border-color: rgba(45, 138, 62, 0.35);
 }
 
-main .booking-lifecycle-action--check-in:hover:not(:disabled) {
+main .action-toolbar__btn--check-in:hover:not(:disabled) {
   background: color-mix(in srgb, var(--status-checked-in) 14%, var(--semantic-success-bg));
   border-color: color-mix(in srgb, var(--status-checked-in) 45%, var(--border-default));
 }
 
-main .booking-lifecycle-action--check-out {
+main .action-toolbar__btn--check-out {
   background: var(--surface-2);
   color: var(--ink-secondary);
   border-color: var(--border-subtle);
 }
 
-main .booking-lifecycle-action--check-out:hover:not(:disabled) {
+main .action-toolbar__btn--check-out:hover:not(:disabled) {
   background: color-mix(in srgb, var(--status-checked-out) 12%, var(--surface-2));
   color: var(--status-checked-out);
   border-color: color-mix(in srgb, var(--status-checked-out) 28%, var(--border-default));
 }
 
-main .booking-lifecycle-action--cancel {
+main .action-toolbar__btn--cancel {
   background: var(--semantic-error-bg);
   color: var(--status-canceled);
   border-color: rgba(229, 115, 115, 0.4);
 }
 
-main .booking-lifecycle-action--cancel:hover:not(:disabled) {
+main .action-toolbar__btn--cancel:hover:not(:disabled) {
   background: color-mix(in srgb, var(--status-canceled) 12%, var(--semantic-error-bg));
   border-color: color-mix(in srgb, var(--status-canceled) 35%, var(--border-emphasis));
 }
 
-/* Grid / popover menu (teleported under body): same accents as toolbar. Not under `main` selector. */
-.booking-lifecycle-menu-item {
+/*
+ * Popover menu rows (often teleported under `body`). Accented modifiers match `.action-toolbar__btn` palettes; `--plain` is neutral (no left accent).
+ */
+.menu-row {
+  --menu-accent: transparent;
   display: block;
   width: 100%;
   margin: 0;
   padding: var(--space-sm) var(--space-md);
-  padding-left: calc(var(--space-md) - 3px);
   border: none;
-  border-left: 3px solid transparent;
-  border-radius: var(--radius-sm);
+  /* Square corners inside padded popovers; parent radius + overflow clips (avoids border+radius paint bugs). */
+  border-radius: 0;
   font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
   text-align: left;
   color: var(--ink-primary);
   background: transparent;
   cursor: pointer;
+  box-shadow: inset 3px 0 0 0 var(--menu-accent);
   transition:
     background 0.12s ease,
     color 0.12s ease;
 }
 
-.booking-lifecycle-menu-item:focus {
+.menu-row--plain {
+  --menu-accent: transparent;
+}
+
+.menu-row--plain:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--ink-primary);
+}
+
+.menu-row:focus {
   outline: none;
 }
 
-.booking-lifecycle-menu-item:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 0.0625rem var(--border-focus);
+.menu-row:focus-visible {
+  outline: var(--pico-outline-width) solid var(--border-focus);
+  outline-offset: calc(-1 * var(--pico-outline-width));
 }
 
-.booking-lifecycle-menu-item:disabled {
+.menu-row:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.booking-lifecycle-menu-item--check-in {
-  border-left-color: var(--status-checked-in);
+.menu-row--check-in {
+  --menu-accent: var(--status-checked-in);
 }
 
-.booking-lifecycle-menu-item--check-in:hover:not(:disabled) {
+.menu-row--check-in:hover:not(:disabled) {
   background: var(--semantic-success-bg);
   color: var(--status-checked-in);
 }
 
-.booking-lifecycle-menu-item--check-out {
-  border-left-color: var(--status-checked-out);
+.menu-row--check-out {
+  --menu-accent: var(--status-checked-out);
 }
 
-.booking-lifecycle-menu-item--check-out:hover:not(:disabled) {
+.menu-row--check-out:hover:not(:disabled) {
   background: color-mix(in srgb, var(--status-checked-out) 10%, var(--surface-2));
   color: var(--status-checked-out);
 }
 
-.booking-lifecycle-menu-item--cancel {
-  border-left-color: var(--status-canceled);
+.menu-row--cancel {
+  --menu-accent: var(--status-canceled);
 }
 
-.booking-lifecycle-menu-item--cancel:hover:not(:disabled) {
+.menu-row--cancel:hover:not(:disabled) {
   background: var(--semantic-error-bg);
   color: var(--status-canceled);
 }
 
-/* Form-level error callouts (auth banners, page-level alerts) */
+/* Form-level error callouts (auth banners, page-level — not `.form-field-error`) */
 .form-error {
   background: var(--semantic-error-bg);
   border: 1px solid var(--border-emphasis);
@@ -1052,9 +1095,10 @@ main .booking-lifecycle-action--cancel:hover:not(:disabled) {
   margin: var(--space-sm) 0 0 0;
 }
 
-.invite-info {
-  background: var(--semantic-info-bg);
-  border: 1px solid var(--border-default);
+/* Form-level success (saved, completed — not field-level validation) */
+.form-success {
+  background: var(--semantic-success-bg);
+  border: 1px solid color-mix(in srgb, var(--semantic-success) 32%, var(--border-default));
   border-radius: var(--radius-lg);
   padding: var(--space-sm) var(--space-md);
   margin-bottom: var(--space-lg);
@@ -1062,8 +1106,23 @@ main .booking-lifecycle-action--cancel:hover:not(:disabled) {
   color: var(--ink-primary);
 }
 
-.invite-info strong {
-  color: var(--brand-primary);
+.form-success strong {
+  color: var(--semantic-success);
+}
+
+/* Form-level info / guidance (invite summary, tips — warning yellow tone, not brand teal) */
+.form-info {
+  background: var(--semantic-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--semantic-warning) 35%, var(--border-default));
+  border-radius: var(--radius-lg);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-lg);
+  font-size: var(--text-body-size);
+  color: var(--ink-primary);
+}
+
+.form-info strong {
+  color: var(--semantic-warning);
 }
 
 /* ----- App shell (flex column: topbar | [sidebar + main]) ----- */
@@ -1614,6 +1673,139 @@ main table.list-table tbody tr:last-child td {
   border-bottom: none;
 }
 
+/*
+ * Row actions (embedded / related tables — not whole-row click targets).
+ * Text: .list-table__action on <a> or <button>. Icons: .list-table__icon-btn + --brand | --danger | --success.
+ */
+main table.list-table th.list-table__col--actions {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+main table.list-table td.list-table__cell--actions {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/*
+ * Pin the control cluster to the cell’s right edge (table layout + text-align).
+ * Use .list-table__actions when multiple controls would otherwise stack as blocks.
+ */
+main table.list-table .list-table__actions {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  vertical-align: middle;
+  text-align: start;
+}
+
+main table.list-table .list-table__action {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--brand-primary);
+  text-decoration: none;
+  cursor: pointer;
+  line-height: inherit;
+}
+
+main table.list-table .list-table__action:hover {
+  color: var(--brand-primary-hover);
+  text-decoration: underline;
+}
+
+main table.list-table .list-table__action:focus {
+  outline: none;
+}
+
+main table.list-table .list-table__action:focus-visible {
+  outline: var(--pico-outline-width) solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+main table.list-table .list-table__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+main table.list-table .list-table__icon-btn:hover {
+  color: var(--ink-primary);
+  background: var(--surface-2);
+  border-color: var(--border-subtle);
+}
+
+main table.list-table .list-table__icon-btn:focus {
+  outline: none;
+}
+
+main table.list-table .list-table__icon-btn:focus-visible {
+  outline: var(--pico-outline-width) solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+main table.list-table .list-table__icon-btn svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+  flex-shrink: 0;
+}
+
+main table.list-table .list-table__icon-btn--brand {
+  color: var(--brand-primary);
+}
+
+main table.list-table .list-table__icon-btn--brand:hover {
+  color: var(--brand-primary-hover);
+  background: var(--semantic-info-bg);
+  border-color: color-mix(in srgb, var(--brand-primary) 35%, var(--border-default));
+}
+
+main table.list-table .list-table__icon-btn--danger {
+  color: var(--semantic-error);
+}
+
+main table.list-table .list-table__icon-btn--danger:hover {
+  background: var(--semantic-error-bg);
+  border-color: color-mix(in srgb, var(--semantic-error) 40%, var(--border-default));
+}
+
+main table.list-table .list-table__icon-btn--success {
+  color: var(--semantic-success);
+}
+
+main table.list-table .list-table__icon-btn--success:hover {
+  background: var(--semantic-success-bg);
+  border-color: color-mix(in srgb, var(--semantic-success) 35%, var(--border-default));
+}
+
 /* List pages: section.list-content is a chrome-less shell; table carries the card + full content radius */
 main .list-content table.list-table {
   border-radius: var(--content-area-radius);
@@ -1621,29 +1813,25 @@ main .list-content table.list-table {
   box-shadow: var(--shadow-sm);
 }
 
-/* List rows (clickable) — only inside list sections, not e.g. guest detail bookings */
-main .list-content .guest-row,
-main .list-content .booking-row {
+/* List rows (clickable) — only inside list sections, not e.g. detail embedded tables */
+main .list-content .list-row {
   cursor: pointer;
   transition: background 0.12s ease;
 }
 
-main .list-content .guest-row:hover,
-main .list-content .booking-row:hover {
+main .list-content .list-row:hover {
   background: var(--surface-2);
 }
 
-main .list-content .guest-row--selected,
-main .list-content .booking-row--selected {
+main .list-content .list-row--selected {
   background: var(--semantic-info-bg);
 }
 
-main .list-content .guest-row--selected:hover,
-main .list-content .booking-row--selected:hover {
+main .list-content .list-row--selected:hover {
   background: var(--semantic-info-bg);
 }
 
-main .previous-bookings table.list-table tbody tr:hover {
+main .related-records table.list-table tbody tr:hover {
   background: var(--surface-2);
 }
 
@@ -1663,9 +1851,7 @@ main .previous-bookings table.list-table tbody tr:hover {
   transform: translateX(0);
 }
 
-main .guest-panel,
-main .booking-panel,
-main .room-panel {
+main .side-panel {
   position: fixed;
   top: calc(var(--app-topbar-height) + var(--space-sm));
   bottom: var(--space-sm);
@@ -1681,9 +1867,7 @@ main .room-panel {
   z-index: 50;
 }
 
-main .guest-panel-header,
-main .booking-panel-header,
-main .room-panel-header {
+main .side-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1692,9 +1876,7 @@ main .room-panel-header {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-main .guest-panel-header h2,
-main .booking-panel-header h2,
-main .room-panel-header h2 {
+main .side-panel-header h2 {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--text-subheading-size);
@@ -1703,9 +1885,7 @@ main .room-panel-header h2 {
   color: var(--ink-primary);
 }
 
-main .guest-panel-close,
-main .booking-panel-close,
-main .room-panel-close {
+main .side-panel-close {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1723,31 +1903,24 @@ main .room-panel-close {
     background 0.15s ease;
 }
 
-main .guest-panel-close:hover,
-main .booking-panel-close:hover,
-main .room-panel-close:hover {
+main .side-panel-close:hover {
   color: var(--ink-primary);
   background: var(--surface-2);
 }
 
-main .guest-panel-close svg,
-main .booking-panel-close svg,
-main .room-panel-close svg {
+main .side-panel-close svg {
   width: 18px;
   height: 18px;
 }
 
-main .guest-panel-body,
-main .booking-panel-body,
-main .room-panel-body {
+main .side-panel-body {
   flex: 1;
   min-height: 0;
   padding: var(--space-lg);
   overflow-y: auto;
 }
 
-main .guest-panel-footer,
-main .booking-panel-footer {
+main .side-panel-footer {
   flex-shrink: 0;
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--border-subtle);
@@ -1755,31 +1928,23 @@ main .booking-panel-footer {
   justify-content: flex-end;
 }
 
-main .guest-panel-dl,
-main .booking-panel-dl,
-main .room-panel-dl {
+main .side-panel-dl {
   margin: 0;
   font-size: var(--text-body-size);
 }
 
-main .guest-panel-dl dt,
-main .booking-panel-dl dt,
-main .room-panel-dl dt {
+main .side-panel-dl dt {
   font-weight: var(--text-label-weight);
   color: var(--ink-tertiary);
   margin-top: var(--space-sm);
   margin-bottom: var(--space-micro);
 }
 
-main .guest-panel-dl dt:first-child,
-main .booking-panel-dl dt:first-child,
-main .room-panel-dl dt:first-child {
+main .side-panel-dl dt:first-child {
   margin-top: 0;
 }
 
-main .guest-panel-dl dd,
-main .booking-panel-dl dd,
-main .room-panel-dl dd {
+main .side-panel-dl dd {
   margin: 0;
   color: var(--ink-primary);
 }
@@ -1804,221 +1969,6 @@ main .btn-open-full-page {
 main .btn-open-full-page:hover {
   background: var(--semantic-info-bg);
   color: var(--brand-primary-hover);
-}
-
-/* ----- Dashboard range toolbar ----- */
-.dashboard-range-bar {
-  --dashboard-control-h: 2.25rem;
-  --dashboard-range-cluster-gap: var(--space-md);
-
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  column-gap: var(--dashboard-range-cluster-gap);
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.dashboard-range-cluster {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.dashboard-range-cluster--start {
-  justify-content: flex-start;
-  justify-self: start;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.dashboard-range-field {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  margin: 0;
-  max-width: 100%;
-}
-
-.dashboard-range-field-label {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-tertiary);
-}
-
-.dashboard-range-cluster--center {
-  justify-content: center;
-}
-
-.dashboard-range-cluster--end {
-  justify-content: flex-end;
-}
-
-.dashboard-range-sector {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-.dashboard-range-sector--nav-dates {
-  display: flex;
-  align-items: center;
-  flex: 0 0 auto;
-  flex-wrap: nowrap;
-  gap: var(--space-sm);
-}
-
-.dashboard-preset-select {
-  box-sizing: border-box;
-  margin: 0;
-  min-height: var(--dashboard-control-h);
-  height: var(--dashboard-control-h);
-  padding: 0 var(--space-sm);
-  padding-inline-end: 1.75rem;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  font-family: var(--font-body);
-  line-height: 1.2;
-  color: var(--ink-primary);
-  background: var(--pico-form-element-background-color);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  min-width: 6.5rem;
-  max-width: 100%;
-}
-
-.dashboard-preset-select:hover {
-  border-color: var(--border-emphasis);
-}
-
-.dashboard-preset-select:focus {
-  border-color: var(--border-focus);
-  outline: none;
-  box-shadow: 0 0 0 0.0625rem var(--border-focus);
-}
-
-.dashboard-today {
-  margin: 0;
-  flex: 0 0 auto;
-  min-height: var(--dashboard-control-h);
-  padding: 0 var(--space-sm);
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  line-height: 1;
-  color: var(--ink-secondary);
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
-}
-
-.dashboard-today:hover {
-  color: var(--ink-primary);
-  border-color: var(--border-emphasis);
-  background: var(--pico-card-background-color);
-}
-
-.dashboard-range-nav {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  margin: 0;
-  width: var(--dashboard-control-h);
-  min-width: var(--dashboard-control-h);
-  height: var(--dashboard-control-h);
-  padding: 0;
-  color: var(--ink-secondary);
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
-}
-
-.dashboard-range-nav:hover {
-  color: var(--ink-primary);
-  border-color: var(--border-emphasis);
-  background: var(--pico-card-background-color);
-}
-
-.dashboard-range-nav:focus {
-  border-color: var(--border-focus);
-  outline: none;
-  box-shadow: 0 0 0 0.0625rem var(--border-focus);
-}
-
-.dashboard-range-nav-icon {
-  display: block;
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
-.dashboard-date-input {
-  box-sizing: border-box;
-  margin: 0;
-  min-height: var(--dashboard-control-h);
-  height: var(--dashboard-control-h);
-  padding: 0 0.5rem;
-  padding-inline-end: 1.85rem;
-  font-size: var(--text-caption-size);
-  font-family: var(--font-body);
-  line-height: 1.2;
-  color: var(--ink-primary);
-  background: var(--pico-form-element-background-color);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  min-width: 10.5rem;
-  max-width: 100%;
-}
-
-.dashboard-date-input:hover {
-  border-color: var(--border-emphasis);
-}
-
-.dashboard-date-input:focus {
-  border-color: var(--border-focus);
-  outline: none;
-  box-shadow: 0 0 0 0.0625rem var(--border-focus);
-}
-
-.dashboard-date-input::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.55;
-  margin-inline-start: 0.125rem;
-}
-
-.dashboard-range-sep {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  color: var(--ink-tertiary);
-  user-select: none;
-  line-height: var(--dashboard-control-h);
-}
-
-main .dashboard-empty {
-  color: var(--ink-secondary);
-  font-size: var(--text-body-size);
-  margin: 0;
 }
 
 /* ----- Rooms view (accordion, room table, dialogs) ----- */
@@ -2289,21 +2239,6 @@ main .optional {
   display: flex;
   gap: var(--space-sm);
   justify-content: flex-end;
-}
-
-.dialog .btn-secondary {
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-label-size);
-  color: var(--ink-secondary);
-  background: var(--control-bg);
-  border: 1px solid var(--control-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-}
-
-.dialog .btn-secondary:hover {
-  color: var(--ink-primary);
-  border-color: var(--border-emphasis);
 }
 
 /* ----- Auth layout (login / invite; standalone <main class="auth-page">) ----- */

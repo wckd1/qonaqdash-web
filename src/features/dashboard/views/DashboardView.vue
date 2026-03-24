@@ -1,101 +1,103 @@
 <template>
-  <header class="page-header">
-    <h1 id="dashboard-title">{{ t('dashboard.title') }}</h1>
-    <router-link :to="{ name: 'booking-new' }" class="btn-add-outline">
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      {{ t('dashboard.newBooking') }}
-    </router-link>
-  </header>
+  <div class="dashboard-view">
+    <header class="page-header">
+      <h1 id="dashboard-title">{{ t('dashboard.title') }}</h1>
+      <router-link :to="{ name: 'booking-new' }" class="btn-add-outline">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {{ t('dashboard.newBooking') }}
+      </router-link>
+    </header>
 
-  <section class="dashboard-toolbar">
-    <div class="dashboard-range-bar" role="toolbar" :aria-label="t('dashboard.rangeToolbar')">
-      <div class="dashboard-range-cluster dashboard-range-cluster--start">
-        <label class="dashboard-range-field">
-          <span class="dashboard-range-field-label">{{ t('dashboard.period') }}</span>
-          <select class="dashboard-preset-select" :value="periodPickerSelectValue" @change="onPeriodSelect">
-            <option v-if="!periodPickerSelectValue" value="" disabled hidden>{{ t('dashboard.presetCustom') }}</option>
-            <option
-              v-if="needsExtraPeriodOption"
-              value="__other"
-              disabled
-            >
-              {{ t('dashboard.presetDays', { count: effectiveSpanDays }) }}
-            </option>
-            <option v-for="n in periodQuickOptions" :key="n" :value="String(n)">
-              {{ t('dashboard.presetDays', { count: n }) }}
-            </option>
-          </select>
+    <section class="dashboard-view__toolbar">
+      <div class="content-toolbar" role="toolbar" :aria-label="t('dashboard.rangeToolbar')">
+        <div class="toolbar-cluster toolbar-cluster--start">
+          <label class="toolbar-field">
+            <span class="toolbar-field-label">{{ t('dashboard.period') }}</span>
+            <select class="toolbar-picker" :value="periodPickerSelectValue" @change="onPeriodSelect">
+              <option v-if="!periodPickerSelectValue" value="" disabled hidden>{{ t('dashboard.presetCustom') }}</option>
+              <option
+                v-if="needsExtraPeriodOption"
+                value="__other"
+                disabled
+              >
+                {{ t('dashboard.presetDays', { count: effectiveSpanDays }) }}
+              </option>
+              <option v-for="n in periodQuickOptions" :key="n" :value="String(n)">
+                {{ t('dashboard.presetDays', { count: n }) }}
+              </option>
+            </select>
         </label>
-      </div>
-      <div class="dashboard-range-cluster dashboard-range-cluster--center">
-        <div class="dashboard-range-sector dashboard-range-sector--nav-dates">
-          <button
-            type="button"
-            class="dashboard-range-nav"
-            :aria-label="t('dashboard.rangePrev')"
-            @click="shiftRange(-1)"
-          >
-            <svg class="dashboard-range-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <input
-            v-model="fromStr"
-            class="dashboard-date-input"
-            type="date"
-            :aria-label="t('dashboard.from')"
-            :max="toStr"
-            @change="onDateFieldChange"
-          />
-          <span class="dashboard-range-sep" aria-hidden="true">–</span>
-          <input
-            v-model="toStr"
-            class="dashboard-date-input"
-            type="date"
-            :aria-label="t('dashboard.to')"
-            :min="fromStr"
-            @change="onDateFieldChange"
-          />
-          <button
-            type="button"
-            class="dashboard-range-nav"
-            :aria-label="t('dashboard.rangeNext')"
-            @click="shiftRange(1)"
-          >
-            <svg class="dashboard-range-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
+        </div>
+        <div class="toolbar-cluster toolbar-cluster--center">
+          <div class="toolbar-group toolbar-group--inline">
+            <button
+              type="button"
+              class="toolbar-btn toolbar-btn--icon"
+              :aria-label="t('dashboard.rangePrev')"
+              @click="shiftRange(-1)"
+            >
+              <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <input
+              v-model="fromStr"
+              class="toolbar-input"
+              type="date"
+              :aria-label="t('dashboard.from')"
+              :max="toStr"
+              @change="onDateFieldChange"
+            />
+            <span class="toolbar-sep" aria-hidden="true">–</span>
+            <input
+              v-model="toStr"
+              class="toolbar-input"
+              type="date"
+              :aria-label="t('dashboard.to')"
+              :min="fromStr"
+              @change="onDateFieldChange"
+            />
+            <button
+              type="button"
+              class="toolbar-btn toolbar-btn--icon"
+              :aria-label="t('dashboard.rangeNext')"
+              @click="shiftRange(1)"
+            >
+              <svg class="toolbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="toolbar-cluster toolbar-cluster--end">
+          <button type="button" class="toolbar-btn" @click="jumpToday">{{ t('dashboard.today') }}</button>
         </div>
       </div>
-      <div class="dashboard-range-cluster dashboard-range-cluster--end">
-        <button type="button" class="dashboard-today" @click="jumpToday">{{ t('dashboard.today') }}</button>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="dashboard-body" aria-labelledby="dashboard-title">
-    <div class="dashboard-body__viewport">
-      <p v-if="loadError" class="error-message">{{ loadError }}</p>
-      <p v-else-if="!loading && sortedRooms.length === 0" class="dashboard-empty">
-        {{ t('dashboard.emptyRooms') }}
-      </p>
-      <p v-else-if="loading" class="loading-state">{{ t('dashboard.loadingGrid') }}</p>
-      <ReservationGrid
-        v-else
-        :rooms="sortedRooms"
-        :entries="gridEntries"
-        :range-from="rangeFromDate"
-        :range-to="rangeToDate"
-        @select-booking="selectedBooking = $event"
-        @booking-updated="onGridBookingUpdated"
-      />
-    </div>
-    <BookingSidePanel :booking="selectedBooking" @close="selectedBooking = null" />
-  </section>
+    <section class="dashboard-view__body" aria-labelledby="dashboard-title">
+      <div class="dashboard-view__viewport">
+        <p v-if="loadError" class="error-message">{{ loadError }}</p>
+        <p v-else-if="!loading && sortedRooms.length === 0" class="dashboard-view__empty">
+          {{ t('dashboard.emptyRooms') }}
+        </p>
+        <p v-else-if="loading" class="loading-state">{{ t('dashboard.loadingGrid') }}</p>
+        <ReservationGrid
+          v-else
+          :rooms="sortedRooms"
+          :entries="gridEntries"
+          :range-from="rangeFromDate"
+          :range-to="rangeToDate"
+          @select-booking="selectedBooking = $event"
+          @booking-updated="onGridBookingUpdated"
+        />
+      </div>
+      <BookingSidePanel :booking="selectedBooking" @close="selectedBooking = null" />
+    </section>
+  </div>
 </template>
 
 <script setup>
@@ -379,3 +381,244 @@ watch(
   },
 )
 </script>
+
+<style scoped>
+/* Home grid only: layout shell + content toolbar. Promote to main.css only if a second screen reuses the same markup. */
+.dashboard-view {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  box-sizing: border-box;
+}
+
+.dashboard-view__toolbar {
+  flex: 0 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0 var(--space-md);
+  overflow: visible;
+}
+
+.dashboard-view__body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  gap: var(--content-area-gap);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0 var(--space-md) var(--space-md);
+  box-sizing: border-box;
+}
+
+.dashboard-view__viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--content-area-gap);
+  overflow-y: auto;
+}
+
+.dashboard-view__empty {
+  color: var(--ink-secondary);
+  font-size: var(--text-body-size);
+  margin: 0;
+}
+
+.content-toolbar {
+  --toolbar-control-height: 2.25rem;
+  --toolbar-cluster-gap: var(--space-md);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--toolbar-cluster-gap);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.toolbar-cluster {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbar-cluster--start {
+  justify-content: flex-start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.toolbar-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  max-width: 100%;
+}
+
+.toolbar-field-label {
+  flex-shrink: 0;
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-tertiary);
+}
+
+.toolbar-cluster--center {
+  justify-content: center;
+}
+
+.toolbar-cluster--end {
+  justify-content: flex-end;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.toolbar-group--inline {
+  flex-wrap: nowrap;
+  gap: var(--space-sm);
+}
+
+.toolbar-picker {
+  box-sizing: border-box;
+  margin: 0;
+  min-height: var(--toolbar-control-height);
+  height: var(--toolbar-control-height);
+  padding: 0 var(--space-sm);
+  padding-inline-end: 1.75rem;
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  font-family: var(--font-body);
+  line-height: 1.2;
+  color: var(--ink-primary);
+  background: var(--pico-form-element-background-color);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-width: 6.5rem;
+  max-width: 100%;
+}
+
+.toolbar-picker:hover {
+  border-color: var(--border-emphasis);
+}
+
+.toolbar-picker:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.toolbar-btn {
+  margin: 0;
+  flex: 0 0 auto;
+  min-height: var(--toolbar-control-height);
+  padding: 0 var(--space-sm);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  line-height: 1;
+  color: var(--ink-secondary);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.toolbar-btn:hover {
+  color: var(--ink-primary);
+  border-color: var(--border-emphasis);
+  background: var(--pico-card-background-color);
+}
+
+.toolbar-btn:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.toolbar-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: var(--toolbar-control-height);
+  min-width: var(--toolbar-control-height);
+}
+
+.toolbar-icon {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.toolbar-input {
+  box-sizing: border-box;
+  margin: 0;
+  min-height: var(--toolbar-control-height);
+  height: var(--toolbar-control-height);
+  padding: 0 0.5rem;
+  padding-inline-end: 1.85rem;
+  font-size: var(--text-caption-size);
+  font-family: var(--font-body);
+  line-height: 1.2;
+  color: var(--ink-primary);
+  background: var(--pico-form-element-background-color);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  min-width: 10.5rem;
+  max-width: 100%;
+}
+
+.toolbar-input:hover {
+  border-color: var(--border-emphasis);
+}
+
+.toolbar-input:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.toolbar-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  margin-inline-start: 0.125rem;
+}
+
+.toolbar-sep {
+  flex-shrink: 0;
+  font-size: var(--text-caption-size);
+  color: var(--ink-tertiary);
+  user-select: none;
+  line-height: var(--toolbar-control-height);
+}
+</style>

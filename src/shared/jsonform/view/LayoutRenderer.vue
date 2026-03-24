@@ -14,7 +14,7 @@
       </div>
       <router-link
         v-if="linkedGuestId"
-        class="guest-section-view__profile-cta"
+        class="form-entity-section__profile-cta"
         :to="{ name: 'guest-detail', params: { id: linkedGuestId } }"
       >
         {{ t('bookings.openGuestProfile') }}
@@ -85,7 +85,7 @@ const wrapperTag = computed(() => (isGroup.value ? 'section' : 'div'))
 
 const wrapperClass = computed(() => {
   if (isGroup.value && isGuestGroup.value) {
-    return 'form-view-layout form-view-layout--group guest-section-view'
+    return 'form-view-layout form-view-layout--group form-entity-section'
   }
   if (isGroup.value) return 'form-view-layout form-view-layout--group'
   if (isVertical.value) return 'form-view-layout form-view-layout--vertical'

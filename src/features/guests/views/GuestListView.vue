@@ -37,8 +37,8 @@
               <tr
                 v-for="guest in guests"
                 :key="guest.id"
-                class="guest-row"
-                :class="{ 'guest-row--selected': selectedGuestId === guest.id }"
+                class="list-row"
+                :class="{ 'list-row--selected': selectedGuestId === guest.id }"
                 @click="openPanel(guest)"
               >
                 <td :data-label="t('fields.firstName')">{{ guest.first_name ?? '—' }}</td>

@@ -102,14 +102,14 @@
     <Transition name="slide-panel">
       <aside
         v-if="selectedRoom"
-        class="room-panel"
-        aria-labelledby="room-panel-title"
+        class="side-panel"
+        aria-labelledby="side-panel-title"
       >
-        <div class="room-panel-header">
-          <h2 id="room-panel-title">{{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}</h2>
+        <div class="side-panel-header">
+          <h2 id="side-panel-title">{{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}</h2>
           <button
             type="button"
-            class="room-panel-close"
+            class="side-panel-close"
             :aria-label="t('common.closePanel')"
             @click="closePanel"
           >
@@ -120,21 +120,21 @@
           </button>
         </div>
         <div
-          class="booking-lifecycle-toolbar"
+          class="action-toolbar"
           role="toolbar"
           :aria-label="t('rooms.panelToolbarAria')"
         >
           <template v-if="!roomPanelEditing">
             <button
               type="button"
-              class="booking-lifecycle-action booking-lifecycle-action--check-out"
+              class="action-toolbar__btn action-toolbar__btn--check-out"
               @click="startRoomEdit"
             >
               {{ t('common.edit') }}
             </button>
             <button
               type="button"
-              class="booking-lifecycle-action booking-lifecycle-action--cancel"
+              class="action-toolbar__btn action-toolbar__btn--cancel"
               :disabled="removeRoomSaving"
               :aria-label="t('rooms.removeRoomAria', { number: selectedRoom.room?.number ?? '' })"
               @click="openRemoveRoomConfirm"
@@ -145,7 +145,7 @@
           <template v-else>
             <button
               type="button"
-              class="booking-lifecycle-action booking-lifecycle-action--check-out"
+              class="action-toolbar__btn action-toolbar__btn--check-out"
               :disabled="roomSaveSaving"
               @click="cancelRoomEdit"
             >
@@ -153,7 +153,7 @@
             </button>
             <button
               type="button"
-              class="booking-lifecycle-action booking-lifecycle-action--check-in"
+              class="action-toolbar__btn action-toolbar__btn--check-in"
               :aria-busy="roomSaveSaving"
               :disabled="roomSaveSaving"
               @click="submitRoomEdit"
@@ -162,10 +162,10 @@
             </button>
           </template>
         </div>
-        <div class="room-panel-body">
+        <div class="side-panel-body">
           <p v-if="roomPanelError" class="form-error">{{ roomPanelError }}</p>
           <template v-if="!roomPanelEditing">
-            <dl class="room-panel-dl">
+            <dl class="side-panel-dl">
               <dt>{{ t('fields.roomType') }}</dt>
               <dd>{{ selectedRoom.roomType?.name ?? '—' }}</dd>
               <dt>{{ t('fields.status') }}</dt>
@@ -175,7 +175,7 @@
               </dd>
             </dl>
           </template>
-          <form v-else class="room-panel-edit-form" @submit.prevent="submitRoomEdit">
+          <form v-else class="side-panel-edit-form" @submit.prevent="submitRoomEdit">
             <label>
               {{ t('fields.roomNumber') }}
               <input v-model="editRoomForm.number" type="text" required :disabled="roomSaveSaving" />
@@ -645,12 +645,12 @@ onMounted(() => load({}, true))
 </script>
 
 <style scoped>
-.room-panel-edit-form label {
+.side-panel-edit-form label {
   display: block;
   margin-top: var(--space-sm);
 }
 
-.room-panel-edit-form label:first-child {
+.side-panel-edit-form label:first-child {
   margin-top: 0;
 }
 

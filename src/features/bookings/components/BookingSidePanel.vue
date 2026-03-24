@@ -2,14 +2,14 @@
   <Transition name="slide-panel">
     <aside
       v-if="booking"
-      class="booking-panel"
-      aria-labelledby="booking-panel-title"
+      class="side-panel"
+      aria-labelledby="side-panel-title"
     >
-      <div class="booking-panel-header">
-        <h2 id="booking-panel-title">{{ bookingPanelTitle }}</h2>
+      <div class="side-panel-header">
+        <h2 id="side-panel-title">{{ bookingPanelTitle }}</h2>
         <button
           type="button"
-          class="booking-panel-close"
+          class="side-panel-close"
           :aria-label="t('common.closePanel')"
           @click="emit('close')"
         >
@@ -25,7 +25,7 @@
         :status="panelBookingStatus"
         @updated="onBookingStatusMutation"
       />
-      <div class="booking-panel-body">
+      <div class="side-panel-body">
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
         <p v-else-if="notFound" class="error-message">{{ t('bookings.notFound') }}</p>
         <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
@@ -38,7 +38,7 @@
         />
         <p v-else class="section-placeholder">{{ t('bookings.detailsLoading') }}</p>
       </div>
-      <div class="booking-panel-footer">
+      <div class="side-panel-footer">
         <router-link
           :to="{ name: 'booking-detail', params: { id: booking.id } }"
           class="btn-open-full-page"

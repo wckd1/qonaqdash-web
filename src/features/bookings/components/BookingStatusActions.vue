@@ -2,15 +2,15 @@
   <div v-if="hasAnyAction" class="booking-status-actions-root">
     <div
       v-if="layout === 'row'"
-      class="booking-lifecycle-toolbar"
-      :class="{ 'booking-detail-toolbar': detailInset }"
+      class="action-toolbar"
+      :class="{ 'action-toolbar--inset': detailInset }"
       role="toolbar"
       :aria-label="t('bookings.lifecycleToolbarAria')"
     >
       <button
         v-if="allowsCheckIn"
         type="button"
-        class="booking-lifecycle-action booking-lifecycle-action--check-in"
+        class="action-toolbar__btn action-toolbar__btn--check-in"
         :disabled="running"
         @click="openConfirm('checkIn')"
       >
@@ -19,7 +19,7 @@
       <button
         v-if="allowsCheckOut"
         type="button"
-        class="booking-lifecycle-action booking-lifecycle-action--check-out"
+        class="action-toolbar__btn action-toolbar__btn--check-out"
         :disabled="running"
         @click="openConfirm('checkOut')"
       >
@@ -28,7 +28,7 @@
       <button
         v-if="allowsCancel"
         type="button"
-        class="booking-lifecycle-action booking-lifecycle-action--cancel"
+        class="action-toolbar__btn action-toolbar__btn--cancel"
         :disabled="running"
         @click="openConfirm('cancel')"
       >
@@ -39,7 +39,7 @@
       <button
         v-if="allowsCheckIn"
         type="button"
-        class="booking-lifecycle-menu-item booking-lifecycle-menu-item--check-in"
+        class="menu-row menu-row--check-in"
         role="menuitem"
         :disabled="running"
         @click="openConfirm('checkIn')"
@@ -49,7 +49,7 @@
       <button
         v-if="allowsCheckOut"
         type="button"
-        class="booking-lifecycle-menu-item booking-lifecycle-menu-item--check-out"
+        class="menu-row menu-row--check-out"
         role="menuitem"
         :disabled="running"
         @click="openConfirm('checkOut')"
@@ -59,7 +59,7 @@
       <button
         v-if="allowsCancel"
         type="button"
-        class="booking-lifecycle-menu-item booking-lifecycle-menu-item--cancel"
+        class="menu-row menu-row--cancel"
         role="menuitem"
         :disabled="running"
         @click="openConfirm('cancel')"
@@ -84,7 +84,7 @@
             </button>
             <button
               type="button"
-              class="booking-lifecycle-action"
+              class="action-toolbar__btn"
               :class="primaryActionModifierClass"
               :disabled="running"
               @click="runPending"
@@ -115,7 +115,7 @@ const props = defineProps({
   status: { type: String, default: undefined },
   /** `row`: toolbar strip; `menu`: grid context menu items. */
   layout: { type: String, default: 'row' },
-  /** Full-page booking detail: horizontal inset + card radius (see main.css `.booking-detail-toolbar`). */
+  /** Full-page in `main`: add `action-toolbar--inset` for horizontal inset + `--radius-md` shell (see main.css). */
   detailInset: { type: Boolean, default: false },
 })
 
@@ -138,9 +138,9 @@ const hasAnyAction = computed(
 )
 
 const primaryActionModifierClass = computed(() => {
-  if (pending.value === 'checkIn') return 'booking-lifecycle-action--check-in'
-  if (pending.value === 'checkOut') return 'booking-lifecycle-action--check-out'
-  if (pending.value === 'cancel') return 'booking-lifecycle-action--cancel'
+  if (pending.value === 'checkIn') return 'action-toolbar__btn--check-in'
+  if (pending.value === 'checkOut') return 'action-toolbar__btn--check-out'
+  if (pending.value === 'cancel') return 'action-toolbar__btn--cancel'
   return ''
 })
 

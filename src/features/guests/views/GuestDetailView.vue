@@ -51,8 +51,8 @@
         </template>
         <p v-else class="section-placeholder">{{ t('guests.detailsLoading') }}</p>
       </div>
-      <section v-if="guestId" class="previous-bookings" aria-labelledby="previous-bookings-heading">
-      <h2 id="previous-bookings-heading">{{ t('guests.bookingsHeading') }}</h2>
+      <section v-if="guestId" class="related-records" aria-labelledby="related-records-heading">
+      <h2 id="related-records-heading">{{ t('guests.bookingsHeading') }}</h2>
       <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
       <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
       <p v-else-if="!previousBookings.length" class="empty-state">{{ t('guests.noBookings') }}</p>
@@ -62,7 +62,7 @@
             <th scope="col">{{ t('fields.checkIn') }}</th>
             <th scope="col">{{ t('fields.checkOut') }}</th>
             <th scope="col">{{ t('fields.status') }}</th>
-            <th scope="col"></th>
+            <th scope="col" class="list-table__col--actions"></th>
           </tr>
         </thead>
         <tbody>
@@ -72,8 +72,13 @@
             <td :data-label="t('fields.status')">
               <BookingStatusBadge :status="b.status" />
             </td>
-            <td>
-              <router-link :to="{ name: 'booking-detail', params: { id: b.id } }" class="link-booking">{{ t('common.view') }}</router-link>
+            <td class="list-table__cell--actions">
+              <router-link
+                :to="{ name: 'booking-detail', params: { id: b.id } }"
+                class="list-table__action"
+              >
+                {{ t('common.view') }}
+              </router-link>
             </td>
           </tr>
         </tbody>
@@ -101,7 +106,7 @@
           </button>
           <button
             type="button"
-            class="booking-lifecycle-action booking-lifecycle-action--cancel"
+            class="action-toolbar__btn action-toolbar__btn--cancel"
             :disabled="removing"
             @click="confirmBlock"
           >
@@ -357,7 +362,7 @@ load()
   font-size: var(--text-body-size);
 }
 
-.previous-bookings {
+.related-records {
   flex: auto;
   order: 1;
   min-width: 0;
@@ -374,16 +379,6 @@ load()
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
   margin: 0;
-}
-
-.link-booking {
-  color: var(--brand-primary);
-  text-decoration: none;
-  font-weight: var(--text-label-weight);
-}
-
-.link-booking:hover {
-  text-decoration: underline;
 }
 
 .guest-detail-block-btn {

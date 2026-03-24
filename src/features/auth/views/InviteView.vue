@@ -7,7 +7,7 @@
     </template>
 
     <template v-else-if="invite">
-      <div class="invite-info">
+      <div class="form-info">
         <i18n-t keypath="auth.invite.summary" tag="span">
           <template #org>
             <strong>{{ invite.organization_name }}</strong>

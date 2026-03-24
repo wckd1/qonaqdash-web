@@ -100,18 +100,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { addDays, differenceInCalendarDays, startOfDay, startOfToday, subDays } from 'date-fns'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
-import { fetchBookingGrid } from '@/features/bookings/api'
+import { fetchBookingGrid, type BookingGridEntry } from '@/features/bookings/api'
+import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
 import { parseLocalYmd, formatLocalYmd } from '@/features/bookings/utils/gridDates'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 /** Saved range; period length is derived from from/to. */
 const STORAGE_RANGE = 'qonaqdash.dashboard.gridCustomRange'
@@ -128,9 +129,9 @@ const fromStr = ref('')
 const toStr = ref('')
 const loading = ref(true)
 const loadError = ref('')
-const gridEntries = ref([])
+const gridEntries = ref<BookingGridEntry[]>([])
 /** Grid selection: panel stays on dashboard (no navigation to bookings list). */
-const selectedBooking = ref(null)
+const selectedBooking = ref<GridPanelBooking | null>(null)
 
 async function onGridBookingUpdated() {
   await loadGridData()
@@ -150,11 +151,11 @@ async function onGridBookingUpdated() {
   }
 }
 
-function isValidYmd(s) {
+function isValidYmd(s: unknown): s is string {
   return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
 }
 
-function isValidRange(from, to) {
+function isValidRange(from: unknown, to: unknown): boolean {
   if (!isValidYmd(from) || !isValidYmd(to)) return false
   const a = parseLocalYmd(from)
   const b = parseLocalYmd(to)
@@ -166,7 +167,7 @@ function isValidRange(from, to) {
  * Window for a period length: one day before today, then today, then future days.
  * Today is always the 2nd column; `dayCount` is the inclusive span (min 2).
  */
-function rangeForPeriod(dayCount) {
+function rangeForPeriod(dayCount: number) {
   const today = startOfToday()
   const n = Math.max(2, dayCount)
   const from = startOfDay(subDays(today, 1))
@@ -233,8 +234,8 @@ const sortedRooms = computed(() => {
       room_type_name: r.room_type_name || typeNameById.get(r.room_type_id) || '',
     }))
     .sort((a, b) => {
-      const ai = order.has(a.room_type_id) ? order.get(a.room_type_id) : 999
-      const bi = order.has(b.room_type_id) ? order.get(b.room_type_id) : 999
+      const ai = order.get(a.room_type_id) ?? 999
+      const bi = order.get(b.room_type_id) ?? 999
       if (ai !== bi) return ai - bi
       return String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
     })
@@ -261,9 +262,9 @@ async function loadGridData() {
   try {
     await Promise.all([propertyStore.fetchRoomTypes(), propertyStore.fetchRooms()])
     gridEntries.value = await fetchBookingGrid({ from: fromStr.value, to: toStr.value })
-  } catch (err) {
+  } catch (err: unknown) {
     gridEntries.value = []
-    loadError.value = formatApiError(err.response?.data?.error) || t('dashboard.loadFailed')
+    loadError.value = formatUnknownApiError(err) || t('dashboard.loadFailed')
   } finally {
     loading.value = false
   }
@@ -289,8 +290,10 @@ function persistRangeToStorage() {
   }
 }
 
-function onPeriodSelect(ev) {
-  const v = ev.target.value
+function onPeriodSelect(ev: Event) {
+  const target = ev.target
+  if (!(target instanceof HTMLSelectElement)) return
+  const v = target.value
   if (!v || v === '__other') return
   const n = parseInt(v, 10)
   if (Number.isNaN(n) || n < 2) return
@@ -343,7 +346,7 @@ function jumpToday() {
 }
 
 /** Shift the visible window by the current inclusive period length. */
-function shiftRange(direction) {
+function shiftRange(direction: number) {
   loadError.value = ''
   if (!isValidRange(fromStr.value, toStr.value)) return
   const fromD = startOfDay(parseLocalYmd(fromStr.value))

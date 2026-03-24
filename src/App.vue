@@ -3,7 +3,7 @@
   <NotificationToast />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import NotificationToast from '@/shared/components/NotificationToast.vue'

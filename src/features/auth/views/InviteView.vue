@@ -60,14 +60,15 @@
   </AuthLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { fetchInvite } from '@/features/auth/api'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 
 const { t } = useI18n()
@@ -76,7 +77,12 @@ const route = useRoute()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 
-const invite = ref(null)
+interface InvitePreview {
+  organization_name?: string
+  email?: string
+}
+
+const invite = ref<InvitePreview | null>(null)
 const inviteLoading = ref(true)
 const loadError = ref('')
 
@@ -86,14 +92,21 @@ const submitting = ref(false)
 const formError = ref('')
 
 onMounted(async () => {
+  const token = route.params.token
+  const tok = typeof token === 'string' ? token : Array.isArray(token) ? token[0] : ''
+  if (!tok) {
+    loadError.value = t('auth.invite.loadErrorInvalid')
+    inviteLoading.value = false
+    return
+  }
   try {
-    invite.value = await fetchInvite(route.params.token)
-  } catch (err) {
-    if (err.response) {
-      const msg = formatApiError(err.response.data?.error)
+    invite.value = (await fetchInvite(tok)) as InvitePreview
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)) {
+      const msg = formatApiError(httpErrorData(err)?.error)
       loadError.value = msg || t('auth.invite.loadErrorInvalid')
     } else {
-      loadError.value = t('auth.login.errorNetwork')
+      loadError.value = formatUnknownApiError(err) || t('auth.login.errorNetwork')
     }
   } finally {
     inviteLoading.value = false
@@ -108,18 +121,25 @@ async function handleSubmit() {
     return
   }
 
+  const token = route.params.token
+  const tok = typeof token === 'string' ? token : Array.isArray(token) ? token[0] : ''
+  if (!tok) {
+    formError.value = t('auth.invite.loadErrorInvalid')
+    return
+  }
+
   submitting.value = true
 
   try {
-    await authStore.completeInvite(route.params.token, password.value)
+    await authStore.completeInvite(tok, password.value)
     void settingsStore.fetchUserSettings().catch(() => {})
     router.push('/')
-  } catch (err) {
-    if (err.response) {
-      const msg = formatApiError(err.response.data?.error)
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)) {
+      const msg = formatApiError(httpErrorData(err)?.error)
       formError.value = msg || t('auth.invite.submitError')
     } else {
-      formError.value = t('auth.login.errorNetwork')
+      formError.value = formatUnknownApiError(err) || t('auth.login.errorNetwork')
     }
   } finally {
     submitting.value = false

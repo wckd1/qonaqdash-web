@@ -24,19 +24,23 @@
   </template>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, provide, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
-import { formatApiError } from '@/shared/i18n/apiError'
+import type { Room } from '@/shared/types/property'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { bookingSchemaWithAvailableRoomIds } from '@/shared/jsonform/utils'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 
-provide('guestSearch', (q) => fetchGuests({ q }))
+import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
+
+provide(guestSearchKey, (q) => fetchGuests({ q }))
 
 const { t } = useI18n()
 const route = useRoute()
@@ -45,18 +49,25 @@ const store = useBookingStore()
 
 const loading = ref(true)
 const loadError = ref('')
-const bookingForm = ref(null)
-const formData = ref({})
-const errorsMap = ref({})
-const submitting = ref(false)
-const availableRooms = ref([])
+type BookingFormRuntime = { schema: object; uischema: object; data: Record<string, unknown> }
 
-provide('availableRooms', availableRooms)
+const bookingForm = ref<BookingFormRuntime | null>(null)
+const formData = ref<Record<string, unknown>>({})
+const errorsMap = ref<Record<string, string[]>>({})
+const submitting = ref(false)
+const availableRooms = ref<Room[]>([])
+
+provide(availableRoomsKey, availableRooms)
 
 watch(
-  () => [formData.value?.booking?.checkIn, formData.value?.booking?.checkOut],
+  () => {
+    const raw = formData.value.booking
+    if (!raw || typeof raw !== 'object') return [undefined, undefined] as const
+    const b = raw as Record<string, unknown>
+    return [b.checkIn, b.checkOut] as const
+  },
   async ([checkIn, checkOut]) => {
-    if (!checkIn || !checkOut) {
+    if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
       availableRooms.value = []
       return
     }
@@ -76,19 +87,21 @@ watch(
 )
 
 async function mergeRouteQueryIntoForm() {
-  if (!formData.value?.booking) return
+  const raw = formData.value.booking
+  if (!raw || typeof raw !== 'object') return
+  const booking = raw as Record<string, unknown>
   const q = route.query
   const checkIn = typeof q.checkIn === 'string' ? q.checkIn : ''
   const checkOut = typeof q.checkOut === 'string' ? q.checkOut : ''
   const roomId = typeof q.roomId === 'string' ? q.roomId : ''
-  if (checkIn) formData.value.booking.checkIn = checkIn
-  if (checkOut) formData.value.booking.checkOut = checkOut
+  if (checkIn) booking.checkIn = checkIn
+  if (checkOut) booking.checkOut = checkOut
   if (roomId) {
     try {
       const list = await fetchRooms()
       const room = list.find((r) => r.id === roomId)
       if (room?.room_type_id) {
-        formData.value.booking.rooms = [{ roomType: room.room_type_id, roomID: room.id }]
+        booking.rooms = [{ roomType: room.room_type_id, roomID: room.id }]
       }
     } catch {
       /* keep existing rooms */
@@ -100,15 +113,18 @@ onMounted(async () => {
   loading.value = true
   loadError.value = ''
   try {
-    bookingForm.value = await store.fetchBookingForm()
+    const template = await store.fetchBookingForm()
+    bookingForm.value = template as BookingFormRuntime
     formData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
     if (!formData.value.guest) formData.value.guest = {}
-    if (formData.value.guest.id === undefined) formData.value.guest.id = null
+    const guestObj = formData.value.guest as Record<string, unknown>
+    if (guestObj.id === undefined) guestObj.id = null
     if (!formData.value.booking) formData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
-    if (!Array.isArray(formData.value.booking.rooms)) formData.value.booking.rooms = []
+    const bookingObj = formData.value.booking as Record<string, unknown>
+    if (!Array.isArray(bookingObj.rooms)) bookingObj.rooms = []
     await mergeRouteQueryIntoForm()
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('bookings.formLoadFailed')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('bookings.formLoadFailed')
   } finally {
     loading.value = false
   }
@@ -140,10 +156,16 @@ async function onSubmit() {
     delete payload.id
     await store.createBooking(payload)
     router.push('/bookings')
-  } catch (err) {
-    const msg = formatApiError(err.response?.data?.error) || t('bookings.createFailed')
-    if (err.response?.data?.errors && typeof err.response.data.errors === 'object') {
-      errorsMap.value = err.response.data.errors
+  } catch (err: unknown) {
+    const msg = formatUnknownApiError(err) || t('bookings.createFailed')
+    const serverErrors = httpErrorData(err)?.errors
+    if (
+      httpErrorResponse(err) &&
+      serverErrors &&
+      typeof serverErrors === 'object' &&
+      !Array.isArray(serverErrors)
+    ) {
+      errorsMap.value = serverErrors as Record<string, string[]>
     } else {
       errorsMap.value = { '': [msg] }
     }

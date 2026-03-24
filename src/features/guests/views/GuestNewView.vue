@@ -24,12 +24,13 @@
   </template>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 
@@ -39,19 +40,22 @@ const store = useGuestStore()
 
 const loading = ref(true)
 const loadError = ref('')
-const guestForm = ref(null)
-const formData = ref({})
-const errorsMap = ref({})
+type GuestFormRuntime = { schema: object; uischema: object; data: Record<string, unknown> }
+
+const guestForm = ref<GuestFormRuntime | null>(null)
+const formData = ref<Record<string, unknown>>({})
+const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 
 onMounted(async () => {
   loading.value = true
   loadError.value = ''
   try {
-    guestForm.value = await store.fetchGuestForm()
+    const template = await store.fetchGuestForm()
+    guestForm.value = template as GuestFormRuntime
     formData.value = { ...(guestForm.value.data ?? {}) }
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('guests.formLoadFailed')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('guests.formLoadFailed')
     guestForm.value = null
     formData.value = {}
   } finally {
@@ -61,10 +65,9 @@ onMounted(async () => {
 
 async function onSubmit() {
   errorsMap.value = {}
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(
-    guestForm.value?.schema ?? {},
-    formData.value,
-  )
+  const form = guestForm.value
+  if (!form) return
+  const { valid, errorsMap: clientErrors } = validateJsonFormData(form.schema ?? {}, formData.value)
   if (!valid) {
     errorsMap.value = clientErrors
     return
@@ -73,10 +76,16 @@ async function onSubmit() {
   try {
     await store.createGuest(formData.value)
     router.push('/guests')
-  } catch (err) {
-    const msg = formatApiError(err.response?.data?.error) || t('guests.saveFailed')
-    if (err.response?.data?.errors) {
-      errorsMap.value = err.response.data.errors
+  } catch (err: unknown) {
+    const msg = formatUnknownApiError(err) || t('guests.saveFailed')
+    const serverErrors = httpErrorData(err)?.errors
+    if (
+      httpErrorResponse(err) &&
+      serverErrors &&
+      typeof serverErrors === 'object' &&
+      !Array.isArray(serverErrors)
+    ) {
+      errorsMap.value = serverErrors as Record<string, string[]>
     } else {
       errorsMap.value = { '': [msg] }
     }

@@ -25,7 +25,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'

@@ -1,15 +1,18 @@
 import api from '@/shared/api/client'
 
-/**
- * @typedef {{ id: string, first_name: string, last_name: string, email: string, phone?: string }} Guest
- * @typedef {{ schema?: unknown, uischema?: unknown, data?: { firstName?: string, lastName?: string, [key: string]: unknown } }} GuestDetailResponse
- */
+export type {
+  Guest,
+  GuestDetailResponse,
+  GuestJsonFormData,
+  GuestJsonFormDataPartial,
+  GuestJsonFormFields,
+} from '@/shared/types/guests'
 
 /**
  * @param {{ q?: string }} [params] - Optional search query; backend filters by name, email, phone.
- * @returns {Promise<Guest[]>}
+ * @returns {Promise<import('@/shared/types/guests').Guest[]>}
  */
-export function fetchGuests(params = {}) {
+export function fetchGuests(params: { q?: string } = {}) {
   const config = params.q?.trim()
     ? { params: { q: params.q.trim() } }
     : {}
@@ -19,9 +22,9 @@ export function fetchGuests(params = {}) {
 /**
  * Returns raw response so caller can handle both plain guest object and JSONForm-style { data }.
  * @param {string} id
- * @returns {Promise<Guest | GuestDetailResponse>}
+ * @returns {Promise<import('@/shared/types/guests').Guest | GuestDetailResponse>}
  */
-export function fetchGuest(id) {
+export function fetchGuest(id: string) {
   return api.get(`/api/guests/${id}`).then(({ data }) => data)
 }
 
@@ -54,7 +57,7 @@ export function fetchGuestFormSchema() {
  * @param {{ schema: object, uischema: object, data?: object }} body
  * @returns {Promise<{ schema?: object, uischema?: object, data?: object }>}
  */
-export function updateGuestFormSchema(body) {
+export function updateGuestFormSchema(body: { schema: object; uischema: object; data?: object }) {
   return api.put('/api/guests/form/schema', body).then(({ data }) => data)
 }
 
@@ -63,7 +66,7 @@ export function updateGuestFormSchema(body) {
  * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
  * @returns {Promise<GuestDetailResponse>}
  */
-export function createGuest(data) {
+export function createGuest(data: Record<string, unknown>) {
   return api.post('/api/guests', data).then(({ data: res }) => res)
 }
 
@@ -73,7 +76,7 @@ export function createGuest(data) {
  * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
  * @returns {Promise<GuestDetailResponse>}
  */
-export function updateGuest(id, data) {
+export function updateGuest(id: string, data: Record<string, unknown>) {
   return api.put(`/api/guests/${id}`, data).then(({ data: res }) => res)
 }
 
@@ -82,15 +85,15 @@ export function updateGuest(id, data) {
  * @param {string} id
  * @returns {Promise<void>}
  */
-export function deleteGuest(id) {
+export function deleteGuest(id: string) {
   return api.delete(`/api/guests/${id}`).then(() => undefined)
 }
 
 /**
- * All bookings for the given guest (e.g. "Previous bookings" on guest detail). Same shape as GET /api/bookings list.
+ * All bookings for the given guest (e.g. "Previous bookings" on guest detail).
  * @param {string} guestId
- * @returns {Promise<Array<{ id: string, guest_id: string, check_in: string, check_out: string, status: string, guest?: { first_name?: string, last_name?: string } }>>}
+ * @returns {Promise<import('@/shared/types/bookings').BookingListItem[]>}
  */
-export function fetchGuestBookings(guestId) {
+export function fetchGuestBookings(guestId: string) {
   return api.get(`/api/guests/${guestId}/bookings`).then(({ data }) => data ?? [])
 }

@@ -107,27 +107,56 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { format, startOfDay, isSameDay } from 'date-fns'
+import type { BookingGridEntry } from '@/features/bookings/api'
+import type { Room } from '@/shared/types/property'
 import { listDaysInclusive, formatLocalYmd } from '@/features/bookings/utils/gridDates'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
+import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 
-const props = defineProps({
-  /** Sorted room rows (Y-axis). */
-  rooms: { type: Array, default: () => [] },
-  /** Raw grid API rows; only those with room_id in `rooms` are drawn. */
-  entries: { type: Array, default: () => [] },
-  /** First visible column (local start-of-day). */
-  rangeFrom: { type: Date, required: true },
-  /** Last visible column (local start-of-day). */
-  rangeTo: { type: Date, required: true },
-})
+type RoomRow = Room & { room_type_name?: string }
+
+type CellMenuState = { roomId: string; rangeFirst: Date; rangeLast: Date; x: number; y: number }
+
+type BarMenuState = { x: number; y: number; bookingId: string; status: string }
+
+type DragSelectState = { roomId: string; startDay: Date; endDay: Date }
+
+type GridRow =
+  | { kind: 'type-header'; key: string; title: string }
+  | { kind: 'room'; key: string; room: RoomRow }
+
+type BarLayout = {
+  key: string
+  bookingId: string
+  panelBooking: GridPanelBooking
+  left: number
+  width: number
+  top: number
+  label: string
+  statusClass: string
+  ariaLabel: string
+}
+
+const props = withDefaults(
+  defineProps<{
+    rooms: RoomRow[]
+    entries: BookingGridEntry[]
+    rangeFrom: Date
+    rangeTo: Date
+  }>(),
+  {
+    rooms: () => [],
+    entries: () => [],
+  },
+)
 
 const router = useRouter()
 
@@ -137,7 +166,10 @@ const settingsStore = useSettingsStore()
 const { locale: appLocale } = storeToRefs(settingsStore)
 const dateFnsLocale = computed(() => dateFnsLocaleForApp(appLocale.value))
 
-const emit = defineEmits(['select-booking', 'booking-updated'])
+const emit = defineEmits<{
+  'select-booking': [booking: GridPanelBooking]
+  'booking-updated': []
+}>()
 
 const headerHeight = 52
 const cellHeight = 64
@@ -145,23 +177,21 @@ const typeHeaderHeight = 44
 const yLabelWidth = 118
 const dayMs = 86400000
 
-const gridRef = ref(null)
+const gridRef = ref<HTMLElement | null>(null)
 const gridInnerWidth = ref(0)
-const cellMenu = ref(null)
-const cellMenuEl = ref(null)
-/** @type {import('vue').Ref<{ x: number, y: number, bookingId: string, status: string } | null>} */
-const barMenu = ref(null)
-const barMenuEl = ref(null)
+const cellMenu = ref<CellMenuState | null>(null)
+const cellMenuEl = ref<HTMLElement | null>(null)
+const barMenu = ref<BarMenuState | null>(null)
+const barMenuEl = ref<HTMLElement | null>(null)
 
 /** True while primary button is held after starting a cell drag-select. */
 const selectPointerDown = ref(false)
-/** @type {import('vue').Ref<{ roomId: string, startDay: Date, endDay: Date } | null>} */
-const dragSelectState = ref(null)
+const dragSelectState = ref<DragSelectState | null>(null)
 
 /** Cells to highlight: active drag and/or open context menu range (menu stays visible after drag ends). */
 const rangeHighlightKeys = computed(() => {
   const set = new Set()
-  const addSpan = (roomId, a, b) => {
+  const addSpan = (roomId: string, a: Date, b: Date) => {
     const low = Math.min(a.getTime(), b.getTime())
     const high = Math.max(a.getTime(), b.getTime())
     for (let t = low; t <= high; t += dayMs) {
@@ -190,10 +220,10 @@ function cellAriaLabel(roomNumber, day) {
   return t('grid.cellAria', { number: roomNumber, date: formatLocalYmd(day) })
 }
 
-const gridRows = computed(() => {
+const gridRows = computed((): GridRow[] => {
   void locale.value
-  const rows = []
-  let prevTypeKey = undefined
+  const rows: GridRow[] = []
+  let prevTypeKey: string | undefined
   for (const room of props.rooms) {
     const tid = room.room_type_id ?? '__none__'
     if (tid !== prevTypeKey) {
@@ -208,7 +238,7 @@ const gridRows = computed(() => {
 
 /** Pixel offset from top of grid body (below date header) to each room row top. */
 const roomTopOffsetById = computed(() => {
-  const map = new Map()
+  const map = new Map<string, number>()
   let y = headerHeight
   for (const row of gridRows.value) {
     if (row.kind === 'type-header') {
@@ -270,12 +300,12 @@ function statusClass(status) {
   return 'reservation-bar--default'
 }
 
-const barLayouts = computed(() => {
+const barLayouts = computed((): BarLayout[] => {
   void locale.value
   const cw = colWidth.value
   if (!cw || !props.rooms.length) return []
 
-  const layouts = []
+  const layouts: BarLayout[] = []
   const tops = roomTopOffsetById.value
   for (const e of props.entries) {
     const rid = e.room_id
@@ -495,7 +525,7 @@ function onDocumentKeydown(event) {
   }
 }
 
-let ro = null
+let ro: ResizeObserver | null = null
 
 function measureGrid() {
   const el = gridRef.value

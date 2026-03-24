@@ -25,11 +25,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as propertyApi from '@/features/property/api'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const { t } = useI18n()
 
@@ -51,8 +51,8 @@ async function load() {
     const n = typeof data?.name === 'string' ? data.name : ''
     name.value = n
     originalName.value = n
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('hotel.loadError')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('hotel.loadError')
   } finally {
     loading.value = false
   }

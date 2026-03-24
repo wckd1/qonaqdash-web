@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type {
+  BookingFormResponse,
+  BookingListItem,
+  CreateBookingPayload,
+} from '@/features/bookings/api'
 import * as bookingsApi from '@/features/bookings/api'
+
+type BookingFormTemplate = { schema: object; uischema: object; data: object }
 
 /**
  * @param {{ schema?: object, uischema?: object, data?: object }} res
@@ -15,13 +22,13 @@ function snapshotBookingForm(res) {
 }
 
 export const useBookingStore = defineStore('bookings', () => {
-  const bookings = ref([])
-  const currentBooking = ref(null)
+  const bookings = ref<BookingListItem[]>([])
+  const currentBooking = ref<BookingFormResponse | null>(null)
   /** Booking id last loaded into `currentBooking` (detail route); lifecycle PUTs refresh it only when this matches. */
-  const currentBookingId = ref(null)
+  const currentBookingId = ref<string | null>(null)
 
   /** Session cache for GET /api/bookings/form (blank form definition). */
-  const bookingFormTemplate = ref(null)
+  const bookingFormTemplate = ref<BookingFormTemplate | null>(null)
 
   /**
    * @param {{ q?: string, from?: string, to?: string }} [params]
@@ -37,7 +44,7 @@ export const useBookingStore = defineStore('bookings', () => {
    * @param {{ force?: boolean }} [options] - force=true always hits the network.
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
-  async function fetchBookingForm(options = {}) {
+  async function fetchBookingForm(options: { force?: boolean } = {}) {
     if (!options.force && bookingFormTemplate.value != null) {
       return JSON.parse(JSON.stringify(bookingFormTemplate.value))
     }
@@ -76,7 +83,7 @@ export const useBookingStore = defineStore('bookings', () => {
    * @param {{ setAsCurrent?: boolean }} [options] - setAsCurrent=false when refreshing another id without switching detail context.
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
-  async function fetchBooking(id, options = {}) {
+  async function fetchBooking(id: string, options: { setAsCurrent?: boolean } = {}) {
     const setAsCurrent = options.setAsCurrent !== false
     const formResponse = await bookingsApi.fetchBooking(id)
     if (setAsCurrent) {
@@ -90,7 +97,7 @@ export const useBookingStore = defineStore('bookings', () => {
    * @param {import('@/features/bookings/api').CreateBookingPayload} payload
    * @returns {Promise<{ id: string, guest_id: string, check_in: string, check_out: string, status: string, version?: number }>}
    */
-  async function createBooking(payload) {
+  async function createBooking(payload: CreateBookingPayload) {
     return bookingsApi.createBooking(payload)
   }
 
@@ -99,9 +106,9 @@ export const useBookingStore = defineStore('bookings', () => {
    * @param {import('@/features/bookings/api').CreateBookingPayload} payload
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
-  async function updateBooking(id, payload) {
+  async function updateBooking(id: string, payload: CreateBookingPayload) {
     await bookingsApi.updateBooking(id, payload)
-    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    const formResponse = await bookingsApi.fetchBooking(id)
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }
@@ -114,7 +121,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function checkIn(id) {
     await bookingsApi.checkIn(id)
-    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    const formResponse = await bookingsApi.fetchBooking(id)
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }
@@ -127,7 +134,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function checkOut(id) {
     await bookingsApi.checkOut(id)
-    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    const formResponse = await bookingsApi.fetchBooking(id)
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }
@@ -140,7 +147,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function cancel(id) {
     await bookingsApi.cancel(id)
-    const formResponse = await bookingsApi.fetchBooking(id, { setAsCurrent: false })
+    const formResponse = await bookingsApi.fetchBooking(id)
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }

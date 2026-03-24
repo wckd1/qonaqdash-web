@@ -98,7 +98,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'

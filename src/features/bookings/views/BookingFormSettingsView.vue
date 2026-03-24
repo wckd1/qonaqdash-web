@@ -23,12 +23,12 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { updateBookingFormSchema } from '@/features/bookings/api'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
 import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
@@ -66,8 +66,8 @@ async function loadForm() {
     uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? {}))
     formData.value = normalizeFormData(res.data)
     hasLoaded.value = true
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('formSettings.loadFailed')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('formSettings.loadFailed')
     hasLoaded.value = false
   } finally {
     loading.value = false
@@ -94,8 +94,8 @@ async function onSave() {
     if (res.data) formData.value = normalizeFormData(res.data)
     bookingStore.replaceBookingFormTemplate(res)
     success(t('formSettings.saved'))
-  } catch (err) {
-    const msg = formatApiError(err.response?.data?.error) || t('formSettings.saveFailed')
+  } catch (err: unknown) {
+    const msg = formatUnknownApiError(err) || t('formSettings.saveFailed')
     saveError.value = msg
     notifyError(msg)
   } finally {

@@ -34,11 +34,12 @@
   </AuthLayout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
@@ -61,14 +62,15 @@ async function handleSubmit() {
   try {
     await authStore.login(email.value, password.value)
     void settingsStore.fetchUserSettings().catch(() => {})
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
-  } catch (err) {
-    if (err.response) {
-      const msg = formatApiError(err.response.data?.error)
+    const r = route.query.redirect
+    const redirect = typeof r === 'string' && r.startsWith('/') ? r : '/'
+    await router.push(redirect)
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)) {
+      const msg = formatApiError(httpErrorData(err)?.error)
       formError.value = msg || t('auth.login.errorInvalid')
     } else {
-      formError.value = t('auth.login.errorNetwork')
+      formError.value = formatUnknownApiError(err) || t('auth.login.errorNetwork')
     }
   } finally {
     loading.value = false

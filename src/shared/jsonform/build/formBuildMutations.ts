@@ -229,7 +229,7 @@ export function addBuildChild(schema, parent, type) {
     return
   }
 
-  const newEl = {
+  const newEl: { type: string; elements: unknown[]; id?: string } = {
     type,
     elements: [],
   }

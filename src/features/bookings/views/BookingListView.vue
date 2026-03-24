@@ -56,7 +56,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -65,7 +65,8 @@ import SearchBar from '@/shared/components/SearchBar.vue'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
-import { formatApiError } from '@/shared/i18n/apiError'
+import type { BookingListItem } from '@/features/bookings/api'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 300
 
@@ -79,7 +80,7 @@ const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-let searchDebounceId = null
+let searchDebounceId: ReturnType<typeof setTimeout> | null = null
 
 const selectedBookingId = computed(() => {
   const id = route.params.id
@@ -92,7 +93,9 @@ const selectedBooking = computed(() => {
   return bookings.value.find((b) => b.id === id) ?? { id }
 })
 
-function bookingGuestName(booking) {
+type BookingPanelRow = BookingListItem | { id: string; guest_name?: string; guest?: BookingListItem['guest'] }
+
+function bookingGuestName(booking: BookingPanelRow | null | undefined) {
   if (!booking) return '—'
   if (booking.guest_name) return booking.guest_name
   const g = booking.guest
@@ -103,7 +106,7 @@ function bookingGuestName(booking) {
   return parts.length ? parts.join(' ') : (g.email ?? '—')
 }
 
-function formatDate(iso) {
+function formatDate(iso: string | undefined) {
   if (!iso) return '—'
   try {
     return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
@@ -112,7 +115,7 @@ function formatDate(iso) {
   }
 }
 
-function openPanel(booking) {
+function openPanel(booking: BookingListItem) {
   const id = booking.id
   if (route.params.id) {
     router.replace({ name: 'bookings', params: { id } })
@@ -134,7 +137,7 @@ function refreshBookings() {
   return load(q ? { q } : {})
 }
 
-async function load(params = {}, isInitial = false) {
+async function load(params: { q?: string } = {}, isInitial = false) {
   loadError.value = ''
   if (isInitial) {
     initialLoading.value = true
@@ -143,8 +146,8 @@ async function load(params = {}, isInitial = false) {
   }
   try {
     await store.fetchBookings(params)
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('bookings.loadFailed')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('bookings.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

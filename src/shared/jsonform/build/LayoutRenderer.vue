@@ -258,12 +258,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, inject, ref, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { canMutateBuildNode, isGuestImmutableBuildGroup } from './buildChangability'
+import { jsonFormBuildKey } from '@/shared/injectKeys'
 import { MAX_HORIZONTAL_LAYOUT_CHILDREN } from './formBuildMutations'
 import { resolveGroupTitle } from '../utils'
 import IconTrash from './icons/IconTrash.vue'
@@ -286,7 +287,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const formBuild = inject('jsonFormBuild', null)
+const formBuild = inject(jsonFormBuildKey, null)
 
 const layoutType = computed(() => props.uischema?.type)
 const isGroup = computed(() => layoutType.value === 'Group')
@@ -344,7 +345,7 @@ const buildGroupHeadingText = computed(() => {
 const buildGroupHeadingMuted = computed(() => !resolvedGroupTitle.value)
 
 const editingGroupTitle = ref(false)
-const titleInputRef = ref(null)
+const titleInputRef = ref<HTMLInputElement | null>(null)
 let groupTitleSnapshot = ''
 
 const groupLabelModel = computed({

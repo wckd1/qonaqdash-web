@@ -55,7 +55,7 @@
   <div v-else class="loading-state">{{ t('common.loading') }}</div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -64,6 +64,7 @@ import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms } from '@/features/property/api'
+import type { Room } from '@/shared/types/property'
 import {
   getBookingStatusFromResponse,
   bookingStatusAllowsEdit,
@@ -72,11 +73,15 @@ import BookingStatusActions from '@/features/bookings/components/BookingStatusAc
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { bookingSchemaWithAvailableRoomIds } from '@/shared/jsonform/utils'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 
-provide('guestSearch', (q) => fetchGuests({ q }))
+import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
+import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
+
+provide(guestSearchKey, (q) => fetchGuests({ q }))
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -86,14 +91,21 @@ const loadError = ref('')
 const notFound = ref(false)
 const concurrentError = ref('')
 const editing = ref(false)
-const editFormData = ref({})
-const errorsMap = ref({})
+const editFormData = ref<BookingFormDataDraft>({})
+const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
-const availableRooms = ref([])
+const availableRooms = ref<Room[]>([])
 
-provide('availableRooms', availableRooms)
+provide(availableRoomsKey, availableRooms)
 
-const bookingId = computed(() => route.params.id ?? null)
+function routeParamId(): string | null {
+  const id = route.params.id
+  if (typeof id === 'string' && id) return id
+  if (Array.isArray(id) && id[0]) return id[0]
+  return null
+}
+
+const bookingId = computed(() => routeParamId())
 
 /** Edit when API allows PUT (confirmed or checked_in). */
 const canEdit = computed(() => {
@@ -106,14 +118,17 @@ const bookingForm = computed(() => normalizeBookingFormResponse(currentBooking.v
 
 /** Title line from FormResponse (data.guest) or flat Booking (guest). */
 const guestDisplayName = computed(() => {
-  const b = currentBooking.value
+  const b = currentBooking.value as Record<string, unknown> | null
   if (!b) return ''
-  const g = b.data?.guest ?? b.guest
+  const data = (b.data as Record<string, unknown> | undefined) ?? {}
+  const flatGuest = b.guest as Record<string, unknown> | undefined
+  const g = (data.guest as Record<string, unknown> | undefined) ?? flatGuest
   if (!g) return ''
-  const first = g.firstName ?? g.first_name ?? ''
-  const last = g.lastName ?? g.last_name ?? ''
+  const first = (g.firstName ?? g.first_name ?? '') as string
+  const last = (g.lastName ?? g.last_name ?? '') as string
   const parts = [first, last].filter(Boolean)
-  return parts.length ? parts.join(' ') : (g.email ?? '')
+  const email = g.email
+  return parts.length ? parts.join(' ') : ((typeof email === 'string' ? email : '') ?? '')
 })
 
 const pageTitle = computed(() => {
@@ -124,26 +139,26 @@ const pageTitle = computed(() => {
 })
 
 async function load() {
-  const id = route.params.id
+  const id = routeParamId()
   if (!id) return
   store.clearCurrentBooking()
   loadError.value = ''
   notFound.value = false
   try {
     await store.fetchBooking(id)
-  } catch (err) {
-    if (err.response?.status === 404) {
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)?.status === 404) {
       store.clearCurrentBooking()
       notFound.value = true
     } else {
-      loadError.value = formatApiError(err.response?.data?.error) || t('bookings.detailLoadFailed')
+      loadError.value = formatUnknownApiError(err) || t('bookings.detailLoadFailed')
     }
   }
 }
 
 watch(editing, (isEdit) => {
   if (isEdit && bookingForm.value) {
-    editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
+    editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {})) as BookingFormDataDraft
     if (!editFormData.value.guest) editFormData.value.guest = {}
     if (editFormData.value.guest.id === undefined) editFormData.value.guest.id = null
     if (!editFormData.value.booking) editFormData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
@@ -158,7 +173,7 @@ watch(
       ? [editFormData.value?.booking?.checkIn, editFormData.value?.booking?.checkOut]
       : [null, null],
   async ([checkIn, checkOut]) => {
-    if (!checkIn || !checkOut) {
+    if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
       availableRooms.value = []
       return
     }
@@ -193,7 +208,7 @@ function startEdit() {
 function cancelEdit() {
   editing.value = false
   if (bookingForm.value) {
-    editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
+    editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {})) as BookingFormDataDraft
     if (!editFormData.value.guest) editFormData.value.guest = {}
     if (editFormData.value.guest.id === undefined) editFormData.value.guest.id = null
     if (!editFormData.value.booking) editFormData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
@@ -228,16 +243,20 @@ async function onSave() {
     if (payload.booking && typeof payload.booking === 'object') {
       delete payload.booking.status
     }
-    await store.updateBooking(bookingId.value, payload)
+    await store.updateBooking(bookingId.value, payload as CreateBookingPayload)
     editing.value = false
-  } catch (err) {
-    if (err.response?.status === 409) {
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)?.status === 409) {
       concurrentError.value =
-        formatApiError(err.response?.data?.error) || t('bookings.concurrent')
+        formatUnknownApiError(err) || t('bookings.concurrent')
       await load()
     } else {
-      const msg = formatApiError(err.response?.data?.error) || t('bookings.saveFailed')
-      errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
+      const msg = formatUnknownApiError(err) || t('bookings.saveFailed')
+      const serverErrors = httpErrorData(err)?.errors
+      errorsMap.value =
+        serverErrors && typeof serverErrors === 'object'
+          ? (serverErrors as Record<string, string[]>)
+          : { '': [msg] }
     }
   } finally {
     submitting.value = false

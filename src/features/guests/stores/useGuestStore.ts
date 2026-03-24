@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { Guest, GuestDetailResponse } from '@/features/guests/api'
 import * as guestsApi from '@/features/guests/api'
+
+type GuestFormTemplate = { schema: object; uischema: object; data: object }
 
 /**
  * @param {{ schema?: object, uischema?: object, data?: object }} res
@@ -15,11 +18,11 @@ function snapshotGuestForm(res) {
 }
 
 export const useGuestStore = defineStore('guests', () => {
-  const guests = ref([])
-  const currentGuest = ref(null)
+  const guests = ref<Guest[]>([])
+  const currentGuest = ref<Guest | GuestDetailResponse | null>(null)
 
   /** Session cache for GET /api/guests/form (runtime blank form). */
-  const guestFormTemplate = ref(null)
+  const guestFormTemplate = ref<GuestFormTemplate | null>(null)
 
   /**
    * @param {{ q?: string }} [params] - Optional search query for server-side filtering.
@@ -42,7 +45,7 @@ export const useGuestStore = defineStore('guests', () => {
    * @param {{ force?: boolean }} [options] - force=true always hits the network.
    * @returns {Promise<{ schema: object, uischema: object, data: object }>}
    */
-  async function fetchGuestForm(options = {}) {
+  async function fetchGuestForm(options: { force?: boolean } = {}) {
     if (!options.force && guestFormTemplate.value != null) {
       return JSON.parse(JSON.stringify(guestFormTemplate.value))
     }
@@ -102,12 +105,15 @@ export const useGuestStore = defineStore('guests', () => {
     guests.value = guests.value.filter((g) => g.id !== id)
     const cg = currentGuest.value
     if (cg && typeof cg === 'object') {
-      const top = 'id' in cg ? cg.id : undefined
+      const row = cg as Record<string, unknown>
+      const top = typeof row.id === 'string' ? row.id : undefined
+      const data = row.data
       const nested =
-        cg.data && typeof cg.data === 'object' && cg.data !== null && 'id' in cg.data
-          ? cg.data.id
+        data && typeof data === 'object' && data !== null && 'id' in data
+          ? (data as { id?: unknown }).id
           : undefined
-      const curId = typeof top === 'string' ? top : typeof nested === 'string' ? nested : null
+      const curId =
+        top ?? (typeof nested === 'string' ? nested : null)
       if (curId === id) currentGuest.value = null
     }
   }

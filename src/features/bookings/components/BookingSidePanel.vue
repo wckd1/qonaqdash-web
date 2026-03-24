@@ -21,7 +21,7 @@
       </div>
       <BookingStatusActions
         v-if="panelStatusActionsVisible"
-        :booking-id="props.booking.id"
+        :booking-id="booking!.id"
         :status="panelBookingStatus"
         @updated="onBookingStatusMutation"
       />
@@ -50,29 +50,34 @@
   </Transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
-import { fetchBooking } from '@/features/bookings/api'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { fetchBooking, type BookingFormResponse } from '@/features/bookings/api'
+import type { BookingSidePanelRef } from '@/features/bookings/panelTypes'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorResponse } from '@/shared/unknownError'
 import { getBookingStatusFromResponse } from '@/features/bookings/bookingStatus'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 
 const { t, locale } = useI18n()
 
-const props = defineProps({
-  /**
-   * List or grid row: must include `id`. Other fields are optional (used for title until load completes).
-   * @type {{ id: string, check_in?: string, check_out?: string, status?: string, guest?: { first_name?: string, last_name?: string, email?: string }, guest_name?: string } | null}
-   */
-  booking: { type: Object, default: null },
-})
+const props = withDefaults(
+  defineProps<{
+    /** List or grid row: must include `id`. Other fields optional until load completes. */
+    booking: BookingSidePanelRef | null
+  }>(),
+  { booking: null },
+)
 
-const emit = defineEmits(['close', 'booking-updated'])
+const emit = defineEmits<{
+  close: []
+  'booking-updated': []
+}>()
 
-const detailEntity = ref(null)
+const detailEntity = ref<BookingFormResponse | null>(null)
 const loading = ref(false)
 const loadError = ref('')
 const notFound = ref(false)
@@ -94,7 +99,7 @@ const panelStatusActionsVisible = computed(
     !!bookingForm.value,
 )
 
-function bookingGuestNameFromList(b) {
+function bookingGuestNameFromList(b: BookingSidePanelRef | null | undefined) {
   if (!b) return ''
   if (b.guest_name) return b.guest_name
   const g = b.guest
@@ -109,12 +114,15 @@ const bookingPanelTitle = computed(() => {
   void locale.value
   const raw = detailEntity.value
   if (raw) {
-    const g = raw.data?.guest ?? raw.guest
+    const data = (raw.data as Record<string, unknown> | undefined) ?? {}
+    const flatGuest = raw.guest as Record<string, unknown> | undefined
+    const g = (data.guest as Record<string, unknown> | undefined) ?? flatGuest
     if (g) {
-      const first = g.firstName ?? g.first_name ?? ''
-      const last = g.lastName ?? g.last_name ?? ''
+      const first = (g.firstName ?? g.first_name ?? '') as string
+      const last = (g.lastName ?? g.last_name ?? '') as string
       const parts = [first, last].filter(Boolean)
-      const name = parts.length ? parts.join(' ') : (g.email ?? '')
+      const email = g.email
+      const name = parts.length ? parts.join(' ') : (typeof email === 'string' ? email : '')
       if (name) return t('pageTitle.bookingWithGuest', { name })
     }
   }
@@ -133,9 +141,9 @@ async function onBookingStatusMutation() {
     if (seq !== loadSeq) return
     detailEntity.value = entity
     emit('booking-updated')
-  } catch (err) {
+  } catch (err: unknown) {
     if (seq !== loadSeq) return
-    loadError.value = formatApiError(err.response?.data?.error) || t('bookings.detailLoadFailed')
+    loadError.value = formatUnknownApiError(err) || t('bookings.detailLoadFailed')
   }
 }
 
@@ -158,12 +166,12 @@ watch(
       const entity = await fetchBooking(id)
       if (seq !== loadSeq) return
       detailEntity.value = entity
-    } catch (err) {
+    } catch (err: unknown) {
       if (seq !== loadSeq) return
-      if (err.response?.status === 404) {
+      if (httpErrorResponse(err)?.status === 404) {
         notFound.value = true
       } else {
-        loadError.value = formatApiError(err.response?.data?.error) || t('bookings.detailLoadFailed')
+        loadError.value = formatUnknownApiError(err) || t('bookings.detailLoadFailed')
       }
     } finally {
       if (seq === loadSeq) loading.value = false

@@ -4,7 +4,6 @@
       :schema="schema"
       :uischema="rootUischema"
       :model-value="data"
-      :parent-uischema="null"
       :element-index="-1"
       :guest-subtree-locked="false"
       @update:model-value="onModelUpdate"
@@ -89,7 +88,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LayoutRenderer from './build/LayoutRenderer.vue'
@@ -103,6 +102,7 @@ import {
   toggleLayoutDirection,
 } from './build/formBuildMutations'
 import { useFormBuildModals } from './build/useFormBuild'
+import { jsonFormBuildKey, type JsonFormBuildContext } from '@/shared/injectKeys'
 
 const props = defineProps({
   /** JSON Schema for the form */
@@ -225,7 +225,7 @@ function toggleLayoutNode(target) {
   if (toggleLayoutDirection(target)) touch()
 }
 
-provide('jsonFormBuild', {
+const jsonFormBuildApi: JsonFormBuildContext = {
   get variant() {
     return props.variant
   },
@@ -234,7 +234,8 @@ provide('jsonFormBuild', {
   removeNode,
   toggleLayoutNode,
   touch,
-})
+}
+provide(jsonFormBuildKey, jsonFormBuildApi)
 </script>
 
 <style scoped>

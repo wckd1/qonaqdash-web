@@ -207,7 +207,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
@@ -236,7 +236,7 @@ const isFormPage = computed(() => {
     p === '/profile'
   )
 })
-const userAreaRef = ref(null)
+const userAreaRef = ref<HTMLElement | null>(null)
 
 const sidebarCollapsed = ref(localStorage.getItem('sidebar_collapsed') === 'true')
 const userMenuOpen = ref(false)
@@ -273,15 +273,21 @@ const userName = computed(() => {
 
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value
-  localStorage.setItem('sidebar_collapsed', sidebarCollapsed.value)
+  localStorage.setItem('sidebar_collapsed', String(sidebarCollapsed.value))
 }
 
 function toggleUserMenu() {
   userMenuOpen.value = !userMenuOpen.value
 }
 
-function handleClickOutside(e) {
-  if (userMenuOpen.value && userAreaRef.value && !userAreaRef.value.contains(e.target)) {
+function handleClickOutside(e: MouseEvent) {
+  const target = e.target
+  if (
+    userMenuOpen.value &&
+    userAreaRef.value &&
+    target instanceof Node &&
+    !userAreaRef.value.contains(target)
+  ) {
     userMenuOpen.value = false
   }
 }

@@ -315,17 +315,20 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
-import { formatApiError } from '@/shared/i18n/apiError'
+import type { Room, RoomType } from '@/shared/types/property'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 300
 
 const ROOM_STATUSES = ['available', 'maintenance', 'out_of_order']
+
+type RoomPanelSelection = { room: Room; roomType: RoomType | undefined }
 
 const { t } = useI18n()
 const store = usePropertyStore()
@@ -338,7 +341,7 @@ const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-const selectedRoom = ref(null)
+const selectedRoom = ref<RoomPanelSelection | null>(null)
 const roomPanelEditing = ref(false)
 const roomPanelError = ref('')
 const editRoomForm = ref({ room_type_id: '', number: '', status: 'available' })
@@ -355,27 +358,27 @@ const editTypeSaving = ref(false)
 const editTypeError = ref('')
 
 const removeTypeConfirmOpen = ref(false)
-const removeTypeTarget = ref(null)
+const removeTypeTarget = ref<RoomType | null>(null)
 const removeTypeSaving = ref(false)
 const removeTypeError = ref('')
 
 const addRoomOpen = ref(false)
-const addRoomType = ref(null)
+const addRoomType = ref<RoomType | null>(null)
 const addRoomForm = ref({ number: '' })
 const addRoomSaving = ref(false)
 
 const removeRoomConfirmOpen = ref(false)
-const removeRoomTarget = ref(null)
+const removeRoomTarget = ref<Room | null>(null)
 const removeRoomSaving = ref(false)
 const removeRoomError = ref('')
 
-let searchDebounceId = null
+let searchDebounceId: ReturnType<typeof setTimeout> | null = null
 
-function roomsByType(roomTypeId) {
+function roomsByType(roomTypeId: string) {
   return rooms.value.filter((r) => r.room_type_id === roomTypeId)
 }
 
-function openPanel(room, roomType) {
+function openPanel(room: Room, roomType: RoomType | undefined) {
   selectedRoom.value = { room, roomType }
   roomPanelEditing.value = false
   roomPanelError.value = ''
@@ -413,7 +416,8 @@ function startRoomEdit() {
   editRoomForm.value = {
     room_type_id: sel.room.room_type_id,
     number: sel.room.number,
-    status: ROOM_STATUSES.includes(sel.room.status) ? sel.room.status : 'available',
+    status:
+      sel.room.status && ROOM_STATUSES.includes(sel.room.status) ? sel.room.status : 'available',
   }
   roomPanelError.value = ''
   roomPanelEditing.value = true
@@ -440,8 +444,8 @@ async function submitRoomEdit() {
     const rt = roomTypes.value.find((x) => x.id === updated.room_type_id)
     selectedRoom.value = { room: updated, roomType: rt }
     roomPanelEditing.value = false
-  } catch (err) {
-    roomPanelError.value = formatApiError(err.response?.data?.error) || t('rooms.loadFailed')
+  } catch (err: unknown) {
+    roomPanelError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
   } finally {
     roomSaveSaving.value = false
   }
@@ -473,8 +477,8 @@ async function confirmRemoveRoom() {
       roomPanelEditing.value = false
     }
     closeRemoveRoomConfirm()
-  } catch (err) {
-    removeRoomError.value = formatApiError(err.response?.data?.error) || t('rooms.loadFailed')
+  } catch (err: unknown) {
+    removeRoomError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
   } finally {
     removeRoomSaving.value = false
   }
@@ -502,7 +506,7 @@ async function submitAddType() {
   }
 }
 
-function openEditTypeDialog(rt) {
+function openEditTypeDialog(rt: RoomType) {
   editTypeId.value = rt.id
   editTypeForm.value = { name: rt.name, description: rt.description ?? '' }
   editTypeError.value = ''
@@ -527,14 +531,14 @@ async function submitEditType() {
     )
     closeEditTypeDialog()
     syncSelectedRoomFromStore()
-  } catch (err) {
-    editTypeError.value = formatApiError(err.response?.data?.error) || t('rooms.loadFailed')
+  } catch (err: unknown) {
+    editTypeError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
   } finally {
     editTypeSaving.value = false
   }
 }
 
-function openRemoveTypeConfirm(rt) {
+function openRemoveTypeConfirm(rt: RoomType) {
   removeTypeTarget.value = rt
   removeTypeError.value = ''
   removeTypeConfirmOpen.value = true
@@ -558,14 +562,14 @@ async function confirmRemoveType() {
       roomPanelEditing.value = false
     }
     closeRemoveTypeConfirm()
-  } catch (err) {
-    removeTypeError.value = formatApiError(err.response?.data?.error) || t('rooms.loadFailed')
+  } catch (err: unknown) {
+    removeTypeError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
   } finally {
     removeTypeSaving.value = false
   }
 }
 
-function openAddRoomDialog(rt) {
+function openAddRoomDialog(rt: RoomType) {
   addRoomType.value = rt
   addRoomForm.value = { number: '' }
   addRoomOpen.value = true
@@ -615,7 +619,7 @@ watch(selectedRoom, (v) => {
  * @param {{ q?: string }} [params]
  * @param {boolean} [isInitial] - If true, show full-page "Loading…"; otherwise show spinner in search bar.
  */
-async function load(params = {}, isInitial = false) {
+async function load(params: { q?: string } = {}, isInitial = false) {
   loadError.value = ''
   if (isInitial) {
     initialLoading.value = true
@@ -625,8 +629,8 @@ async function load(params = {}, isInitial = false) {
   try {
     await store.fetchRoomTypes(params)
     await store.fetchRooms(params)
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('rooms.loadFailed')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

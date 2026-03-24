@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as propertyApi from '@/features/property/api'
+import type { Room, RoomType } from '@/shared/types/property'
 
 /**
  * @param {{ q?: string }} params
@@ -10,8 +11,8 @@ function hasSearchQuery(params) {
 }
 
 export const usePropertyStore = defineStore('property', () => {
-  const roomTypes = ref([])
-  const rooms = ref([])
+  const roomTypes = ref<RoomType[]>([])
+  const rooms = ref<Room[]>([])
 
   /** True when `roomTypes` was last filled by a successful unfiltered fetch. */
   const fullRoomTypesHydrated = ref(false)

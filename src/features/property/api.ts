@@ -1,14 +1,11 @@
 import api from '@/shared/api/client'
-
-/**
- * @typedef {{ id: string, name: string }} Hotel
- */
+import type { Hotel, Room, RoomType } from '@/shared/types/property'
 
 /**
  * Current JWT hotel profile (display name).
  * @returns {Promise<Hotel>}
  */
-export function fetchHotel() {
+export function fetchHotel(): Promise<Hotel> {
   return api.get('/api/property/hotel').then(({ data }) => data)
 }
 
@@ -16,20 +13,15 @@ export function fetchHotel() {
  * @param {string} name - Display name (trimmed server-side; required non-empty).
  * @returns {Promise<Hotel>}
  */
-export function updateHotel(name) {
+export function updateHotel(name: string): Promise<Hotel> {
   return api.put('/api/property/hotel', { name }).then(({ data }) => data)
 }
-
-/**
- * @typedef {{ id: string, name: string, description?: string }} RoomType
- * @typedef {{ id: string, number: string, room_type_id: string, room_type_name?: string, status?: string }} Room
- */
 
 /**
  * @param {{ q?: string }} [params] - Optional search query; backend filters by type name/description or room number.
  * @returns {Promise<RoomType[]>}
  */
-export function fetchRoomTypes(params = {}) {
+export function fetchRoomTypes(params: { q?: string } = {}): Promise<RoomType[]> {
   const config = params.q?.trim()
     ? { params: { q: params.q.trim() } }
     : {}
@@ -41,7 +33,7 @@ export function fetchRoomTypes(params = {}) {
  * @param {string} [description]
  * @returns {Promise<RoomType>}
  */
-export function createRoomType(name, description = '') {
+export function createRoomType(name: string, description = ''): Promise<RoomType> {
   return api
     .post('/api/property/room-types', { name, description: description || undefined })
     .then(({ data }) => data)
@@ -52,7 +44,10 @@ export function createRoomType(name, description = '') {
  * @param {{ name: string, description?: string }} body
  * @returns {Promise<RoomType>}
  */
-export function updateRoomType(id, body) {
+export function updateRoomType(
+  id: string,
+  body: { name: string; description?: string },
+): Promise<RoomType> {
   return api
     .put(`/api/property/room-types/${id}`, {
       name: body.name,
@@ -66,7 +61,7 @@ export function updateRoomType(id, body) {
  * @param {string} id
  * @returns {Promise<void>}
  */
-export function deleteRoomType(id) {
+export function deleteRoomType(id: string): Promise<void> {
   return api.delete(`/api/property/room-types/${id}`).then(() => undefined)
 }
 
@@ -74,7 +69,7 @@ export function deleteRoomType(id) {
  * @param {{ q?: string }} [params] - Optional search query; backend filters by room number.
  * @returns {Promise<Room[]>}
  */
-export function fetchRooms(params = {}) {
+export function fetchRooms(params: { q?: string } = {}): Promise<Room[]> {
   const config = params.q?.trim()
     ? { params: { q: params.q.trim() } }
     : {}
@@ -86,7 +81,7 @@ export function fetchRooms(params = {}) {
  * @param {string} number
  * @returns {Promise<Room>}
  */
-export function createRoom(roomTypeId, number) {
+export function createRoom(roomTypeId: string, number: string): Promise<Room> {
   return api
     .post('/api/property/rooms', { room_type_id: roomTypeId, number })
     .then(({ data }) => data)
@@ -97,7 +92,10 @@ export function createRoom(roomTypeId, number) {
  * @param {{ room_type_id: string, number: string, status: string }} body
  * @returns {Promise<Room>}
  */
-export function updateRoom(id, body) {
+export function updateRoom(
+  id: string,
+  body: { room_type_id: string; number: string; status: string },
+): Promise<Room> {
   return api
     .put(`/api/property/rooms/${id}`, {
       room_type_id: body.room_type_id,
@@ -112,7 +110,7 @@ export function updateRoom(id, body) {
  * @param {string} id
  * @returns {Promise<void>}
  */
-export function deleteRoom(id) {
+export function deleteRoom(id: string): Promise<void> {
   return api.delete(`/api/property/rooms/${id}`).then(() => undefined)
 }
 
@@ -124,8 +122,12 @@ export function deleteRoom(id) {
  * @param {{ excludeBookingId?: string }} [options] - With both dates set, pass booking id to send query `exclude` (rooms occupied only by that booking stay available; ignored without `from`+`to` per API).
  * @returns {Promise<Room[]>}
  */
-export function fetchAvailableRooms(from, to, options = {}) {
-  const params = {}
+export function fetchAvailableRooms(
+  from: Date | string | null,
+  to: Date | string | null,
+  options: { excludeBookingId?: string } = {},
+): Promise<Room[]> {
+  const params: Record<string, string> = {}
   if (from != null) {
     const d = typeof from === 'string' ? new Date(from) : from
     if (!Number.isNaN(d.getTime())) {

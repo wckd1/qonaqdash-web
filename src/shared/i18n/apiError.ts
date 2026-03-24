@@ -33,3 +33,10 @@ export function formatApiError(payload) {
   }
   return String(payload)
 }
+
+/** `formatApiError` for values caught as `unknown` (e.g. Axios errors). */
+export function formatUnknownApiError(err: unknown): string {
+  if (typeof err !== 'object' || err === null) return ''
+  const r = err as { response?: { data?: { error?: unknown } } }
+  return formatApiError(r.response?.data?.error) || ''
+}

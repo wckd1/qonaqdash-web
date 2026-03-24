@@ -1,4 +1,5 @@
 import { ref, watch, reactive } from 'vue'
+import type { GuestSearchRow } from '@/shared/injectKeys'
 
 const GUEST_SEARCH_MIN_LENGTH = 2
 const DEBOUNCE_MS = 300
@@ -42,16 +43,16 @@ export function apiGuestToFormGuest(apiGuest) {
  */
 export function useGuestSearch(getFormData, searchGuests) {
   const query = ref('')
-  const results = ref([])
+  const results = ref<GuestSearchRow[]>([])
   const loading = ref(false)
   /** True between typing a valid query and debounce firing / request finishing */
   const debouncing = ref(false)
 
-  let debounceTimer = null
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined
   watch(
     () => buildGuestSearchQuery(getFormData()?.guest),
     (newQuery) => {
-      clearTimeout(debounceTimer)
+      if (debounceTimer !== undefined) clearTimeout(debounceTimer)
       if (!newQuery || newQuery.length < GUEST_SEARCH_MIN_LENGTH) {
         debouncing.value = false
         query.value = ''
@@ -59,7 +60,7 @@ export function useGuestSearch(getFormData, searchGuests) {
         return
       }
       debouncing.value = true
-      debounceTimer = setTimeout(async () => {
+      debounceTimer = window.setTimeout(async () => {
         debouncing.value = false
         query.value = newQuery
         loading.value = true
@@ -94,8 +95,8 @@ export function useGuestSearch(getFormData, searchGuests) {
 
   /** Close typeahead UI: cancel pending search, drop in-flight state and results. */
   function dismiss() {
-    clearTimeout(debounceTimer)
-    debounceTimer = null
+    if (debounceTimer !== undefined) clearTimeout(debounceTimer)
+    debounceTimer = undefined
     debouncing.value = false
     loading.value = false
     results.value = []

@@ -44,30 +44,35 @@
   </Transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import { composeGuestFormFromEntity } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchGuest } from '@/features/guests/api'
+import type { Guest, GuestDetailResponse } from '@/features/guests/api'
+import type { GuestSidePanelRef } from '@/features/guests/panelTypes'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorResponse } from '@/shared/unknownError'
 
 const { t, locale } = useI18n()
 const guestStore = useGuestStore()
 const { guestFormTemplate } = storeToRefs(guestStore)
 
-const props = defineProps({
-  /**
-   * @type {{ id: string, first_name?: string, last_name?: string, email?: string, phone?: string } | null}
-   */
-  guest: { type: Object, default: null },
-})
+const props = withDefaults(
+  defineProps<{
+    guest: GuestSidePanelRef | null
+  }>(),
+  { guest: null },
+)
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+}>()
 
-const detailEntity = ref(null)
+const detailEntity = ref<Guest | GuestDetailResponse | null>(null)
 const loading = ref(false)
 const loadError = ref('')
 const notFound = ref(false)
@@ -82,12 +87,21 @@ const guestPanelTitle = computed(() => {
   void locale.value
   const entity = detailEntity.value
   if (entity) {
-    const data = entity.data ?? entity
-    const first = data.firstName ?? data.first_name ?? ''
-    const last = data.lastName ?? data.last_name ?? ''
-    const parts = [first, last].filter(Boolean)
-    if (parts.length) return parts.join(' ')
-    if (data.email) return String(data.email)
+    if ('data' in entity && entity.data && typeof entity.data === 'object') {
+      const data = entity.data as Record<string, unknown>
+      const first = (data.firstName ?? data.first_name ?? '') as string
+      const last = (data.lastName ?? data.last_name ?? '') as string
+      const parts = [first, last].filter(Boolean)
+      if (parts.length) return parts.join(' ')
+      if (data.email != null) return String(data.email)
+    } else {
+      const g = entity as Guest
+      const first = g.first_name ?? ''
+      const last = g.last_name ?? ''
+      const parts = [first, last].filter(Boolean)
+      if (parts.length) return parts.join(' ')
+      if (g.email) return g.email
+    }
   }
   const g = props.guest
   if (!g) return ''
@@ -119,12 +133,12 @@ watch(
         await guestStore.fetchGuestForm()
         if (seq !== loadSeq) return
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (seq !== loadSeq) return
-      if (err.response?.status === 404) {
+      if (httpErrorResponse(err)?.status === 404) {
         notFound.value = true
       } else {
-        loadError.value = formatApiError(err.response?.data?.error) || t('guests.guestLoadFailed')
+        loadError.value = formatUnknownApiError(err) || t('guests.guestLoadFailed')
       }
     } finally {
       if (seq === loadSeq) loading.value = false

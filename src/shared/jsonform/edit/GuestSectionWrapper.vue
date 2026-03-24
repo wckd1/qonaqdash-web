@@ -89,7 +89,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import {
   computed,
   inject,
@@ -101,11 +101,13 @@ import {
   onBeforeUnmount,
   nextTick,
   useId,
+  type CSSProperties,
 } from 'vue'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { useI18n } from 'vue-i18n'
 import { buildGuestSearchQuery, useGuestSearch } from '@/shared/composables/useGuestSearch'
+import { guestSearchKey, guestPickerAnchorKey } from '@/shared/injectKeys'
 import { resolveGroupTitle } from '../utils'
 
 const props = defineProps({
@@ -121,16 +123,16 @@ const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
 const guestPickerTitleId = useId()
 
-const searchGuestsFn = inject('guestSearch', null)
+const searchGuestsFn = inject(guestSearchKey, undefined)
 const searchContext = searchGuestsFn
   ? useGuestSearch(() => props.modelValue, searchGuestsFn)
   : null
 
-const pickerAnchorEl = shallowRef(null)
+const pickerAnchorEl = shallowRef<HTMLElement | null>(null)
 const pickerDismissed = ref(false)
-const dropdownEl = ref(null)
-const dropdownStyle = ref(null)
-let clearAnchorTimer = null
+const dropdownEl = ref<HTMLElement | null>(null)
+const dropdownStyle = ref<CSSProperties | undefined>(undefined)
+let clearAnchorTimer: ReturnType<typeof setTimeout> | null = null
 
 function updateDropdownPosition() {
   const el = pickerAnchorEl.value
@@ -141,7 +143,7 @@ function updateDropdownPosition() {
       searchContext.loading ||
       searchContext.results.length > 0)
   if (!el || !visible) {
-    dropdownStyle.value = null
+    dropdownStyle.value = undefined
     return
   }
   const r = el.getBoundingClientRect()
@@ -181,12 +183,12 @@ function clearPickerAnchor(target) {
   }, 0)
 }
 
-provide('guestPickerAnchor', {
-  setPickerAnchor: (el) => {
+provide(guestPickerAnchorKey, {
+  setPickerAnchor: (el: HTMLElement | null) => {
     if (!searchGuestsFn) return
     setPickerAnchor(el)
   },
-  clearPickerAnchor: (el) => {
+  clearPickerAnchor: (el: HTMLElement | null) => {
     if (!searchGuestsFn) return
     clearPickerAnchor(el)
   },

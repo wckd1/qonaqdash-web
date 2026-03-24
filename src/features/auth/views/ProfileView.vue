@@ -64,11 +64,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as authApi from '@/features/auth/api'
-import { formatApiError } from '@/shared/i18n/apiError'
+import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 
 const { t } = useI18n()
@@ -96,12 +96,12 @@ const dirty = computed(() => {
   return false
 })
 
-function serverLocaleToChoice(loc) {
+function serverLocaleToChoice(loc: unknown) {
   if (loc === 'en' || loc === 'ru') return loc
   return ''
 }
 
-function choiceToPayloadLocale(choice) {
+function choiceToPayloadLocale(choice: string) {
   if (choice === 'en' || choice === 'ru') return choice
   return null
 }
@@ -119,20 +119,25 @@ async function load() {
     originalLocaleChoice.value = choice
     currentPassword.value = ''
     newPassword.value = ''
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('profile.loadError')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('profile.loadError')
   } finally {
     loading.value = false
   }
 }
 
-function buildPayload() {
-  const payload = {}
+function buildPayload(): Record<string, unknown> {
+  const payload: Record<string, unknown> = {}
   if (email.value.trim() !== originalEmail.value.trim()) {
     payload.account = { email: email.value.trim() }
   }
   if (newPassword.value.length > 0) {
-    payload.account = { ...payload.account, currentPassword: currentPassword.value, newPassword: newPassword.value }
+    const prev = (payload.account as Record<string, string> | undefined) ?? {}
+    payload.account = {
+      ...prev,
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+    }
   }
   if (localeChoice.value !== originalLocaleChoice.value) {
     payload.settings = { locale: choiceToPayloadLocale(localeChoice.value) }

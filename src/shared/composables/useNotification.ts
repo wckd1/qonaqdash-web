@@ -1,6 +1,8 @@
 import { reactive, readonly } from 'vue'
 
-const state = reactive({ items: [] })
+type NotificationItem = { id: number; message: string; type: string }
+
+const state = reactive<{ items: NotificationItem[] }>({ items: [] })
 let nextId = 0
 
 function addNotification(message, type = 'info', duration = 5000) {

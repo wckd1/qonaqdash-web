@@ -118,7 +118,7 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -130,7 +130,9 @@ import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
 import { composeGuestFormFromEntity } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
-import { formatApiError } from '@/shared/i18n/apiError'
+import type { BookingListItem } from '@/features/bookings/api'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
 import { useNotification } from '@/shared/composables/useNotification'
 
@@ -150,14 +152,21 @@ const blockConfirmOpen = ref(false)
 const removing = ref(false)
 const blockDialogTitleId = useId()
 
-const guestId = computed(() => route.params.id || null)
+function routeGuestId(): string | null {
+  const id = route.params.id
+  if (typeof id === 'string' && id) return id
+  if (Array.isArray(id) && id[0]) return id[0]
+  return null
+}
+
+const guestId = computed(() => routeGuestId())
 
 /** Schema/uischema from API FormResponse or runtime GET /guests/form; data merged from entity when needed. */
 const guestForm = computed(() =>
   composeGuestFormFromEntity(currentGuest.value ?? null, guestFormTemplate.value),
 )
 
-const previousBookings = ref([])
+const previousBookings = ref<BookingListItem[]>([])
 const bookingsLoading = ref(false)
 const bookingsLoadError = ref('')
 
@@ -177,15 +186,18 @@ const guestDisplayName = computed(() => {
   void locale.value
   const g = currentGuest.value
   if (!g) return t('pageTitle.guest')
-  const data = g.data ?? g
-  const first = data.firstName ?? data.first_name ?? ''
-  const last = data.lastName ?? data.last_name ?? ''
+  const data = (
+    'data' in g && g.data != null && typeof g.data === 'object' ? g.data : g
+  ) as Record<string, unknown>
+  const first = (data.firstName ?? data.first_name ?? '') as string
+  const last = (data.lastName ?? data.last_name ?? '') as string
   const parts = [first, last].filter(Boolean)
-  return parts.length ? parts.join(' ') : (data.email || t('pageTitle.guest'))
+  const email = data.email
+  return parts.length ? parts.join(' ') : ((typeof email === 'string' ? email : '') || t('pageTitle.guest'))
 })
 
 async function load() {
-  const id = route.params.id
+  const id = routeGuestId()
   if (!id) return
   store.clearCurrentGuest()
   loadError.value = ''
@@ -193,15 +205,24 @@ async function load() {
   try {
     await store.fetchGuest(id)
     const g = currentGuest.value
-    if (g && !(g.schema && g.uischema)) {
+    if (
+      g &&
+      !(
+        typeof g === 'object' &&
+        'schema' in g &&
+        (g as { schema?: unknown }).schema &&
+        'uischema' in g &&
+        (g as { uischema?: unknown }).uischema
+      )
+    ) {
       await store.fetchGuestForm()
     }
-  } catch (err) {
-    if (err.response?.status === 404) {
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)?.status === 404) {
       store.clearCurrentGuest()
       notFound.value = true
     } else {
-      loadError.value = formatApiError(err.response?.data?.error) || t('guests.guestLoadFailed')
+      loadError.value = formatUnknownApiError(err) || t('guests.guestLoadFailed')
     }
   }
 }
@@ -213,8 +234,8 @@ async function loadBookings() {
   bookingsLoading.value = true
   try {
     previousBookings.value = await fetchGuestBookings(id)
-  } catch (err) {
-    bookingsLoadError.value = formatApiError(err.response?.data?.error) || t('guests.bookingsLoadFailed')
+  } catch (err: unknown) {
+    bookingsLoadError.value = formatUnknownApiError(err) || t('guests.bookingsLoadFailed')
     previousBookings.value = []
   } finally {
     bookingsLoading.value = false
@@ -253,9 +274,13 @@ async function onSave() {
   try {
     await store.updateGuest(guestId.value, editFormData.value)
     editing.value = false
-  } catch (err) {
-    const msg = formatApiError(err.response?.data?.error) || t('guests.saveEditFailed')
-    errorsMap.value = err.response?.data?.errors ?? { '': [msg] }
+  } catch (err: unknown) {
+    const msg = formatUnknownApiError(err) || t('guests.saveEditFailed')
+    const serverErrors = httpErrorData(err)?.errors
+    errorsMap.value =
+      serverErrors && typeof serverErrors === 'object'
+        ? (serverErrors as Record<string, string[]>)
+        : { '': [msg] }
   } finally {
     submitting.value = false
   }

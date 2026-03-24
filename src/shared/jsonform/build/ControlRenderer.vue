@@ -118,12 +118,13 @@
   </template>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ControlRenderer from './ControlRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { scopeToPath, getSchemaEntry } from '../utils'
+import { jsonFormBuildKey } from '@/shared/injectKeys'
 import { canMutateBuildNode } from './buildChangability'
 import IconTrash from './icons/IconTrash.vue'
 import IconLock from './icons/IconLock.vue'
@@ -142,7 +143,7 @@ const props = defineProps({
 })
 
 const { t, te, locale } = useI18n()
-const formBuild = inject('jsonFormBuild', null)
+const formBuild = inject(jsonFormBuildKey, null)
 
 const variant = computed(() => (formBuild ? formBuild.variant : 'guest'))
 
@@ -231,7 +232,7 @@ function translateSchemaMetaPart(part) {
 
 const descriptionText = computed(() => {
   void locale.value
-  const parts = []
+  const parts: string[] = []
   const entry = schemaEntry.value
   if (!entry) return ''
   let typeStr = entry.type || ''

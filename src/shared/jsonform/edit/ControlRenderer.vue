@@ -64,7 +64,7 @@
   </template>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, inject } from 'vue'
 import ArrayRenderer from './ArrayRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
@@ -77,6 +77,7 @@ import {
   getFilteredRoomSelectOptions,
   buildRoomOneOfFromRooms,
 } from '../utils'
+import { availableRoomsKey, guestPickerAnchorKey } from '@/shared/injectKeys'
 import { evaluateRule } from '../useJsonFormRules'
 
 const props = defineProps({
@@ -107,10 +108,10 @@ const branchDisabled = computed(() => {
 })
 
 /** When provided by BookingNewView: rooms from GET /api/property/rooms/available when checkIn/checkOut change */
-const availableRooms = inject('availableRooms', null)
+const availableRooms = inject(availableRoomsKey, null)
 
 /** Guest booking typeahead: anchor dropdown to the focused guest field (GuestSectionWrapper). */
-const guestPickerAnchor = inject('guestPickerAnchor', null)
+const guestPickerAnchor = inject(guestPickerAnchorKey, null)
 
 const path = computed(() => scopeToPath(props.uischema.scope))
 const schemaEntry = computed(() => getSchemaEntry(props.schema, path.value))
@@ -198,14 +199,16 @@ function onActionClick() {
   setLocalValue(v)
 }
 
-function onTextInputFocus(e) {
+function onTextInputFocus(e: FocusEvent) {
   if (!participatesInGuestPicker.value) return
-  guestPickerAnchor.setPickerAnchor(e.currentTarget)
+  const el = e.currentTarget
+  guestPickerAnchor?.setPickerAnchor(el instanceof HTMLElement ? el : null)
 }
 
-function onTextInputBlur(e) {
+function onTextInputBlur(e: FocusEvent) {
   if (!participatesInGuestPicker.value) return
-  guestPickerAnchor.clearPickerAnchor(e.currentTarget)
+  const el = e.currentTarget
+  guestPickerAnchor?.clearPickerAnchor(el instanceof HTMLElement ? el : null)
 }
 
 function onInput(e) {
@@ -317,7 +320,7 @@ const isSelect = computed(() => {
     path.value[0] === 'roomID' &&
     props.arrayItemIndex !== undefined &&
     Array.isArray(props.fullData?.booking?.rooms) &&
-    (availableRooms?.value?.length > 0 || hasOneOf)
+    ((availableRooms?.value?.length ?? 0) > 0 || hasOneOf)
   return hasEnum || hasOneOf || roomIdUsesAvailableList
 })
 

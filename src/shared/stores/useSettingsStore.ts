@@ -71,9 +71,12 @@ export const useSettingsStore = defineStore('settings', () => {
         }
       }
       return data
-    } catch (e) {
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: unknown } }; message?: string }
       error.value =
-        formatApiError(e?.response?.data?.error) || e?.message || 'Failed to load account'
+        formatApiError(err.response?.data?.error) ||
+        err.message ||
+        'Failed to load account'
       throw e
     } finally {
       loading.value = false

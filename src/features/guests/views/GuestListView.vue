@@ -54,7 +54,7 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -62,7 +62,8 @@ import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import GuestSidePanel from '@/features/guests/components/GuestSidePanel.vue'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import { formatApiError } from '@/shared/i18n/apiError'
+import type { Guest } from '@/features/guests/api'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 300
 
@@ -76,7 +77,7 @@ const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-let searchDebounceId = null
+let searchDebounceId: ReturnType<typeof setTimeout> | null = null
 
 const selectedGuestId = computed(() => {
   const id = route.params.id
@@ -90,7 +91,7 @@ const selectedGuest = computed(() => {
   return guests.value.find((g) => g.id === id) ?? { id }
 })
 
-function openPanel(guest) {
+function openPanel(guest: Guest) {
   const id = guest.id
   if (route.params.id) {
     router.replace({ name: 'guests', params: { id } })
@@ -107,7 +108,7 @@ function closePanel() {
  * @param {{ q?: string }} [params]
  * @param {boolean} [isInitial] - If true, show full-page "Loading…"; otherwise keep search bar and table visible (no focus loss).
  */
-async function load(params = {}, isInitial = false) {
+async function load(params: { q?: string } = {}, isInitial = false) {
   loadError.value = ''
   if (isInitial) {
     initialLoading.value = true
@@ -116,8 +117,8 @@ async function load(params = {}, isInitial = false) {
   }
   try {
     await store.fetchGuests(params)
-  } catch (err) {
-    loadError.value = formatApiError(err.response?.data?.error) || t('guests.loadFailed')
+  } catch (err: unknown) {
+    loadError.value = formatUnknownApiError(err) || t('guests.loadFailed')
   } finally {
     initialLoading.value = false
     searching.value = false

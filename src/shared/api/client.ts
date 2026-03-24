@@ -1,6 +1,12 @@
-import axios from 'axios'
+import * as axiosNs from 'axios'
 import { formatApiError, getApiErrorCode } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
+
+/**
+ * Axios typings resolve as namespace-only under `moduleResolution: "bundler"` + package `exports`;
+ * runtime exposes the client on `default`.
+ */
+const axios: any = (axiosNs as any).default ?? axiosNs
 
 const TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
@@ -15,7 +21,7 @@ const api = axios.create({
 })
 
 /** Single-flight refresh so concurrent 401s share one POST /api/auth/refresh. */
-let refreshPromise = null
+let refreshPromise: Promise<void> | null = null
 
 function refreshAccessToken() {
   if (refreshPromise) return refreshPromise
@@ -32,7 +38,7 @@ function refreshAccessToken() {
       const nextRefresh = data.refresh_token
       localStorage.setItem(TOKEN_KEY, access)
       localStorage.setItem(REFRESH_TOKEN_KEY, nextRefresh)
-      const { useAuthStore } = await import('@/features/auth/stores/useAuthStore.js')
+      const { useAuthStore } = await import('@/features/auth/stores/useAuthStore')
       useAuthStore().setTokens(access, nextRefresh)
     })
     .finally(() => {
@@ -45,7 +51,7 @@ function refreshAccessToken() {
 async function clearSessionAndRedirectLogin() {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(REFRESH_TOKEN_KEY)
-  const { useAuthStore } = await import('@/features/auth/stores/useAuthStore.js')
+  const { useAuthStore } = await import('@/features/auth/stores/useAuthStore')
   useAuthStore().logout()
   window.location.href = '/auth/login'
 }
@@ -100,9 +106,10 @@ api.interceptors.response.use(
           err.config.headers = err.config.headers || {}
           err.config.headers.Authorization = `Bearer ${token}`
           return api.request(err.config)
-        } catch (refreshErr) {
+        } catch (refreshErr: unknown) {
           const refreshHadResponse =
-            axios.isAxiosError(refreshErr) && !!refreshErr.response
+            axios.isAxiosError(refreshErr) &&
+            !!(refreshErr as { response?: unknown }).response
           const noRefreshStored = !localStorage.getItem(REFRESH_TOKEN_KEY)
           if (refreshHadResponse || noRefreshStored) {
             await clearSessionAndRedirectLogin()

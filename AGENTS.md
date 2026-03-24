@@ -1,3 +1,21 @@
+## Feature implementation (definition of done)
+
+Treat **new product behavior**, **API integration changes**, and **visible UI changes** the same: complete the full checklist below in the **same change set** when user-facing behavior, contract assumptions, or design authority shift.
+
+**These items are blocking.** Do not treat implementation as finished after “it works locally” alone. Skipping applicable items is a **process failure**, not an optional follow-up.
+
+1. **Contract (`docs/requirements.md`) (MUST)** — Implement and parse responses against **[docs/requirements.md](docs/requirements.md)** as the shipped API contract. **Do not edit `requirements.md` in this repo** (backend owns it). If the backend must add or change endpoints, payloads, or error behavior to support the frontend, record it in the **same change set** in **[docs/backend-change-requests.md](docs/backend-change-requests.md)** (method/path, params, reason, how the UI will use it). Do not paper over contract gaps in silence. After backend ships updates, **trim or remove** resolved rows from `backend-change-requests.md` so the queue stays accurate. **Skill (when shaping proposals):** **api-design-principles**.
+
+2. **Design authority (`design.md` / `design.html` / tokens) (MUST when UI or product chrome changes)** — Align implementation with **[docs/design.md](docs/design.md)**, **[docs/design.html](docs/design.html)**, and **`src/assets/main.css`** tokens. If you change layout, navigation, interaction patterns, or design decisions reflected in those docs, update **`design.md` and `design.html` in the same change set** so documentation stays authoritative. Prefer tokens over ad-hoc colors/sizing. **Skills (before calling UI done):** **frontend-design** and **interface-design** — run their checks as hard gates (hierarchy, motion, a11y, token/swap/squint/signature tests). **In the same delivery** (assistant response, PR description, or equivalent), include a **short UI check summary**: what you verified, plus gaps or intentional exceptions. Silently skipping this summary for substantive UI work is **incomplete**.
+
+3. **Implementation quality (MUST)** — Match existing feature layout (`src/features/…`, thin stores, feature `api.js`), shared patterns in `src/shared/`, and the conventions in the sections below. **Vue / Router / Pinia work:** follow **vue-best-practices**; use **vue-router-best-practices** and **vue-pinia-best-practices** when routes or stores are involved. **New reusable composables** whose inputs may be refs or plain values: prefer **create-adaptable-composable**. **Substantial or cross-cutting features:** consider **planning** (structured plan under `docs/plans/` when that skill is invoked); if a plan file exists before build-out, **plan-review** can sanity-check it. **Exploration / options:** **brainstorm** when the user wants design or approach discovery before coding.
+
+4. **Build and linters (MUST)** — Run **`npm run build`** and fix failures introduced by the change. If the repo or CI adds ESLint, Prettier, `vue-tsc`, or other checks, satisfy them for **touched files** before considering the work done. **Debugging Vue/runtime issues:** **vue-debug-guides**. **Automated tests** (when present or added): **vue-testing-best-practices** / **test-automator**.
+
+5. **i18n (MUST for new or changed user-visible copy)** — Add or update keys in **`src/locales/en.json` and `src/locales/ru.json`**. Do not hardcode new English UI strings. Server `data.error` stays as returned (do not invent English-only fallbacks that hide API messages).
+
+6. **Learnings (optional)** — When the user asks to capture session knowledge (**learn** skill) or at the end of a significant change, update this **AGENTS.md** if something durable about process or architecture was discovered.
+
 ## Tech Stack
 
 - **Frontend**: Vue 3 + Vite + Pinia + Vue Router + Pico CSS
@@ -12,12 +30,9 @@
 - **Feature API modules**: Each feature has its own `api.js` (e.g. `src/features/auth/api.js`) for HTTP and parsing; stores stay thin and call these modules.
 - **API integration**: If the backend should change shape or add endpoints/params to support the frontend properly, say so explicitly (what to return, why). Do not paper over gaps in silence. **Record every proposed backend change in [docs/backend-change-requests.md](docs/backend-change-requests.md)** (method/path, params, reason, how the frontend will use it).
 
-## Feature Implementation
+## Feature implementation (quick pointer)
 
-- **Backend contract**: Implement against **[docs/requirements.md](docs/requirements.md)** as the shipped API and integration contract. **Do not edit `requirements.md` in this repo** — it is maintained by the backend; propose API changes only via **[docs/backend-change-requests.md](docs/backend-change-requests.md)** until they appear in requirements.
-- **Design reference**: Align with **[docs/design.md](docs/design.md)** and **[docs/design.html](docs/design.html)** plus tokens in `main.css`. If implementation changes a design decision (sidebar, tokens, patterns), update **both** `docs/design.md` and `docs/design.html` so docs stay authoritative.
-- **Backend coordination**: **[docs/backend-change-requests.md](docs/backend-change-requests.md)** is the queue for **outstanding** proposals to the backend team. Keep it accurate: add new items when needed; remove or shrink entries once they are reflected in `docs/requirements.md`.
-- **UI work — `/frontend-design` and `/interface-design`**: Use both skills when designing or building UI. **Before treating UI as done**, apply their checks as hard requirements, not optional polish — for example: intent and palette/depth tied to design tokens (not random values); interface-design **swap / squint / signature / token** tests; frontend-design coherence (hierarchy, motion, accessibility). If a check fails, fix the UI before shipping.
+The **blocking checklist** (contract, `backend-change-requests`, design docs + tokens, build/linters, i18n, UI skills + summary) lives at the top: **Feature implementation (definition of done)**.
 
 ## UI and UX
 
@@ -42,7 +57,7 @@
 
 - **Intent** (in `main.css` header): reception/staff, bookings/guests, warm calm teal. New tokens should match that intent.
 - **Content / forms**: Full-width content sections; vertical form stacks; labels per global `label` rule. Input/select/textarea value size: **`--text-label-size`** (checkbox/radio excluded); compact toolbars may override locally.
-- **UI review**: When using `/interface-design`, ensure component fallbacks match current tokens; avoid layout that fights full-width content; token names should read as product-specific.
+- **UI review**: Same bar as **Feature implementation (definition of done)** step 2 — **frontend-design** / **interface-design**; component fallbacks match tokens; avoid layout that fights full-width content; token names should read as product-specific.
 
 ## Frontend / Vue
 

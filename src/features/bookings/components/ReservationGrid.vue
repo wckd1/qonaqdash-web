@@ -192,10 +192,10 @@ const dragSelectState = ref<DragSelectState | null>(null)
 const rangeHighlightKeys = computed(() => {
   const set = new Set()
   const addSpan = (roomId: string, a: Date, b: Date) => {
-    const low = Math.min(a.getTime(), b.getTime())
-    const high = Math.max(a.getTime(), b.getTime())
-    for (let t = low; t <= high; t += dayMs) {
-      set.add(`${roomId}-${t}`)
+    const first = a.getTime() <= b.getTime() ? a : b
+    const last = a.getTime() <= b.getTime() ? b : a
+    for (const day of listDaysInclusive(first, last)) {
+      set.add(`${roomId}-${startOfDay(day).getTime()}`)
     }
   }
   const drag = dragSelectState.value

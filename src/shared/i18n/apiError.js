@@ -11,7 +11,7 @@ export function getApiErrorCode(data) {
 }
 
 /**
- * Human-readable message for API error payloads (legacy string or §9.1 object).
+ * Human-readable message for API `error`: plain string or object with `code` / `message` / `fields`.
  * @param {unknown} payload - `response.data.error`
  * @returns {string}
  */

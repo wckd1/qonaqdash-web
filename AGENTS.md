@@ -33,7 +33,7 @@
 ## Conventions
 
 - **Shared components**: Reused UI → `src/shared/` (or appropriate shared path). Keep components token-driven; move duplicated layout from features into `main.css` when it becomes a system pattern.
-- **`docs/`**: Design and requirements live here; excluded from app builds. Do **not** reference `docs/*.md` paths inside `src/` comments or JSDoc — contracts stay in docs; code comments stay self-contained.
+- **`docs/`**: Design, API contract, and change-request queue live here; excluded from app builds. Files under `docs/` **should** cross-link each other when helpful. Do **not** reference `docs/*.md` / `docs/*.html` paths inside `src/` comments or JSDoc — contracts stay in docs; application code stays self-contained. Procedural pointers to which doc is which remain in this file for agents.
 - **Markdown**: Do not create `.md` files unless the user asks.
 - **Quality**: Fix root causes; avoid workaround-only fixes.
 - **API errors**: Backend uses `{ "error": "human-readable message" }`. Surface `data?.error`, not `data?.message`, in the client and views.

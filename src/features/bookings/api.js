@@ -5,13 +5,13 @@ import api from '@/shared/api/client'
  * @typedef {{ id: string, guest_id: string, check_in: string, check_out: string, status: string, guest?: { first_name?: string, last_name?: string } }} BookingListItem
  */
 /**
- * Single booking detail from state transitions (PUT check-in/check-out/cancel/update) or legacy shape.
+ * Flat booking row returned by PUT check-in/check-out/cancel/update (before optional re-fetch).
  * @typedef {{ id?: string, guest_id?: string, check_in: string, check_out: string, status: string, version?: number, guest?: { first_name?: string, last_name?: string, email?: string, phone?: string }, rooms?: Array<{ room_type_id?: string, room_type_name?: string, room_id?: string, room_number?: string }> }} BookingFlat
  */
 /**
  * GET /api/bookings/{id} returns FormResponse: schema, uischema, data (camelCase form data).
  * data.booking.rooms[] includes roomType, roomID and display fields roomType_title, roomID_title.
- * @typedef {{ schema?: unknown, uischema?: unknown, data?: { status?: string, guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string, roomType_title?: string, roomID_title?: string }> } }, status?: string }} BookingFormResponse
+ * @typedef {{ schema?: unknown, uischema?: unknown, data?: { guest?: { id?: string, firstName?: string, lastName?: string, email?: string, phone?: string }, booking?: { status?: string, checkIn?: string, checkOut?: string, rooms?: Array<{ roomType?: string, roomID?: string, roomType_title?: string, roomID_title?: string }> } } }} BookingFormResponse
  */
 /**
  * Create/update booking body: `{ guest, booking }` only. Link an existing guest with `guest.id`; omit any top-level `id`.

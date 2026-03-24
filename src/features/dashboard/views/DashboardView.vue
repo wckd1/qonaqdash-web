@@ -113,9 +113,8 @@ import { formatApiError } from '@/shared/i18n/apiError'
 
 /** Saved range; period length is derived from from/to. */
 const STORAGE_RANGE = 'qonaqdash.dashboard.gridCustomRange'
-/** Default period when no saved range (and legacy `gridPreset` fallback). */
+/** Last chosen period length (days), for defaults when no saved range. */
 const STORAGE_LAST_PERIOD = 'qonaqdash.dashboard.gridLastPeriod'
-const STORAGE_PRESET_LEGACY = 'qonaqdash.dashboard.gridPreset'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -176,11 +175,9 @@ function rangeForPeriod(dayCount) {
 /** Quick picks in the period dropdown only; any other length still appears as an extra option. */
 const periodQuickOptions = Object.freeze([7, 14, 30])
 
-function readFallbackPeriodDays() {
+function readLastPeriodDays() {
   const last = parseInt(localStorage.getItem(STORAGE_LAST_PERIOD) || '', 10)
   if (!Number.isNaN(last) && last >= 2) return last
-  const legacy = parseInt(localStorage.getItem(STORAGE_PRESET_LEGACY) || '', 10)
-  if (!Number.isNaN(legacy) && legacy >= 2) return legacy
   return 14
 }
 
@@ -201,7 +198,7 @@ function readInitialRange() {
   } catch {
     /* ignore */
   }
-  const r = rangeForPeriod(readFallbackPeriodDays())
+  const r = rangeForPeriod(readLastPeriodDays())
   return { from: r.from, to: r.to }
 }
 
@@ -329,7 +326,7 @@ function onDateFieldChange() {
 }
 
 function jumpToday() {
-  let n = readFallbackPeriodDays()
+  let n = readLastPeriodDays()
   if (isValidRange(fromStr.value, toStr.value)) {
     const fromD = startOfDay(parseLocalYmd(fromStr.value))
     const toD = startOfDay(parseLocalYmd(toStr.value))

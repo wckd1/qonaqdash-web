@@ -1,6 +1,6 @@
 /**
- * Booking lifecycle on GET /api/bookings/{id}: `data.status` (see requirements).
- * Fallbacks support rollout or alternate server shapes.
+ * Booking lifecycle on GET /api/bookings/{id}: `data.booking.status` (FormResponse).
+ * Fallbacks: legacy `data.status`, top-level `status` on the response.
  *
  * @param {Record<string, unknown> | null | undefined} bookingResponse
  * @returns {string | undefined}
@@ -8,15 +8,15 @@
 export function getBookingStatusFromResponse(bookingResponse) {
   if (!bookingResponse || typeof bookingResponse !== 'object') return undefined
   const data = bookingResponse.data
+  const booking = data && typeof data === 'object' ? data.booking : undefined
+  if (booking && typeof booking === 'object' && booking.status != null && booking.status !== '') {
+    return String(booking.status)
+  }
   if (data && typeof data === 'object' && data.status != null && data.status !== '') {
     return String(data.status)
   }
   if (bookingResponse.status != null && bookingResponse.status !== '') {
     return String(bookingResponse.status)
-  }
-  const booking = data && typeof data === 'object' ? data.booking : undefined
-  if (booking && typeof booking === 'object' && booking.status != null && booking.status !== '') {
-    return String(booking.status)
   }
   return undefined
 }

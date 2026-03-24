@@ -207,6 +207,9 @@ async function onSave() {
   concurrentError.value = ''
   const forValidate = JSON.parse(JSON.stringify(editFormData.value))
   delete forValidate.status
+  if (forValidate.booking && typeof forValidate.booking === 'object') {
+    delete forValidate.booking.status
+  }
   const schemaForValidate = bookingSchemaWithAvailableRoomIds(
     bookingForm.value?.schema ?? {},
     availableRooms.value,
@@ -222,6 +225,9 @@ async function onSave() {
     const payload = JSON.parse(JSON.stringify(editFormData.value))
     delete payload.id
     delete payload.status
+    if (payload.booking && typeof payload.booking === 'object') {
+      delete payload.booking.status
+    }
     await store.updateBooking(bookingId.value, payload)
     editing.value = false
   } catch (err) {

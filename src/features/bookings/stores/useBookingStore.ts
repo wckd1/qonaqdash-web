@@ -27,6 +27,9 @@ export const useBookingStore = defineStore('bookings', () => {
   /** Booking id last loaded into `currentBooking` (detail route); lifecycle PUTs refresh it only when this matches. */
   const currentBookingId = ref<string | null>(null)
 
+  /** Last `hash` from create `GET …/form?target=edit` — `If-None-Match` on each new-booking open. */
+  const bookingCreateFormHash = ref<string | null>(null)
+
   /** Session cache for GET /api/bookings/form (blank form definition). */
   const bookingFormTemplate = ref<BookingFormTemplate | null>(null)
 
@@ -45,10 +48,15 @@ export const useBookingStore = defineStore('bookings', () => {
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
   async function fetchBookingForm(options: { force?: boolean } = {}) {
-    if (!options.force && bookingFormTemplate.value != null) {
-      return JSON.parse(JSON.stringify(bookingFormTemplate.value))
+    const res = await bookingsApi.fetchBookingForm({
+      target: 'edit',
+      force: options.force,
+      revalidate: !options.force,
+      ifNoneMatch: options.force ? null : bookingCreateFormHash.value,
+    })
+    if (typeof res.hash === 'string' && res.hash.trim()) {
+      bookingCreateFormHash.value = res.hash.trim()
     }
-    const res = await bookingsApi.fetchBookingForm()
     bookingFormTemplate.value = snapshotBookingForm(res)
     return JSON.parse(JSON.stringify(bookingFormTemplate.value))
   }
@@ -72,6 +80,8 @@ export const useBookingStore = defineStore('bookings', () => {
    * @param {{ schema?: object, uischema?: object, data?: object }} res
    */
   function replaceBookingFormTemplate(res) {
+    bookingsApi.invalidateBookingRuntimeFormCache()
+    bookingCreateFormHash.value = null
     bookingFormTemplate.value = null
     if (res?.schema != null && res?.uischema != null) {
       bookingFormTemplate.value = snapshotBookingForm(res)

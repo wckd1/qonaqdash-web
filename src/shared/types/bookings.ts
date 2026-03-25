@@ -20,10 +20,11 @@ export interface BookingDetailData {
   booking: Record<string, unknown>
 }
 
-/** Runtime `GET …/form?target=` — schema + uischema only (optional empty `data`). */
+/** Runtime `GET …/form?target=` — schema + uischema + canonical `hash` (optional empty `data`). */
 export interface BookingFormSchemaResponse {
   schema?: unknown
   uischema?: unknown
+  hash?: string
   data?: Record<string, unknown>
 }
 

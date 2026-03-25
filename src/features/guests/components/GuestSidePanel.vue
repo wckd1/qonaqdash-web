@@ -120,12 +120,14 @@ watch(
     notFound.value = false
     detailEntity.value = null
     try {
-      const [entity] = await Promise.all([
-        fetchGuest(id),
-        guestStore.fetchGuestForm({ target: 'view' }),
-      ])
+      const payload = await fetchGuest(id)
       if (seq !== loadSeq) return
-      detailEntity.value = entity
+      detailEntity.value = payload.data
+      await guestStore.fetchGuestForm({
+        target: 'view',
+        definitionHash: payload.formRef?.hash ?? null,
+      })
+      if (seq !== loadSeq) return
     } catch (err: unknown) {
       if (seq !== loadSeq) return
       if (httpErrorResponse(err)?.status === 404) {

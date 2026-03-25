@@ -1,4 +1,10 @@
 import api from '@/shared/api/client'
+import { clearFormDefinitionsFor, normalizeFormRef } from '@/shared/forms/formDefinitionCache'
+import {
+  loadRuntimeFormDefinition,
+  type LoadRuntimeFormOptions,
+} from '@/shared/forms/loadRuntimeFormDefinition'
+import type { FormRef } from '@/shared/types/forms'
 
 export type {
   Guest,
@@ -8,6 +14,26 @@ export type {
   GuestJsonFormDataPartial,
   GuestJsonFormFields,
 } from '@/shared/types/guests'
+
+export type { FormRef }
+
+export interface GuestDetailPayload {
+  data: import('@/shared/types/guests').GuestDetailData
+  formRef: FormRef | null
+}
+
+/**
+ * @param {unknown} raw - GET/PUT/POST guest JSON (may include `_form`).
+ */
+export function parseGuestDetailPayload(raw: unknown): GuestDetailPayload {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const formRef = normalizeFormRef(o._form)
+  const { _form: _f, ...rest } = o
+  return {
+    data: rest as import('@/shared/types/guests').GuestDetailData,
+    formRef,
+  }
+}
 
 /**
  * @param {{ q?: string }} [params] - Optional search query; backend filters by name, email, phone.
@@ -21,28 +47,56 @@ export function fetchGuests(params: { q?: string } = {}) {
 }
 
 /**
- * Guest profile data only (GET /api/guests/:id).
+ * Guest profile + optional `_form` meta (GET /api/guests/:id).
  * @param {string} id
- * @returns {Promise<import('@/shared/types/guests').GuestDetailData>}
  */
-export function fetchGuest(id: string) {
-  return api.get(`/api/guests/${id}`).then(({ data }) => data)
+export function fetchGuest(id: string): Promise<GuestDetailPayload> {
+  return api.get(`/api/guests/${id}`).then(({ data }) => parseGuestDetailPayload(data))
 }
 
 /**
- * Runtime guest JSONForm definition (schema + uischema; optional empty `data`).
- * GET /api/guests/form?target=edit|view — omit query → edit.
- * @param {{ target?: 'edit' | 'view' }} [options]
+ * Cached runtime guest form (`GET /api/guests/form?target=`).
+ * @param {'edit' | 'view'} mode
+ * @param {string | null | undefined} definitionHash - from `_form.hash` on detail; omit on create.
  */
-export function fetchGuestForm(options: { target?: 'edit' | 'view' } = {}) {
+export function loadGuestRuntimeForm(
+  mode: 'edit' | 'view',
+  definitionHash: string | null | undefined,
+  options: LoadRuntimeFormOptions = {},
+) {
+  return loadRuntimeFormDefinition('guest', '/api/guests/form', mode, definitionHash, options)
+}
+
+/**
+ * Runtime guest JSONForm definition.
+ * @param {{ target?: 'edit' | 'view', force?: boolean, definitionHash?: string | null, revalidate?: boolean, ifNoneMatch?: string | null }} [options]
+ */
+export async function fetchGuestForm(
+  options: {
+    target?: 'edit' | 'view'
+    force?: boolean
+    definitionHash?: string | null
+    revalidate?: boolean
+    ifNoneMatch?: string | null
+  } = {},
+): Promise<import('@/shared/types/guests').GuestFormSchemaResponse> {
   const target = options.target ?? 'edit'
-  return api
-    .get('/api/guests/form', { params: { target } })
-    .then(({ data }) => ({
-      schema: data.schema ?? {},
-      uischema: data.uischema ?? {},
-      data: data.data ?? {},
-    }))
+  const loaded = await loadGuestRuntimeForm(target, options.definitionHash ?? null, {
+    force: options.force,
+    revalidate: options.revalidate,
+    ifNoneMatch: options.ifNoneMatch,
+  })
+  return {
+    schema: loaded.schema ?? {},
+    uischema: loaded.uischema ?? {},
+    hash: loaded.hash,
+    data: loaded.data,
+  }
+}
+
+/** Clear guest runtime form cache (call after org form definition changes). */
+export function invalidateGuestRuntimeFormCache(): void {
+  clearFormDefinitionsFor('guest')
 }
 
 /**
@@ -69,20 +123,17 @@ export function updateGuestFormSchema(body: { schema: object; uischema: object; 
 /**
  * Creates a new guest. Body is flat camelCase (firstName, lastName, email, phone).
  * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
- * @returns {Promise<import('@/shared/types/guests').GuestDetailData>}
  */
 export function createGuest(data: Record<string, unknown>) {
-  return api.post('/api/guests', data).then(({ data: res }) => res)
+  return api.post('/api/guests', data).then(({ data: res }) => parseGuestDetailPayload(res).data)
 }
 
 /**
  * Updates an existing guest. Body is flat camelCase (same shape as create).
- * @param {string} id
- * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
- * @returns {Promise<import('@/shared/types/guests').GuestDetailData>}
+ * @returns {Promise<GuestDetailPayload>}
  */
-export function updateGuest(id: string, data: Record<string, unknown>) {
-  return api.put(`/api/guests/${id}`, data).then(({ data: res }) => res)
+export function updateGuest(id: string, data: Record<string, unknown>): Promise<GuestDetailPayload> {
+  return api.put(`/api/guests/${id}`, data).then(({ data: res }) => parseGuestDetailPayload(res))
 }
 
 /**

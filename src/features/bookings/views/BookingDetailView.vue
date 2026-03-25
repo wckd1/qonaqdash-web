@@ -195,11 +195,15 @@ watch(
   { immediate: true },
 )
 
-watch(() => route.params.id, (newId) => {
-  if (newId) load()
-  editing.value = false
-  concurrentError.value = ''
-})
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) load()
+    editing.value = false
+    concurrentError.value = ''
+  },
+  { immediate: true },
+)
 
 async function startEdit() {
   const id = bookingId.value
@@ -273,8 +277,6 @@ watch(
   },
   { immediate: true },
 )
-
-load()
 </script>
 
 <style scoped>

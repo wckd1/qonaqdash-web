@@ -1,4 +1,10 @@
 import api from '@/shared/api/client'
+import { clearFormDefinitionsFor, normalizeFormRef } from '@/shared/forms/formDefinitionCache'
+import {
+  loadRuntimeFormDefinition,
+  type LoadRuntimeFormOptions,
+} from '@/shared/forms/loadRuntimeFormDefinition'
+import type { FormRef } from '@/shared/types/forms'
 import type {
   BookingDetailData,
   BookingFlat,
@@ -25,6 +31,27 @@ export type {
   BookingListItem,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
+
+export type { FormRef }
+
+export interface BookingDetailPayload {
+  detail: BookingDetailData
+  formRef: FormRef | null
+}
+
+/**
+ * @param {unknown} raw - GET booking detail JSON (guest + booking + optional `_form`).
+ */
+export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const formRef = normalizeFormRef(o._form)
+  const guest = (o.guest && typeof o.guest === 'object' ? o.guest : {}) as Record<string, unknown>
+  const booking = (o.booking && typeof o.booking === 'object' ? o.booking : {}) as Record<string, unknown>
+  return {
+    detail: { guest, booking },
+    formRef,
+  }
+}
 
 /**
  * @param {{ from: string, to: string }} params - Inclusive range, YYYY-MM-DD.
@@ -53,20 +80,45 @@ export function fetchBookings(params: { q?: string; from?: string; to?: string }
 }
 
 /**
- * Runtime booking JSONForm definition (schema + uischema; optional empty `data`).
- * GET /api/bookings/form?target=edit|view — omit query → edit.
+ * Cached runtime booking form (`GET /api/bookings/form?target=`).
  */
-export function fetchBookingForm(
-  options: { target?: 'edit' | 'view' } = {},
+export function loadBookingRuntimeForm(
+  mode: 'edit' | 'view',
+  definitionHash: string | null | undefined,
+  options: LoadRuntimeFormOptions = {},
+) {
+  return loadRuntimeFormDefinition('booking', '/api/bookings/form', mode, definitionHash, options)
+}
+
+/**
+ * Runtime booking JSONForm definition.
+ */
+export async function fetchBookingForm(
+  options: {
+    target?: 'edit' | 'view'
+    force?: boolean
+    definitionHash?: string | null
+    revalidate?: boolean
+    ifNoneMatch?: string | null
+  } = {},
 ): Promise<BookingFormSchemaResponse> {
   const target = options.target ?? 'edit'
-  return api
-    .get('/api/bookings/form', { params: { target } })
-    .then(({ data }) => ({
-      schema: data.schema,
-      uischema: data.uischema,
-      data: data.data ?? {},
-    }))
+  const loaded = await loadBookingRuntimeForm(target, options.definitionHash ?? null, {
+    force: options.force,
+    revalidate: options.revalidate,
+    ifNoneMatch: options.ifNoneMatch,
+  })
+  return {
+    schema: loaded.schema,
+    uischema: loaded.uischema,
+    hash: loaded.hash,
+    data: loaded.data,
+  }
+}
+
+/** Clear booking runtime form cache (after org form definition changes). */
+export function invalidateBookingRuntimeFormCache(): void {
+  clearFormDefinitionsFor('booking')
 }
 
 /**
@@ -87,16 +139,14 @@ export function mergeBookingDetailWithRuntimeForm(
 }
 
 /**
- * Parallel load for booking detail / panel: aggregate data + runtime form.
+ * Booking detail + optional `_form` meta, then runtime form (hash-keyed cache).
  */
 export async function fetchBookingWithRuntimeForm(
   id: string,
   target: 'edit' | 'view' = 'view',
 ): Promise<BookingFormResponse> {
-  const [detail, form] = await Promise.all([
-    fetchBooking(id),
-    fetchBookingForm({ target }),
-  ])
+  const { detail, formRef } = await fetchBooking(id)
+  const form = await loadBookingRuntimeForm(target, formRef?.hash, { force: false })
   return mergeBookingDetailWithRuntimeForm(detail, form)
 }
 
@@ -112,9 +162,9 @@ export function updateBookingFormSchema(body: {
   return api.put('/api/bookings/form/schema', body).then(({ data }) => data)
 }
 
-/** Booking JSONForms data only (`{ guest, booking }`). */
-export function fetchBooking(id: string): Promise<BookingDetailData> {
-  return api.get(`/api/bookings/${id}`).then(({ data }) => data)
+/** Booking JSONForms data + `_form` meta. */
+export function fetchBooking(id: string): Promise<BookingDetailPayload> {
+  return api.get(`/api/bookings/${id}`).then(({ data }) => parseBookingDetailPayload(data))
 }
 
 export function updateBooking(id: string, body: CreateBookingPayload): Promise<BookingFlat> {

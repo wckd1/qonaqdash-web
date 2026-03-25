@@ -13,10 +13,11 @@ export interface Guest {
  */
 export type GuestDetailData = GuestJsonFormDataPartial & { id?: string }
 
-/** Runtime `GET …/form?target=` — schema + uischema only (optional empty `data`). */
+/** Runtime `GET …/form?target=` — schema + uischema + canonical `hash` (optional empty `data`). */
 export interface GuestFormSchemaResponse {
   schema?: unknown
   uischema?: unknown
+  hash?: string
   data?: GuestJsonFormDataPartial
 }
 

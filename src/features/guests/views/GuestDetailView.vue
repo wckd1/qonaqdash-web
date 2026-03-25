@@ -141,7 +141,8 @@ const route = useRoute()
 const router = useRouter()
 const store = useGuestStore()
 const { success } = useNotification()
-const { currentGuest, guestFormTemplate, guestFormRuntimeView } = storeToRefs(store)
+const { currentGuest, guestFormTemplate, guestFormRuntimeView, currentGuestFormRef } =
+  storeToRefs(store)
 const loadError = ref('')
 const notFound = ref(false)
 const editing = ref(false)
@@ -204,7 +205,11 @@ async function load() {
   loadError.value = ''
   notFound.value = false
   try {
-    await Promise.all([store.fetchGuest(id), store.fetchGuestForm({ target: 'view' })])
+    await store.fetchGuest(id)
+    await store.fetchGuestForm({
+      target: 'view',
+      definitionHash: currentGuestFormRef.value?.hash ?? null,
+    })
   } catch (err: unknown) {
     if (httpErrorResponse(err)?.status === 404) {
       store.clearCurrentGuest()
@@ -237,10 +242,14 @@ watch(editing, (isEdit) => {
   }
 })
 
-watch(() => route.params.id, (newId) => {
-  if (newId) load()
-  editing.value = false
-})
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) load()
+    editing.value = false
+  },
+  { immediate: true },
+)
 
 function cancelEdit() {
   editing.value = false
@@ -315,8 +324,6 @@ async function confirmBlock() {
     removing.value = false
   }
 }
-
-load()
 </script>
 
 <style scoped>

@@ -113,7 +113,7 @@ const canEdit = computed(() => {
   return bookingStatusAllowsEdit(status)
 })
 
-/** Normalized { schema, uischema, data } when GET /api/bookings/:id returned FormResponse. */
+/** Merged runtime form + GET /api/bookings/:id `{ guest, booking }` data. */
 const bookingForm = computed(() => normalizeBookingFormResponse(currentBooking.value ?? null))
 
 /** Title line from FormResponse (data.guest) or flat Booking (guest). */
@@ -145,7 +145,7 @@ async function load() {
   loadError.value = ''
   notFound.value = false
   try {
-    await store.fetchBooking(id)
+    await store.fetchBooking(id, { formTarget: 'view' })
   } catch (err: unknown) {
     if (httpErrorResponse(err)?.status === 404) {
       store.clearCurrentBooking()
@@ -201,7 +201,10 @@ watch(() => route.params.id, (newId) => {
   concurrentError.value = ''
 })
 
-function startEdit() {
+async function startEdit() {
+  const id = bookingId.value
+  if (!id) return
+  await store.fetchBooking(id, { formTarget: 'edit' })
   editing.value = true
 }
 

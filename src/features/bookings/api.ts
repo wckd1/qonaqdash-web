@@ -1,11 +1,19 @@
 import api from '@/shared/api/client'
-import type { BookingFlat, BookingFormResponse, CreateBookingPayload } from '@/shared/types/bookings'
+import type {
+  BookingDetailData,
+  BookingFlat,
+  BookingFormResponse,
+  BookingFormSchemaResponse,
+  CreateBookingPayload,
+} from '@/shared/types/bookings'
 
 export type {
+  BookingDetailData,
   BookingFlat,
   BookingFormDataDraft,
   BookingFormGuestData,
   BookingFormResponse,
+  BookingFormSchemaResponse,
   BookingGridEntry,
   BookingJsonFormBookingBranch,
   BookingJsonFormBookingBranchFields,
@@ -44,12 +52,56 @@ export function fetchBookings(params: { q?: string; from?: string; to?: string }
   return api.get('/api/bookings', config).then(({ data }) => data.bookings ?? data ?? [])
 }
 
-export function fetchBookingForm(): Promise<BookingFormResponse> {
-  return api.get('/api/bookings/form').then(({ data }) => data)
+/**
+ * Runtime booking JSONForm definition (schema + uischema; optional empty `data`).
+ * GET /api/bookings/form?target=edit|view — omit query → edit.
+ */
+export function fetchBookingForm(
+  options: { target?: 'edit' | 'view' } = {},
+): Promise<BookingFormSchemaResponse> {
+  const target = options.target ?? 'edit'
+  return api
+    .get('/api/bookings/form', { params: { target } })
+    .then(({ data }) => ({
+      schema: data.schema,
+      uischema: data.uischema,
+      data: data.data ?? {},
+    }))
+}
+
+/**
+ * Merge `GET /api/bookings/:id` data with runtime form schema (client-side JSONForms envelope).
+ */
+export function mergeBookingDetailWithRuntimeForm(
+  detail: BookingDetailData,
+  form: Pick<BookingFormSchemaResponse, 'schema' | 'uischema'>,
+): BookingFormResponse {
+  return {
+    schema: form.schema,
+    uischema: form.uischema,
+    data: {
+      guest: detail.guest ?? {},
+      booking: detail.booking ?? {},
+    },
+  }
+}
+
+/**
+ * Parallel load for booking detail / panel: aggregate data + runtime form.
+ */
+export async function fetchBookingWithRuntimeForm(
+  id: string,
+  target: 'edit' | 'view' = 'view',
+): Promise<BookingFormResponse> {
+  const [detail, form] = await Promise.all([
+    fetchBooking(id),
+    fetchBookingForm({ target }),
+  ])
+  return mergeBookingDetailWithRuntimeForm(detail, form)
 }
 
 export function fetchBookingFormSchema(): Promise<BookingFormResponse> {
-  return api.get('/api/bookings/form/schema').then(({ data }) => data)
+  return api.get('/api/bookings/form/schema').then(({ data }) => data as BookingFormResponse)
 }
 
 export function updateBookingFormSchema(body: {
@@ -60,7 +112,8 @@ export function updateBookingFormSchema(body: {
   return api.put('/api/bookings/form/schema', body).then(({ data }) => data)
 }
 
-export function fetchBooking(id: string): Promise<BookingFormResponse> {
+/** Booking JSONForms data only (`{ guest, booking }`). */
+export function fetchBooking(id: string): Promise<BookingDetailData> {
   return api.get(`/api/bookings/${id}`).then(({ data }) => data)
 }
 

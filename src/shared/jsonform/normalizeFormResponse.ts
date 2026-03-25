@@ -64,10 +64,21 @@ export function composeGuestFormFromEntity(guestEntity, template) {
   const fromApi = normalizeGuestFormResponse(guestEntity)
   if (fromApi) return fromApi
   if (!template?.schema || !template?.uischema) return null
+  const templateData =
+    template.data && typeof template.data === 'object' && !Array.isArray(template.data)
+      ? /** @type {Record<string, unknown>} */ (template.data)
+      : {}
+  const templateKeys = Object.keys(templateData)
+  const data =
+    templateKeys.length > 0
+      ? overlayTemplateDataFromPayload(guestEntity, templateData)
+      : guestEntity && typeof guestEntity === 'object'
+        ? { .../** @type {Record<string, unknown>} */ (guestEntity) }
+        : {}
   return {
     schema: template.schema,
     uischema: template.uischema,
-    data: overlayTemplateDataFromPayload(guestEntity, template.data ?? {}),
+    data,
   }
 }
 

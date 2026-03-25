@@ -51,7 +51,7 @@ import { storeToRefs } from 'pinia'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import { composeGuestFormFromEntity } from '@/shared/jsonform/normalizeFormResponse'
 import { fetchGuest } from '@/features/guests/api'
-import type { Guest, GuestDetailResponse } from '@/features/guests/api'
+import type { GuestDetailData } from '@/features/guests/api'
 import type { GuestSidePanelRef } from '@/features/guests/panelTypes'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
@@ -59,7 +59,7 @@ import { httpErrorResponse } from '@/shared/unknownError'
 
 const { t, locale } = useI18n()
 const guestStore = useGuestStore()
-const { guestFormTemplate } = storeToRefs(guestStore)
+const { guestFormTemplate, guestFormRuntimeView } = storeToRefs(guestStore)
 
 const props = withDefaults(
   defineProps<{
@@ -72,7 +72,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const detailEntity = ref<Guest | GuestDetailResponse | null>(null)
+const detailEntity = ref<GuestDetailData | null>(null)
 const loading = ref(false)
 const loadError = ref('')
 const notFound = ref(false)
@@ -80,28 +80,22 @@ const notFound = ref(false)
 let loadSeq = 0
 
 const guestForm = computed(() =>
-  composeGuestFormFromEntity(detailEntity.value ?? null, guestFormTemplate.value),
+  composeGuestFormFromEntity(
+    detailEntity.value ?? null,
+    guestFormRuntimeView.value ?? guestFormTemplate.value,
+  ),
 )
 
 const guestPanelTitle = computed(() => {
   void locale.value
   const entity = detailEntity.value
   if (entity) {
-    if ('data' in entity && entity.data && typeof entity.data === 'object') {
-      const data = entity.data as Record<string, unknown>
-      const first = (data.firstName ?? data.first_name ?? '') as string
-      const last = (data.lastName ?? data.last_name ?? '') as string
-      const parts = [first, last].filter(Boolean)
-      if (parts.length) return parts.join(' ')
-      if (data.email != null) return String(data.email)
-    } else {
-      const g = entity as Guest
-      const first = g.first_name ?? ''
-      const last = g.last_name ?? ''
-      const parts = [first, last].filter(Boolean)
-      if (parts.length) return parts.join(' ')
-      if (g.email) return g.email
-    }
+    const row = entity as Record<string, unknown>
+    const first = (row.firstName ?? row.first_name ?? '') as string
+    const last = (row.lastName ?? row.last_name ?? '') as string
+    const parts = [first, last].filter(Boolean)
+    if (parts.length) return parts.join(' ')
+    if (row.email != null) return String(row.email)
   }
   const g = props.guest
   if (!g) return ''
@@ -126,13 +120,12 @@ watch(
     notFound.value = false
     detailEntity.value = null
     try {
-      const entity = await fetchGuest(id)
+      const [entity] = await Promise.all([
+        fetchGuest(id),
+        guestStore.fetchGuestForm({ target: 'view' }),
+      ])
       if (seq !== loadSeq) return
       detailEntity.value = entity
-      if (entity && !(entity.schema && entity.uischema)) {
-        await guestStore.fetchGuestForm()
-        if (seq !== loadSeq) return
-      }
     } catch (err: unknown) {
       if (seq !== loadSeq) return
       if (httpErrorResponse(err)?.status === 404) {

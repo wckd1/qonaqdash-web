@@ -55,7 +55,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
 import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
-import { fetchBooking, type BookingFormResponse } from '@/features/bookings/api'
+import { fetchBookingWithRuntimeForm, type BookingFormResponse } from '@/features/bookings/api'
 import type { BookingSidePanelRef } from '@/features/bookings/panelTypes'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
@@ -137,7 +137,7 @@ async function onBookingStatusMutation() {
   if (!id) return
   const seq = loadSeq
   try {
-    const entity = await fetchBooking(id)
+    const entity = await fetchBookingWithRuntimeForm(id, 'view')
     if (seq !== loadSeq) return
     detailEntity.value = entity
     emit('booking-updated')
@@ -163,7 +163,7 @@ watch(
     notFound.value = false
     detailEntity.value = null
     try {
-      const entity = await fetchBooking(id)
+      const entity = await fetchBookingWithRuntimeForm(id, 'view')
       if (seq !== loadSeq) return
       detailEntity.value = entity
     } catch (err: unknown) {

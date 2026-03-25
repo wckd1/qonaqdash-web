@@ -11,7 +11,23 @@ export interface BookingListItem {
   guest?: { first_name?: string; last_name?: string; email?: string }
 }
 
-/** GET /api/bookings/:id — FormResponse. */
+/**
+ * GET /api/bookings/:id — `{ guest, booking }` JSONForms data only (no schema/uischema).
+ * Merge with `GET /api/bookings/form?target=view|edit` on the client.
+ */
+export interface BookingDetailData {
+  guest: Record<string, unknown>
+  booking: Record<string, unknown>
+}
+
+/** Runtime `GET …/form?target=` — schema + uischema only (optional empty `data`). */
+export interface BookingFormSchemaResponse {
+  schema?: unknown
+  uischema?: unknown
+  data?: Record<string, unknown>
+}
+
+/** Merged shape for JsonFormView / JsonFormEdit after combining detail data + runtime form. */
 export interface BookingFormResponse {
   schema?: unknown
   uischema?: unknown

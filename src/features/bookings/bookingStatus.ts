@@ -1,5 +1,5 @@
 /**
- * Booking lifecycle on GET /api/bookings/{id}: `data.booking.status` (FormResponse).
+ * Booking lifecycle: `data.booking.status` on merged JSONForms envelope (detail data + runtime form).
  *
  * @param {Record<string, unknown> | null | undefined} bookingResponse
  * @returns {string | undefined}

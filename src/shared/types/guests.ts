@@ -7,8 +7,14 @@ export interface Guest {
   phone?: string
 }
 
-/** GET /api/guests/:id — JSONForm-style or flat entity. */
-export interface GuestDetailResponse {
+/**
+ * GET/PUT /api/guests/:id — flat JSONForms `data` only (no schema/uischema).
+ * Merge with `GET /api/guests/form?target=view|edit` on the client.
+ */
+export type GuestDetailData = GuestJsonFormDataPartial & { id?: string }
+
+/** Runtime `GET …/form?target=` — schema + uischema only (optional empty `data`). */
+export interface GuestFormSchemaResponse {
   schema?: unknown
   uischema?: unknown
   data?: GuestJsonFormDataPartial

@@ -2,7 +2,8 @@ import api from '@/shared/api/client'
 
 export type {
   Guest,
-  GuestDetailResponse,
+  GuestDetailData,
+  GuestFormSchemaResponse,
   GuestJsonFormData,
   GuestJsonFormDataPartial,
   GuestJsonFormFields,
@@ -20,24 +21,28 @@ export function fetchGuests(params: { q?: string } = {}) {
 }
 
 /**
- * Returns raw response so caller can handle both plain guest object and JSONForm-style { data }.
+ * Guest profile data only (GET /api/guests/:id).
  * @param {string} id
- * @returns {Promise<import('@/shared/types/guests').Guest | GuestDetailResponse>}
+ * @returns {Promise<import('@/shared/types/guests').GuestDetailData>}
  */
 export function fetchGuest(id: string) {
   return api.get(`/api/guests/${id}`).then(({ data }) => data)
 }
 
 /**
- * Runtime blank guest form (create / CRM). GET /api/guests/form
- * @returns {Promise<{ schema: object, uischema: object, data: object }>}
+ * Runtime guest JSONForm definition (schema + uischema; optional empty `data`).
+ * GET /api/guests/form?target=edit|view — omit query → edit.
+ * @param {{ target?: 'edit' | 'view' }} [options]
  */
-export function fetchGuestForm() {
-  return api.get('/api/guests/form').then(({ data }) => ({
-    schema: data.schema ?? {},
-    uischema: data.uischema ?? {},
-    data: data.data ?? {},
-  }))
+export function fetchGuestForm(options: { target?: 'edit' | 'view' } = {}) {
+  const target = options.target ?? 'edit'
+  return api
+    .get('/api/guests/form', { params: { target } })
+    .then(({ data }) => ({
+      schema: data.schema ?? {},
+      uischema: data.uischema ?? {},
+      data: data.data ?? {},
+    }))
 }
 
 /**
@@ -64,7 +69,7 @@ export function updateGuestFormSchema(body: { schema: object; uischema: object; 
 /**
  * Creates a new guest. Body is flat camelCase (firstName, lastName, email, phone).
  * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
- * @returns {Promise<GuestDetailResponse>}
+ * @returns {Promise<import('@/shared/types/guests').GuestDetailData>}
  */
 export function createGuest(data: Record<string, unknown>) {
   return api.post('/api/guests', data).then(({ data: res }) => res)
@@ -74,7 +79,7 @@ export function createGuest(data: Record<string, unknown>) {
  * Updates an existing guest. Body is flat camelCase (same shape as create).
  * @param {string} id
  * @param {Record<string, unknown>} data - Form data from JsonFormEdit (camelCase)
- * @returns {Promise<GuestDetailResponse>}
+ * @returns {Promise<import('@/shared/types/guests').GuestDetailData>}
  */
 export function updateGuest(id: string, data: Record<string, unknown>) {
   return api.put(`/api/guests/${id}`, data).then(({ data: res }) => res)

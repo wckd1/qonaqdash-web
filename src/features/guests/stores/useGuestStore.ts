@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Guest, GuestDetailResponse } from '@/features/guests/api'
+import type { Guest, GuestDetailData } from '@/features/guests/api'
 import * as guestsApi from '@/features/guests/api'
 
 type GuestFormTemplate = { schema: object; uischema: object; data: object }
@@ -19,10 +19,12 @@ function snapshotGuestForm(res) {
 
 export const useGuestStore = defineStore('guests', () => {
   const guests = ref<Guest[]>([])
-  const currentGuest = ref<Guest | GuestDetailResponse | null>(null)
+  const currentGuest = ref<GuestDetailData | null>(null)
 
-  /** Session cache for GET /api/guests/form (runtime blank form). */
+  /** Session cache: GET /api/guests/form?target=edit (create flow, default runtime). */
   const guestFormTemplate = ref<GuestFormTemplate | null>(null)
+  /** Session cache: GET /api/guests/form?target=view (detail / panel). */
+  const guestFormRuntimeView = ref<GuestFormTemplate | null>(null)
 
   /**
    * @param {{ q?: string }} [params] - Optional search query for server-side filtering.
@@ -33,7 +35,7 @@ export const useGuestStore = defineStore('guests', () => {
 
   /**
    * @param {string} id
-   * @returns {Promise<import('@/features/guests/api').Guest | import('@/features/guests/api').GuestDetailResponse>}
+   * @returns {Promise<GuestDetailData>}
    */
   async function fetchGuest(id) {
     const guest = await guestsApi.fetchGuest(id)
@@ -42,16 +44,19 @@ export const useGuestStore = defineStore('guests', () => {
   }
 
   /**
-   * @param {{ force?: boolean }} [options] - force=true always hits the network.
+   * @param {{ force?: boolean, target?: 'edit' | 'view' }} [options] - `target=edit` for create; `view` for read-only detail.
    * @returns {Promise<{ schema: object, uischema: object, data: object }>}
    */
-  async function fetchGuestForm(options: { force?: boolean } = {}) {
-    if (!options.force && guestFormTemplate.value != null) {
-      return JSON.parse(JSON.stringify(guestFormTemplate.value))
+  async function fetchGuestForm(options: { force?: boolean; target?: 'edit' | 'view' } = {}) {
+    const target = options.target ?? 'edit'
+    const slot = target === 'view' ? guestFormRuntimeView : guestFormTemplate
+    if (!options.force && slot.value != null) {
+      return JSON.parse(JSON.stringify(slot.value))
     }
-    const res = await guestsApi.fetchGuestForm()
-    guestFormTemplate.value = snapshotGuestForm(res)
-    return JSON.parse(JSON.stringify(guestFormTemplate.value))
+    const res = await guestsApi.fetchGuestForm({ target })
+    const snap = snapshotGuestForm(res)
+    slot.value = snap
+    return JSON.parse(JSON.stringify(snap))
   }
 
   /**
@@ -68,11 +73,12 @@ export const useGuestStore = defineStore('guests', () => {
   }
 
   /**
-   * After PUT …/form/schema from settings: invalidate runtime GET …/form cache; re-seed if response is complete.
+   * After PUT …/form/schema from settings: invalidate runtime GET …/form caches; re-seed if response is complete.
    * @param {{ schema?: object, uischema?: object, data?: object }} res
    */
   function replaceGuestFormTemplate(res) {
     guestFormTemplate.value = null
+    guestFormRuntimeView.value = null
     if (res?.schema != null && res?.uischema != null) {
       guestFormTemplate.value = snapshotGuestForm(res)
     }
@@ -80,7 +86,7 @@ export const useGuestStore = defineStore('guests', () => {
 
   /**
    * @param {Record<string, unknown>} data - camelCase form data (firstName, lastName, email, phone)
-   * @returns {Promise<import('@/features/guests/api').GuestDetailResponse>}
+   * @returns {Promise<GuestDetailData>}
    */
   async function createGuest(data) {
     return guestsApi.createGuest(data)
@@ -89,7 +95,7 @@ export const useGuestStore = defineStore('guests', () => {
   /**
    * @param {string} id
    * @param {Record<string, unknown>} data - camelCase form data
-   * @returns {Promise<import('@/features/guests/api').GuestDetailResponse>}
+   * @returns {Promise<GuestDetailData>}
    */
   async function updateGuest(id, data) {
     const updated = await guestsApi.updateGuest(id, data)
@@ -106,14 +112,7 @@ export const useGuestStore = defineStore('guests', () => {
     const cg = currentGuest.value
     if (cg && typeof cg === 'object') {
       const row = cg as Record<string, unknown>
-      const top = typeof row.id === 'string' ? row.id : undefined
-      const data = row.data
-      const nested =
-        data && typeof data === 'object' && data !== null && 'id' in data
-          ? (data as { id?: unknown }).id
-          : undefined
-      const curId =
-        top ?? (typeof nested === 'string' ? nested : null)
+      const curId = typeof row.id === 'string' ? row.id : undefined
       if (curId === id) currentGuest.value = null
     }
   }
@@ -125,8 +124,8 @@ export const useGuestStore = defineStore('guests', () => {
   return {
     guests,
     currentGuest,
-    /** Cached GET /api/guests/form — used to render guest detail when GET /guests/:id is not a FormResponse */
     guestFormTemplate,
+    guestFormRuntimeView,
     fetchGuests,
     fetchGuest,
     fetchGuestForm,

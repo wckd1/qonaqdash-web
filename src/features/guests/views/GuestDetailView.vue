@@ -141,7 +141,7 @@ const route = useRoute()
 const router = useRouter()
 const store = useGuestStore()
 const { success } = useNotification()
-const { currentGuest, guestFormTemplate } = storeToRefs(store)
+const { currentGuest, guestFormTemplate, guestFormRuntimeView } = storeToRefs(store)
 const loadError = ref('')
 const notFound = ref(false)
 const editing = ref(false)
@@ -161,9 +161,12 @@ function routeGuestId(): string | null {
 
 const guestId = computed(() => routeGuestId())
 
-/** Schema/uischema from API FormResponse or runtime GET /guests/form; data merged from entity when needed. */
+/** Runtime GET /guests/form?target=view (+ edit fallback) merged with GET /guests/:id data. */
 const guestForm = computed(() =>
-  composeGuestFormFromEntity(currentGuest.value ?? null, guestFormTemplate.value),
+  composeGuestFormFromEntity(
+    currentGuest.value ?? null,
+    guestFormRuntimeView.value ?? guestFormTemplate.value,
+  ),
 )
 
 const previousBookings = ref<BookingListItem[]>([])
@@ -186,9 +189,7 @@ const guestDisplayName = computed(() => {
   void locale.value
   const g = currentGuest.value
   if (!g) return t('pageTitle.guest')
-  const data = (
-    'data' in g && g.data != null && typeof g.data === 'object' ? g.data : g
-  ) as Record<string, unknown>
+  const data = g as Record<string, unknown>
   const first = (data.firstName ?? data.first_name ?? '') as string
   const last = (data.lastName ?? data.last_name ?? '') as string
   const parts = [first, last].filter(Boolean)
@@ -203,20 +204,7 @@ async function load() {
   loadError.value = ''
   notFound.value = false
   try {
-    await store.fetchGuest(id)
-    const g = currentGuest.value
-    if (
-      g &&
-      !(
-        typeof g === 'object' &&
-        'schema' in g &&
-        (g as { schema?: unknown }).schema &&
-        'uischema' in g &&
-        (g as { uischema?: unknown }).uischema
-      )
-    ) {
-      await store.fetchGuestForm()
-    }
+    await Promise.all([store.fetchGuest(id), store.fetchGuestForm({ target: 'view' })])
   } catch (err: unknown) {
     if (httpErrorResponse(err)?.status === 404) {
       store.clearCurrentGuest()

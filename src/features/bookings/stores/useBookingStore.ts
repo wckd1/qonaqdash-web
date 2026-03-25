@@ -83,9 +83,13 @@ export const useBookingStore = defineStore('bookings', () => {
    * @param {{ setAsCurrent?: boolean }} [options] - setAsCurrent=false when refreshing another id without switching detail context.
    * @returns {Promise<import('@/features/bookings/api').BookingFormResponse>}
    */
-  async function fetchBooking(id: string, options: { setAsCurrent?: boolean } = {}) {
+  async function fetchBooking(
+    id: string,
+    options: { setAsCurrent?: boolean; formTarget?: 'view' | 'edit' } = {},
+  ) {
     const setAsCurrent = options.setAsCurrent !== false
-    const formResponse = await bookingsApi.fetchBooking(id)
+    const formTarget = options.formTarget ?? 'view'
+    const formResponse = await bookingsApi.fetchBookingWithRuntimeForm(id, formTarget)
     if (setAsCurrent) {
       currentBookingId.value = id
       currentBooking.value = formResponse
@@ -108,7 +112,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function updateBooking(id: string, payload: CreateBookingPayload) {
     await bookingsApi.updateBooking(id, payload)
-    const formResponse = await bookingsApi.fetchBooking(id)
+    const formResponse = await bookingsApi.fetchBookingWithRuntimeForm(id, 'view')
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }
@@ -121,7 +125,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function checkIn(id) {
     await bookingsApi.checkIn(id)
-    const formResponse = await bookingsApi.fetchBooking(id)
+    const formResponse = await bookingsApi.fetchBookingWithRuntimeForm(id, 'view')
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }
@@ -134,7 +138,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function checkOut(id) {
     await bookingsApi.checkOut(id)
-    const formResponse = await bookingsApi.fetchBooking(id)
+    const formResponse = await bookingsApi.fetchBookingWithRuntimeForm(id, 'view')
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }
@@ -147,7 +151,7 @@ export const useBookingStore = defineStore('bookings', () => {
    */
   async function cancel(id) {
     await bookingsApi.cancel(id)
-    const formResponse = await bookingsApi.fetchBooking(id)
+    const formResponse = await bookingsApi.fetchBookingWithRuntimeForm(id, 'view')
     if (currentBookingId.value === id) {
       currentBooking.value = formResponse
     }

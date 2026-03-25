@@ -1,12 +1,6 @@
 import { ref } from 'vue'
-
-export type FieldSettingsDraft = {
-  label: string
-  type: string
-  options: string
-  default: string | number | boolean | null
-  required: boolean
-}
+import type { FormNode } from '@/shared/types/forms'
+import type { FieldSettingsDraft } from './formBuildMutations'
 
 const blankFieldSettings = (): FieldSettingsDraft => ({
   label: '',
@@ -16,12 +10,9 @@ const blankFieldSettings = (): FieldSettingsDraft => ({
   required: false,
 })
 
-/**
- * Modal / draft state for the JSONForm WYSIWYG builder.
- */
 export function useFormBuildModals() {
-  const addingParent = ref<Record<string, unknown> | null>(null)
-  const updatingControl = ref<Record<string, unknown> | null>(null)
+  const addingParent = ref<FormNode | null>(null)
+  const updatingControl = ref<FormNode | null>(null)
   const fieldSettings = ref<FieldSettingsDraft>(blankFieldSettings())
 
   function resetFieldSettings() {

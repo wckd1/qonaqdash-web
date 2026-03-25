@@ -1,4 +1,5 @@
-import type { GuestJsonFormFields } from '@/shared/types/guests'
+import type { FormNode } from './forms'
+import type { GuestFormFields } from './guests'
 
 /** List row from GET /api/bookings (guest display snake_case). */
 export interface BookingListItem {
@@ -12,7 +13,7 @@ export interface BookingListItem {
 }
 
 /**
- * GET /api/bookings/:id — `{ guest, booking }` JSONForms data only (no schema/uischema).
+ * GET /api/bookings/:id — `{ guest, booking }` data only (no definition).
  * Merge with `GET /api/bookings/form?target=view|edit` on the client.
  */
 export interface BookingDetailData {
@@ -20,18 +21,16 @@ export interface BookingDetailData {
   booking: Record<string, unknown>
 }
 
-/** Runtime `GET …/form?target=` — schema + uischema + canonical `hash` (optional empty `data`). */
-export interface BookingFormSchemaResponse {
-  schema?: unknown
-  uischema?: unknown
+/** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */
+export interface BookingFormDefinitionResponse {
+  definition?: FormNode
   hash?: string
   data?: Record<string, unknown>
 }
 
-/** Merged shape for JsonFormView / JsonFormEdit after combining detail data + runtime form. */
+/** Merged shape for FormView / FormEdit after combining detail data + runtime form definition. */
 export interface BookingFormResponse {
-  schema?: unknown
-  uischema?: unknown
+  definition?: FormNode
   data?: Record<string, unknown>
   guest?: Record<string, unknown>
 }
@@ -60,22 +59,22 @@ export interface BookingFlat {
 }
 
 /** One element of `booking.rooms`. */
-export interface BookingJsonFormRoomRowFields {
+export interface BookingFormRoomRowFields {
   roomType: string | null
   roomID: string | null
 }
 
-export type BookingJsonFormRoomRow = BookingJsonFormRoomRowFields & { [key: string]: unknown }
+export type BookingFormRoomRow = BookingFormRoomRowFields & { [key: string]: unknown }
 
 /** `booking` branch: check-in/out and room rows; API may add `status` and other keys. */
-export interface BookingJsonFormBookingBranchFields {
+export interface BookingFormBookingBranchFields {
   checkIn: string
   checkOut: string
-  rooms: BookingJsonFormRoomRow[]
+  rooms: BookingFormRoomRow[]
   status?: string
 }
 
-export type BookingJsonFormBookingBranch = BookingJsonFormBookingBranchFields & {
+export type BookingFormBookingBranch = BookingFormBookingBranchFields & {
   [key: string]: unknown
 }
 
@@ -83,18 +82,18 @@ export type BookingJsonFormBookingBranch = BookingJsonFormBookingBranchFields & 
  * `data.guest` on the booking form: same core fields as the standalone guest form,
  * plus `id` (existing guest UUID or `null` on create).
  */
-export type BookingFormGuestData = GuestJsonFormFields & {
+export type BookingFormGuestData = GuestFormFields & {
   id: string | null
 } & { [key: string]: unknown }
 
-export interface BookingJsonFormRootFields {
+export interface BookingFormRootFields {
   guest: BookingFormGuestData
-  booking: BookingJsonFormBookingBranch
+  booking: BookingFormBookingBranch
 }
 
-export type BookingJsonFormRootData = BookingJsonFormRootFields & { [key: string]: unknown }
+export type BookingFormRootData = BookingFormRootFields & { [key: string]: unknown }
 
-export type BookingJsonFormRootDataPartial = Partial<BookingJsonFormRootFields> & {
+export type BookingFormRootDataPartial = Partial<BookingFormRootFields> & {
   [key: string]: unknown
 }
 
@@ -108,5 +107,5 @@ export interface BookingFormDataDraft {
 /** Create / update booking body: `{ guest, booking }` only (no top-level `id`). */
 export type CreateBookingPayload = {
   guest: BookingFormGuestData
-  booking: BookingJsonFormBookingBranch
+  booking: BookingFormBookingBranch
 }

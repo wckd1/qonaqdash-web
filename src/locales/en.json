@@ -241,7 +241,7 @@
     "emptyRooms": "No rooms yet. Add rooms under Settings to see the reservation grid.",
     "loadingGrid": "Loading grid…"
   },
-  "jsonForm": {
+  "formDsl": {
     "edit": {
       "removeArrayItemAria": "Remove this row",
       "addArrayItemAria": "Add another row"

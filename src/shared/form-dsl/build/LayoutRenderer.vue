@@ -16,7 +16,7 @@
           class="form-build-icon-btn"
           :disabled="!canToggleLayoutDirection"
           :title="layoutToggleTitle"
-          :aria-label="t('jsonForm.build.layoutSwitchAria')"
+          :aria-label="t('formDsl.build.layoutSwitchAria')"
           @click="onToggleLayout"
         >
           <IconSwitchLayout :horizontal="isHorizontal" />
@@ -25,13 +25,13 @@
           v-if="canDeleteSelf"
           type="button"
           class="form-build-icon-btn form-build-icon-btn--danger"
-          :title="t('jsonForm.build.remove')"
-          :aria-label="t('jsonForm.build.removeLayoutAria')"
+          :title="t('formDsl.build.remove')"
+          :aria-label="t('formDsl.build.removeLayoutAria')"
           @click="onDeleteSelf"
         >
           <IconTrash />
         </button>
-        <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('jsonForm.build.locked')">
+        <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('formDsl.build.locked')">
           <IconLock />
         </span>
       </div>
@@ -50,43 +50,20 @@
                   >
                     {{ buildGroupHeadingText }}
                   </h2>
-                  <button
-                    type="button"
-                    class="form-build-icon-btn"
-                    :title="t('jsonForm.build.editGroupTitle')"
-                    :aria-label="t('jsonForm.build.editGroupTitle')"
-                    @click="startTitleEdit"
-                  >
+                  <button type="button" class="form-build-icon-btn" :title="t('formDsl.build.editGroupTitle')" @click="startTitleEdit">
                     <IconPencil />
                   </button>
                 </div>
                 <div v-else class="form-build-group-title-edit-row">
                   <label class="form-build-group-label-edit form-build-group-label-edit--grow">
-                    <span class="visually-hidden">{{ t('jsonForm.build.groupTitleHidden') }}</span>
-                    <input
-                      ref="titleInputRef"
-                      v-model="groupLabelModel"
-                      type="text"
-                      :placeholder="titlePlaceholder"
-                      @blur="onTitleBlur"
-                      @keydown.enter.prevent="onTitleConfirm"
-                      @keydown.escape.prevent="cancelTitleEdit"
-                    />
+                    <span class="visually-hidden">{{ t('formDsl.build.groupTitleHidden') }}</span>
+                    <input ref="titleInputRef" v-model="groupTitleModel" type="text" :placeholder="titlePlaceholder" @blur="onTitleBlur" @keydown.enter.prevent="onTitleConfirm" @keydown.escape.prevent="cancelTitleEdit" />
                   </label>
-                  <button
-                    type="button"
-                    class="form-build-icon-btn form-build-icon-btn--confirm"
-                    :title="t('jsonForm.build.saveTitle')"
-                    :aria-label="t('jsonForm.build.saveGroupTitleAria')"
-                    @mousedown.prevent
-                    @click="onTitleConfirm"
-                  >
+                  <button type="button" class="form-build-icon-btn form-build-icon-btn--confirm" :title="t('formDsl.build.saveTitle')" @mousedown.prevent @click="onTitleConfirm">
                     <IconCheck />
                   </button>
                 </div>
-                <p class="form-build-shell__guest-note">
-                  {{ t('jsonForm.build.guestBannerNote') }}
-                </p>
+                <p class="form-build-shell__guest-note">{{ t('formDsl.build.guestBannerNote') }}</p>
               </div>
             </template>
             <template v-else>
@@ -97,163 +74,91 @@
                 >
                   {{ buildGroupHeadingText }}
                 </h2>
-                <button
-                  type="button"
-                  class="form-build-icon-btn"
-                  :title="t('jsonForm.build.editGroupTitle')"
-                  :aria-label="t('jsonForm.build.editGroupTitle')"
-                  @click="startTitleEdit"
-                >
+                <button type="button" class="form-build-icon-btn" :title="t('formDsl.build.editGroupTitle')" @click="startTitleEdit">
                   <IconPencil />
                 </button>
               </div>
               <div v-else class="form-build-group-title-edit-row">
                 <label class="form-build-group-label-edit form-build-group-label-edit--grow">
-                  <span class="visually-hidden">{{ t('jsonForm.build.groupTitleHidden') }}</span>
-                  <input
-                    ref="titleInputRef"
-                    v-model="groupLabelModel"
-                    type="text"
-                    :placeholder="titlePlaceholder"
-                    @blur="onTitleBlur"
-                    @keydown.enter.prevent="onTitleConfirm"
-                    @keydown.escape.prevent="cancelTitleEdit"
-                  />
+                  <span class="visually-hidden">{{ t('formDsl.build.groupTitleHidden') }}</span>
+                  <input ref="titleInputRef" v-model="groupTitleModel" type="text" :placeholder="titlePlaceholder" @blur="onTitleBlur" @keydown.enter.prevent="onTitleConfirm" @keydown.escape.prevent="cancelTitleEdit" />
                 </label>
-                <button
-                  type="button"
-                  class="form-build-icon-btn form-build-icon-btn--confirm"
-                  :title="t('jsonForm.build.saveTitle')"
-                  :aria-label="t('jsonForm.build.saveGroupTitleAria')"
-                  @mousedown.prevent
-                  @click="onTitleConfirm"
-                >
+                <button type="button" class="form-build-icon-btn form-build-icon-btn--confirm" :title="t('formDsl.build.saveTitle')" @mousedown.prevent @click="onTitleConfirm">
                   <IconCheck />
                 </button>
               </div>
-              <p v-if="isGuestMainInfoNote" class="form-build-shell__guest-note">
-                {{ t('jsonForm.build.guestMainNote') }}
-              </p>
+              <p v-if="isGuestMainInfoNote" class="form-build-shell__guest-note">{{ t('formDsl.build.guestMainNote') }}</p>
             </template>
           </div>
           <div class="form-build-shell__actions">
-            <button
-              v-if="canDeleteSelf"
-              type="button"
-              class="form-build-icon-btn form-build-icon-btn--danger"
-              :title="t('jsonForm.build.removeGroup')"
-              :aria-label="t('jsonForm.build.removeGroupAria')"
-              @click="onDeleteSelf"
-            >
+            <button v-if="canDeleteSelf" type="button" class="form-build-icon-btn form-build-icon-btn--danger" :title="t('formDsl.build.removeGroup')" @click="onDeleteSelf">
               <IconTrash />
             </button>
-            <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('jsonForm.build.locked')">
+            <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('formDsl.build.locked')">
               <IconLock />
             </span>
           </div>
         </div>
       </div>
       <div class="form-view-layout__fields">
-        <template v-for="(element, idx) in elements" :key="idx">
+        <template v-for="(child, idx) in children" :key="idx">
           <LayoutRenderer
-            v-if="element.type !== 'Control'"
-            :schema="schema"
-            :uischema="element"
-            :model-value="modelValue"
-            :full-data="fullData"
-            :parent-uischema="uischema"
+            v-if="isContainerNode(child)"
+            :node="child"
+            :data="data"
+            :parent-node="node"
             :element-index="idx"
             :guest-subtree-locked="childGuestLocked"
-            @update:model-value="updateModel"
           />
           <ControlRenderer
             v-else
-            :schema="schema"
-            :uischema="element"
-            :model-value="modelValue"
-            :full-data="fullData"
-            :parent-uischema="uischema"
+            :node="child"
+            :data="data"
+            :parent-node="node"
             :element-index="idx"
             :guest-subtree-locked="childGuestLocked"
             build-leaf="tree"
-            @update:model-value="updateModel"
           />
         </template>
       </div>
-      <button
-        v-if="showAddChild"
-        type="button"
-        class="form-build-add-child form-build-add-child--in-group"
-        @click="onAddChild"
-      >
-        {{ t('jsonForm.build.addElement') }}
+      <button v-if="showAddChild" type="button" class="form-build-add-child form-build-add-child--in-group" @click="onAddChild">
+        {{ t('formDsl.build.addElement') }}
       </button>
     </section>
 
     <div
       v-else
-      :class="[
-        wrapperClass,
-        {
-          'form-view-layout--horizontal-empty':
-            isHorizontal && elements.length === 0,
-        },
-      ]"
+      :class="[wrapperClass, { 'form-view-layout--horizontal-empty': isHorizontal && children.length === 0 }]"
     >
-      <template v-for="(element, idx) in elements" :key="idx">
+      <template v-for="(child, idx) in children" :key="idx">
         <LayoutRenderer
-          v-if="element.type !== 'Control'"
-          :schema="schema"
-          :uischema="element"
-          :model-value="modelValue"
-          :full-data="fullData"
-          :parent-uischema="uischema"
+          v-if="isContainerNode(child)"
+          :node="child"
+          :data="data"
+          :parent-node="node"
           :element-index="idx"
           :guest-subtree-locked="childGuestLocked"
-          @update:model-value="updateModel"
         />
         <ControlRenderer
           v-else
-          :schema="schema"
-          :uischema="element"
-          :model-value="modelValue"
-          :full-data="fullData"
-          :parent-uischema="uischema"
+          :node="child"
+          :data="data"
+          :parent-node="node"
           :element-index="idx"
           :guest-subtree-locked="childGuestLocked"
           build-leaf="tree"
-          @update:model-value="updateModel"
         />
       </template>
-      <button
-        v-if="showAddChild && isHorizontal && elements.length === 0"
-        type="button"
-        class="form-build-add-child form-build-add-child--horizontal-empty"
-        :title="t('jsonForm.build.addElementToRow')"
-        :aria-label="t('jsonForm.build.addElementToRowAria')"
-        @click="onAddChild"
-      >
-        {{ t('jsonForm.build.addElement') }}
+      <button v-if="showAddChild && isHorizontal && children.length === 0" type="button" class="form-build-add-child form-build-add-child--horizontal-empty" @click="onAddChild">
+        {{ t('formDsl.build.addElement') }}
       </button>
-      <button
-        v-if="showAddChild && isHorizontal && elements.length === 1"
-        type="button"
-        class="form-build-add-child form-build-add-child--horizontal-tail"
-        :title="t('jsonForm.build.addNextInRow')"
-        :aria-label="t('jsonForm.build.addToEndOfRowAria')"
-        @click="onAddChild"
-      >
-        {{ t('jsonForm.build.addElement') }}
+      <button v-if="showAddChild && isHorizontal && children.length === 1" type="button" class="form-build-add-child form-build-add-child--horizontal-tail" @click="onAddChild">
+        {{ t('formDsl.build.addElement') }}
       </button>
     </div>
 
-    <button
-      v-if="showAddChild && !isGroup && !isHorizontal"
-      type="button"
-      class="form-build-add-child"
-      @click="onAddChild"
-    >
-      {{ t('jsonForm.build.addElement') }}
+    <button v-if="showAddChild && !isGroup && !isHorizontal" type="button" class="form-build-add-child" @click="onAddChild">
+      {{ t('formDsl.build.addElement') }}
     </button>
   </div>
 </template>
@@ -261,10 +166,11 @@
 <script setup lang="ts">
 import { computed, inject, ref, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { FormNode, FormStackNode, FormGroupNode } from '@/shared/types/forms'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { canMutateBuildNode, isGuestImmutableBuildGroup } from './buildChangability'
-import { jsonFormBuildKey } from '@/shared/injectKeys'
+import { formBuildKey } from '@/shared/injectKeys'
 import { MAX_HORIZONTAL_LAYOUT_CHILDREN } from './formBuildMutations'
 import { resolveGroupTitle } from '../utils'
 import IconTrash from './icons/IconTrash.vue'
@@ -276,46 +182,39 @@ import IconCheck from './icons/IconCheck.vue'
 const { t, locale } = useI18n()
 
 const props = defineProps({
-  schema: { type: Object, default: () => ({}) },
-  uischema: { type: Object, required: true },
-  modelValue: { type: Object, default: () => ({}) },
-  fullData: { type: Object, default: () => ({}) },
-  parentUischema: { type: Object, default: null },
+  node: { type: Object as () => FormNode, required: true },
+  data: { type: Object as () => Record<string, unknown>, default: () => ({}) },
+  parentNode: { type: Object as () => FormNode | null, default: null },
   elementIndex: { type: Number, default: -1 },
   guestSubtreeLocked: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const formBuild = inject(formBuildKey, null)
 
-const formBuild = inject(jsonFormBuildKey, null)
-
-const layoutType = computed(() => props.uischema?.type)
-const isGroup = computed(() => layoutType.value === 'Group')
-const isVertical = computed(() => layoutType.value === 'VerticalLayout')
-const isHorizontal = computed(() => layoutType.value === 'HorizontalLayout')
+const isStack = computed(() => props.node.type === 'stack')
+const isGroup = computed(() => props.node.type === 'group')
+const isVertical = computed(() => isStack.value && (props.node as FormStackNode).direction === 'vertical')
+const isHorizontal = computed(() => isStack.value && (props.node as FormStackNode).direction === 'horizontal')
 
 const variant = computed(() => (formBuild ? formBuild.variant : 'guest'))
 
-const childGuestLocked = computed(
-  () =>
-    props.guestSubtreeLocked ||
-    (variant.value === 'booking' && isGuestImmutableBuildGroup(props.uischema)),
+const childGuestLocked = computed(() =>
+  props.guestSubtreeLocked || (variant.value === 'booking' && isGuestImmutableBuildGroup(props.node)),
 )
 
-const isGuestBanner = computed(
-  () => variant.value === 'booking' && isGuestImmutableBuildGroup(props.uischema),
+const isGuestBanner = computed(() =>
+  variant.value === 'booking' && isGuestImmutableBuildGroup(props.node),
 )
 
-/** Guest form settings: core `main` group — explain link to booking flow (editable, unlike booking guest banner). */
-const isGuestMainInfoNote = computed(
-  () => variant.value === 'guest' && isGroup.value && props.uischema?.id === 'main',
+const isGuestMainInfoNote = computed(() =>
+  variant.value === 'guest' && isGroup.value && (props.node as FormGroupNode).id === 'main',
 )
 
 const canMutateNode = computed(() =>
-  canMutateBuildNode(variant.value, props.uischema, props.guestSubtreeLocked),
+  canMutateBuildNode(variant.value, props.node, props.guestSubtreeLocked),
 )
 
-const isRoot = computed(() => props.parentUischema == null)
+const isRoot = computed(() => props.parentNode == null)
 
 const canDeleteSelf = computed(() => {
   if (!canMutateNode.value) return false
@@ -329,17 +228,18 @@ const wrapperClass = computed(() => {
   return 'form-view-layout'
 })
 
-const resolvedGroupTitle = computed(() => resolveGroupTitle(props.uischema))
+const resolvedGroupTitle = computed(() =>
+  isGroup.value ? resolveGroupTitle(props.node as { title?: string; id?: string }) : '',
+)
 
 const titlePlaceholder = computed(() => {
   void locale.value
-  return t('jsonForm.build.setTitlePlaceholder')
+  return t('formDsl.build.setTitlePlaceholder')
 })
 
-/** Shown next to pencil when the group has no user-defined title (builder). */
 const buildGroupHeadingText = computed(() => {
   void locale.value
-  return resolvedGroupTitle.value || t('jsonForm.build.setTitlePlaceholder')
+  return resolvedGroupTitle.value || t('formDsl.build.setTitlePlaceholder')
 })
 
 const buildGroupHeadingMuted = computed(() => !resolvedGroupTitle.value)
@@ -348,85 +248,70 @@ const editingGroupTitle = ref(false)
 const titleInputRef = ref<HTMLInputElement | null>(null)
 let groupTitleSnapshot = ''
 
-const groupLabelModel = computed({
+const groupTitleModel = computed({
   get() {
-    return props.uischema?.label ?? ''
+    return isGroup.value ? (props.node as FormGroupNode).title ?? '' : ''
   },
-  set(v) {
-    props.uischema.label = v
-    formBuild?.touch?.()
+  set(v: string) {
+    if (isGroup.value) {
+      (props.node as FormGroupNode).title = v
+      formBuild?.touch?.()
+    }
   },
 })
 
 const layoutBadge = computed(() => {
   void locale.value
-  return isHorizontal.value ? t('jsonForm.build.horizontalLayout') : t('jsonForm.build.verticalLayout')
+  return isHorizontal.value ? t('formDsl.build.horizontalLayout') : t('formDsl.build.verticalLayout')
 })
 
-const elements = computed(() => props.uischema?.elements ?? [])
-
-const isCoreFieldGroup = computed(
-  () =>
-    isGroup.value && (props.uischema?.id === 'main' || props.uischema?.id === 'booking'),
-)
+const children = computed(() => (props.node as { items?: FormNode[] }).items ?? [])
 
 const showAddChild = computed(() => {
   if (!formBuild) return false
   if (isGuestBanner.value) return false
   if (props.guestSubtreeLocked) return false
-  if (!isGroup.value && !isVertical.value && !isHorizontal.value) return false
-  if (
-    isHorizontal.value &&
-    elements.value.length >= MAX_HORIZONTAL_LAYOUT_CHILDREN
-  ) {
-    return false
-  }
-  /* Layouts: allow adding children even when the layout is "unchangeable" (locked descendants). */
-  if (isVertical.value || isHorizontal.value) return true
-  if (isCoreFieldGroup.value) return true
+  if (!isGroup.value && !isStack.value) return false
+  if (isHorizontal.value && children.value.length >= MAX_HORIZONTAL_LAYOUT_CHILDREN) return false
+  if (isStack.value) return true
   return canMutateNode.value
 })
 
 const canToggleLayoutDirection = computed(() => {
   if (isHorizontal.value) return true
-  if (isVertical.value) {
-    return elements.value.length <= MAX_HORIZONTAL_LAYOUT_CHILDREN
-  }
+  if (isVertical.value) return children.value.length <= MAX_HORIZONTAL_LAYOUT_CHILDREN
   return true
 })
 
 const layoutToggleTitle = computed(() => {
   void locale.value
   if (!canMutateNode.value) return ''
-  if (
-    isVertical.value &&
-    elements.value.length > MAX_HORIZONTAL_LAYOUT_CHILDREN
-  ) {
-    return t('jsonForm.build.layoutMaxChildren', { max: MAX_HORIZONTAL_LAYOUT_CHILDREN })
+  if (isVertical.value && children.value.length > MAX_HORIZONTAL_LAYOUT_CHILDREN) {
+    return t('formDsl.build.layoutMaxChildren', { max: MAX_HORIZONTAL_LAYOUT_CHILDREN })
   }
   return isVertical.value
-    ? t('jsonForm.build.layoutSwitchHorizontal')
-    : t('jsonForm.build.layoutSwitchVertical')
+    ? t('formDsl.build.layoutSwitchHorizontal')
+    : t('formDsl.build.layoutSwitchVertical')
 })
 
-function updateModel(val) {
-  emit('update:modelValue', val)
+function isContainerNode(child: FormNode): boolean {
+  return child.type === 'stack' || child.type === 'group'
 }
 
 function onToggleLayout() {
-  formBuild?.toggleLayoutNode?.(props.uischema)
+  formBuild?.toggleLayoutNode?.(props.node)
 }
 
 function onDeleteSelf() {
-  formBuild?.removeNode?.(props.uischema)
+  formBuild?.removeNode?.(props.node)
 }
 
 function onAddChild() {
-  formBuild?.openAddMenu?.(props.uischema)
+  formBuild?.openAddMenu?.(props.node)
 }
 
 function startTitleEdit() {
-  groupTitleSnapshot = typeof props.uischema?.label === 'string' ? props.uischema.label : ''
+  groupTitleSnapshot = isGroup.value ? (props.node as FormGroupNode).title ?? '' : ''
   editingGroupTitle.value = true
   nextTick(() => {
     titleInputRef.value?.focus?.()
@@ -442,8 +327,7 @@ function onTitleConfirm() {
   finishTitleEdit()
 }
 
-/** Ignore blur when focus moves to the save button in the same row (click order). */
-function onTitleBlur(e) {
+function onTitleBlur(e: FocusEvent) {
   const row = titleInputRef.value?.closest?.('.form-build-group-title-edit-row')
   const rel = e.relatedTarget
   if (row && rel instanceof Node && row.contains(rel)) return
@@ -451,8 +335,10 @@ function onTitleBlur(e) {
 }
 
 function cancelTitleEdit() {
-  props.uischema.label = groupTitleSnapshot
-  formBuild?.touch?.()
+  if (isGroup.value) {
+    (props.node as FormGroupNode).title = groupTitleSnapshot
+    formBuild?.touch?.()
+  }
   editingGroupTitle.value = false
 }
 </script>
@@ -460,7 +346,6 @@ function cancelTitleEdit() {
 <style scoped>
 .form-build-shell {
   position: relative;
-  /* width: do not set 100% — horizontal layouts need flex children to share a row (see main.css). */
   min-width: 0;
 }
 
@@ -525,7 +410,6 @@ function cancelTitleEdit() {
   min-width: 0;
 }
 
-/* Title + pencil as one cluster so the icon sits right after the text, not at the row edge. */
 .form-build-group-title-display {
   display: inline-flex;
   align-items: center;
@@ -642,7 +526,6 @@ function cancelTitleEdit() {
   cursor: pointer;
 }
 
-/* Empty horizontal row: one full-width drop zone. */
 .form-build-add-child--horizontal-empty {
   margin-top: 0;
   flex: 1 1 0;
@@ -657,7 +540,6 @@ function cancelTitleEdit() {
   padding: var(--space-md);
 }
 
-/* One child: narrow add control at end of row, full row height. */
 .form-build-add-child--horizontal-tail {
   margin-top: 0;
   margin-left: 0;

@@ -23,11 +23,10 @@
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
         <p v-else-if="notFound" class="error-message">{{ t('guests.notFound') }}</p>
         <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
-        <JsonFormView
+        <FormView
           v-else-if="guestForm"
           compact
-          :schema="guestForm.schema"
-          :uischema="guestForm.uischema"
+          :definition="guestForm.definition"
           :data="guestForm.data"
         />
         <p v-else class="section-placeholder">{{ t('guests.detailsLoading') }}</p>
@@ -48,8 +47,8 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
-import { composeGuestFormFromEntity } from '@/shared/jsonform/normalizeFormResponse'
+import FormView from '@/shared/form-dsl/FormView.vue'
+import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormResponse'
 import { fetchGuest } from '@/features/guests/api'
 import type { GuestDetailData } from '@/features/guests/api'
 import type { GuestSidePanelRef } from '@/features/guests/panelTypes'

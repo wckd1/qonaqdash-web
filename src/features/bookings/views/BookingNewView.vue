@@ -14,9 +14,8 @@
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
   <template v-else-if="bookingForm">
-    <JsonFormEdit
-      :schema="bookingForm.schema"
-      :uischema="bookingForm.uischema"
+    <FormEdit
+      :definition="bookingForm.definition"
       :data="formData"
       :errors-map="errorsMap"
       @update:data="formData = $event"
@@ -32,11 +31,11 @@ import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import type { Room } from '@/shared/types/property'
+import type { FormNode } from '@/shared/types/forms'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
-import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
-import { bookingSchemaWithAvailableRoomIds } from '@/shared/jsonform/utils'
-import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
+import FormEdit from '@/shared/form-dsl/FormEdit.vue'
+import { validateFormData } from '@/shared/form-dsl/validateFormData'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 
@@ -49,7 +48,7 @@ const store = useBookingStore()
 
 const loading = ref(true)
 const loadError = ref('')
-type BookingFormRuntime = { schema: object; uischema: object; data: Record<string, unknown> }
+type BookingFormRuntime = { definition: FormNode; data: Record<string, unknown> }
 
 const bookingForm = ref<BookingFormRuntime | null>(null)
 const formData = ref<Record<string, unknown>>({})
@@ -140,12 +139,7 @@ watch(
 
 async function onSubmit() {
   errorsMap.value = {}
-  const schemaForValidate = bookingSchemaWithAvailableRoomIds(
-    bookingForm.value?.schema ?? {},
-    availableRooms.value,
-    formData.value,
-  )
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(schemaForValidate, formData.value)
+  const { valid, errorsMap: clientErrors } = validateFormData(bookingForm.value?.definition, formData.value)
   if (!valid) {
     errorsMap.value = clientErrors
     return

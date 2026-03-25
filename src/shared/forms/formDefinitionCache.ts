@@ -1,12 +1,11 @@
-import type { FormRef } from '@/shared/types/forms'
+import type { FormRef, FormNode } from '@/shared/types/forms'
 
 export type FormDomainId = 'guest' | 'booking'
 
 export type RuntimeFormMode = 'view' | 'edit'
 
 export interface CachedFormDefinition {
-  schema: unknown
-  uischema: unknown
+  definition: FormNode
   hash: string
 }
 
@@ -37,7 +36,7 @@ export function getCachedFormDefinition(
     const raw = sessionStorage.getItem(key)
     if (!raw) return null
     const parsed = JSON.parse(raw) as CachedFormDefinition
-    if (parsed && typeof parsed.hash === 'string' && parsed.schema != null && parsed.uischema != null) {
+    if (parsed && typeof parsed.hash === 'string' && parsed.definition != null) {
       memory.set(key, parsed)
       return parsed
     }
@@ -51,12 +50,11 @@ export function setCachedFormDefinition(
   formId: FormDomainId,
   mode: RuntimeFormMode,
   hash: string,
-  def: { schema: unknown; uischema: unknown; hash?: string },
+  def: { definition: unknown; hash?: string },
 ): CachedFormDefinition {
   const h = (def.hash ?? hash).trim()
   const entry: CachedFormDefinition = {
-    schema: JSON.parse(JSON.stringify(def.schema ?? {})),
-    uischema: JSON.parse(JSON.stringify(def.uischema ?? {})),
+    definition: JSON.parse(JSON.stringify(def.definition ?? {})),
     hash: h,
   }
   const key = formDefinitionCacheKey(formId, mode, h)

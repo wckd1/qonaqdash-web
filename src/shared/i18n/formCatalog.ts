@@ -1,7 +1,7 @@
 import { i18n } from '@/i18n'
 
 /**
- * Schema / uischema title or label: pass through vue-i18n `t()`.
+ * Form definition `label` / title string: pass through vue-i18n `t()`.
  * Known keys translate; missing keys fall back to the string itself (vue-i18n default).
  * @param {unknown} value
  * @returns {string}

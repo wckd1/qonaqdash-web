@@ -4,12 +4,12 @@ import {
   loadRuntimeFormDefinition,
   type LoadRuntimeFormOptions,
 } from '@/shared/forms/loadRuntimeFormDefinition'
-import type { FormRef } from '@/shared/types/forms'
+import type { FormRef, FormNode } from '@/shared/types/forms'
 import type {
   BookingDetailData,
   BookingFlat,
   BookingFormResponse,
-  BookingFormSchemaResponse,
+  BookingFormDefinitionResponse,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
 
@@ -19,15 +19,15 @@ export type {
   BookingFormDataDraft,
   BookingFormGuestData,
   BookingFormResponse,
-  BookingFormSchemaResponse,
+  BookingFormDefinitionResponse,
   BookingGridEntry,
-  BookingJsonFormBookingBranch,
-  BookingJsonFormBookingBranchFields,
-  BookingJsonFormRootData,
-  BookingJsonFormRootDataPartial,
-  BookingJsonFormRootFields,
-  BookingJsonFormRoomRow,
-  BookingJsonFormRoomRowFields,
+  BookingFormBookingBranch,
+  BookingFormBookingBranchFields,
+  BookingFormRootData,
+  BookingFormRootDataPartial,
+  BookingFormRootFields,
+  BookingFormRoomRow,
+  BookingFormRoomRowFields,
   BookingListItem,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
@@ -39,9 +39,6 @@ export interface BookingDetailPayload {
   formRef: FormRef | null
 }
 
-/**
- * @param {unknown} raw - GET booking detail JSON (guest + booking + optional `_form`).
- */
 export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const formRef = normalizeFormRef(o._form)
@@ -53,10 +50,6 @@ export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   }
 }
 
-/**
- * @param {{ from: string, to: string }} params - Inclusive range, YYYY-MM-DD.
- * @returns {Promise<import('@/shared/types/bookings').BookingGridEntry[]>}
- */
 export function fetchBookingGrid(params: { from: string; to: string }) {
   return api
     .get('/api/bookings/grid', { params: { from: params.from, to: params.to } })
@@ -67,10 +60,6 @@ export function createBooking(body: CreateBookingPayload): Promise<BookingFlat> 
   return api.post('/api/bookings', body).then(({ data }) => data)
 }
 
-/**
- * @param {{ q?: string, from?: string, to?: string }} [params] - Optional search (guest name), date filter (YYYY-MM-DD).
- * @returns {Promise<import('@/shared/types/bookings').BookingListItem[]>}
- */
 export function fetchBookings(params: { q?: string; from?: string; to?: string } = {}) {
   const config: { params: Record<string, string> } = { params: {} }
   if (params.q?.trim()) config.params.q = params.q.trim()
@@ -91,7 +80,7 @@ export function loadBookingRuntimeForm(
 }
 
 /**
- * Runtime booking JSONForm definition.
+ * Runtime booking FormDSL definition.
  */
 export async function fetchBookingForm(
   options: {
@@ -101,7 +90,7 @@ export async function fetchBookingForm(
     revalidate?: boolean
     ifNoneMatch?: string | null
   } = {},
-): Promise<BookingFormSchemaResponse> {
+): Promise<BookingFormDefinitionResponse> {
   const target = options.target ?? 'edit'
   const loaded = await loadBookingRuntimeForm(target, options.definitionHash ?? null, {
     force: options.force,
@@ -109,8 +98,7 @@ export async function fetchBookingForm(
     ifNoneMatch: options.ifNoneMatch,
   })
   return {
-    schema: loaded.schema,
-    uischema: loaded.uischema,
+    definition: loaded.definition,
     hash: loaded.hash,
     data: loaded.data,
   }
@@ -122,15 +110,14 @@ export function invalidateBookingRuntimeFormCache(): void {
 }
 
 /**
- * Merge `GET /api/bookings/:id` data with runtime form schema (client-side JSONForms envelope).
+ * Merge `GET /api/bookings/:id` data with runtime form definition.
  */
 export function mergeBookingDetailWithRuntimeForm(
   detail: BookingDetailData,
-  form: Pick<BookingFormSchemaResponse, 'schema' | 'uischema'>,
+  form: Pick<BookingFormDefinitionResponse, 'definition'>,
 ): BookingFormResponse {
   return {
-    schema: form.schema,
-    uischema: form.uischema,
+    definition: form.definition,
     data: {
       guest: detail.guest ?? {},
       booking: detail.booking ?? {},
@@ -150,19 +137,20 @@ export async function fetchBookingWithRuntimeForm(
   return mergeBookingDetailWithRuntimeForm(detail, form)
 }
 
-export function fetchBookingFormSchema(): Promise<BookingFormResponse> {
-  return api.get('/api/bookings/form/schema').then(({ data }) => data as BookingFormResponse)
+export function fetchBookingFormSchema(): Promise<{ definition: FormNode; data: Record<string, unknown> }> {
+  return api.get('/api/bookings/form/schema').then(({ data }) => ({
+    definition: (data.definition ?? {}) as FormNode,
+    data: (data.data ?? {}) as Record<string, unknown>,
+  }))
 }
 
 export function updateBookingFormSchema(body: {
-  schema: object
-  uischema: object
-  data?: object
-}): Promise<BookingFormResponse> {
+  definition: FormNode
+  data?: Record<string, unknown>
+}): Promise<{ definition?: FormNode; data?: Record<string, unknown> }> {
   return api.put('/api/bookings/form/schema', body).then(({ data }) => data)
 }
 
-/** Booking JSONForms data + `_form` meta. */
 export function fetchBooking(id: string): Promise<BookingDetailPayload> {
   return api.get(`/api/bookings/${id}`).then(({ data }) => parseBookingDetailPayload(data))
 }

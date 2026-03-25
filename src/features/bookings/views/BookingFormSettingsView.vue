@@ -14,22 +14,23 @@
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-if="saveError" class="error-message">{{ saveError }}</p>
   <div v-else-if="loading" class="loading-state">{{ t('formSettings.loadingSchema') }}</div>
-  <JsonFormBuild
+  <FormBuild
     v-else-if="formReady"
-    v-model:schema="schemaDraft"
-    v-model:uischema="uischemaDraft"
+    :definition="definitionDraft"
     :data="formData"
     variant="booking"
+    @update:definition="definitionDraft = $event"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { FormNode } from '@/shared/types/forms'
 import { updateBookingFormSchema } from '@/features/bookings/api'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
-import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
-import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import FormBuild from '@/shared/form-dsl/FormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t } = useI18n()
@@ -41,14 +42,13 @@ const saving = ref(false)
 const loadError = ref('')
 const saveError = ref('')
 
-const schemaDraft = ref({})
-const uischemaDraft = ref({})
-const formData = ref({})
+const definitionDraft = ref<FormNode | null>(null)
+const formData = ref<Record<string, unknown>>({})
 const hasLoaded = ref(false)
 
 const formReady = computed(() => hasLoaded.value && !loadError.value)
 
-function normalizeFormData(data) {
+function normalizeFormData(data: Record<string, unknown>): Record<string, unknown> {
   const next = JSON.parse(JSON.stringify(data ?? {}))
   if (!next.guest) next.guest = {}
   if (next.guest.id === undefined) next.guest.id = null
@@ -62,9 +62,8 @@ async function loadForm() {
   loadError.value = ''
   try {
     const res = await bookingStore.fetchBookingFormSchema()
-    schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? {}))
-    uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? {}))
-    formData.value = normalizeFormData(res.data)
+    definitionDraft.value = JSON.parse(JSON.stringify(res.definition ?? {}))
+    formData.value = normalizeFormData(res.data ?? {})
     hasLoaded.value = true
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('formSettings.loadFailed')
@@ -86,11 +85,9 @@ async function onSave() {
   saveError.value = ''
   try {
     const res = await updateBookingFormSchema({
-      schema: schemaDraft.value,
-      uischema: uischemaDraft.value,
+      definition: definitionDraft.value as FormNode,
     })
-    schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? schemaDraft.value))
-    uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? uischemaDraft.value))
+    if (res.definition) definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     if (res.data) formData.value = normalizeFormData(res.data)
     bookingStore.replaceBookingFormTemplate(res)
     success(t('formSettings.saved'))

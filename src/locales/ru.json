@@ -241,7 +241,7 @@
     "emptyRooms": "Номеров пока нет. Добавьте их в «Настройках», чтобы увидеть сетку бронирований.",
     "loadingGrid": "Загрузка сетки…"
   },
-  "jsonForm": {
+  "formDsl": {
     "edit": {
       "removeArrayItemAria": "Удалить эту строку",
       "addArrayItemAria": "Добавить строку"

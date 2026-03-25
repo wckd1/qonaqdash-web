@@ -291,7 +291,7 @@ main.app-main > section.list-content > .list-content__viewport {
   gap: var(--content-area-gap);
 }
 
-/* Form routes: JSONForm root scrolls here (see JsonFormEdit / JsonFormView / JsonFormBuild) */
+/* Form routes: FormDSL root scrolls here (see FormEdit / FormView / FormBuild) */
 main.app-main > .form-content__viewport {
   flex: 1 1 auto;
   min-height: 0;
@@ -554,7 +554,7 @@ main.app-main > search.has-value .search-bar-clear {
   margin-bottom: 0;
 }
 
-/* JSONForm view: entity group — full-width profile CTA below fields when linked record id is set */
+/* FormDSL view: entity group — full-width profile CTA below fields when linked record id is set */
 main .form-entity-section__profile-cta {
   display: block;
   width: 100%;
@@ -634,8 +634,8 @@ main .form-entity-section__profile-cta:hover {
   min-width: 0;
 }
 
-/* JsonFormView `compact` root (side panels): scroll stays on panel body; stack horizontal rows vertically */
-.jsonform-view-root {
+/* FormView `compact` root (side panels): scroll stays on panel body; stack horizontal rows vertically */
+.form-dsl-view-root {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -646,10 +646,10 @@ main .form-entity-section__profile-cta:hover {
   padding: 0;
   box-sizing: border-box;
 }
-.jsonform-view-root--compact .form-view-layout--horizontal {
+.form-dsl-view-root--compact .form-view-layout--horizontal {
   flex-direction: column;
 }
-.jsonform-view-root--compact .form-view-layout--horizontal > * {
+.form-dsl-view-root--compact .form-view-layout--horizontal > * {
   width: 100%;
   flex: 1 1 auto;
   min-width: 0;

@@ -14,9 +14,8 @@
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
   <template v-else-if="guestForm">
-    <JsonFormEdit
-      :schema="guestForm.schema"
-      :uischema="guestForm.uischema"
+    <FormEdit
+      :definition="guestForm.definition"
       :data="formData"
       :errors-map="errorsMap"
       @update:data="formData = $event"
@@ -30,9 +29,10 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import type { FormNode } from '@/shared/types/forms'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
-import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
-import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
+import FormEdit from '@/shared/form-dsl/FormEdit.vue'
+import { validateFormData } from '@/shared/form-dsl/validateFormData'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -40,7 +40,7 @@ const store = useGuestStore()
 
 const loading = ref(true)
 const loadError = ref('')
-type GuestFormRuntime = { schema: object; uischema: object; data: Record<string, unknown> }
+type GuestFormRuntime = { definition: FormNode; data: Record<string, unknown> }
 
 const guestForm = ref<GuestFormRuntime | null>(null)
 const formData = ref<Record<string, unknown>>({})
@@ -67,7 +67,7 @@ async function onSubmit() {
   errorsMap.value = {}
   const form = guestForm.value
   if (!form) return
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(form.schema ?? {}, formData.value)
+  const { valid, errorsMap: clientErrors } = validateFormData(form.definition, formData.value)
   if (!valid) {
     errorsMap.value = clientErrors
     return

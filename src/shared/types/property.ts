@@ -1,4 +1,4 @@
-/** Property / rooms REST shapes (shared across features and JSONForm inject). */
+/** Property / rooms REST shapes (shared across features and FormDSL inject). */
 
 export interface Hotel {
   id: string

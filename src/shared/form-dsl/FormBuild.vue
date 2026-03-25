@@ -1,12 +1,10 @@
 <template>
-  <div v-if="rootUischema" class="form-content__viewport">
+  <div v-if="definition" class="form-content__viewport">
     <LayoutRenderer
-      :schema="schema"
-      :uischema="rootUischema"
-      :model-value="data"
+      :node="definition"
+      :data="data"
       :element-index="-1"
       :guest-subtree-locked="false"
-      @update:model-value="onModelUpdate"
     />
   </div>
 
@@ -19,16 +17,16 @@
     @click.self="addingParent = null"
   >
     <article class="form-build-modal">
-      <h3 id="form-build-add-title" class="form-build-modal__title">{{ t('jsonForm.build.modalAddTitle') }}</h3>
+      <h3 id="form-build-add-title" class="form-build-modal__title">{{ t('formDsl.build.modalAddTitle') }}</h3>
       <div class="form-build-modal__list">
         <button
-          v-for="t in addTypeOptions"
-          :key="t"
+          v-for="opt in addTypeOptions"
+          :key="opt"
           type="button"
           class="form-build-modal__option"
-          @click="confirmAdd(t)"
+          @click="confirmAdd(opt)"
         >
-          {{ addTypeLabel(t) }}
+          {{ addTypeLabel(opt) }}
         </button>
       </div>
       <footer class="form-build-modal__footer">
@@ -46,37 +44,37 @@
     @click.self="closeConfigure"
   >
     <article class="form-build-modal form-build-modal--wide">
-      <h3 id="form-build-cfg-title" class="form-build-modal__title">{{ t('jsonForm.build.modalFieldSettingsTitle') }}</h3>
+      <h3 id="form-build-cfg-title" class="form-build-modal__title">{{ t('formDsl.build.modalFieldSettingsTitle') }}</h3>
       <label>
-        {{ t('jsonForm.build.fieldLabel') }}
+        {{ t('formDsl.build.fieldLabel') }}
         <input v-model="fieldSettings.label" type="text" />
       </label>
       <label>
-        {{ t('jsonForm.build.fieldType') }}
+        {{ t('formDsl.build.fieldType') }}
         <select v-model="fieldSettings.type">
-          <option value="Text">{{ t('jsonForm.build.typeText') }}</option>
-          <option value="Email">{{ t('jsonForm.build.typeEmail') }}</option>
-          <option value="Date">{{ t('jsonForm.build.typeDate') }}</option>
-          <option value="Number">{{ t('jsonForm.build.typeNumber') }}</option>
-          <option value="Enum">{{ t('jsonForm.build.typeEnum') }}</option>
+          <option value="Text">{{ t('formDsl.build.typeText') }}</option>
+          <option value="Email">{{ t('formDsl.build.typeEmail') }}</option>
+          <option value="Date">{{ t('formDsl.build.typeDate') }}</option>
+          <option value="Number">{{ t('formDsl.build.typeNumber') }}</option>
+          <option value="Enum">{{ t('formDsl.build.typeEnum') }}</option>
         </select>
       </label>
       <label v-if="fieldSettings.type === 'Enum'">
-        {{ t('jsonForm.build.optionsComma') }}
+        {{ t('formDsl.build.optionsComma') }}
         <input v-model="fieldSettings.options" type="text" />
       </label>
       <label class="form-build-modal__check">
         <input v-model="fieldSettings.required" type="checkbox" />
-        {{ t('jsonForm.build.requiredField') }}
+        {{ t('formDsl.build.requiredField') }}
       </label>
       <label v-if="fieldSettings.type !== 'Enum'">
-        {{ t('jsonForm.build.defaultValue') }}
+        {{ t('formDsl.build.defaultValue') }}
         <input v-model="defaultString" type="text" />
       </label>
       <label v-else>
-        {{ t('jsonForm.build.defaultValue') }}
+        {{ t('formDsl.build.defaultValue') }}
         <select v-model="defaultString">
-          <option value="">{{ t('jsonForm.build.defaultNone') }}</option>
+          <option value="">{{ t('formDsl.build.defaultNone') }}</option>
           <option v-for="opt in enumOptionList" :key="opt" :value="opt">{{ opt }}</option>
         </select>
       </label>
@@ -91,6 +89,7 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { FormNode } from '@/shared/types/forms'
 import LayoutRenderer from './build/LayoutRenderer.vue'
 import {
   addBuildChild,
@@ -102,85 +101,68 @@ import {
   toggleLayoutDirection,
 } from './build/formBuildMutations'
 import { useFormBuildModals } from './build/useFormBuild'
-import { jsonFormBuildKey, type JsonFormBuildContext } from '@/shared/injectKeys'
+import { formBuildKey, type FormBuildContext } from '@/shared/injectKeys'
 
 const props = defineProps({
-  /** JSON Schema for the form */
-  schema: { type: Object, default: () => ({}) },
-  /** UI schema (root Group/Layout or array with one root) */
-  uischema: { type: [Object, Array], default: () => ({}) },
-  /** Sample form data (optional) */
-  data: { type: Object, default: () => ({}) },
-  /** `booking` locks guest group subtree in the builder */
+  definition: { type: Object as () => FormNode | null, default: null },
+  data: { type: Object as () => Record<string, unknown>, default: () => ({}) },
   variant: { type: String, default: 'guest' },
 })
 
-const emit = defineEmits(['update:data', 'update:schema', 'update:uischema'])
+const emit = defineEmits(['update:data', 'update:definition'])
 
 const { t } = useI18n()
-
-const rootUischema = computed(() => {
-  const ui = props.uischema
-  if (!ui) return null
-  if (Array.isArray(ui) && ui.length > 0) return ui[0]
-  return ui
-})
 
 const { addingParent, updatingControl, fieldSettings, resetFieldSettings } = useFormBuildModals()
 
 function touch() {
-  emit('update:schema', props.schema)
-  emit('update:uischema', props.uischema)
-}
-
-function onModelUpdate(val) {
-  emit('update:data', val)
+  emit('update:definition', props.definition)
 }
 
 const addTypeOptions = computed(() => {
   const parent = addingParent.value
-  const root = rootUischema.value
+  const root = props.definition
   if (!parent || !root) return []
   return allowedAddTypes(parent, root)
 })
 
-function addTypeLabel(type) {
+function addTypeLabel(type: string): string {
   switch (type) {
-    case 'VerticalLayout':
-      return t('jsonForm.build.verticalLayout')
-    case 'HorizontalLayout':
-      return t('jsonForm.build.horizontalLayout')
+    case 'VerticalStack':
+      return t('formDsl.build.verticalLayout')
+    case 'HorizontalStack':
+      return t('formDsl.build.horizontalLayout')
     case 'Group':
-      return t('jsonForm.build.addTypeGroup')
+      return t('formDsl.build.addTypeGroup')
     case 'Field':
-      return t('jsonForm.build.addTypeField')
+      return t('formDsl.build.addTypeField')
     default:
       return type
   }
 }
 
-function confirmAdd(type) {
+function confirmAdd(type: string) {
   const parent = addingParent.value
-  const root = rootUischema.value
-  if (!parent || !root) return
-  addBuildChild(props.schema, parent, type)
+  if (!parent) return
+  addBuildChild(parent, type)
   addingParent.value = null
   touch()
 }
 
-function openAddMenu(parent) {
+function openAddMenu(parent: FormNode) {
   if (
-    parent?.type === 'HorizontalLayout' &&
-    (parent.elements?.length ?? 0) >= MAX_HORIZONTAL_LAYOUT_CHILDREN
+    parent.type === 'stack' &&
+    (parent as { direction?: string }).direction === 'horizontal' &&
+    ((parent as { items?: FormNode[] }).items?.length ?? 0) >= MAX_HORIZONTAL_LAYOUT_CHILDREN
   ) {
     return
   }
   addingParent.value = parent
 }
 
-function openConfigure(control) {
+function openConfigure(control: FormNode) {
   updatingControl.value = control
-  fieldSettings.value = readControlFieldSettings(control, props.schema)
+  fieldSettings.value = readControlFieldSettings(control)
 }
 
 function closeConfigure() {
@@ -194,7 +176,7 @@ const defaultString = computed({
     if (v == null) return ''
     return String(v)
   },
-  set(s) {
+  set(s: string) {
     fieldSettings.value.default = s === '' ? null : s
   },
 })
@@ -209,23 +191,23 @@ const enumOptionList = computed(() =>
 function saveConfigure() {
   const c = updatingControl.value
   if (!c) return
-  applyControlFieldSettings(c, props.schema, fieldSettings.value)
+  applyControlFieldSettings(c, fieldSettings.value)
   closeConfigure()
   touch()
 }
 
-function removeNode(target) {
-  const root = rootUischema.value
+function removeNode(target: FormNode) {
+  const root = props.definition
   if (!root) return
-  removeBuildNode(props.schema, root, target)
+  removeBuildNode(root, target)
   touch()
 }
 
-function toggleLayoutNode(target) {
+function toggleLayoutNode(target: FormNode) {
   if (toggleLayoutDirection(target)) touch()
 }
 
-const jsonFormBuildApi: JsonFormBuildContext = {
+const formBuildApi: FormBuildContext = {
   get variant() {
     return props.variant
   },
@@ -235,7 +217,7 @@ const jsonFormBuildApi: JsonFormBuildContext = {
   toggleLayoutNode,
   touch,
 }
-provide(jsonFormBuildKey, jsonFormBuildApi)
+provide(formBuildKey, formBuildApi)
 </script>
 
 <style scoped>

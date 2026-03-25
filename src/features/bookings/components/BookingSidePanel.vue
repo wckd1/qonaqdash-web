@@ -29,11 +29,10 @@
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
         <p v-else-if="notFound" class="error-message">{{ t('bookings.notFound') }}</p>
         <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
-        <JsonFormView
+        <FormView
           v-else-if="bookingForm"
           compact
-          :schema="bookingForm.schema"
-          :uischema="bookingForm.uischema"
+          :definition="bookingForm.definition"
           :data="bookingForm.data"
         />
         <p v-else class="section-placeholder">{{ t('bookings.detailsLoading') }}</p>
@@ -53,8 +52,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
-import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
+import FormView from '@/shared/form-dsl/FormView.vue'
+import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormResponse'
 import { fetchBookingWithRuntimeForm, type BookingFormResponse } from '@/features/bookings/api'
 import type { BookingSidePanelRef } from '@/features/bookings/panelTypes'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'

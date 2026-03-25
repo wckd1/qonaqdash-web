@@ -34,16 +34,14 @@
   </p>
   <template v-else-if="currentBooking">
     <template v-if="bookingForm">
-      <JsonFormView
+      <FormView
         v-if="!editing"
-        :schema="bookingForm.schema"
-        :uischema="bookingForm.uischema"
+        :definition="bookingForm.definition"
         :data="bookingForm.data"
       />
       <template v-else>
-        <JsonFormEdit
-          :schema="bookingForm.schema"
-          :uischema="bookingForm.uischema"
+        <FormEdit
+          :definition="bookingForm.definition"
           :data="editFormData"
           :errors-map="errorsMap"
           @update:data="editFormData = $event"
@@ -70,13 +68,12 @@ import {
   bookingStatusAllowsEdit,
 } from '@/features/bookings/bookingStatus'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
-import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
-import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
-import { normalizeBookingFormResponse } from '@/shared/jsonform/normalizeFormResponse'
+import FormView from '@/shared/form-dsl/FormView.vue'
+import FormEdit from '@/shared/form-dsl/FormEdit.vue'
+import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormResponse'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
-import { bookingSchemaWithAvailableRoomIds } from '@/shared/jsonform/utils'
-import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
+import { validateFormData } from '@/shared/form-dsl/validateFormData'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
@@ -232,12 +229,7 @@ async function onSave() {
   if (forValidate.booking && typeof forValidate.booking === 'object') {
     delete forValidate.booking.status
   }
-  const schemaForValidate = bookingSchemaWithAvailableRoomIds(
-    bookingForm.value?.schema ?? {},
-    availableRooms.value,
-    forValidate,
-  )
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(schemaForValidate, forValidate)
+  const { valid, errorsMap: clientErrors } = validateFormData(bookingForm.value?.definition, forValidate)
   if (!valid) {
     errorsMap.value = clientErrors
     return

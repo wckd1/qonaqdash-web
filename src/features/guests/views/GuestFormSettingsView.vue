@@ -14,22 +14,23 @@
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-if="saveError" class="error-message">{{ saveError }}</p>
   <div v-else-if="loading" class="loading-state">{{ t('formSettings.loadingSchema') }}</div>
-  <JsonFormBuild
+  <FormBuild
     v-else-if="formReady"
-    v-model:schema="schemaDraft"
-    v-model:uischema="uischemaDraft"
+    :definition="definitionDraft"
     :data="formData"
     variant="guest"
+    @update:definition="definitionDraft = $event"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { FormNode } from '@/shared/types/forms'
 import { updateGuestFormSchema } from '@/features/guests/api'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
-import JsonFormBuild from '@/shared/jsonform/JsonFormBuild.vue'
+import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import FormBuild from '@/shared/form-dsl/FormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t } = useI18n()
@@ -41,9 +42,8 @@ const saving = ref(false)
 const loadError = ref('')
 const saveError = ref('')
 
-const schemaDraft = ref({})
-const uischemaDraft = ref({})
-const formData = ref({})
+const definitionDraft = ref<FormNode | null>(null)
+const formData = ref<Record<string, unknown>>({})
 const hasLoaded = ref(false)
 
 const formReady = computed(() => hasLoaded.value && !loadError.value)
@@ -53,8 +53,7 @@ async function loadForm() {
   loadError.value = ''
   try {
     const res = await guestStore.fetchGuestFormSchema()
-    schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? {}))
-    uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? {}))
+    definitionDraft.value = JSON.parse(JSON.stringify(res.definition ?? {}))
     formData.value = JSON.parse(JSON.stringify(res.data ?? {}))
     hasLoaded.value = true
   } catch (err: unknown) {
@@ -77,11 +76,9 @@ async function onSave() {
   saveError.value = ''
   try {
     const res = await updateGuestFormSchema({
-      schema: schemaDraft.value,
-      uischema: uischemaDraft.value,
+      definition: definitionDraft.value as FormNode,
     })
-    schemaDraft.value = JSON.parse(JSON.stringify(res.schema ?? schemaDraft.value))
-    uischemaDraft.value = JSON.parse(JSON.stringify(res.uischema ?? uischemaDraft.value))
+    if (res.definition) definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     if (res.data) formData.value = JSON.parse(JSON.stringify(res.data))
     guestStore.replaceGuestFormTemplate(res)
     success(t('formSettings.saved'))

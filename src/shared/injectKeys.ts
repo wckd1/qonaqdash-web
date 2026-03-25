@@ -1,5 +1,6 @@
 import type { InjectionKey, Ref } from 'vue'
 import type { Room } from '@/shared/types/property'
+import type { FormNode } from '@/shared/types/forms'
 
 /** Guest typeahead: API rows from `GET /api/guests?q=`. */
 export type GuestSearchRow = {
@@ -16,17 +17,17 @@ export const guestSearchKey: InjectionKey<GuestSearchFn> = Symbol('guestSearch')
 
 export const availableRoomsKey: InjectionKey<Ref<Room[]>> = Symbol('availableRooms')
 
-/** JSONForm builder context (manage → form schema UI). */
-export interface JsonFormBuildContext {
+/** FormDSL builder context (manage → form definition UI). */
+export interface FormBuildContext {
   readonly variant: string
-  openAddMenu: (parent: Record<string, unknown>) => void
-  openConfigure: (control: Record<string, unknown>) => void
-  removeNode: (target: Record<string, unknown>) => void
-  toggleLayoutNode: (target: Record<string, unknown>) => void
+  openAddMenu: (parent: FormNode) => void
+  openConfigure: (control: FormNode) => void
+  removeNode: (target: FormNode) => void
+  toggleLayoutNode: (target: FormNode) => void
   touch: () => void
 }
 
-export const jsonFormBuildKey: InjectionKey<JsonFormBuildContext> = Symbol('jsonFormBuild')
+export const formBuildKey: InjectionKey<FormBuildContext> = Symbol('formBuild')
 
 export interface GuestPickerAnchorContext {
   setPickerAnchor: (el: HTMLElement | null) => void

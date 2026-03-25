@@ -33,16 +33,14 @@
     <div class="guest-detail-body">
       <div class="guest-detail-form">
         <template v-if="guestForm">
-          <JsonFormView
+          <FormView
             v-if="!editing"
-            :schema="guestForm.schema"
-            :uischema="guestForm.uischema"
+            :definition="guestForm.definition"
             :data="guestForm.data"
           />
           <template v-else>
-            <JsonFormEdit
-              :schema="guestForm.schema"
-              :uischema="guestForm.uischema"
+            <FormEdit
+              :definition="guestForm.definition"
               :data="editFormData"
               :errors-map="errorsMap"
               @update:data="editFormData = $event"
@@ -125,15 +123,15 @@ import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import JsonFormView from '@/shared/jsonform/JsonFormView.vue'
-import JsonFormEdit from '@/shared/jsonform/JsonFormEdit.vue'
-import { composeGuestFormFromEntity } from '@/shared/jsonform/normalizeFormResponse'
+import FormView from '@/shared/form-dsl/FormView.vue'
+import FormEdit from '@/shared/form-dsl/FormEdit.vue'
+import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormResponse'
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import type { BookingListItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
-import { validateJsonFormData } from '@/shared/jsonform/validateJsonFormData'
+import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t, locale } = useI18n()
@@ -259,8 +257,8 @@ function cancelEdit() {
 async function onSave() {
   if (!guestId.value) return
   errorsMap.value = {}
-  const { valid, errorsMap: clientErrors } = validateJsonFormData(
-    guestForm.value?.schema ?? {},
+  const { valid, errorsMap: clientErrors } = validateFormData(
+    guestForm.value?.definition,
     editFormData.value,
   )
   if (!valid) {
@@ -351,7 +349,7 @@ async function confirmBlock() {
   width: 100%;
 }
 
-/* JSONForm root: single scroll on `.guest-detail-body`, not nested viewport */
+/* FormDSL root: single scroll on `.guest-detail-body`, not nested viewport */
 :deep(.form-content__viewport) {
   flex: 0 1 auto;
   overflow: visible;

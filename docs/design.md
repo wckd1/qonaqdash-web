@@ -50,7 +50,7 @@ Templates are **logical** layouts inside `AppLayout` (`main.app-main`). They com
 | **T0** | **App chrome** | — | Topbar + sidebar + `main.app-main` (flex column, gap). Not a “page”; wraps all authenticated routes. |
 | **T1** | **Default page** | T0 | `header.page-header` (h1 + optional `.page-header-actions`). Below: route body. No default section wrapper. |
 | **T2** | **Default list page** | T1 | After header: `SearchBar` as direct child of `main` (semantic `<search>`), then `section.list-content` → `div.list-content__viewport` (scroll). **Side panel** (`aside.side-panel*`) as sibling after the viewport (fixed; see `main.css`). Table: `.list-table`, rows `.list-row` / `.list-row--selected`. Optional per-row actions use shared **table row action** classes (see `design.html` Lists); on clickable rows, stop propagation from the actions cell. |
-| **T3** | **Default entity detail (full height)** | T1 | `main.app-main` **without** `app-main--fit-content` (see `AppLayout.vue`: detail routes fill height). Header: title + **Edit** / save/cancel in `.page-header-actions` using `.btn-secondary` for secondary actions. Body: JSONForm view/edit or custom blocks; inner scroll (e.g. `.guest-detail-body`) per view scoped CSS. Optional **context** strip: `.action-toolbar` (`BookingStatusActions`) — full-bleed in panel, **inset** (`action-toolbar--inset`) on booking detail when `detailInset` is set. |
+| **T3** | **Default entity detail (full height)** | T1 | `main.app-main` **without** `app-main--fit-content` (see `AppLayout.vue`: detail routes fill height). Header: title + **Edit** / save/cancel in `.page-header-actions` using `.btn-secondary` for secondary actions. Body: FormDSL view/edit or custom blocks; inner scroll (e.g. `.guest-detail-body`) per view scoped CSS. Optional **context** strip: `.action-toolbar` (`BookingStatusActions`) — full-bleed in panel, **inset** (`action-toolbar--inset`) on booking detail when `detailInset` is set. |
 | **T4** | **Short form page (fit main)** | T1 | `AppLayout` adds `main.app-main--fit-content` for specific paths (new entity, profile, manage hotel, form builder tabs). Content often uses `.form-content__viewport` or compact vertical stack. |
 | **T5** | **Home grid / timeline** | T1 | Root `.dashboard-view` (flex column, scoped in `DashboardView.vue`). **Toolbar row** + **body**: `dashboard-view__toolbar`, `dashboard-view__body`, `dashboard-view__viewport` (scroll). **Content toolbar** (`.content-toolbar`, `.toolbar-picker`, `.toolbar-btn`, …) is **only** in `DashboardView` scoped CSS + duplicated in `design.html`. Grid: `ReservationGrid.vue`. Side panel: booking summary from grid. |
 | **T6** | **Auth card** | — | `main.auth-page` (centered card; login / invite). Styles in `main.css` for auth layout. |
@@ -112,9 +112,9 @@ Each row is an **implemented** route. **Extends** refers to [Page templates](#pa
 | Route | View | Template | Routine actions & content |
 | --- | --- | --- | --- |
 | `/bookings` | `BookingListView.vue` | **T2** | Header: title + **New booking**. **SearchBar** (server `q`). Table: guest, check-in, check-out, status (`.list-table`). Row click → panel, `.list-row--selected`. |
-| — | `BookingSidePanel.vue` | (panel) | Header + close; `.action-toolbar` + `BookingStatusActions`; JSONForm summary; **Open full page** → detail. |
-| `/bookings/new` | `BookingNewView.vue` | **T4** | New entity title; JSONForm **edit** (guest + booking). Guest picker: names as search, select locks fields + Reset. Rooms: types / optional room, multi-room. |
-| `/bookings/:id/details` | `BookingDetailView.vue` | **T3** | Header: title; **Edit** (`.btn-secondary`) when not editing; save/cancel when editing. **Lifecycle**: `BookingStatusActions` with `detailInset` → `.action-toolbar.action-toolbar--inset`. JSONForm view / edit; errors + retry as needed. |
+| — | `BookingSidePanel.vue` | (panel) | Header + close; `.action-toolbar` + `BookingStatusActions`; FormDSL summary; **Open full page** → detail. |
+| `/bookings/new` | `BookingNewView.vue` | **T4** | New entity title; FormDSL **edit** (guest + booking). Guest picker: names as search, select locks fields + Reset. Rooms: types / optional room, multi-room. |
+| `/bookings/:id/details` | `BookingDetailView.vue` | **T3** | Header: title; **Edit** (`.btn-secondary`) when not editing; save/cancel when editing. **Lifecycle**: `BookingStatusActions` with `detailInset` → `.action-toolbar.action-toolbar--inset`. FormDSL view / edit; errors + retry as needed. |
 
 ### Guest list & detail
 
@@ -122,8 +122,8 @@ Each row is an **implemented** route. **Extends** refers to [Page templates](#pa
 | --- | --- | --- | --- |
 | `/guests` | `GuestListView.vue` | **T2** | Header: title + **New guest**. SearchBar. Table: name, email, phone, created. Row → `GuestSidePanel`. |
 | — | `GuestSidePanel.vue` | (panel) | Same panel pattern as booking: header, body, footer **Open full page**. |
-| `/guests/new` | `GuestNewView.vue` | **T4** | JSONForm create guest. |
-| `/guests/:id/details` | `GuestDetailView.vue` | **T3** | Header: **Edit** / save / cancel. JSONForm profile; **related-records** block: past bookings table with **View** as `.list-table__action` in `.list-table__cell--actions`; actions column header intentionally blank (`th.list-table__col--actions`). Inner scroll via view scoped `.guest-detail-body`. |
+| `/guests/new` | `GuestNewView.vue` | **T4** | FormDSL create guest. |
+| `/guests/:id/details` | `GuestDetailView.vue` | **T3** | Header: **Edit** / save / cancel. FormDSL profile; **related-records** block: past bookings table with **View** as `.list-table__action` in `.list-table__cell--actions`; actions column header intentionally blank (`th.list-table__col--actions`). Inner scroll via view scoped `.guest-detail-body`. |
 
 ### Property & settings (manage)
 
@@ -131,7 +131,7 @@ Each row is an **implemented** route. **Extends** refers to [Page templates](#pa
 | --- | --- | --- | --- |
 | `/manage/hotel` | `HotelSettingsView.vue` | **T4** | Hotel display name form (`GET`/`PUT` hotel). |
 | `/manage/rooms` | `RoomsView.vue` | **T1** + custom | Accordion room types; room tables; **side panel** for room detail / edit / remove (`.side-panel*` + local scoped form). In-panel `.action-toolbar` for edit/save/cancel pattern. |
-| `/manage/guests/form` | `GuestFormSettingsView.vue` | **T4** | Form builder + preview (JSONForm build). |
+| `/manage/guests/form` | `GuestFormSettingsView.vue` | **T4** | Form builder + preview (`FormBuild`). |
 | `/manage/bookings/form` | `BookingFormSettingsView.vue` | **T4** | Same builder pattern for booking template. |
 
 ### Account & error
@@ -155,7 +155,7 @@ Use this as the **default starting point** when adding a screen that users navig
 
 1. **Match in `design.md`** — Read [Page templates](#page-templates) and [App screens catalog](#app-screens-catalog). Pick the **closest existing page** (same template ID and similar header / list / form / panel behavior).
 2. **Describe the new page** — In this file, add a short spec **before or while** you build: intended route, template (**T1–T7**), routine actions in the header, primary content, and what happens on click/submit. If the catalog table is the right place, add a row marked *planned* or implement and then add the row.
-3. **Implement from a reference view** — Copy the **closest `*.vue` layout** (markup structure), then **remove** controls, sections, and components you do not need. Prefer existing feature components (`SearchBar`, `BookingStatusActions`, JSONForm wrappers, etc.) over new ones.
+3. **Implement from a reference view** — Copy the **closest `*.vue` layout** (markup structure), then **remove** controls, sections, and components you do not need. Prefer existing feature components (`SearchBar`, `BookingStatusActions`, FormDSL components, etc.) over new ones.
 4. **Pick controls from `design.html`** — For anything that should look like the rest of the app (buttons, search, panels, toolbars, tables, chips, dialogs), open **[design.html](design.html)** and reuse the **same classes and patterns** documented there (backed by `main.css` unless the gallery says otherwise).
 5. **Page-specific styling** — If a control or layout is **only** for this route, put styles in that view’s **`<style scoped>`** (and duplicate into `design.html`’s `<style>` **only** if you need a visible mock there). If the same pattern appears on **another** screen, **propose** promoting it into the design system (`main.css` + `design.html` as needed); after acceptance, **refactor** both views to shared top-level classes ([Documentation layers](#documentation-layers), [CSS placement](#css-placement-and-naming-convention)).
 6. **First doc pass (layout matches feature)** — When the structure matches the product intent, **update `design.md`**: catalog row, template notes, or the short spec so the doc matches the implementation (including any intentional differences from the reference page).

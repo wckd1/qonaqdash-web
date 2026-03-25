@@ -3,16 +3,15 @@
     <h2 v-if="groupTitle">{{ groupTitle }}</h2>
     <div class="form-view-layout__fields">
       <component
-        v-for="(element, idx) in elements"
+        v-for="(child, idx) in children"
         :key="idx"
-        :is="getRenderer(element)"
-        :schema="schema"
-        :uischema="element"
-        :model-value="modelValue"
-        :full-data="modelValue"
+        :is="getRenderer(child)"
+        :node="child"
+        :data="data"
+        :full-data="data"
         :errors-map="errorsMap"
         :disabled="disabled"
-        @update:model-value="updateModel"
+        @update:data="updateData"
       />
     </div>
     <Teleport to="body">
@@ -103,6 +102,8 @@ import {
   useId,
   type CSSProperties,
 } from 'vue'
+import type { FormNode, FormGroupNode } from '@/shared/types/forms'
+import { INPUT_NODE_TYPES } from '@/shared/types/forms'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { useI18n } from 'vue-i18n'
@@ -111,21 +112,20 @@ import { guestSearchKey, guestPickerAnchorKey } from '@/shared/injectKeys'
 import { resolveGroupTitle } from '../utils'
 
 const props = defineProps({
-  schema: { type: Object, default: () => ({}) },
-  uischema: { type: Object, required: true },
-  modelValue: { type: Object, default: () => ({}) },
-  errorsMap: { type: Object, default: () => ({}) },
+  node: { type: Object as () => FormGroupNode, required: true },
+  data: { type: Object as () => Record<string, unknown>, default: () => ({}) },
+  errorsMap: { type: Object as () => Record<string, string[]>, default: () => ({}) },
   disabled: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:data'])
 
 const { t } = useI18n()
 const guestPickerTitleId = useId()
 
 const searchGuestsFn = inject(guestSearchKey, undefined)
 const searchContext = searchGuestsFn
-  ? useGuestSearch(() => props.modelValue, searchGuestsFn)
+  ? useGuestSearch(() => props.data, searchGuestsFn)
   : null
 
 const pickerAnchorEl = shallowRef<HTMLElement | null>(null)
@@ -155,7 +155,7 @@ function updateDropdownPosition() {
   }
 }
 
-function setPickerAnchor(target) {
+function setPickerAnchor(target: HTMLElement | null) {
   if (clearAnchorTimer != null) {
     clearTimeout(clearAnchorTimer)
     clearAnchorTimer = null
@@ -171,7 +171,7 @@ function dismissPicker() {
   nextTick(() => updateDropdownPosition())
 }
 
-function clearPickerAnchor(target) {
+function clearPickerAnchor(target: HTMLElement | null) {
   if (clearAnchorTimer != null) clearTimeout(clearAnchorTimer)
   clearAnchorTimer = setTimeout(() => {
     clearAnchorTimer = null
@@ -222,42 +222,39 @@ watch(
 )
 
 watch(
-  () => buildGuestSearchQuery(props.modelValue?.guest),
+  () => buildGuestSearchQuery(props.data?.guest),
   () => {
     pickerDismissed.value = false
   },
 )
 
-const groupTitle = computed(() => resolveGroupTitle(props.uischema))
+const groupTitle = computed(() => resolveGroupTitle(props.node))
 
-const elements = computed(() => props.uischema?.elements ?? [])
+const children = computed(() => props.node.items ?? [])
 
-function getRenderer(elem) {
-  return elem?.type === 'Control' ? ControlRenderer : LayoutRenderer
+function getRenderer(child: FormNode) {
+  if (child.type === 'stack' || child.type === 'group') return LayoutRenderer
+  return ControlRenderer
 }
 
-function updateModel(val) {
-  emit('update:modelValue', val)
+function updateData(val: Record<string, unknown>) {
+  emit('update:data', val)
 }
 
-function guestOptionLabel(g) {
-  const last = g.last_name ?? g.lastName ?? ''
-  const first = g.first_name ?? g.firstName ?? ''
+function guestOptionLabel(g: Record<string, unknown>): string {
+  const last = (g.last_name ?? g.lastName ?? '') as string
+  const first = (g.first_name ?? g.firstName ?? '') as string
   const named = [last, first].filter(Boolean).join(' ')
   const email = String(g.email ?? '').trim()
   if (named) return named
-  return email || g.id
+  return email || String(g.id)
 }
 
-/**
- * Secondary line for disambiguation: when we show a real name, email · phone;
- * when the title is already email (no name), show phone only if present.
- */
-function guestOptionContactLine(g) {
+function guestOptionContactLine(g: Record<string, unknown>): string {
   const email = String(g.email ?? '').trim()
   const phone = String(g.phone ?? '').trim()
-  const last = g.last_name ?? g.lastName ?? ''
-  const first = g.first_name ?? g.firstName ?? ''
+  const last = (g.last_name ?? g.lastName ?? '') as string
+  const first = (g.first_name ?? g.firstName ?? '') as string
   const hasName = Boolean([last, first].filter(Boolean).join(' '))
   if (hasName) {
     if (email && phone) return `${email} · ${phone}`
@@ -266,7 +263,7 @@ function guestOptionContactLine(g) {
   return phone || ''
 }
 
-function guestPickerOptionAriaLabel(g) {
+function guestPickerOptionAriaLabel(g: Record<string, unknown>): string {
   const name = guestOptionLabel(g)
   const email = String(g.email ?? '').trim()
   const phone = String(g.phone ?? '').trim()
@@ -276,10 +273,10 @@ function guestPickerOptionAriaLabel(g) {
   return parts.join('. ')
 }
 
-function onSelectGuest(apiGuest) {
+function onSelectGuest(apiGuest: Record<string, unknown>) {
   if (!searchContext) return
   const next = searchContext.select(apiGuest)
-  if (next) emit('update:modelValue', next)
+  if (next) emit('update:data', next)
 }
 </script>
 
@@ -299,7 +296,6 @@ function onSelectGuest(apiGuest) {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  /* Clip row hovers to rounded shell (avoids square corners bleeding out) */
   overflow: hidden;
 }
 
@@ -354,7 +350,6 @@ function onSelectGuest(apiGuest) {
 
 .guest-section-edit__dropdown-scroll {
   overflow-y: auto;
-  /* ~5 guests; rows may include name + contact line */
   max-height: calc(
     5 *
       (

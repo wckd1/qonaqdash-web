@@ -1,4 +1,5 @@
 import api from '@/shared/api/client'
+import type { FormNode } from '@/shared/types/forms'
 import {
   getCachedFormDefinition,
   setCachedFormDefinition,
@@ -7,8 +8,7 @@ import {
 } from '@/shared/forms/formDefinitionCache'
 
 export interface LoadedRuntimeForm {
-  schema: unknown
-  uischema: unknown
+  definition: FormNode
   hash: string
   data: Record<string, unknown>
 }
@@ -42,8 +42,7 @@ function parseOkBody(
       ? (rawData as Record<string, unknown>)
       : {}
   return {
-    schema: d.schema,
-    uischema: d.uischema,
+    definition: d.definition as FormNode,
     hash: h,
     data,
   }
@@ -56,7 +55,7 @@ async function getRuntimeFormUnconditional(
 ): Promise<LoadedRuntimeForm> {
   const res = await api.get(path, {
     params: { target: mode },
-    validateStatus: (s) => s >= 200 && s < 300,
+    validateStatus: (s: number) => s >= 200 && s < 300,
   })
   const d = res.data && typeof res.data === 'object' ? (res.data as Record<string, unknown>) : {}
   const out = parseOkBody(d, '')
@@ -86,8 +85,7 @@ export async function loadRuntimeFormDefinition(
     const cached = getCachedFormDefinition(formId, mode, defHash)
     if (cached) {
       return {
-        schema: cached.schema,
-        uischema: cached.uischema,
+        definition: cached.definition,
         hash: cached.hash,
         data: {},
       }
@@ -98,11 +96,6 @@ export async function loadRuntimeFormDefinition(
     return getRuntimeFormUnconditional(formId, path, mode)
   }
 
-  /**
-   * Only send If-None-Match when we already hold that revision locally. Otherwise the server
-   * may answer 304 while we have no schema/uischema to reuse (detail `_form.hash` matches ETag
-   * but this is the first fetch — would force a second unconditional GET).
-   */
   const lookupKey = etagForRequest.trim()
   const hasLocalCopy =
     lookupKey.length > 0 &&
@@ -116,15 +109,14 @@ export async function loadRuntimeFormDefinition(
   const res = await api.get(path, {
     params: { target: mode },
     headers,
-    validateStatus: (s) => s === 304 || (s >= 200 && s < 300),
+    validateStatus: (s: number) => s === 304 || (s >= 200 && s < 300),
   })
 
   if (res.status === 304) {
     const cached = lookupKey ? getCachedFormDefinition(formId, mode, lookupKey) : null
     if (cached) {
       return {
-        schema: cached.schema,
-        uischema: cached.uischema,
+        definition: cached.definition,
         hash: cached.hash,
         data: {},
       }

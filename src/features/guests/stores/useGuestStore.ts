@@ -1,17 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { FormRef, FormNode } from '@/shared/types/forms'
+import type { FormRef } from '@/shared/types/forms'
+import { type FormTemplate, snapshotForm } from '@/shared/forms/formSnapshot'
 import type { Guest, GuestDetailData } from '@/features/guests/api'
 import * as guestsApi from '@/features/guests/api'
-
-type GuestFormTemplate = { definition: FormNode; data: Record<string, unknown> }
-
-function snapshotGuestForm(res: { definition?: unknown; data?: unknown }): GuestFormTemplate {
-  return {
-    definition: JSON.parse(JSON.stringify(res.definition ?? {})),
-    data: JSON.parse(JSON.stringify(res.data ?? {})),
-  }
-}
 
 export const useGuestStore = defineStore('guests', () => {
   const guests = ref<Guest[]>([])
@@ -20,8 +12,8 @@ export const useGuestStore = defineStore('guests', () => {
 
   const guestCreateFormHash = ref<string | null>(null)
 
-  const guestFormTemplate = ref<GuestFormTemplate | null>(null)
-  const guestFormRuntimeView = ref<GuestFormTemplate | null>(null)
+  const guestFormTemplate = ref<FormTemplate | null>(null)
+  const guestFormRuntimeView = ref<FormTemplate | null>(null)
 
   async function fetchGuests(params = {}) {
     guests.value = await guestsApi.fetchGuests(params)
@@ -57,7 +49,7 @@ export const useGuestStore = defineStore('guests', () => {
     if (isCreateEdit && typeof res.hash === 'string' && res.hash.trim()) {
       guestCreateFormHash.value = res.hash.trim()
     }
-    const snap = snapshotGuestForm(res)
+    const snap = snapshotForm(res)
     slot.value = snap
     return JSON.parse(JSON.stringify(snap))
   }
@@ -76,7 +68,7 @@ export const useGuestStore = defineStore('guests', () => {
     guestFormTemplate.value = null
     guestFormRuntimeView.value = null
     if (res?.definition != null) {
-      guestFormTemplate.value = snapshotGuestForm(res)
+      guestFormTemplate.value = snapshotForm(res)
     }
   }
 

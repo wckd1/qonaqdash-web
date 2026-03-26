@@ -33,6 +33,7 @@ import type { FormNode } from '@/shared/types/forms'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
+import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -70,6 +71,7 @@ async function onSubmit() {
   const { valid, errorsMap: clientErrors } = validateFormData(form.definition, formData.value)
   if (!valid) {
     errorsMap.value = clientErrors
+    scrollToFirstFormError()
     return
   }
   submitting.value = true

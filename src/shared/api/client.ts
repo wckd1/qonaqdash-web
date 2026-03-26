@@ -1,22 +1,16 @@
-import * as axiosNs from 'axios'
+import axios, { type AxiosInstance, isAxiosError } from 'axios'
 import { formatApiError, getApiErrorCode } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
-
-/**
- * Axios typings resolve as namespace-only under `moduleResolution: "bundler"` + package `exports`;
- * runtime exposes the client on `default`.
- */
-const axios: any = (axiosNs as any).default ?? axiosNs
 
 const TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
 
 /** No JWT / app interceptors — used for refresh only (§2). */
-export const refreshTransport = axios.create({
+export const refreshTransport: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '',
 })
 
-const api = axios.create({
+const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '',
 })
 
@@ -108,7 +102,7 @@ api.interceptors.response.use(
           return api.request(err.config)
         } catch (refreshErr: unknown) {
           const refreshHadResponse =
-            axios.isAxiosError(refreshErr) &&
+            isAxiosError(refreshErr) &&
             !!(refreshErr as { response?: unknown }).response
           const noRefreshStored = !localStorage.getItem(REFRESH_TOKEN_KEY)
           if (refreshHadResponse || noRefreshStored) {

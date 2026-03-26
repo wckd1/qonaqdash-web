@@ -13,9 +13,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
-
-declare module 'axios' {
-  interface InternalAxiosRequestConfig {
-    __authRefreshRetried?: boolean
-  }
-}

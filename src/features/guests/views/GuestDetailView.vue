@@ -132,6 +132,7 @@ import type { BookingListItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
+import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t, locale } = useI18n()
@@ -263,6 +264,7 @@ async function onSave() {
   )
   if (!valid) {
     errorsMap.value = clientErrors
+    scrollToFirstFormError()
     return
   }
   submitting.value = true

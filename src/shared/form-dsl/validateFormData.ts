@@ -1,12 +1,14 @@
 /**
  * Client-side validation for FormDSL forms.
  * Walks the definition tree, reads `validation` on input nodes, checks the companion data.
+ * Condition-aware: nodes hidden by visibleWhen / hiddenWhen / options.hidden are skipped.
  */
 
 import type { FormNode, FormValidation } from '@/shared/types/forms'
 import { INPUT_NODE_TYPES } from '@/shared/types/forms'
 import { bindToPath, getValueByPath } from './utils'
 import { localizeValidationError } from './formValidationI18n'
+import { evaluateNodeState } from './formNodeConditions'
 
 /**
  * Validate form data against a FormDSL definition tree.
@@ -35,6 +37,9 @@ function walkNode(
   bindPrefix: string,
   errorsMap: Record<string, string[]>,
 ): void {
+  const { hidden } = evaluateNodeState(node, data)
+  if (hidden) return
+
   if (node.type === 'stack') {
     for (const child of node.items ?? []) {
       walkNode(child, data, bindPrefix, errorsMap)

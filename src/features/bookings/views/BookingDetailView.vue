@@ -74,6 +74,7 @@ import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormRes
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
+import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
@@ -232,6 +233,7 @@ async function onSave() {
   const { valid, errorsMap: clientErrors } = validateFormData(bookingForm.value?.definition, forValidate)
   if (!valid) {
     errorsMap.value = clientErrors
+    scrollToFirstFormError()
     return
   }
   submitting.value = true

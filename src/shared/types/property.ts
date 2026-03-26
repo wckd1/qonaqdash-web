@@ -11,8 +11,6 @@ export interface RoomType {
   id: string
   name: string
   description?: string
-  /** Nightly rate in minor currency units (e.g. 1 000 000 = 10 000.00 KZT). */
-  base_rate_minor: number
 }
 
 export interface Room {

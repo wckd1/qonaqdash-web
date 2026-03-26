@@ -1,46 +1,42 @@
 /**
  * Pricing domain types: rules, conditions, effects, quote lines,
  * and the accommodation snapshot embedded on a booking.
- *
- * These mirror the backend contract from requirements §4-9
- * and will be consumed by the quote composable (FE2b) and
- * booking commercial snapshot (FE3).
  */
 
 // ---------------------------------------------------------------------------
-// Pricing rule conditions (requirements §8)
+// Pricing rule conditions
 // ---------------------------------------------------------------------------
 
-export interface PricingConditionDimensionEq {
-  type: 'dimension_eq'
-  dimension_id: string
-  value: string
+export type ConditionType = 'property' | 'specific_date' | 'date_range'
+export type PropertyOperator = 'eq' | 'in'
+export type RuleStatus = 'active' | 'disabled' | 'invalid'
+
+export interface PricingConditionProperty {
+  type: 'property'
+  field_id: string
+  operator: PropertyOperator
+  value?: string
+  values?: string[]
 }
 
-export interface PricingConditionDimensionIn {
-  type: 'dimension_in'
-  dimension_id: string
-  values: string[]
+export interface PricingConditionSpecificDate {
+  type: 'specific_date'
+  date: string
 }
 
-export interface PricingConditionNightInCalendar {
-  type: 'night_in_calendar'
-  calendar_set_id: string
-}
-
-export interface PricingConditionNightDowIn {
-  type: 'night_dow_in'
-  days_of_week: number[]
+export interface PricingConditionDateRange {
+  type: 'date_range'
+  from: string
+  to: string
 }
 
 export type PricingCondition =
-  | PricingConditionDimensionEq
-  | PricingConditionDimensionIn
-  | PricingConditionNightInCalendar
-  | PricingConditionNightDowIn
+  | PricingConditionProperty
+  | PricingConditionSpecificDate
+  | PricingConditionDateRange
 
 // ---------------------------------------------------------------------------
-// Effect shape (requirements §9)
+// Effect shape
 // ---------------------------------------------------------------------------
 
 export type EffectType = 'percent' | 'fixed'
@@ -54,16 +50,40 @@ export interface PricingEffect {
 }
 
 // ---------------------------------------------------------------------------
+// Invalid reason
+// ---------------------------------------------------------------------------
+
+export interface InvalidReason {
+  code: string
+  message: string
+  field_id?: string
+  condition_index?: number
+  details?: Record<string, unknown>
+}
+
+// ---------------------------------------------------------------------------
 // Pricing rule
 // ---------------------------------------------------------------------------
 
 export interface PricingRule {
   id: string
-  name?: string
+  name: string
   priority: number
+  status: RuleStatus
+  invalid_reason: InvalidReason | null
   conditions: PricingCondition[]
   effect: PricingEffect
-  room_type_ids?: string[]
+  created_at: string
+  updated_at: string
+}
+
+// ---------------------------------------------------------------------------
+// Base rates
+// ---------------------------------------------------------------------------
+
+export interface BaseRateItem {
+  room_type_id: string
+  base_rate_minor: number
 }
 
 // ---------------------------------------------------------------------------

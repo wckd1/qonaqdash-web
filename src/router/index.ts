@@ -64,6 +64,16 @@ const routes = [
         component: () => import('@/features/bookings/views/BookingListView.vue'),
       },
       {
+        path: 'manage/pricing/base-rates',
+        name: 'manage-pricing-base-rates',
+        component: () => import('@/features/pricing/views/BaseRatesView.vue'),
+      },
+      {
+        path: 'manage/pricing/rules',
+        name: 'manage-pricing-rules',
+        component: () => import('@/features/pricing/views/PricingRulesView.vue'),
+      },
+      {
         path: 'manage/guests/form',
         name: 'manage-guests-form',
         component: () => import('@/features/guests/views/GuestFormSettingsView.vue'),

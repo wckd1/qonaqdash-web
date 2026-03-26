@@ -45,26 +45,19 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  async function createRoomType(name: string, description: string, baseRateMinor: number) {
+  async function createRoomType(name: string, description: string) {
     const created = await propertyApi.createRoomType({
       name,
       description: description || undefined,
-      base_rate_minor: baseRateMinor,
     })
     roomTypes.value = [...roomTypes.value, created]
     return created
   }
 
-  async function updateRoomType(
-    id: string,
-    name: string,
-    description: string,
-    baseRateMinor: number,
-  ) {
+  async function updateRoomType(id: string, name: string, description: string) {
     const updated = await propertyApi.updateRoomType(id, {
       name,
       description: description || undefined,
-      base_rate_minor: baseRateMinor,
     })
     roomTypes.value = roomTypes.value.map((t) => (t.id === id ? updated : t))
     return updated

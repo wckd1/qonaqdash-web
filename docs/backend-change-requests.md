@@ -21,11 +21,11 @@ Queue for API work the frontend needs from the backend. Contract sources remain 
 
 ### Summary
 
-| Area        | Who        | Allowed edits |
-| ----------- | ---------- | ------------- |
-| **Request** | Frontend   | Frontend adds/updates while open. Backend: **no edits**. |
-| **Done**    | Backend    | Backend fills when marking `[x]`. Frontend: **read-only**; then remove whole block when frontend work is done. |
-| Heading     | Both       | Checkbox only: `[ ]` → `[x]` by backend when shipped. |
+| Area        | Who      | Allowed edits                                                                                                  |
+| ----------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| **Request** | Frontend | Frontend adds/updates while open. Backend: **no edits**.                                                       |
+| **Done**    | Backend  | Backend fills when marking `[x]`. Frontend: **read-only**; then remove whole block when frontend work is done. |
+| Heading     | Both     | Checkbox only: `[ ]` → `[x]` by backend when shipped.                                                          |
 
 ---
 
@@ -34,16 +34,16 @@ Queue for API work the frontend needs from the backend. Contract sources remain 
 ```markdown
 ### [ ] Short title (imperative or outcome)
 
-**Request** *(frontend — do not edit below this heading; backend fills **Done** only)*
+**Request** _(frontend — do not edit below this heading; backend fills **Done** only)_
 
 - Method/path (if known), params, payload/response shape, error behaviour, or product reason.
 - How the UI will use it.
 
-**Done** *(backend — add when marking `[x]`; include Swagger + integration pointers)*
+**Done** _(backend — add when marking `[x]`; include Swagger + integration pointers)_
 
 - **Swagger:** …
-- **Integration:** … *(if applicable)*
-- **Notes:** … *(optional: codes, migration, breaking changes)*
+- **Integration:** … _(if applicable)_
+- **Notes:** … _(optional: codes, migration, breaking changes)_
 
 ---
 ```
@@ -54,4 +54,4 @@ Remove the fenced code block wrapper when pasting a real item; keep the `---` af
 
 ## Open requests
 
-*(Add new items below this line.)*
+_(none)_

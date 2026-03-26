@@ -73,7 +73,6 @@
               <span class="accordion-title">
                 <strong>{{ rt.name }}</strong>
                 <span v-if="rt.description" class="accordion-desc">{{ rt.description }}</span>
-                <span class="accordion-rate">{{ formattedBaseRate(rt) }}</span>
               </span>
               <div class="accordion-header-actions">
                 <button
@@ -289,20 +288,6 @@
             :disabled="addTypeSaving"
           />
         </label>
-        <label>
-          {{ t('rooms.base_rate_label') }}
-          <div class="rate-input-group">
-            <input
-              v-model.number="addTypeForm.baseRate"
-              type="number"
-              min="0"
-              :step="rateInputStep"
-              :placeholder="t('rooms.base_rate_placeholder')"
-              :disabled="addTypeSaving"
-            />
-            <span class="rate-input-currency">{{ hotelCurrency }}</span>
-          </div>
-        </label>
         <div class="dialog-actions">
           <button type="button" class="btn-secondary" @click="closeAddTypeDialog">
             {{ t('common.cancel') }}
@@ -339,20 +324,6 @@
             :placeholder="t('rooms.desc_placeholder')"
             :disabled="editTypeSaving"
           />
-        </label>
-        <label>
-          {{ t('rooms.base_rate_label') }}
-          <div class="rate-input-group">
-            <input
-              v-model.number="editTypeForm.baseRate"
-              type="number"
-              min="0"
-              :step="rateInputStep"
-              :placeholder="t('rooms.base_rate_placeholder')"
-              :disabled="editTypeSaving"
-            />
-            <span class="rate-input-currency">{{ hotelCurrency }}</span>
-          </div>
         </label>
         <div class="dialog-actions">
           <button type="button" class="btn-secondary" @click="closeEditTypeDialog">
@@ -468,14 +439,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, watch, useId } from 'vue'
+import { ref, nextTick, onMounted, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import type { Room, RoomType } from '@/shared/types/property'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
-import { formatMoney, minorToMajor, majorToMinor, getCurrencyExponent } from '@/shared/lib/money'
 
 const DEBOUNCE_MS = 300
 
@@ -483,20 +453,9 @@ const ROOM_STATUSES = ['available', 'maintenance', 'out_of_order']
 
 type RoomPanelSelection = { room: Room; roomType: RoomType | undefined }
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const store = usePropertyStore()
-const { roomTypes, rooms, hotel } = storeToRefs(store)
-
-const hotelCurrency = computed(() => hotel.value?.currency ?? 'USD')
-
-const rateInputStep = computed(() => {
-  const exp = getCurrencyExponent(hotelCurrency.value)
-  return (1 / 10 ** exp).toString()
-})
-
-function formattedBaseRate(rt: RoomType): string {
-  return formatMoney(rt.base_rate_minor ?? 0, hotelCurrency.value, locale.value)
-}
+const { roomTypes, rooms } = storeToRefs(store)
 
 const removeTypeTitleId = useId()
 const removeRoomTitleId = useId()
@@ -512,12 +471,12 @@ const editRoomForm = ref({ room_type_id: '', number: '', status: 'available' })
 const roomSaveSaving = ref(false)
 
 const addTypeOpen = ref(false)
-const addTypeForm = ref({ name: '', description: '', baseRate: 0 })
+const addTypeForm = ref({ name: '', description: '' })
 const addTypeSaving = ref(false)
 
 const editTypeOpen = ref(false)
 const editTypeId = ref('')
-const editTypeForm = ref({ name: '', description: '', baseRate: 0 })
+const editTypeForm = ref({ name: '', description: '' })
 const editTypeSaving = ref(false)
 const editTypeError = ref('')
 
@@ -653,7 +612,7 @@ async function confirmRemoveRoom() {
 }
 
 function openAddTypeDialog() {
-  addTypeForm.value = { name: '', description: '', baseRate: 0 }
+  addTypeForm.value = { name: '', description: '' }
   addTypeOpen.value = true
   nextTick(() => addTypeNameRef.value?.focus())
 }
@@ -665,12 +624,10 @@ function closeAddTypeDialog() {
 async function submitAddType() {
   if (!addTypeForm.value.name?.trim()) return
   addTypeSaving.value = true
-  const baseRateMinor = majorToMinor(Number(addTypeForm.value.baseRate) || 0, hotelCurrency.value)
   try {
     const created = await store.createRoomType(
       addTypeForm.value.name.trim(),
       addTypeForm.value.description?.trim() || '',
-      baseRateMinor,
     )
     expandedTypes.value.add(created.id)
     closeAddTypeDialog()
@@ -686,7 +643,6 @@ function openEditTypeDialog(rt: RoomType) {
   editTypeForm.value = {
     name: rt.name,
     description: rt.description ?? '',
-    baseRate: minorToMajor(rt.base_rate_minor ?? 0, hotelCurrency.value),
   }
   editTypeError.value = ''
   editTypeOpen.value = true
@@ -702,13 +658,11 @@ async function submitEditType() {
   if (!editTypeForm.value.name?.trim() || !editTypeId.value) return
   editTypeSaving.value = true
   editTypeError.value = ''
-  const baseRateMinor = majorToMinor(Number(editTypeForm.value.baseRate) || 0, hotelCurrency.value)
   try {
     await store.updateRoomType(
       editTypeId.value,
       editTypeForm.value.name.trim(),
       editTypeForm.value.description?.trim() || '',
-      baseRateMinor,
     )
     closeEditTypeDialog()
     syncSelectedRoomFromStore()
@@ -811,7 +765,6 @@ async function load(params: { q?: string } = {}, isInitial = false) {
     searching.value = true
   }
   try {
-    await store.fetchHotel()
     await store.fetchRoomTypes(params)
     await store.fetchRooms(params)
   } catch (err: unknown) {
@@ -846,30 +799,6 @@ onMounted(() => load({}, true))
 .rooms-confirm-body {
   margin: 0 0 var(--space-md);
   font-size: var(--text-body-size);
-  color: var(--ink-secondary);
-}
-
-.accordion-rate {
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-caption-weight);
-  color: var(--ink-secondary);
-}
-
-.rate-input-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.rate-input-group input {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.rate-input-currency {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
   color: var(--ink-secondary);
 }
 </style>

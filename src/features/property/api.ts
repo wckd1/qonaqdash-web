@@ -33,18 +33,12 @@ export function fetchRoomTypes(params: { q?: string } = {}): Promise<RoomType[]>
 /**
  * @param body.name - Required non-empty.
  * @param body.description - Optional.
- * @param body.base_rate_minor - Nightly rate in minor currency units (≥ 0, defaults to 0).
  */
-export function createRoomType(body: {
-  name: string
-  description?: string
-  base_rate_minor?: number
-}): Promise<RoomType> {
+export function createRoomType(body: { name: string; description?: string }): Promise<RoomType> {
   return api
     .post('/api/property/room-types', {
       name: body.name,
       description: body.description || undefined,
-      base_rate_minor: body.base_rate_minor ?? 0,
     })
     .then(({ data }) => data)
 }
@@ -53,17 +47,15 @@ export function createRoomType(body: {
  * @param id - Room type UUID.
  * @param body.name - Required non-empty.
  * @param body.description - Optional.
- * @param body.base_rate_minor - Nightly rate in minor currency units (≥ 0).
  */
 export function updateRoomType(
   id: string,
-  body: { name: string; description?: string; base_rate_minor: number },
+  body: { name: string; description?: string },
 ): Promise<RoomType> {
   return api
     .put(`/api/property/room-types/${id}`, {
       name: body.name,
       description: body.description || undefined,
-      base_rate_minor: body.base_rate_minor,
     })
     .then(({ data }) => data)
 }

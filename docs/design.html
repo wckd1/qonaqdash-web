@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
@@ -6,7 +6,10 @@
     <title>QonaqDash — Design system reference</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
     <link rel="stylesheet" href="../src/assets/main.css" />
     <style>
@@ -382,7 +385,9 @@
         max-width: 100%;
         margin: 0;
         box-sizing: border-box;
-        transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+        transition:
+          border-color var(--pico-transition),
+          box-shadow var(--pico-transition);
       }
       main.ds-page search:focus-within {
         border-color: var(--pico-form-element-active-border-color);
@@ -472,9 +477,24 @@
     <main class="ds-page">
       <header class="ds-header">
         <h1>QonaqDash design system</h1>
-        <p><strong>Design system</strong> — This gallery plus <code>src/assets/main.css</code> define top-level visuals (tokens, shared layout, reusable components). Sections run small → large: foundation, compact parts, composite controls and page chrome, then full structures.</p>
-        <p><strong>Page specification</strong> — Routes, templates, and flows live in <a href="design.md">design.md</a>, using the naming and classes documented here. <strong>Product UI</strong> implements those pages and adds route-scoped styles only where needed; repeated scoped patterns should be proposed for promotion into this system, then views refactored to shared classes.</p>
-        <p><strong>Backend / HTTP</strong> — High-level integration: <a href="integration.md">integration.md</a>. Endpoint details (routes, schemas, errors): <a href="swagger.yaml">swagger.yaml</a> (OpenAPI).</p>
+        <p>
+          <strong>Design system</strong> — This gallery plus <code>src/assets/main.css</code> define
+          top-level visuals (tokens, shared layout, reusable components). Sections run small →
+          large: foundation, compact parts, composite controls and page chrome, then full
+          structures.
+        </p>
+        <p>
+          <strong>Page specification</strong> — Routes, templates, and flows live in
+          <a href="design.md">design.md</a>, using the naming and classes documented here.
+          <strong>Product UI</strong> implements those pages and adds route-scoped styles only where
+          needed; repeated scoped patterns should be proposed for promotion into this system, then
+          views refactored to shared classes.
+        </p>
+        <p>
+          <strong>Backend / HTTP</strong> — High-level integration:
+          <a href="integration.md">integration.md</a>. Endpoint details (routes, schemas, errors):
+          <a href="swagger.yaml">swagger.yaml</a> (OpenAPI).
+        </p>
         <nav class="ds-toc" aria-label="On this page">
           <span class="ds-toc-group">Foundation</span>
           <a href="#colors">Colors</a>
@@ -485,6 +505,7 @@
           <a href="#status-chips">Status chips</a>
           <a href="#states">Loading, states &amp; form messages</a>
           <span class="ds-toc-group">Composite components</span>
+          <a href="#subnav">Sub-navigation tabs</a>
           <a href="#page-header-outline">Page header (outline CTA)</a>
           <a href="#toolbars">Toolbars</a>
           <a href="#context-menu">Context menu</a>
@@ -506,19 +527,25 @@
           <h3>Foreground (text)</h3>
           <div class="swatch-grid">
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--ink-primary);"></div>
-              <div class="swatch-label">ink-primary <span class="swatch-var">--ink-primary</span></div>
+              <div class="swatch-color" style="background: var(--ink-primary)"></div>
+              <div class="swatch-label">
+                ink-primary <span class="swatch-var">--ink-primary</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--ink-secondary);"></div>
-              <div class="swatch-label">ink-secondary <span class="swatch-var">--ink-secondary</span></div>
+              <div class="swatch-color" style="background: var(--ink-secondary)"></div>
+              <div class="swatch-label">
+                ink-secondary <span class="swatch-var">--ink-secondary</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--ink-tertiary);"></div>
-              <div class="swatch-label">ink-tertiary <span class="swatch-var">--ink-tertiary</span></div>
+              <div class="swatch-color" style="background: var(--ink-tertiary)"></div>
+              <div class="swatch-label">
+                ink-tertiary <span class="swatch-var">--ink-tertiary</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--ink-muted);"></div>
+              <div class="swatch-color" style="background: var(--ink-muted)"></div>
               <div class="swatch-label">ink-muted <span class="swatch-var">--ink-muted</span></div>
             </div>
           </div>
@@ -527,15 +554,18 @@
           <h3>Background &amp; surfaces</h3>
           <div class="swatch-grid">
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--canvas);"></div>
+              <div class="swatch-color" style="background: var(--canvas)"></div>
               <div class="swatch-label">canvas <span class="swatch-var">--canvas</span></div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--surface-1); border: 1px solid var(--border-subtle);"></div>
+              <div
+                class="swatch-color"
+                style="background: var(--surface-1); border: 1px solid var(--border-subtle)"
+              ></div>
               <div class="swatch-label">surface-1 <span class="swatch-var">--surface-1</span></div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--surface-2);"></div>
+              <div class="swatch-color" style="background: var(--surface-2)"></div>
               <div class="swatch-label">surface-2 <span class="swatch-var">--surface-2</span></div>
             </div>
           </div>
@@ -544,12 +574,16 @@
           <h3>Brand</h3>
           <div class="swatch-grid">
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--brand-primary);"></div>
-              <div class="swatch-label">brand-primary <span class="swatch-var">--brand-primary</span></div>
+              <div class="swatch-color" style="background: var(--brand-primary)"></div>
+              <div class="swatch-label">
+                brand-primary <span class="swatch-var">--brand-primary</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--brand-primary-hover);"></div>
-              <div class="swatch-label">brand-primary-hover <span class="swatch-var">--brand-primary-hover</span></div>
+              <div class="swatch-color" style="background: var(--brand-primary-hover)"></div>
+              <div class="swatch-label">
+                brand-primary-hover <span class="swatch-var">--brand-primary-hover</span>
+              </div>
             </div>
           </div>
         </div>
@@ -557,20 +591,28 @@
           <h3>Semantic</h3>
           <div class="swatch-grid">
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--semantic-success);"></div>
-              <div class="swatch-label">semantic-success <span class="swatch-var">--semantic-success</span></div>
+              <div class="swatch-color" style="background: var(--semantic-success)"></div>
+              <div class="swatch-label">
+                semantic-success <span class="swatch-var">--semantic-success</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--semantic-error);"></div>
-              <div class="swatch-label">semantic-error <span class="swatch-var">--semantic-error</span></div>
+              <div class="swatch-color" style="background: var(--semantic-error)"></div>
+              <div class="swatch-label">
+                semantic-error <span class="swatch-var">--semantic-error</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--semantic-warning);"></div>
-              <div class="swatch-label">semantic-warning <span class="swatch-var">--semantic-warning</span></div>
+              <div class="swatch-color" style="background: var(--semantic-warning)"></div>
+              <div class="swatch-label">
+                semantic-warning <span class="swatch-var">--semantic-warning</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--semantic-info);"></div>
-              <div class="swatch-label">semantic-info <span class="swatch-var">--semantic-info</span></div>
+              <div class="swatch-color" style="background: var(--semantic-info)"></div>
+              <div class="swatch-label">
+                semantic-info <span class="swatch-var">--semantic-info</span>
+              </div>
             </div>
           </div>
         </div>
@@ -578,42 +620,66 @@
           <h3>Booking status</h3>
           <div class="swatch-grid">
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--status-confirmed);"></div>
-              <div class="swatch-label">confirmed <span class="swatch-var">--status-confirmed</span></div>
+              <div class="swatch-color" style="background: var(--status-confirmed)"></div>
+              <div class="swatch-label">
+                confirmed <span class="swatch-var">--status-confirmed</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--status-checked-in);"></div>
-              <div class="swatch-label">checked-in <span class="swatch-var">--status-checked-in</span></div>
+              <div class="swatch-color" style="background: var(--status-checked-in)"></div>
+              <div class="swatch-label">
+                checked-in <span class="swatch-var">--status-checked-in</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--status-checked-out);"></div>
-              <div class="swatch-label">checked-out <span class="swatch-var">--status-checked-out</span></div>
+              <div class="swatch-color" style="background: var(--status-checked-out)"></div>
+              <div class="swatch-label">
+                checked-out <span class="swatch-var">--status-checked-out</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--status-canceled);"></div>
-              <div class="swatch-label">canceled <span class="swatch-var">--status-canceled</span></div>
+              <div class="swatch-color" style="background: var(--status-canceled)"></div>
+              <div class="swatch-label">
+                canceled <span class="swatch-var">--status-canceled</span>
+              </div>
             </div>
           </div>
         </div>
         <div class="ds-subsection">
           <h3>Sidebar (dark)</h3>
-          <p class="ds-note">Navigation chrome; Settings covers hotel, rooms, and form schema editors.</p>
+          <p class="ds-note">
+            Navigation chrome; Settings covers hotel, rooms, and form schema editors.
+          </p>
           <div class="swatch-grid">
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--sidebar-bg);"></div>
-              <div class="swatch-label">sidebar-bg <span class="swatch-var">--sidebar-bg</span></div>
+              <div class="swatch-color" style="background: var(--sidebar-bg)"></div>
+              <div class="swatch-label">
+                sidebar-bg <span class="swatch-var">--sidebar-bg</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--sidebar-user-menu-bg); border: 1px solid var(--border-subtle);"></div>
-              <div class="swatch-label">user-menu-bg <span class="swatch-var">--sidebar-user-menu-bg</span></div>
+              <div
+                class="swatch-color"
+                style="
+                  background: var(--sidebar-user-menu-bg);
+                  border: 1px solid var(--border-subtle);
+                "
+              ></div>
+              <div class="swatch-label">
+                user-menu-bg <span class="swatch-var">--sidebar-user-menu-bg</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--sidebar-text);"></div>
-              <div class="swatch-label">sidebar-text <span class="swatch-var">--sidebar-text</span></div>
+              <div class="swatch-color" style="background: var(--sidebar-text)"></div>
+              <div class="swatch-label">
+                sidebar-text <span class="swatch-var">--sidebar-text</span>
+              </div>
             </div>
             <div class="swatch">
-              <div class="swatch-color" style="background: var(--sidebar-text-muted);"></div>
-              <div class="swatch-label">sidebar-text-muted <span class="swatch-var">--sidebar-text-muted</span></div>
+              <div class="swatch-color" style="background: var(--sidebar-text-muted)"></div>
+              <div class="swatch-label">
+                sidebar-text-muted <span class="swatch-var">--sidebar-text-muted</span>
+              </div>
             </div>
           </div>
         </div>
@@ -623,69 +689,199 @@
         <h2>Spacing, borders &amp; shadows</h2>
         <div class="ds-subsection">
           <h3>Spacing scale</h3>
-          <p class="ds-note">Base unit 8px: <code>--space-micro</code> (4px) through <code>--space-block</code> (48px). Content shell: <code>--content-area-gap</code>, <code>--content-area-radius</code>, <code>--content-area-padding</code>.</p>
+          <p class="ds-note">
+            Base unit 8px: <code>--space-micro</code> (4px) through
+            <code>--space-block</code> (48px). Content shell: <code>--content-area-gap</code>,
+            <code>--content-area-radius</code>, <code>--content-area-padding</code>.
+          </p>
           <div class="space-demo">
-            <div class="space-bar" style="width: var(--space-micro); height: 24px;" title="--space-micro"></div>
-            <div class="space-bar" style="width: var(--space-xs); height: 24px;" title="--space-xs"></div>
-            <div class="space-bar" style="width: var(--space-sm); height: 24px;" title="--space-sm"></div>
-            <div class="space-bar" style="width: var(--space-md); height: 24px;" title="--space-md"></div>
-            <div class="space-bar" style="width: var(--space-lg); height: 24px;" title="--space-lg"></div>
-            <div class="space-bar" style="width: var(--space-xl); height: 24px;" title="--space-xl"></div>
-            <div class="space-bar" style="width: var(--space-block); height: 24px;" title="--space-block"></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-micro); height: 24px"
+              title="--space-micro"
+            ></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-xs); height: 24px"
+              title="--space-xs"
+            ></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-sm); height: 24px"
+              title="--space-sm"
+            ></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-md); height: 24px"
+              title="--space-md"
+            ></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-lg); height: 24px"
+              title="--space-lg"
+            ></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-xl); height: 24px"
+              title="--space-xl"
+            ></div>
+            <div
+              class="space-bar"
+              style="width: var(--space-block); height: 24px"
+              title="--space-block"
+            ></div>
           </div>
         </div>
         <div class="ds-subsection">
           <h3>Borders</h3>
-          <p class="ds-note"><code>--border-subtle</code> → <code>--border-default</code> → <code>--border-emphasis</code> → <code>--border-focus</code></p>
-          <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
-            <div style="height: 20px; background: var(--surface-1); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);"></div>
-            <div style="height: 20px; background: var(--surface-1); border: 1px solid var(--border-default); border-radius: var(--radius-sm);"></div>
-            <div style="height: 20px; background: var(--surface-1); border: 1px solid var(--border-emphasis); border-radius: var(--radius-sm);"></div>
-            <div style="height: 20px; background: var(--surface-1); border: 2px solid var(--border-focus); border-radius: var(--radius-sm);"></div>
+          <p class="ds-note">
+            <code>--border-subtle</code> → <code>--border-default</code> →
+            <code>--border-emphasis</code> → <code>--border-focus</code>
+          </p>
+          <div style="display: flex; flex-direction: column; gap: var(--space-xs)">
+            <div
+              style="
+                height: 20px;
+                background: var(--surface-1);
+                border: 1px solid var(--border-subtle);
+                border-radius: var(--radius-sm);
+              "
+            ></div>
+            <div
+              style="
+                height: 20px;
+                background: var(--surface-1);
+                border: 1px solid var(--border-default);
+                border-radius: var(--radius-sm);
+              "
+            ></div>
+            <div
+              style="
+                height: 20px;
+                background: var(--surface-1);
+                border: 1px solid var(--border-emphasis);
+                border-radius: var(--radius-sm);
+              "
+            ></div>
+            <div
+              style="
+                height: 20px;
+                background: var(--surface-1);
+                border: 2px solid var(--border-focus);
+                border-radius: var(--radius-sm);
+              "
+            ></div>
           </div>
         </div>
         <div class="ds-subsection">
           <h3>Shadows &amp; overlay</h3>
-          <p class="ds-note"><code>--shadow-sm</code> / <code>--shadow-md</code> / <code>--shadow-lg</code>; modal backdrop <code>--overlay-bg</code>.</p>
-          <div style="display: flex; gap: var(--space-lg); flex-wrap: wrap;">
-            <div style="width: 100px; height: 60px; background: var(--surface-1); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);"></div>
-            <div style="width: 100px; height: 60px; background: var(--surface-1); border-radius: var(--radius-md); box-shadow: var(--shadow-md);"></div>
-            <div style="width: 100px; height: 60px; background: var(--surface-1); border-radius: var(--radius-md); box-shadow: var(--shadow-lg);"></div>
+          <p class="ds-note">
+            <code>--shadow-sm</code> / <code>--shadow-md</code> / <code>--shadow-lg</code>; modal
+            backdrop <code>--overlay-bg</code>.
+          </p>
+          <div style="display: flex; gap: var(--space-lg); flex-wrap: wrap">
+            <div
+              style="
+                width: 100px;
+                height: 60px;
+                background: var(--surface-1);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-sm);
+              "
+            ></div>
+            <div
+              style="
+                width: 100px;
+                height: 60px;
+                background: var(--surface-1);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-md);
+              "
+            ></div>
+            <div
+              style="
+                width: 100px;
+                height: 60px;
+                background: var(--surface-1);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+              "
+            ></div>
           </div>
         </div>
       </section>
 
       <section class="ds-section" id="typography">
         <h2>Typography</h2>
-        <p class="ds-note"><strong>Work Sans</strong> body (<code>--font-body</code>), <strong>Manrope</strong> headings (<code>--font-display</code>). Latin + Cyrillic. Weights 400–700 from Google Fonts (load in the product HTML shell).</p>
+        <p class="ds-note">
+          <strong>Work Sans</strong> body (<code>--font-body</code>),
+          <strong>Manrope</strong> headings (<code>--font-display</code>). Latin + Cyrillic. Weights
+          400–700 from Google Fonts (load in the product HTML shell).
+        </p>
         <div class="ds-subsection">
           <h3>Type scale</h3>
           <div class="type-sample">
             <div class="label">Heading</div>
-            <div style="font-family: var(--font-display); font-size: var(--text-heading-size); font-weight: var(--text-heading-weight); color: var(--ink-primary);">Room 12 — John Smith · Номер 12 — Иван Петров</div>
+            <div
+              style="
+                font-family: var(--font-display);
+                font-size: var(--text-heading-size);
+                font-weight: var(--text-heading-weight);
+                color: var(--ink-primary);
+              "
+            >
+              Room 12 — John Smith · Номер 12 — Иван Петров
+            </div>
           </div>
           <div class="type-sample">
             <div class="label">Body</div>
-            <div style="font-size: var(--text-body-size); font-weight: var(--text-body-weight); color: var(--ink-primary);">Check-in 15 Mar, check-out 18 Mar. Заезд 15 марта, выезд 18 марта.</div>
+            <div
+              style="
+                font-size: var(--text-body-size);
+                font-weight: var(--text-body-weight);
+                color: var(--ink-primary);
+              "
+            >
+              Check-in 15 Mar, check-out 18 Mar. Заезд 15 марта, выезд 18 марта.
+            </div>
           </div>
           <div class="type-sample">
             <div class="label">Secondary</div>
-            <div style="font-size: var(--text-body-size); color: var(--ink-secondary);">Supporting information. Дополнительная информация.</div>
+            <div style="font-size: var(--text-body-size); color: var(--ink-secondary)">
+              Supporting information. Дополнительная информация.
+            </div>
           </div>
           <div class="type-sample">
             <div class="label">Label</div>
-            <div style="font-size: var(--text-label-size); font-weight: var(--text-label-weight); color: var(--ink-secondary);">Guest name · Имя гостя</div>
+            <div
+              style="
+                font-size: var(--text-label-size);
+                font-weight: var(--text-label-weight);
+                color: var(--ink-secondary);
+              "
+            >
+              Guest name · Имя гостя
+            </div>
           </div>
           <div class="type-sample">
             <div class="label">Caption / data</div>
-            <div style="font-size: var(--text-caption-size); color: var(--ink-muted);">Created 12 Mar 2025 · Обновлено 14 мар</div>
+            <div style="font-size: var(--text-caption-size); color: var(--ink-muted)">
+              Created 12 Mar 2025 · Обновлено 14 мар
+            </div>
           </div>
         </div>
       </section>
 
       <section class="ds-section" id="buttons">
         <h2>Buttons</h2>
-        <p class="ds-note">Primary stack maps to brand teal; all action buttons use <code>--text-label-size</code> + <code>--text-label-weight</code> (not Pico’s 1rem). <strong>Secondary</strong> uses <code>.btn-secondary</code> everywhere (Edit / Cancel / dialogs, etc.) — same light field + neutral border as entity detail headers, not Pico’s filled <code>.secondary</code>. Header <strong>New …</strong> outline CTA (<code>.btn-add-outline</code> + <code>.btn-icon</code>): <a href="#page-header-outline">Page header (outline CTA)</a>.</p>
+        <p class="ds-note">
+          Primary stack maps to brand teal; all action buttons use <code>--text-label-size</code> +
+          <code>--text-label-weight</code> (not Pico’s 1rem). <strong>Secondary</strong> uses
+          <code>.btn-secondary</code> everywhere (Edit / Cancel / dialogs, etc.) — same light field
+          + neutral border as entity detail headers, not Pico’s filled <code>.secondary</code>.
+          Header <strong>New …</strong> outline CTA (<code>.btn-add-outline</code> +
+          <code>.btn-icon</code>): <a href="#page-header-outline">Page header (outline CTA)</a>.
+        </p>
         <div class="btn-row">
           <button type="button" class="primary">Primary</button>
           <button type="button" class="btn-secondary">Secondary</button>
@@ -697,7 +893,10 @@
 
       <section class="ds-section" id="status-chips">
         <h2>Status chips</h2>
-        <p class="ds-note">Grid and lists: <code>.status-chip</code> + modifier <code>--confirmed</code> / <code>--checked-in</code> / <code>--checked-out</code> / <code>--canceled</code>.</p>
+        <p class="ds-note">
+          Grid and lists: <code>.status-chip</code> + modifier <code>--confirmed</code> /
+          <code>--checked-in</code> / <code>--checked-out</code> / <code>--canceled</code>.
+        </p>
         <div class="status-chips">
           <span class="status-chip status-chip--confirmed">Confirmed</span>
           <span class="status-chip status-chip--checked-in">Checked in</span>
@@ -708,33 +907,105 @@
 
       <section class="ds-section" id="states">
         <h2>Loading, empty &amp; error</h2>
-        <p class="ds-note">List and page chrome: place these patterns as direct children of the main content column (<code>main.app-main</code>; selectors in <code>main.css</code>).</p>
+        <p class="ds-note">
+          List and page chrome: place these patterns as direct children of the main content column
+          (<code>main.app-main</code>; selectors in <code>main.css</code>).
+        </p>
         <p class="loading-state">Loading… (<code>.loading-state</code>)</p>
         <p class="empty-state">No results (<code>.empty-state</code>)</p>
         <p class="error-message">Request failed (<code>.error-message</code>)</p>
         <p class="section-placeholder">Placeholder copy (<code>.section-placeholder</code>)</p>
         <div class="ds-subsection">
           <h3>Form-level vs field-level</h3>
-          <p class="ds-note"><code>.form-error</code>, <code>.form-info</code>, <code>.form-success</code> are whole-form or page-level banners. <code>.form-field-error</code> sits under a single control. Field stacks and control chrome use the same tokens as <a href="#forms-layout">Form layout</a> (<code>--form-element-padding-*</code>, <code>--control-bg</code>, <code>--control-border</code>, <code>--control-focus-ring</code>).</p>
+          <p class="ds-note">
+            <code>.form-error</code>, <code>.form-info</code>, <code>.form-success</code> are
+            whole-form or page-level banners. <code>.form-field-error</code> sits under a single
+            control. Field stacks and control chrome use the same tokens as
+            <a href="#forms-layout">Form layout</a> (<code>--form-element-padding-*</code>,
+            <code>--control-bg</code>, <code>--control-border</code>,
+            <code>--control-focus-ring</code>).
+          </p>
           <p class="form-error" role="alert">Something went wrong (<code>.form-error</code>).</p>
-          <p class="form-info"><strong>Heads up</strong> — warning-tone guidance (<code>.form-info</code>, <code>--semantic-warning</code>).</p>
-          <p class="form-success"><strong>Saved</strong> — completed successfully (<code>.form-success</code>).</p>
-          <label style="display: block; margin-top: var(--space-md);">
+          <p class="form-info">
+            <strong>Heads up</strong> — warning-tone guidance (<code>.form-info</code>,
+            <code>--semantic-warning</code>).
+          </p>
+          <p class="form-success">
+            <strong>Saved</strong> — completed successfully (<code>.form-success</code>).
+          </p>
+          <label style="display: block; margin-top: var(--space-md)">
             Field
             <input type="text" value="invalid" aria-invalid="true" />
-            <span class="form-field-error">Inline field error (<code>.form-field-error</code>).</span>
+            <span class="form-field-error"
+              >Inline field error (<code>.form-field-error</code>).</span
+            >
           </label>
+        </div>
+      </section>
+
+      <section class="ds-section" id="subnav">
+        <h2>Sub-navigation tabs</h2>
+        <p class="ds-note">
+          Underline-style horizontal tab bar for sectioned settings pages (e.g. pricing admin).
+          Container: <code>.subnav</code> (bottom border rail); items: <code>.subnav__link</code>.
+          Active item: <code>.subnav__link--active</code> (static) or
+          <code>.router-link-exact-active</code> (Vue Router). Place below
+          <code>.page-header</code> as a sibling in the page flow.
+        </p>
+        <div
+          style="
+            background: var(--canvas);
+            padding: var(--space-md);
+            border-radius: var(--content-area-radius);
+            border: 1px solid var(--border-subtle);
+          "
+        >
+          <nav class="subnav" aria-label="Settings tabs preview">
+            <a href="#subnav" class="subnav__link subnav__link--active" onclick="return false"
+              >Rules</a
+            >
+            <a href="#subnav" class="subnav__link" onclick="return false">Dimensions</a>
+            <a href="#subnav" class="subnav__link" onclick="return false">Calendar sets</a>
+          </nav>
         </div>
       </section>
 
       <section class="ds-section" id="page-header-outline">
         <h2>Page header (outline CTA)</h2>
-        <p class="ds-note">List and home headers: title + <strong>New …</strong> using <code>.btn-add-outline</code> and <code>.btn-icon</code> (see also <a href="#page-layout">Page layout &amp; search</a> mock).</p>
-        <div style="background: var(--canvas); padding: var(--space-md); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle);">
-          <header class="page-header" style="padding-left: 0; padding-right: 0;">
-            <h1 style="margin: 0; font-family: var(--font-display); font-size: var(--text-heading-size); font-weight: var(--text-heading-weight);">Dashboard</h1>
-            <a href="#" class="btn-add-outline" onclick="return false;">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <p class="ds-note">
+          List and home headers: title + <strong>New …</strong> using
+          <code>.btn-add-outline</code> and <code>.btn-icon</code> (see also
+          <a href="#page-layout">Page layout &amp; search</a> mock).
+        </p>
+        <div
+          style="
+            background: var(--canvas);
+            padding: var(--space-md);
+            border-radius: var(--content-area-radius);
+            border: 1px solid var(--border-subtle);
+          "
+        >
+          <header class="page-header" style="padding-left: 0; padding-right: 0">
+            <h1
+              style="
+                margin: 0;
+                font-family: var(--font-display);
+                font-size: var(--text-heading-size);
+                font-weight: var(--text-heading-weight);
+              "
+            >
+              Dashboard
+            </h1>
+            <a href="#" class="btn-add-outline" onclick="return false">
+              <svg
+                class="btn-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -746,22 +1017,60 @@
 
       <section class="ds-section" id="toolbars">
         <h2>Toolbars</h2>
-        <p class="ds-note"><strong>Content toolbars</strong> (dashboard range/filters) and <strong>context actions toolbars</strong> (booking lifecycle on a selected record) are strips of controls; routine <strong>Edit</strong> / <strong>Block</strong> / <strong>Save</strong> stay in <code>.page-header</code> or form actions. Popover rows: <a href="#context-menu">Context menu</a>. List search: <a href="#search-bar">Search bar</a>.</p>
+        <p class="ds-note">
+          <strong>Content toolbars</strong> (dashboard range/filters) and
+          <strong>context actions toolbars</strong> (booking lifecycle on a selected record) are
+          strips of controls; routine <strong>Edit</strong> / <strong>Block</strong> /
+          <strong>Save</strong> stay in <code>.page-header</code> or form actions. Popover rows:
+          <a href="#context-menu">Context menu</a>. List search:
+          <a href="#search-bar">Search bar</a>.
+        </p>
 
         <div class="ds-subsection">
           <h3>Content toolbar (preview)</h3>
-          <p class="ds-note">Content toolbar styles are not in <code>main.css</code> (colocated with the reservation grid layout). Shell: <code>.dashboard-view__toolbar</code> → <code>.content-toolbar</code>. Controls: <code>.toolbar-picker</code> (<code>&lt;select&gt;</code>), <code>.toolbar-btn.toolbar-btn--icon</code> (nav), <code>.toolbar-input</code> (<code>type="date"</code>), plain <code>.toolbar-btn</code> (e.g. jump-to-current range). This page mirrors those rules under <code>.ds-content-toolbar-preview</code> for the swatch below.</p>
+          <p class="ds-note">
+            Content toolbar styles are not in <code>main.css</code> (colocated with the reservation
+            grid layout). Shell: <code>.dashboard-view__toolbar</code> →
+            <code>.content-toolbar</code>. Controls:
+            <code>.toolbar-picker</code> (<code>&lt;select&gt;</code>),
+            <code>.toolbar-btn.toolbar-btn--icon</code> (nav),
+            <code>.toolbar-input</code> (<code>type="date"</code>), plain
+            <code>.toolbar-btn</code> (e.g. jump-to-current range). This page mirrors those rules
+            under <code>.ds-content-toolbar-preview</code> for the swatch below.
+          </p>
           <div class="ds-content-toolbar-preview">
             <section class="dashboard-view__toolbar">
               <div class="content-toolbar" role="toolbar" aria-label="Content toolbar preview">
                 <div class="toolbar-cluster toolbar-cluster--start">
-                  <span class="toolbar-field" style="display: inline-flex; align-items: center; gap: var(--space-xs); margin: 0;">
+                  <span
+                    class="toolbar-field"
+                    style="
+                      display: inline-flex;
+                      align-items: center;
+                      gap: var(--space-xs);
+                      margin: 0;
+                    "
+                  >
                     <span class="toolbar-field-label">Period</span>
-                    <span style="font-size: var(--text-label-size); font-weight: var(--text-label-weight); color: var(--ink-primary);">7 days</span>
+                    <span
+                      style="
+                        font-size: var(--text-label-size);
+                        font-weight: var(--text-label-weight);
+                        color: var(--ink-primary);
+                      "
+                      >7 days</span
+                    >
                   </span>
                 </div>
                 <div class="toolbar-cluster toolbar-cluster--center">
-                  <span style="font-size: var(--text-caption-size); color: var(--ink-secondary); user-select: none;">10 Mar – 16 Mar 2025</span>
+                  <span
+                    style="
+                      font-size: var(--text-caption-size);
+                      color: var(--ink-secondary);
+                      user-select: none;
+                    "
+                    >10 Mar – 16 Mar 2025</span
+                  >
                 </div>
                 <div class="toolbar-cluster toolbar-cluster--end">
                   <button type="button" class="toolbar-btn">Today</button>
@@ -773,24 +1082,57 @@
 
         <div class="ds-subsection">
           <h3>Context actions toolbar (booking)</h3>
-          <p class="ds-note">Booking lifecycle strip: <code>.action-toolbar</code> + <code>.action-toolbar__btn--check-in|check-out|cancel</code>. Full-page contexts (e.g. booking detail, short forms): add <code>.action-toolbar--inset</code> for horizontal inset in <code>main</code>; shell radius <code>--radius-md</code> (aligned with the buttons). Popover menus: <a href="#context-menu">Context menu</a>.</p>
+          <p class="ds-note">
+            Booking lifecycle strip: <code>.action-toolbar</code> +
+            <code>.action-toolbar__btn--check-in|check-out|cancel</code>. Full-page contexts (e.g.
+            booking detail, short forms): add <code>.action-toolbar--inset</code> for horizontal
+            inset in <code>main</code>; shell radius <code>--radius-md</code> (aligned with the
+            buttons). Popover menus: <a href="#context-menu">Context menu</a>.
+          </p>
           <div class="ds-toolbar-variant">
             <h4>Panel strip (full-bleed under title)</h4>
-            <div style="background: var(--surface-1); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle); overflow: hidden; max-width: 560px;">
+            <div
+              style="
+                background: var(--surface-1);
+                border-radius: var(--radius-lg);
+                border: 1px solid var(--border-subtle);
+                overflow: hidden;
+                max-width: 560px;
+              "
+            >
               <div class="action-toolbar">
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">Check in</button>
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-out">Check out</button>
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--cancel">Cancel booking</button>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">
+                  Check in
+                </button>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-out">
+                  Check out
+                </button>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--cancel">
+                  Cancel booking
+                </button>
               </div>
             </div>
           </div>
           <div class="ds-toolbar-variant">
             <h4>Full-page detail (inset; shell <code>--radius-md</code>)</h4>
-            <div style="background: var(--canvas); padding: var(--space-md); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle);">
+            <div
+              style="
+                background: var(--canvas);
+                padding: var(--space-md);
+                border-radius: var(--content-area-radius);
+                border: 1px solid var(--border-subtle);
+              "
+            >
               <div class="action-toolbar action-toolbar--inset ds-action-toolbar-inset-demo">
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">Check in</button>
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-out">Check out</button>
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--cancel">Cancel booking</button>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">
+                  Check in
+                </button>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-out">
+                  Check out
+                </button>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--cancel">
+                  Cancel booking
+                </button>
               </div>
             </div>
           </div>
@@ -799,8 +1141,27 @@
 
       <section class="ds-section" id="context-menu">
         <h2>Context menu</h2>
-        <p class="ds-note">Grid cells and other popovers: <code>.menu-row</code> base; add <code>--plain</code> for neutral rows without the left accent bar. Lifecycle modifiers add status color + bar (inset shadow; wrap menu with <code>overflow: hidden</code> + radius). Rows use square corners inside the shell. Toolbar strip variant: <a href="#toolbars">Toolbars</a> → Context actions toolbar.</p>
-        <div style="display: inline-flex; flex-direction: column; align-items: stretch; min-width: 220px; padding: var(--space-xs); overflow: hidden; background: var(--surface-1); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); box-shadow: var(--shadow-md);">
+        <p class="ds-note">
+          Grid cells and other popovers: <code>.menu-row</code> base; add <code>--plain</code> for
+          neutral rows without the left accent bar. Lifecycle modifiers add status color + bar
+          (inset shadow; wrap menu with <code>overflow: hidden</code> + radius). Rows use square
+          corners inside the shell. Toolbar strip variant: <a href="#toolbars">Toolbars</a> →
+          Context actions toolbar.
+        </p>
+        <div
+          style="
+            display: inline-flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 220px;
+            padding: var(--space-xs);
+            overflow: hidden;
+            background: var(--surface-1);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+          "
+        >
           <button type="button" class="menu-row menu-row--plain">Open full page</button>
           <button type="button" class="menu-row menu-row--plain">Copy link</button>
           <button type="button" class="menu-row menu-row--check-in">Check in</button>
@@ -811,49 +1172,161 @@
 
       <section class="ds-section" id="search-bar">
         <h2>Search bar</h2>
-        <p class="ds-note">Semantic <code>&lt;search&gt;</code> with icon, text field, and clear control; <code>.has-value</code> toggles the clear affordance. On list screens, place as a direct child of <code>main.app-main</code> under the page header. Shell placement: <a href="#page-layout">Page layout &amp; search</a>.</p>
+        <p class="ds-note">
+          Semantic <code>&lt;search&gt;</code> with icon, text field, and clear control;
+          <code>.has-value</code> toggles the clear affordance. On list screens, place as a direct
+          child of <code>main.app-main</code> under the page header. Shell placement:
+          <a href="#page-layout">Page layout &amp; search</a>.
+        </p>
         <search id="search-bar-demo">
           <span class="search-bar-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
           </span>
           <input type="text" placeholder="Search…" id="search-bar-input" autocomplete="off" />
-          <button type="button" class="search-bar-clear" id="search-bar-clear" aria-label="Clear search"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+          <button
+            type="button"
+            class="search-bar-clear"
+            id="search-bar-clear"
+            aria-label="Clear search"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
         </search>
       </section>
 
       <section class="ds-section" id="page-layout">
         <h2>Page layout &amp; search</h2>
-        <p class="ds-note">Main content column (<code>main.app-main</code>): optional breadcrumbs, <code>header.page-header</code> (title + actions), then body. List template: <code>search</code> or <code>.search-bar-wrap</code> under the header, then <code>section.list-content</code>. Interactive search pattern: <a href="#search-bar">Search bar</a>. Outline header CTA: <a href="#page-header-outline">Page header (outline CTA)</a>. Detail / schema-driven screens often skip the list wrapper; use inner sections for the form. Selectors: <code>main .page-header</code>, <code>main.app-main &gt; section.list-content</code> in <code>main.css</code>.</p>
-        <div class="ds-subsection" style="background: var(--canvas); padding: var(--space-md); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle);">
-          <header class="page-header" style="margin-bottom: var(--space-md); padding-left: 0; padding-right: 0;">
-            <h1 style="margin: 0; font-family: var(--font-display); font-size: var(--text-heading-size); font-weight: var(--text-heading-weight);">Page title</h1>
-            <button type="button" class="btn-secondary" style="margin: 0;">New item</button>
+        <p class="ds-note">
+          Main content column (<code>main.app-main</code>): optional breadcrumbs,
+          <code>header.page-header</code> (title + actions), then body. List template:
+          <code>search</code> or <code>.search-bar-wrap</code> under the header, then
+          <code>section.list-content</code>. Interactive search pattern:
+          <a href="#search-bar">Search bar</a>. Outline header CTA:
+          <a href="#page-header-outline">Page header (outline CTA)</a>. Detail / schema-driven
+          screens often skip the list wrapper; use inner sections for the form. Selectors:
+          <code>main .page-header</code>, <code>main.app-main &gt; section.list-content</code> in
+          <code>main.css</code>.
+        </p>
+        <div
+          class="ds-subsection"
+          style="
+            background: var(--canvas);
+            padding: var(--space-md);
+            border-radius: var(--content-area-radius);
+            border: 1px solid var(--border-subtle);
+          "
+        >
+          <header
+            class="page-header"
+            style="margin-bottom: var(--space-md); padding-left: 0; padding-right: 0"
+          >
+            <h1
+              style="
+                margin: 0;
+                font-family: var(--font-display);
+                font-size: var(--text-heading-size);
+                font-weight: var(--text-heading-weight);
+              "
+            >
+              Page title
+            </h1>
+            <button type="button" class="btn-secondary" style="margin: 0">New item</button>
           </header>
-          <search style="margin-bottom: var(--space-md);">
-            <span class="search-bar-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-            <input type="text" placeholder="Search…" readonly style="cursor: default;" />
+          <search style="margin-bottom: var(--space-md)">
+            <span class="search-bar-icon" aria-hidden="true"
+              ><svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" /></svg
+            ></span>
+            <input type="text" placeholder="Search…" readonly style="cursor: default" />
           </search>
-          <section style="background: var(--surface-1); border-radius: var(--content-area-radius); padding: var(--content-area-padding); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
-            <p style="margin: 0; font-size: var(--text-body-size); color: var(--ink-secondary);">Table or empty state scrolls inside <code>.list-content__viewport</code>.</p>
+          <section
+            style="
+              background: var(--surface-1);
+              border-radius: var(--content-area-radius);
+              padding: var(--content-area-padding);
+              border: 1px solid var(--border-subtle);
+              box-shadow: var(--shadow-sm);
+            "
+          >
+            <p style="margin: 0; font-size: var(--text-body-size); color: var(--ink-secondary)">
+              Table or empty state scrolls inside <code>.list-content__viewport</code>.
+            </p>
           </section>
         </div>
       </section>
 
       <section class="ds-section" id="empty-state">
         <h2>Empty state</h2>
-        <p class="ds-note">Full-parent centered placeholder for lists, grids, and sections with no data. Container: <code>.empty-state-widget</code> (fills parent width &amp; height, flex-centers content). Slots: <code>__icon</code> (contextual SVG in a tinted circle), <code>__title</code>, optional <code>__description</code>, optional <code>__actions</code> (vertical button stack). Place inside any scroll root or content area (<code>.list-content__viewport</code>, <code>.dashboard-view__viewport</code>, etc.).</p>
+        <p class="ds-note">
+          Full-parent centered placeholder for lists, grids, and sections with no data. Container:
+          <code>.empty-state-widget</code> (fills parent width &amp; height, flex-centers content).
+          Slots: <code>__icon</code> (contextual SVG in a tinted circle), <code>__title</code>,
+          optional <code>__description</code>, optional <code>__actions</code> (vertical button
+          stack). Place inside any scroll root or content area
+          (<code>.list-content__viewport</code>, <code>.dashboard-view__viewport</code>, etc.).
+        </p>
         <div class="ds-subsection">
           <h3>Full variant (icon + title + description + action)</h3>
-          <div style="height: 320px; background: var(--canvas); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle); overflow: hidden;">
+          <div
+            style="
+              height: 320px;
+              background: var(--canvas);
+              border-radius: var(--content-area-radius);
+              border: 1px solid var(--border-subtle);
+              overflow: hidden;
+            "
+          >
             <div class="empty-state-widget">
               <div class="empty-state-widget__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-                  <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                  <path
+                    d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+                  />
                 </svg>
               </div>
               <h3 class="empty-state-widget__title">No bookings yet</h3>
-              <p class="empty-state-widget__description">Create your first booking to see it on the reservation grid.</p>
+              <p class="empty-state-widget__description">
+                Create your first booking to see it on the reservation grid.
+              </p>
               <div class="empty-state-widget__actions">
                 <button type="button" class="primary">New booking</button>
               </div>
@@ -862,10 +1335,25 @@
         </div>
         <div class="ds-subsection">
           <h3>Minimal variant (icon + title only)</h3>
-          <div style="height: 200px; background: var(--canvas); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle); overflow: hidden;">
+          <div
+            style="
+              height: 200px;
+              background: var(--canvas);
+              border-radius: var(--content-area-radius);
+              border: 1px solid var(--border-subtle);
+              overflow: hidden;
+            "
+          >
             <div class="empty-state-widget">
               <div class="empty-state-widget__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                   <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -878,16 +1366,33 @@
         </div>
         <div class="ds-subsection">
           <h3>With description and multiple actions</h3>
-          <div style="height: 340px; background: var(--canvas); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle); overflow: hidden;">
+          <div
+            style="
+              height: 340px;
+              background: var(--canvas);
+              border-radius: var(--content-area-radius);
+              border: 1px solid var(--border-subtle);
+              overflow: hidden;
+            "
+          >
             <div class="empty-state-widget">
               <div class="empty-state-widget__icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
               </div>
               <h3 class="empty-state-widget__title">Set up your property</h3>
-              <p class="empty-state-widget__description">Add room types and rooms to start managing reservations.</p>
+              <p class="empty-state-widget__description">
+                Add room types and rooms to start managing reservations.
+              </p>
               <div class="empty-state-widget__actions">
                 <button type="button" class="primary">Add room type</button>
                 <button type="button" class="btn-secondary">Learn more</button>
@@ -899,9 +1404,31 @@
 
       <section class="ds-section" id="lists">
         <h2>Lists &amp; tables</h2>
-        <p class="ds-note"><code>section.list-content</code> + scrollable <code>.list-content__viewport</code>. Table <code>.list-table</code>; row classes <code>.list-row</code>, <code>.list-row--selected</code>. Row actions (embedded tables, not whole-row click lists): trailing column <code>th.list-table__col--actions</code> (often blank) / <code>td.list-table__cell--actions</code> — <code>text-align: right</code> pins the cluster to the row’s right; wrap multiple controls in <code>.list-table__actions</code> (<code>inline-flex</code> row). Text: <code>.list-table__action</code> on links (<code>&lt;a&gt;</code>) or <code>&lt;button&gt;</code>. Icon buttons: <code>.list-table__icon-btn</code> + <code>--brand</code> / <code>--danger</code> / <code>--success</code> (include <code>aria-label</code>). When rows are clickable, stop propagation from the actions cell so controls do not trigger row selection.</p>
-        <section class="list-content" style="position: relative; overflow: visible; padding: 0; border: none; background: transparent;">
-          <div class="list-content__viewport" style="overflow: visible;">
+        <p class="ds-note">
+          <code>section.list-content</code> + scrollable <code>.list-content__viewport</code>. Table
+          <code>.list-table</code>; row classes <code>.list-row</code>,
+          <code>.list-row--selected</code>. Row actions (embedded tables, not whole-row click
+          lists): trailing column <code>th.list-table__col--actions</code> (often blank) /
+          <code>td.list-table__cell--actions</code> — <code>text-align: right</code> pins the
+          cluster to the row’s right; wrap multiple controls in
+          <code>.list-table__actions</code> (<code>inline-flex</code> row). Text:
+          <code>.list-table__action</code> on links (<code>&lt;a&gt;</code>) or
+          <code>&lt;button&gt;</code>. Icon buttons: <code>.list-table__icon-btn</code> +
+          <code>--brand</code> / <code>--danger</code> / <code>--success</code> (include
+          <code>aria-label</code>). When rows are clickable, stop propagation from the actions cell
+          so controls do not trigger row selection.
+        </p>
+        <section
+          class="list-content"
+          style="
+            position: relative;
+            overflow: visible;
+            padding: 0;
+            border: none;
+            background: transparent;
+          "
+        >
+          <div class="list-content__viewport" style="overflow: visible">
             <table class="list-table" role="grid">
               <thead>
                 <tr>
@@ -924,9 +1451,21 @@
         </section>
         <div class="ds-subsection">
           <h3>Table row actions — text</h3>
-          <p class="ds-note">Related records on entity detail (e.g. past bookings): primary text links, right-aligned.</p>
-          <section class="list-content" style="position: relative; overflow: visible; padding: 0; border: none; background: transparent;">
-            <div class="list-content__viewport" style="overflow: visible;">
+          <p class="ds-note">
+            Related records on entity detail (e.g. past bookings): primary text links,
+            right-aligned.
+          </p>
+          <section
+            class="list-content"
+            style="
+              position: relative;
+              overflow: visible;
+              padding: 0;
+              border: none;
+              background: transparent;
+            "
+          >
+            <div class="list-content__viewport" style="overflow: visible">
               <table class="list-table">
                 <thead>
                   <tr>
@@ -941,7 +1480,7 @@
                     <td><span class="status-chip status-chip--confirmed">Confirmed</span></td>
                     <td class="list-table__cell--actions">
                       <div class="list-table__actions">
-                        <a href="#" class="list-table__action" onclick="return false;">View</a>
+                        <a href="#" class="list-table__action" onclick="return false">View</a>
                         <button type="button" class="list-table__action">Edit</button>
                       </div>
                     </td>
@@ -953,9 +1492,20 @@
         </div>
         <div class="ds-subsection">
           <h3>Table row actions — icons</h3>
-          <p class="ds-note">Compact row tools: 2rem hit area, token-tinted hover. Pair with accessible names.</p>
-          <section class="list-content" style="position: relative; overflow: visible; padding: 0; border: none; background: transparent;">
-            <div class="list-content__viewport" style="overflow: visible;">
+          <p class="ds-note">
+            Compact row tools: 2rem hit area, token-tinted hover. Pair with accessible names.
+          </p>
+          <section
+            class="list-content"
+            style="
+              position: relative;
+              overflow: visible;
+              padding: 0;
+              border: none;
+              background: transparent;
+            "
+          >
+            <div class="list-content__viewport" style="overflow: visible">
               <table class="list-table">
                 <thead>
                   <tr>
@@ -968,20 +1518,58 @@
                     <td>Reservation note</td>
                     <td class="list-table__cell--actions">
                       <div class="list-table__actions">
-                        <button type="button" class="list-table__icon-btn list-table__icon-btn--brand" aria-label="Edit">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <button
+                          type="button"
+                          class="list-table__icon-btn list-table__icon-btn--brand"
+                          aria-label="Edit"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                         </button>
-                        <button type="button" class="list-table__icon-btn list-table__icon-btn--danger" aria-label="Delete">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <button
+                          type="button"
+                          class="list-table__icon-btn list-table__icon-btn--danger"
+                          aria-label="Delete"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
                             <path d="M3 6h18" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path
+                              d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                            />
                           </svg>
                         </button>
-                        <button type="button" class="list-table__icon-btn list-table__icon-btn--success" aria-label="Confirm">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <button
+                          type="button"
+                          class="list-table__icon-btn list-table__icon-btn--success"
+                          aria-label="Confirm"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            aria-hidden="true"
+                          >
                             <path d="M20 6 9 17l-5-5" />
                           </svg>
                         </button>
@@ -997,7 +1585,15 @@
 
       <section class="ds-section" id="forms-layout">
         <h2>Form layout</h2>
-        <p class="ds-note">Full-width create, edit, and schema-driven detail: vertical stack; labels at readable size (<code>--text-label-size</code>); section header + description + field grid. Inputs: <code>--form-element-padding-vertical</code>, <code>--form-element-padding-horizontal</code>; controls <code>--control-bg</code>, <code>--control-border</code>, <code>--control-focus-ring</code>. Page-level and inline messages: <a href="#states">Loading, states &amp; form messages</a> → Form-level vs field-level.</p>
+        <p class="ds-note">
+          Full-width create, edit, and schema-driven detail: vertical stack; labels at readable size
+          (<code>--text-label-size</code>); section header + description + field grid. Inputs:
+          <code>--form-element-padding-vertical</code>,
+          <code>--form-element-padding-horizontal</code>; controls <code>--control-bg</code>,
+          <code>--control-border</code>, <code>--control-focus-ring</code>. Page-level and inline
+          messages: <a href="#states">Loading, states &amp; form messages</a> → Form-level vs
+          field-level.
+        </p>
         <div class="form-section-preview">
           <h3 class="form-section-header">New guest</h3>
           <p class="form-section-desc">Required fields are marked with an asterisk.</p>
@@ -1011,34 +1607,59 @@
 
       <section class="ds-section" id="panels">
         <h2>Side panels</h2>
-        <p class="ds-note">Slide-in shell: <code>.side-panel</code> + <code>.side-panel-header</code> / <code>.side-panel-body</code> / <code>.side-panel-footer</code>. Title row only in the header — <strong>Edit</strong> / object actions stay on the full page. Below the title, optional <code>.action-toolbar</code>; then body and <code>.btn-open-full-page</code>. Toolbar classes: see <a href="#toolbars">Toolbars</a>. Live shell: <code>position: fixed</code>; this gallery uses in-flow panels.</p>
+        <p class="ds-note">
+          Slide-in shell: <code>.side-panel</code> + <code>.side-panel-header</code> /
+          <code>.side-panel-body</code> / <code>.side-panel-footer</code>. Title row only in the
+          header — <strong>Edit</strong> / object actions stay on the full page. Below the title,
+          optional <code>.action-toolbar</code>; then body and <code>.btn-open-full-page</code>.
+          Toolbar classes: see <a href="#toolbars">Toolbars</a>. Live shell:
+          <code>position: fixed</code>; this gallery uses in-flow panels.
+        </p>
         <aside class="side-panel" aria-label="Example panel">
           <div class="side-panel-header">
             <h2>Booking · Room 12</h2>
             <button type="button" class="side-panel-close" aria-label="Close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M18 6 6 18" />
                 <path d="m6 6 12 12" />
               </svg>
             </button>
           </div>
           <div class="action-toolbar">
-            <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">Check in</button>
-            <button type="button" class="action-toolbar__btn action-toolbar__btn--check-out">Check out</button>
-            <button type="button" class="action-toolbar__btn action-toolbar__btn--cancel">Cancel booking</button>
+            <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">
+              Check in
+            </button>
+            <button type="button" class="action-toolbar__btn action-toolbar__btn--check-out">
+              Check out
+            </button>
+            <button type="button" class="action-toolbar__btn action-toolbar__btn--cancel">
+              Cancel booking
+            </button>
           </div>
           <div class="side-panel-body">
-            <p style="margin: 0; font-size: var(--text-body-size); color: var(--ink-secondary);">Summary body: compact read-only field density.</p>
+            <p style="margin: 0; font-size: var(--text-body-size); color: var(--ink-secondary)">
+              Summary body: compact read-only field density.
+            </p>
           </div>
           <div class="side-panel-footer">
-            <a href="#" class="btn-open-full-page" onclick="return false;">Open full page</a>
+            <a href="#" class="btn-open-full-page" onclick="return false">Open full page</a>
           </div>
         </aside>
       </section>
 
       <section class="ds-section" id="cards">
         <h2>Cards / panels</h2>
-        <p class="ds-note"><code>--surface-1</code>, <code>--shadow-md</code>, <code>--radius-lg</code>. Elevated blocks may use <code>.panel</code> or pattern <code>.card-demo</code>.</p>
+        <p class="ds-note">
+          <code>--surface-1</code>, <code>--shadow-md</code>, <code>--radius-lg</code>. Elevated
+          blocks may use <code>.panel</code> or pattern <code>.card-demo</code>.
+        </p>
         <div class="card-demo">
           <h4>Booking summary</h4>
           <p>Room 12 · 15 Mar — 18 Mar. Confirmed.</p>
@@ -1047,40 +1668,60 @@
 
       <section class="ds-section" id="dialogs">
         <h2>Dialogs</h2>
-        <p class="ds-note">Confirmations render at the document root (e.g. portal to <code>body</code>) with <code>.dialog-backdrop</code> + <code>.dialog</code> + <code>.dialog-actions</code> (global selectors in <code>main.css</code>). The preview below uses a staged absolute backdrop.</p>
+        <p class="ds-note">
+          Confirmations render at the document root (e.g. portal to <code>body</code>) with
+          <code>.dialog-backdrop</code> + <code>.dialog</code> +
+          <code>.dialog-actions</code> (global selectors in <code>main.css</code>). The preview
+          below uses a staged absolute backdrop.
+        </p>
         <div class="ds-dialog-stage">
           <div class="dialog-backdrop" role="presentation">
             <div class="dialog" role="dialog" aria-labelledby="ds-dialog-title" aria-modal="true">
-              <h2 id="ds-dialog-title" style="margin-top: 0; font-size: var(--text-subheading-size);">Confirm check-in</h2>
-              <p style="margin-bottom: 0; color: var(--ink-secondary); font-size: var(--text-body-size);">Guest will be marked as checked in.</p>
+              <h2
+                id="ds-dialog-title"
+                style="margin-top: 0; font-size: var(--text-subheading-size)"
+              >
+                Confirm check-in
+              </h2>
+              <p
+                style="
+                  margin-bottom: 0;
+                  color: var(--ink-secondary);
+                  font-size: var(--text-body-size);
+                "
+              >
+                Guest will be marked as checked in.
+              </p>
               <div class="dialog-actions">
                 <button type="button" class="btn-secondary">Cancel</button>
-                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">Check in</button>
-          </div>
-        </div>
+                <button type="button" class="action-toolbar__btn action-toolbar__btn--check-in">
+                  Check in
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </main>
     <script>
-      (function () {
-        var wrap = document.getElementById('search-bar-demo');
-        var input = document.getElementById('search-bar-input');
-        var clearBtn = document.getElementById('search-bar-clear');
-        if (!wrap || !input || !clearBtn) return;
+      ;(function () {
+        var wrap = document.getElementById('search-bar-demo')
+        var input = document.getElementById('search-bar-input')
+        var clearBtn = document.getElementById('search-bar-clear')
+        if (!wrap || !input || !clearBtn) return
         function updateClearVisibility() {
-          wrap.classList.toggle('has-value', input.value.trim().length > 0);
+          wrap.classList.toggle('has-value', input.value.trim().length > 0)
         }
-        input.addEventListener('input', updateClearVisibility);
+        input.addEventListener('input', updateClearVisibility)
         input.addEventListener('paste', function () {
-          setTimeout(updateClearVisibility, 0);
-        });
+          setTimeout(updateClearVisibility, 0)
+        })
         clearBtn.addEventListener('click', function () {
-          input.value = '';
-          input.focus();
-          updateClearVisibility();
-        });
-      })();
+          input.value = ''
+          input.focus()
+          updateClearVisibility()
+        })
+      })()
     </script>
   </body>
 </html>

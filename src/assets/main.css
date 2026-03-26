@@ -181,6 +181,7 @@ main .page-header {
   padding-right: var(--space-md);
   box-sizing: border-box;
   flex-shrink: 0;
+  min-height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -227,8 +228,8 @@ main.ds-page .btn-secondary:hover:not(:disabled),
   background: var(--control-bg);
 }
 
-/* Page header: primary outline CTA (New guest / booking / room type, dashboard, etc.) */
-main .page-header .btn-add-outline {
+/* Outline CTA (New guest / booking / room type, add rule, etc.) */
+main .btn-add-outline {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
@@ -246,12 +247,12 @@ main .page-header .btn-add-outline {
   text-decoration: none;
 }
 
-main .page-header .btn-add-outline:hover {
+main .btn-add-outline:hover {
   background: var(--semantic-info-bg);
   color: var(--brand-primary-hover);
 }
 
-main .page-header .btn-add-outline .btn-icon {
+main .btn-add-outline .btn-icon {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
@@ -940,6 +941,48 @@ main .form-entity-section__profile-cta:hover {
   background: var(--semantic-error-bg);
   color: var(--status-canceled);
   border: 1px solid rgba(229, 115, 115, 0.4);
+}
+
+/* Sub-navigation tabs: underline-style horizontal nav for sectioned settings pages. */
+.subnav {
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--space-xs);
+  padding-left: var(--content-area-padding);
+  padding-right: var(--content-area-padding);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.subnav__link {
+  position: relative;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.subnav__link:hover {
+  color: var(--ink-primary);
+  border-bottom-color: var(--border-emphasis);
+}
+
+.subnav__link--active,
+.subnav__link.router-link-exact-active {
+  color: var(--brand-primary);
+  border-bottom-color: var(--brand-primary);
+}
+
+.subnav__link--active:hover,
+.subnav__link.router-link-exact-active:hover {
+  color: var(--brand-primary-hover);
+  border-bottom-color: var(--brand-primary-hover);
 }
 
 /* Context action toolbar: horizontal strip under panel titles or page header (status-style actions). */
@@ -2284,6 +2327,10 @@ main .optional {
   display: flex;
   gap: var(--space-sm);
   justify-content: flex-end;
+}
+
+.dialog .dialog-actions :is(button, [type='submit'], [type='button']) {
+  width: auto;
 }
 
 /* ----- Auth layout (login / invite; standalone <main class="auth-page">) ----- */

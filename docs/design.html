@@ -448,6 +448,24 @@
         align-items: center;
         justify-content: center;
       }
+      .card-demo {
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-subtle);
+        width: 100%;
+      }
+      .card-demo h4 {
+        font-family: var(--font-display);
+        color: var(--ink-primary);
+        margin: 0 0 var(--space-xs);
+      }
+      .card-demo p {
+        margin: 0;
+        font-size: var(--text-body-size);
+        color: var(--ink-secondary);
+      }
     </style>
   </head>
   <body>
@@ -473,6 +491,7 @@
           <a href="#search-bar">Search bar</a>
           <a href="#page-layout">Page layout &amp; search</a>
           <span class="ds-toc-group">Structures</span>
+          <a href="#empty-state">Empty state</a>
           <a href="#lists">Lists &amp; tables</a>
           <a href="#forms-layout">Form layout</a>
           <a href="#panels">Side panels</a>
@@ -817,6 +836,64 @@
           <section style="background: var(--surface-1); border-radius: var(--content-area-radius); padding: var(--content-area-padding); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
             <p style="margin: 0; font-size: var(--text-body-size); color: var(--ink-secondary);">Table or empty state scrolls inside <code>.list-content__viewport</code>.</p>
           </section>
+        </div>
+      </section>
+
+      <section class="ds-section" id="empty-state">
+        <h2>Empty state</h2>
+        <p class="ds-note">Full-parent centered placeholder for lists, grids, and sections with no data. Container: <code>.empty-state-widget</code> (fills parent width &amp; height, flex-centers content). Slots: <code>__icon</code> (contextual SVG in a tinted circle), <code>__title</code>, optional <code>__description</code>, optional <code>__actions</code> (vertical button stack). Place inside any scroll root or content area (<code>.list-content__viewport</code>, <code>.dashboard-view__viewport</code>, etc.).</p>
+        <div class="ds-subsection">
+          <h3>Full variant (icon + title + description + action)</h3>
+          <div style="height: 320px; background: var(--canvas); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle); overflow: hidden;">
+            <div class="empty-state-widget">
+              <div class="empty-state-widget__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                  <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                </svg>
+              </div>
+              <h3 class="empty-state-widget__title">No bookings yet</h3>
+              <p class="empty-state-widget__description">Create your first booking to see it on the reservation grid.</p>
+              <div class="empty-state-widget__actions">
+                <button type="button" class="primary">New booking</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ds-subsection">
+          <h3>Minimal variant (icon + title only)</h3>
+          <div style="height: 200px; background: var(--canvas); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle); overflow: hidden;">
+            <div class="empty-state-widget">
+              <div class="empty-state-widget__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <h3 class="empty-state-widget__title">No guests found</h3>
+            </div>
+          </div>
+        </div>
+        <div class="ds-subsection">
+          <h3>With description and multiple actions</h3>
+          <div style="height: 340px; background: var(--canvas); border-radius: var(--content-area-radius); border: 1px solid var(--border-subtle); overflow: hidden;">
+            <div class="empty-state-widget">
+              <div class="empty-state-widget__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <h3 class="empty-state-widget__title">Set up your property</h3>
+              <p class="empty-state-widget__description">Add room types and rooms to start managing reservations.</p>
+              <div class="empty-state-widget__actions">
+                <button type="button" class="primary">Add room type</button>
+                <button type="button" class="btn-secondary">Learn more</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

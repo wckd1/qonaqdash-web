@@ -81,9 +81,19 @@
     <section class="dashboard-view__body" aria-labelledby="dashboard-title">
       <div class="dashboard-view__viewport">
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
-        <p v-else-if="!loading && sortedRooms.length === 0" class="dashboard-view__empty">
-          {{ t('dashboard.emptyRooms') }}
-        </p>
+        <div v-else-if="!loading && sortedRooms.length === 0" class="empty-state-widget">
+          <div class="empty-state-widget__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <h3 class="empty-state-widget__title">{{ t('dashboard.emptyTitle') }}</h3>
+          <p class="empty-state-widget__description">{{ t('dashboard.emptyDescription') }}</p>
+          <div class="empty-state-widget__actions">
+            <router-link :to="{ name: 'rooms' }" class="primary" role="button">{{ t('dashboard.emptyAction') }}</router-link>
+          </div>
+        </div>
         <p v-else-if="loading" class="loading-state">{{ t('dashboard.loadingGrid') }}</p>
         <ReservationGrid
           v-else
@@ -431,12 +441,6 @@ watch(
   flex-direction: column;
   gap: var(--content-area-gap);
   overflow-y: auto;
-}
-
-.dashboard-view__empty {
-  color: var(--ink-secondary);
-  font-size: var(--text-body-size);
-  margin: 0;
 }
 
 .content-toolbar {

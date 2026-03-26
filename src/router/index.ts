@@ -30,7 +30,7 @@ const routes = [
       },
       {
         path: 'manage/rooms',
-        name: 'property',
+        name: 'rooms',
         component: () => import('@/features/property/views/RoomsView.vue'),
       },
       {

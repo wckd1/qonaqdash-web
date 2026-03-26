@@ -23,7 +23,20 @@
       <p v-if="loadError" class="error-message">{{ loadError }}</p>
       <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
       <template v-else>
-        <p v-if="!roomTypes.length && !searchQuery" class="empty-state">{{ t('rooms.empty') }}</p>
+        <div v-if="!roomTypes.length && !searchQuery" class="empty-state-widget">
+          <div class="empty-state-widget__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
+              <path d="M2 20h20" />
+              <path d="M14 12v.01" />
+            </svg>
+          </div>
+          <h3 class="empty-state-widget__title">{{ t('rooms.emptyTitle') }}</h3>
+          <p class="empty-state-widget__description">{{ t('rooms.emptyDescription') }}</p>
+          <div class="empty-state-widget__actions">
+            <button type="button" class="primary" @click="openAddTypeDialog">{{ t('rooms.addType') }}</button>
+          </div>
+        </div>
         <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">{{ t('rooms.emptySearch') }}</p>
         <div v-else class="accordion-list">
           <details

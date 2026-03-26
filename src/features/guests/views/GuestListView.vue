@@ -22,7 +22,22 @@
       <p v-if="loadError" class="error-message">{{ loadError }}</p>
       <div v-else-if="initialLoading" class="loading-state">{{ t('common.loading') }}</div>
       <template v-else>
-        <p v-if="!guests.length && !searchQuery" class="empty-state">{{ t('guests.empty') }}</p>
+        <div v-if="!guests.length && !searchQuery" class="empty-state-widget">
+          <div class="empty-state-widget__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <h3 class="empty-state-widget__title">{{ t('guests.emptyTitle') }}</h3>
+          <p class="empty-state-widget__description">{{ t('guests.emptyDescription') }}</p>
+          <div class="empty-state-widget__actions">
+            <router-link :to="{ name: 'guest-new' }" class="primary" role="button">{{ t('guests.newGuest') }}</router-link>
+            <router-link :to="{ name: 'booking-new' }" class="btn-secondary" role="button">{{ t('guests.emptyNewBooking') }}</router-link>
+          </div>
+        </div>
         <p v-else-if="!guests.length && searchQuery" class="empty-state">{{ t('guests.emptySearch') }}</p>
         <table v-else-if="guests.length" class="list-table" role="grid">
             <thead>

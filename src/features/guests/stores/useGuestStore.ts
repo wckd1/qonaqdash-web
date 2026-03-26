@@ -54,11 +54,11 @@ export const useGuestStore = defineStore('guests', () => {
     return JSON.parse(JSON.stringify(snap))
   }
 
-  async function fetchGuestFormSchema() {
-    const res = await guestsApi.fetchGuestFormSchema()
+  async function fetchGuestFormDefinition() {
+    const res = await guestsApi.fetchGuestFormDefinition()
     return {
       definition: JSON.parse(JSON.stringify(res.definition ?? {})),
-      data: JSON.parse(JSON.stringify(res.data ?? {})),
+      hash: res.hash,
     }
   }
 
@@ -111,7 +111,7 @@ export const useGuestStore = defineStore('guests', () => {
     fetchGuests,
     fetchGuest,
     fetchGuestForm,
-    fetchGuestFormSchema,
+    fetchGuestFormDefinition,
     replaceGuestFormTemplate,
     createGuest,
     updateGuest,

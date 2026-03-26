@@ -27,7 +27,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { FormNode } from '@/shared/types/forms'
-import { updateBookingFormSchema } from '@/features/bookings/api'
+import { updateBookingFormDefinition } from '@/features/bookings/api'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import FormBuild from '@/shared/form-dsl/FormBuild.vue'
@@ -61,9 +61,9 @@ async function loadForm() {
   loading.value = true
   loadError.value = ''
   try {
-    const res = await bookingStore.fetchBookingFormSchema()
+    const res = await bookingStore.fetchBookingFormDefinition()
     definitionDraft.value = JSON.parse(JSON.stringify(res.definition ?? {}))
-    formData.value = normalizeFormData(res.data ?? {})
+    formData.value = normalizeFormData({})
     hasLoaded.value = true
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('form_settings.load_failed')
@@ -84,11 +84,10 @@ async function onSave() {
   saving.value = true
   saveError.value = ''
   try {
-    const res = await updateBookingFormSchema({
+    const res = await updateBookingFormDefinition({
       definition: definitionDraft.value as FormNode,
     })
-    if (res.definition) definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
-    if (res.data) formData.value = normalizeFormData(res.data)
+    definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     bookingStore.replaceBookingFormTemplate(res)
     success(t('form_settings.saved'))
   } catch (err: unknown) {

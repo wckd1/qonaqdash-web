@@ -86,23 +86,28 @@ export function invalidateGuestRuntimeFormCache(): void {
 }
 
 /**
- * Stored definition for form builder (manage). GET /api/guests/form/schema
+ * Persisted editor definition for form builder (manage). GET /api/guests/form/definition
  */
-export function fetchGuestFormSchema() {
-  return api.get('/api/guests/form/schema').then(({ data }) => ({
+export function fetchGuestFormDefinition(): Promise<{
+  definition: FormNode
+  hash: string
+}> {
+  return api.get('/api/guests/form/definition').then(({ data }) => ({
     definition: (data.definition ?? {}) as FormNode,
-    data: (data.data ?? {}) as Record<string, unknown>,
+    hash: String(data.hash ?? ''),
   }))
 }
 
 /**
- * Save guest form definition from builder. PUT /api/guests/form/schema
+ * Save guest form definition from builder. PUT /api/guests/form/definition
  */
-export function updateGuestFormSchema(body: {
+export function updateGuestFormDefinition(body: {
   definition: FormNode
-  data?: Record<string, unknown>
-}) {
-  return api.put('/api/guests/form/schema', body).then(({ data }) => data)
+}): Promise<{ definition: FormNode; hash: string }> {
+  return api.put('/api/guests/form/definition', body).then(({ data }) => ({
+    definition: (data.definition ?? {}) as FormNode,
+    hash: String(data.hash ?? ''),
+  }))
 }
 
 export function createGuest(data: Record<string, unknown>) {

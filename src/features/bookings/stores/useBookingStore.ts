@@ -36,11 +36,11 @@ export const useBookingStore = defineStore('bookings', () => {
     return JSON.parse(JSON.stringify(bookingFormTemplate.value))
   }
 
-  async function fetchBookingFormSchema() {
-    const res = await bookingsApi.fetchBookingFormSchema()
+  async function fetchBookingFormDefinition() {
+    const res = await bookingsApi.fetchBookingFormDefinition()
     return {
       definition: JSON.parse(JSON.stringify(res.definition ?? {})),
-      data: JSON.parse(JSON.stringify(res.data ?? {})),
+      hash: res.hash,
     }
   }
 
@@ -110,7 +110,7 @@ export const useBookingStore = defineStore('bookings', () => {
     currentBooking,
     fetchBookings,
     fetchBookingForm,
-    fetchBookingFormSchema,
+    fetchBookingFormDefinition,
     replaceBookingFormTemplate,
     fetchBooking,
     createBooking,

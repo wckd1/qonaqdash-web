@@ -150,21 +150,23 @@ export async function fetchBookingWithRuntimeForm(
   return mergeBookingDetailWithRuntimeForm(detail, form)
 }
 
-export function fetchBookingFormSchema(): Promise<{
+export function fetchBookingFormDefinition(): Promise<{
   definition: FormNode
-  data: Record<string, unknown>
+  hash: string
 }> {
-  return api.get('/api/bookings/form/schema').then(({ data }) => ({
+  return api.get('/api/bookings/form/definition').then(({ data }) => ({
     definition: (data.definition ?? {}) as FormNode,
-    data: (data.data ?? {}) as Record<string, unknown>,
+    hash: String(data.hash ?? ''),
   }))
 }
 
-export function updateBookingFormSchema(body: {
+export function updateBookingFormDefinition(body: {
   definition: FormNode
-  data?: Record<string, unknown>
-}): Promise<{ definition?: FormNode; data?: Record<string, unknown> }> {
-  return api.put('/api/bookings/form/schema', body).then(({ data }) => data)
+}): Promise<{ definition: FormNode; hash: string }> {
+  return api.put('/api/bookings/form/definition', body).then(({ data }) => ({
+    definition: (data.definition ?? {}) as FormNode,
+    hash: String(data.hash ?? ''),
+  }))
 }
 
 export function fetchBooking(id: string): Promise<BookingDetailPayload> {

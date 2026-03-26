@@ -27,7 +27,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { FormNode } from '@/shared/types/forms'
-import { updateGuestFormSchema } from '@/features/guests/api'
+import { updateGuestFormDefinition } from '@/features/guests/api'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import FormBuild from '@/shared/form-dsl/FormBuild.vue'
@@ -52,9 +52,9 @@ async function loadForm() {
   loading.value = true
   loadError.value = ''
   try {
-    const res = await guestStore.fetchGuestFormSchema()
+    const res = await guestStore.fetchGuestFormDefinition()
     definitionDraft.value = JSON.parse(JSON.stringify(res.definition ?? {}))
-    formData.value = JSON.parse(JSON.stringify(res.data ?? {}))
+    formData.value = {}
     hasLoaded.value = true
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('form_settings.load_failed')
@@ -75,11 +75,10 @@ async function onSave() {
   saving.value = true
   saveError.value = ''
   try {
-    const res = await updateGuestFormSchema({
+    const res = await updateGuestFormDefinition({
       definition: definitionDraft.value as FormNode,
     })
-    if (res.definition) definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
-    if (res.data) formData.value = JSON.parse(JSON.stringify(res.data))
+    definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     guestStore.replaceGuestFormTemplate(res)
     success(t('form_settings.saved'))
   } catch (err: unknown) {

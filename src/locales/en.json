@@ -73,7 +73,18 @@
     "profile_section": "Hotel profile",
     "display_name": "Display name",
     "name_hint": "This name is shown to staff in the app and may appear on printed or exported materials.",
-    "load_error": "Could not load hotel profile. Please try again."
+    "currency_section": "Currency",
+    "currency": "Default currency",
+    "currency_hint": "Currency used for all rates and billing. Applies hotel-wide.",
+    "load_error": "Could not load hotel profile. Please try again.",
+    "confirm_currency_title": "Change currency?",
+    "confirm_currency_body": "Changing the hotel currency will affect how all existing rates and prices are displayed. Amounts stored in the previous currency will not be converted automatically.",
+    "confirm_currency_proceed": "Proceed",
+    "currency_name": {
+      "KZT": "Kazakhstani Tenge",
+      "USD": "US Dollar",
+      "EUR": "Euro"
+    }
   },
   "profile": {
     "title": "Profile",
@@ -223,6 +234,8 @@
     "confirm_remove_type_body": "“{name}” will be hidden from lists. Existing bookings can still show this type name.",
     "confirm_remove_room_title": "Remove this room?",
     "confirm_remove_room_body": "Room {number} will be hidden from lists and availability. Existing bookings can still show this number.",
+    "base_rate_label": "Base rate / night",
+    "base_rate_placeholder": "e.g. 10000",
     "room_status": {
       "available": "Available",
       "maintenance": "Maintenance",
@@ -460,6 +473,8 @@
       "list_to_before_from": "To date must not be before from date.",
       "room_type_not_found": "Room type not found.",
       "room_type_in_use": "This type still has rooms. Remove or reassign those rooms first.",
+      "hotel_invalid_currency": "Invalid currency code.",
+      "room_type_invalid_base_rate": "Base rate must not be negative.",
       "invalid_room_status": "Invalid room status.",
       "room_status_required": "Room status is required."
     }

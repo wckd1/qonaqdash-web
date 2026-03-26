@@ -1,16 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as propertyApi from '@/features/property/api'
-import type { Room, RoomType } from '@/shared/types/property'
+import type { Hotel, Room, RoomType } from '@/shared/types/property'
 
-/**
- * @param {{ q?: string }} params
- */
-function hasSearchQuery(params) {
+function hasSearchQuery(params: { q?: string }) {
   return Boolean(params.q?.trim())
 }
 
 export const usePropertyStore = defineStore('property', () => {
+  const hotel = ref<Hotel | null>(null)
   const roomTypes = ref<RoomType[]>([])
   const rooms = ref<Room[]>([])
 
@@ -19,10 +17,21 @@ export const usePropertyStore = defineStore('property', () => {
   /** True when `rooms` was last filled by a successful unfiltered fetch. */
   const fullRoomsHydrated = ref(false)
 
-  /**
-   * @param {{ q?: string }} [params] - Optional search; when present, backend returns filtered room types.
-   */
-  async function fetchRoomTypes(params = {}) {
+  let hotelFetched = false
+
+  async function fetchHotel() {
+    if (hotelFetched) return hotel.value
+    hotel.value = await propertyApi.fetchHotel()
+    hotelFetched = true
+    return hotel.value
+  }
+
+  async function updateHotel(name: string, currency: string) {
+    hotel.value = await propertyApi.updateHotel({ name, currency })
+    return hotel.value
+  }
+
+  async function fetchRoomTypes(params: { q?: string } = {}) {
     const filtered = hasSearchQuery(params)
     if (!filtered && fullRoomTypesHydrated.value) {
       return
@@ -36,37 +45,39 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  async function createRoomType(name, description = '') {
-    const created = await propertyApi.createRoomType(name, description)
+  async function createRoomType(name: string, description: string, baseRateMinor: number) {
+    const created = await propertyApi.createRoomType({
+      name,
+      description: description || undefined,
+      base_rate_minor: baseRateMinor,
+    })
     roomTypes.value = [...roomTypes.value, created]
     return created
   }
 
-  /**
-   * @param {string} id
-   * @param {string} name
-   * @param {string} [description]
-   */
-  async function updateRoomType(id, name, description = '') {
+  async function updateRoomType(
+    id: string,
+    name: string,
+    description: string,
+    baseRateMinor: number,
+  ) {
     const updated = await propertyApi.updateRoomType(id, {
       name,
       description: description || undefined,
+      base_rate_minor: baseRateMinor,
     })
     roomTypes.value = roomTypes.value.map((t) => (t.id === id ? updated : t))
     return updated
   }
 
   /** Soft-delete room type; fails with 409 if active rooms still use it. */
-  async function deleteRoomType(id) {
+  async function deleteRoomType(id: string) {
     await propertyApi.deleteRoomType(id)
     roomTypes.value = roomTypes.value.filter((t) => t.id !== id)
     rooms.value = rooms.value.filter((r) => r.room_type_id !== id)
   }
 
-  /**
-   * @param {{ q?: string }} [params] - Optional search; when present, backend returns filtered rooms (by number).
-   */
-  async function fetchRooms(params = {}) {
+  async function fetchRooms(params: { q?: string } = {}) {
     const filtered = hasSearchQuery(params)
     if (!filtered && fullRoomsHydrated.value) {
       return
@@ -80,31 +91,33 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  async function createRoom(roomTypeId, number) {
+  async function createRoom(roomTypeId: string, number: string) {
     const created = await propertyApi.createRoom(roomTypeId, number)
     rooms.value = [...rooms.value, created]
     return created
   }
 
-  /**
-   * @param {string} id
-   * @param {{ room_type_id: string, number: string, status: string }} payload
-   */
-  async function updateRoom(id, payload) {
+  async function updateRoom(
+    id: string,
+    payload: { room_type_id: string; number: string; status: string },
+  ) {
     const updated = await propertyApi.updateRoom(id, payload)
     rooms.value = rooms.value.map((r) => (r.id === id ? updated : r))
     return updated
   }
 
   /** Soft-delete room (removed from catalog lists). */
-  async function deleteRoom(id) {
+  async function deleteRoom(id: string) {
     await propertyApi.deleteRoom(id)
     rooms.value = rooms.value.filter((r) => r.id !== id)
   }
 
   return {
+    hotel,
     roomTypes,
     rooms,
+    fetchHotel,
+    updateHotel,
     fetchRoomTypes,
     createRoomType,
     updateRoomType,

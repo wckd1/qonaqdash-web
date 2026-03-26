@@ -10,11 +10,13 @@ export function fetchHotel(): Promise<Hotel> {
 }
 
 /**
- * @param {string} name - Display name (trimmed server-side; required non-empty).
- * @returns {Promise<Hotel>}
+ * @param body.name - Display name (trimmed server-side; required non-empty).
+ * @param body.currency - ISO 4217 alpha-3 (required).
  */
-export function updateHotel(name: string): Promise<Hotel> {
-  return api.put('/api/property/hotel', { name }).then(({ data }) => data)
+export function updateHotel(body: { name: string; currency: string }): Promise<Hotel> {
+  return api
+    .put('/api/property/hotel', { name: body.name, currency: body.currency })
+    .then(({ data }) => data)
 }
 
 /**
@@ -29,29 +31,39 @@ export function fetchRoomTypes(params: { q?: string } = {}): Promise<RoomType[]>
 }
 
 /**
- * @param {string} name
- * @param {string} [description]
- * @returns {Promise<RoomType>}
+ * @param body.name - Required non-empty.
+ * @param body.description - Optional.
+ * @param body.base_rate_minor - Nightly rate in minor currency units (≥ 0, defaults to 0).
  */
-export function createRoomType(name: string, description = ''): Promise<RoomType> {
+export function createRoomType(body: {
+  name: string
+  description?: string
+  base_rate_minor?: number
+}): Promise<RoomType> {
   return api
-    .post('/api/property/room-types', { name, description: description || undefined })
+    .post('/api/property/room-types', {
+      name: body.name,
+      description: body.description || undefined,
+      base_rate_minor: body.base_rate_minor ?? 0,
+    })
     .then(({ data }) => data)
 }
 
 /**
- * @param {string} id
- * @param {{ name: string, description?: string }} body
- * @returns {Promise<RoomType>}
+ * @param id - Room type UUID.
+ * @param body.name - Required non-empty.
+ * @param body.description - Optional.
+ * @param body.base_rate_minor - Nightly rate in minor currency units (≥ 0).
  */
 export function updateRoomType(
   id: string,
-  body: { name: string; description?: string },
+  body: { name: string; description?: string; base_rate_minor: number },
 ): Promise<RoomType> {
   return api
     .put(`/api/property/room-types/${id}`, {
       name: body.name,
       description: body.description || undefined,
+      base_rate_minor: body.base_rate_minor,
     })
     .then(({ data }) => data)
 }

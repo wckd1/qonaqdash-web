@@ -14,10 +14,10 @@
     <template v-else>
       <p v-if="validationError" class="form-field-error">{{ validationError }}</p>
       <section class="panel hotel-settings-view__section">
-        <h2 class="hotel-settings-view__heading">{{ t('hotel.profileSection') }}</h2>
-        <p class="hotel-settings-view__hint">{{ t('hotel.nameHint') }}</p>
+        <h2 class="hotel-settings-view__heading">{{ t('hotel.profile_section') }}</h2>
+        <p class="hotel-settings-view__hint">{{ t('hotel.name_hint') }}</p>
         <label>
-          {{ t('hotel.displayName') }}
+          {{ t('hotel.display_name') }}
           <input v-model="name" type="text" autocomplete="organization" :disabled="saving" />
         </label>
       </section>
@@ -52,7 +52,7 @@ async function load() {
     name.value = n
     originalName.value = n
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('hotel.loadError')
+    loadError.value = formatUnknownApiError(err) || t('hotel.load_error')
   } finally {
     loading.value = false
   }

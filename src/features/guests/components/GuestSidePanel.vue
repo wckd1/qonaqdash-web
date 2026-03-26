@@ -1,19 +1,22 @@
 <template>
   <Transition name="slide-panel">
-    <aside
-      v-if="guest"
-      class="side-panel"
-      aria-labelledby="side-panel-title"
-    >
+    <aside v-if="guest" class="side-panel" aria-labelledby="side-panel-title">
       <div class="side-panel-header">
         <h2 id="side-panel-title">{{ guestPanelTitle }}</h2>
         <button
           type="button"
           class="side-panel-close"
-          :aria-label="t('common.closePanel')"
+          :aria-label="t('common.close_panel')"
           @click="emit('close')"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
@@ -21,7 +24,7 @@
       </div>
       <div class="side-panel-body">
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
-        <p v-else-if="notFound" class="error-message">{{ t('guests.notFound') }}</p>
+        <p v-else-if="notFound" class="error-message">{{ t('guests.not_found') }}</p>
         <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
         <FormView
           v-else-if="guestForm"
@@ -29,14 +32,14 @@
           :definition="guestForm.definition"
           :data="guestForm.data"
         />
-        <p v-else class="section-placeholder">{{ t('guests.detailsLoading') }}</p>
+        <p v-else class="section-placeholder">{{ t('guests.details_loading') }}</p>
       </div>
       <div class="side-panel-footer">
         <router-link
           :to="{ name: 'guest-detail', params: { id: guest.id } }"
           class="btn-open-full-page"
         >
-          {{ t('common.openFullPage') }}
+          {{ t('common.open_full_page') }}
         </router-link>
       </div>
     </aside>
@@ -90,8 +93,8 @@ const guestPanelTitle = computed(() => {
   const entity = detailEntity.value
   if (entity) {
     const row = entity as Record<string, unknown>
-    const first = (row.firstName ?? row.first_name ?? '') as string
-    const last = (row.lastName ?? row.last_name ?? '') as string
+    const first = (row.first_name ?? '') as string
+    const last = (row.last_name ?? '') as string
     const parts = [first, last].filter(Boolean)
     if (parts.length) return parts.join(' ')
     if (row.email != null) return String(row.email)
@@ -100,7 +103,7 @@ const guestPanelTitle = computed(() => {
   if (!g) return ''
   const first = g.first_name ?? ''
   const last = g.last_name ?? ''
-  return [first, last].filter(Boolean).join(' ') || t('pageTitle.guest')
+  return [first, last].filter(Boolean).join(' ') || t('page_title.guest')
 })
 
 watch(
@@ -132,7 +135,7 @@ watch(
       if (httpErrorResponse(err)?.status === 404) {
         notFound.value = true
       } else {
-        loadError.value = formatUnknownApiError(err) || t('guests.guestLoadFailed')
+        loadError.value = formatUnknownApiError(err) || t('guests.guest_load_failed')
       }
     } finally {
       if (seq === loadSeq) loading.value = false

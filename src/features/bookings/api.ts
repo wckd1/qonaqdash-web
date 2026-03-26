@@ -7,7 +7,7 @@ import {
 import type { FormRef, FormNode } from '@/shared/types/forms'
 import type {
   BookingDetailData,
-  BookingFlat,
+  BookingItem,
   BookingFormResponse,
   BookingFormDefinitionResponse,
   CreateBookingPayload,
@@ -15,20 +15,22 @@ import type {
 
 export type {
   BookingDetailData,
-  BookingFlat,
+  BookingItem,
   BookingFormDataDraft,
   BookingFormGuestData,
   BookingFormResponse,
   BookingFormDefinitionResponse,
-  BookingGridEntry,
-  BookingFormBookingBranch,
-  BookingFormBookingBranchFields,
+  BookingFormStayBranch,
+  BookingFormStayBranchFields,
   BookingFormRootData,
   BookingFormRootDataPartial,
   BookingFormRootFields,
   BookingFormRoomRow,
   BookingFormRoomRowFields,
-  BookingListItem,
+  BookingGuestInfo,
+  BookingStayData,
+  BookingRoomData,
+  GuestBookingListItem,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
 
@@ -43,29 +45,38 @@ export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const formRef = normalizeFormRef(o._form)
   const guest = (o.guest && typeof o.guest === 'object' ? o.guest : {}) as Record<string, unknown>
-  const booking = (o.booking && typeof o.booking === 'object' ? o.booking : {}) as Record<string, unknown>
+  const stay = (o.stay && typeof o.stay === 'object' ? o.stay : {}) as Record<string, unknown>
   return {
-    detail: { guest, booking },
+    detail: {
+      guest,
+      stay,
+      status: typeof o.status === 'string' ? o.status : undefined,
+      id: typeof o.id === 'string' ? o.id : undefined,
+    },
     formRef,
   }
 }
 
-export function fetchBookingGrid(params: { from: string; to: string }) {
+export function fetchBookingGrid(params: { from: string; to: string }): Promise<BookingItem[]> {
   return api
     .get('/api/bookings/grid', { params: { from: params.from, to: params.to } })
-    .then(({ data }) => (Array.isArray(data) ? data : data?.entries ?? data?.grid ?? []))
+    .then(({ data }) => (Array.isArray(data) ? data : (data?.entries ?? data?.grid ?? [])))
 }
 
-export function createBooking(body: CreateBookingPayload): Promise<BookingFlat> {
+export function createBooking(body: CreateBookingPayload): Promise<BookingItem> {
   return api.post('/api/bookings', body).then(({ data }) => data)
 }
 
-export function fetchBookings(params: { q?: string; from?: string; to?: string } = {}) {
+export function fetchBookings(
+  params: { q?: string; from?: string; to?: string } = {},
+): Promise<BookingItem[]> {
   const config: { params: Record<string, string> } = { params: {} }
   if (params.q?.trim()) config.params.q = params.q.trim()
   if (params.from) config.params.from = params.from
   if (params.to) config.params.to = params.to
-  return api.get('/api/bookings', config).then(({ data }) => data.bookings ?? data ?? [])
+  return api
+    .get('/api/bookings', config)
+    .then(({ data }) => (Array.isArray(data) ? data : (data.bookings ?? data ?? [])))
 }
 
 /**
@@ -120,7 +131,9 @@ export function mergeBookingDetailWithRuntimeForm(
     definition: form.definition,
     data: {
       guest: detail.guest ?? {},
-      booking: detail.booking ?? {},
+      stay: detail.stay ?? {},
+      status: detail.status,
+      id: detail.id,
     },
   }
 }
@@ -137,7 +150,10 @@ export async function fetchBookingWithRuntimeForm(
   return mergeBookingDetailWithRuntimeForm(detail, form)
 }
 
-export function fetchBookingFormSchema(): Promise<{ definition: FormNode; data: Record<string, unknown> }> {
+export function fetchBookingFormSchema(): Promise<{
+  definition: FormNode
+  data: Record<string, unknown>
+}> {
   return api.get('/api/bookings/form/schema').then(({ data }) => ({
     definition: (data.definition ?? {}) as FormNode,
     data: (data.data ?? {}) as Record<string, unknown>,
@@ -155,18 +171,18 @@ export function fetchBooking(id: string): Promise<BookingDetailPayload> {
   return api.get(`/api/bookings/${id}`).then(({ data }) => parseBookingDetailPayload(data))
 }
 
-export function updateBooking(id: string, body: CreateBookingPayload): Promise<BookingFlat> {
+export function updateBooking(id: string, body: CreateBookingPayload): Promise<BookingItem> {
   return api.put(`/api/bookings/${id}`, body).then(({ data }) => data)
 }
 
-export function checkIn(id: string): Promise<BookingFlat> {
+export function checkIn(id: string): Promise<BookingItem> {
   return api.put(`/api/bookings/${id}/check-in`).then(({ data }) => data)
 }
 
-export function checkOut(id: string): Promise<BookingFlat> {
+export function checkOut(id: string): Promise<BookingItem> {
   return api.put(`/api/bookings/${id}/check-out`).then(({ data }) => data)
 }
 
-export function cancel(id: string): Promise<BookingFlat> {
+export function cancel(id: string): Promise<BookingItem> {
   return api.put(`/api/bookings/${id}/cancel`).then(({ data }) => data)
 }

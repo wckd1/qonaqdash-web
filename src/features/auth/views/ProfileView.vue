@@ -14,15 +14,15 @@
     <template v-else>
       <p v-if="validationError" class="form-field-error">{{ validationError }}</p>
       <section class="panel profile-view__section">
-        <h2 class="profile-view__heading">{{ t('profile.accountSection') }}</h2>
+        <h2 class="profile-view__heading">{{ t('profile.account_section') }}</h2>
         <label>
           {{ t('profile.email') }}
           <input v-model="email" type="email" autocomplete="email" :disabled="saving" />
         </label>
-        <h3 class="profile-view__subheading">{{ t('profile.passwordSection') }}</h3>
-        <p class="profile-view__hint">{{ t('profile.passwordHint') }}</p>
+        <h3 class="profile-view__subheading">{{ t('profile.password_section') }}</h3>
+        <p class="profile-view__hint">{{ t('profile.password_hint') }}</p>
         <label>
-          {{ t('profile.currentPassword') }}
+          {{ t('profile.current_password') }}
           <input
             v-model="currentPassword"
             type="password"
@@ -31,7 +31,7 @@
           />
         </label>
         <label>
-          {{ t('profile.newPassword') }}
+          {{ t('profile.new_password') }}
           <input
             v-model="newPassword"
             type="password"
@@ -42,11 +42,13 @@
       </section>
 
       <section class="panel profile-view__section">
-        <h2 class="profile-view__heading">{{ t('profile.settingsSection') }}</h2>
+        <h2 class="profile-view__heading">{{ t('profile.settings_section') }}</h2>
         <div class="profile-view__field">
-          <label class="profile-view__control-label" for="profile-locale">{{ t('profile.language') }}</label>
+          <label class="profile-view__control-label" for="profile-locale">{{
+            t('profile.language')
+          }}</label>
           <p id="profile-locale-desc" class="profile-view__hint profile-view__hint--below-label">
-            {{ t('profile.languageHint') }}
+            {{ t('profile.language_hint') }}
           </p>
           <select
             id="profile-locale"
@@ -54,9 +56,9 @@
             :disabled="saving"
             aria-describedby="profile-locale-desc"
           >
-            <option value="">{{ t('profile.languageUnset') }}</option>
-            <option value="en">{{ t('profile.languageEn') }}</option>
-            <option value="ru">{{ t('profile.languageRu') }}</option>
+            <option value="">{{ t('profile.language_unset') }}</option>
+            <option value="en">{{ t('profile.language_en') }}</option>
+            <option value="ru">{{ t('profile.language_ru') }}</option>
           </select>
         </div>
       </section>
@@ -120,7 +122,7 @@ async function load() {
     currentPassword.value = ''
     newPassword.value = ''
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('profile.loadError')
+    loadError.value = formatUnknownApiError(err) || t('profile.load_error')
   } finally {
     loading.value = false
   }
@@ -148,7 +150,7 @@ function buildPayload(): Record<string, unknown> {
 async function onSave() {
   validationError.value = ''
   if (newPassword.value.length > 0 && !currentPassword.value) {
-    validationError.value = t('profile.currentPasswordRequired')
+    validationError.value = t('profile.current_password_required')
     return
   }
   const payload = buildPayload()

@@ -22,10 +22,10 @@ export interface GuestFormDefinitionResponse {
   data?: GuestFormDataPartial
 }
 
-/** Core guest form `data` fields (camelCase in UI). */
+/** Core guest form `data` fields. */
 export interface GuestFormFields {
-  firstName: string
-  lastName: string
+  first_name: string
+  last_name: string
   phone?: string
   email?: string
 }

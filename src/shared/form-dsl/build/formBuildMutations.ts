@@ -75,7 +75,7 @@ function isInsideGroup(parent: FormNode, root: FormNode): boolean {
 export function isAddTypeAllowed(parent: FormNode, root: FormNode, type: string): boolean {
   const insideGroup = isInsideGroup(parent, root)
   if (type === 'Field') {
-    return parent.type === 'group' || ((parent.type === 'stack') && insideGroup)
+    return parent.type === 'group' || (parent.type === 'stack' && insideGroup)
   }
   if (type === 'Group') {
     return !(parent.type === 'stack' && insideGroup)
@@ -178,9 +178,13 @@ export function readControlFieldSettings(node: FormNode): FieldSettingsDraft {
   else if (node.type === 'date' || node.type === 'datetime') uiType = 'Date'
   else if (node.type === 'number') uiType = 'Number'
 
-  const selectItems = node.type === 'select'
-    ? ((node as { items?: Array<{ value: unknown }> }).items ?? []).map((i) => String(i.value ?? '')).filter(Boolean).join(', ')
-    : ''
+  const selectItems =
+    node.type === 'select'
+      ? ((node as { items?: Array<{ value: unknown }> }).items ?? [])
+          .map((i) => String(i.value ?? ''))
+          .filter(Boolean)
+          .join(', ')
+      : ''
 
   return {
     label: input.label ?? '',
@@ -213,7 +217,10 @@ export function applyControlFieldSettings(node: FormNode, settings: FieldSetting
       break
     case 'Enum': {
       raw.type = 'select'
-      const opts = settings.options.split(',').map((s) => s.trim()).filter(Boolean)
+      const opts = settings.options
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
       raw.items = opts.map((v) => ({ value: v }))
       break
     }

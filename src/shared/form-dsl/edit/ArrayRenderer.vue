@@ -2,11 +2,7 @@
   <div class="form-view-array form-edit-array">
     <h2 v-if="label" class="form-edit-array__title">{{ label }}</h2>
     <div class="form-view-array__list">
-      <div
-        v-for="(item, index) in items"
-        :key="index"
-        class="form-edit-array__item"
-      >
+      <div v-for="(item, index) in items" :key="index" class="form-edit-array__item">
         <div class="form-edit-array__item-inner">
           <div class="form-edit-array__item-fields">
             <template v-for="(child, ci) in itemChildren" :key="ci">
@@ -23,15 +19,12 @@
               />
             </template>
           </div>
-          <div
-            v-if="canRemove && !disabled"
-            class="form-edit-array__item-toolbar"
-          >
+          <div v-if="canRemove && !disabled" class="form-edit-array__item-toolbar">
             <button
               type="button"
               class="form-edit-icon-btn form-edit-icon-btn--danger"
-              :title="t('formDsl.build.remove')"
-              :aria-label="t('formDsl.edit.removeArrayItemAria')"
+              :title="t('form_dsl.build.remove')"
+              :aria-label="t('form_dsl.edit.remove_array_item_aria')"
               @click="removeItem(index)"
             >
               <IconTrash />
@@ -44,7 +37,7 @@
       v-if="!disabled"
       type="button"
       class="form-edit-array__add"
-      :aria-label="t('formDsl.edit.addArrayItemAria')"
+      :aria-label="t('form_dsl.edit.add_array_item_aria')"
       @click="addItem"
     >
       {{ t('common.add') }}
@@ -82,7 +75,7 @@ const fullBind = computed(() => {
 
 const path = computed(() => bindToPath(fullBind.value))
 
-const minItems = computed(() => props.node.minItems ?? 0)
+const minItems = computed(() => props.node.min_items ?? 0)
 
 const items = computed({
   get(): Record<string, unknown>[] {

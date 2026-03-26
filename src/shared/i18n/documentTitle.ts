@@ -15,19 +15,19 @@ export function formatDocumentTitle(pagePart) {
 
 /** @type {Record<string, string>} */
 const ROUTE_TITLE_KEYS = {
-  dashboard: 'pageTitle.dashboard',
-  'manage-hotel': 'pageTitle.hotelSettings',
-  rooms: 'pageTitle.rooms',
-  guests: 'pageTitle.guests',
-  'guest-new': 'pageTitle.guestNew',
-  'guest-detail': 'pageTitle.guest',
-  bookings: 'pageTitle.bookings',
-  'booking-new': 'pageTitle.bookingNew',
-  'booking-detail': 'pageTitle.booking',
-  'manage-guests-form': 'pageTitle.guestFormSettings',
-  'manage-bookings-form': 'pageTitle.bookingFormSettings',
-  profile: 'pageTitle.profile',
-  'not-found': 'pageTitle.notFound',
+  dashboard: 'page_title.dashboard',
+  'manage-hotel': 'page_title.hotel_settings',
+  rooms: 'page_title.rooms',
+  guests: 'page_title.guests',
+  'guest-new': 'page_title.guest_new',
+  'guest-detail': 'page_title.guest',
+  bookings: 'page_title.bookings',
+  'booking-new': 'page_title.booking_new',
+  'booking-detail': 'page_title.booking',
+  'manage-guests-form': 'page_title.guest_form_settings',
+  'manage-bookings-form': 'page_title.booking_form_settings',
+  profile: 'page_title.profile',
+  'not-found': 'page_title.not_found',
 }
 
 /**
@@ -42,11 +42,11 @@ export function applyDocumentTitleFromRoute(route) {
   }
 
   if (name === 'login') {
-    document.title = formatDocumentTitle(i18n.global.t('pageTitle.login'))
+    document.title = formatDocumentTitle(i18n.global.t('page_title.login'))
     return
   }
   if (name === 'invite') {
-    document.title = formatDocumentTitle(i18n.global.t('pageTitle.invite'))
+    document.title = formatDocumentTitle(i18n.global.t('page_title.invite'))
     return
   }
 

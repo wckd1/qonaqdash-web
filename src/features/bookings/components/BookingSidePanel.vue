@@ -1,19 +1,22 @@
 <template>
   <Transition name="slide-panel">
-    <aside
-      v-if="booking"
-      class="side-panel"
-      aria-labelledby="side-panel-title"
-    >
+    <aside v-if="booking" class="side-panel" aria-labelledby="side-panel-title">
       <div class="side-panel-header">
         <h2 id="side-panel-title">{{ bookingPanelTitle }}</h2>
         <button
           type="button"
           class="side-panel-close"
-          :aria-label="t('common.closePanel')"
+          :aria-label="t('common.close_panel')"
           @click="emit('close')"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
           </svg>
@@ -27,7 +30,7 @@
       />
       <div class="side-panel-body">
         <p v-if="loadError" class="error-message">{{ loadError }}</p>
-        <p v-else-if="notFound" class="error-message">{{ t('bookings.notFound') }}</p>
+        <p v-else-if="notFound" class="error-message">{{ t('bookings.not_found') }}</p>
         <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
         <FormView
           v-else-if="bookingForm"
@@ -35,14 +38,14 @@
           :definition="bookingForm.definition"
           :data="bookingForm.data"
         />
-        <p v-else class="section-placeholder">{{ t('bookings.detailsLoading') }}</p>
+        <p v-else class="section-placeholder">{{ t('bookings.details_loading') }}</p>
       </div>
       <div class="side-panel-footer">
         <router-link
           :to="{ name: 'booking-detail', params: { id: booking.id } }"
           class="btn-open-full-page"
         >
-          {{ t('common.openFullPage') }}
+          {{ t('common.open_full_page') }}
         </router-link>
       </div>
     </aside>
@@ -117,18 +120,18 @@ const bookingPanelTitle = computed(() => {
     const flatGuest = raw.guest as Record<string, unknown> | undefined
     const g = (data.guest as Record<string, unknown> | undefined) ?? flatGuest
     if (g) {
-      const first = (g.firstName ?? g.first_name ?? '') as string
-      const last = (g.lastName ?? g.last_name ?? '') as string
+      const first = (g.first_name ?? '') as string
+      const last = (g.last_name ?? '') as string
       const parts = [first, last].filter(Boolean)
       const email = g.email
-      const name = parts.length ? parts.join(' ') : (typeof email === 'string' ? email : '')
-      if (name) return t('pageTitle.bookingWithGuest', { name })
+      const name = parts.length ? parts.join(' ') : typeof email === 'string' ? email : ''
+      if (name) return t('page_title.booking_with_guest', { name })
     }
   }
   const b = props.booking
   if (!b) return ''
   const name = bookingGuestNameFromList(b)
-  return name ? t('pageTitle.bookingWithGuest', { name }) : t('pageTitle.booking')
+  return name ? t('page_title.booking_with_guest', { name }) : t('page_title.booking')
 })
 
 async function onBookingStatusMutation() {
@@ -142,7 +145,7 @@ async function onBookingStatusMutation() {
     emit('booking-updated')
   } catch (err: unknown) {
     if (seq !== loadSeq) return
-    loadError.value = formatUnknownApiError(err) || t('bookings.detailLoadFailed')
+    loadError.value = formatUnknownApiError(err) || t('bookings.detail_load_failed')
   }
 }
 
@@ -170,7 +173,7 @@ watch(
       if (httpErrorResponse(err)?.status === 404) {
         notFound.value = true
       } else {
-        loadError.value = formatUnknownApiError(err) || t('bookings.detailLoadFailed')
+        loadError.value = formatUnknownApiError(err) || t('bookings.detail_load_failed')
       }
     } finally {
       if (seq === loadSeq) loading.value = false

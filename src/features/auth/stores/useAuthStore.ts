@@ -45,12 +45,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     const tokens = await authApi.login(email, password)
-    setTokens(tokens.accessToken, tokens.refreshToken)
+    setTokens(tokens.access_token, tokens.refresh_token)
   }
 
   async function completeInvite(token, password) {
     const tokens = await authApi.completeInvite(token, password)
-    setTokens(tokens.accessToken, tokens.refreshToken)
+    setTokens(tokens.access_token, tokens.refresh_token)
   }
 
   function logout() {

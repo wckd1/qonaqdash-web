@@ -16,7 +16,7 @@
           class="form-build-icon-btn"
           :disabled="!canToggleLayoutDirection"
           :title="layoutToggleTitle"
-          :aria-label="t('formDsl.build.layoutSwitchAria')"
+          :aria-label="t('form_dsl.build.layout_switch_aria')"
           @click="onToggleLayout"
         >
           <IconSwitchLayout :horizontal="isHorizontal" />
@@ -25,13 +25,17 @@
           v-if="canDeleteSelf"
           type="button"
           class="form-build-icon-btn form-build-icon-btn--danger"
-          :title="t('formDsl.build.remove')"
-          :aria-label="t('formDsl.build.removeLayoutAria')"
+          :title="t('form_dsl.build.remove')"
+          :aria-label="t('form_dsl.build.remove_layout_aria')"
           @click="onDeleteSelf"
         >
           <IconTrash />
         </button>
-        <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('formDsl.build.locked')">
+        <span
+          v-if="!canMutateNode && !isGuestBanner"
+          class="form-build-shell__locked"
+          :title="t('form_dsl.build.locked')"
+        >
           <IconLock />
         </span>
       </div>
@@ -46,55 +50,113 @@
                 <div v-if="!editingGroupTitle" class="form-build-group-title-display">
                   <h2
                     class="form-build-shell__group-heading"
-                    :class="{ 'form-build-shell__group-heading--placeholder': buildGroupHeadingMuted }"
+                    :class="{
+                      'form-build-shell__group-heading--placeholder': buildGroupHeadingMuted,
+                    }"
                   >
                     {{ buildGroupHeadingText }}
                   </h2>
-                  <button type="button" class="form-build-icon-btn" :title="t('formDsl.build.editGroupTitle')" @click="startTitleEdit">
+                  <button
+                    type="button"
+                    class="form-build-icon-btn"
+                    :title="t('form_dsl.build.edit_group_title')"
+                    @click="startTitleEdit"
+                  >
                     <IconPencil />
                   </button>
                 </div>
                 <div v-else class="form-build-group-title-edit-row">
                   <label class="form-build-group-label-edit form-build-group-label-edit--grow">
-                    <span class="visually-hidden">{{ t('formDsl.build.groupTitleHidden') }}</span>
-                    <input ref="titleInputRef" v-model="groupTitleModel" type="text" :placeholder="titlePlaceholder" @blur="onTitleBlur" @keydown.enter.prevent="onTitleConfirm" @keydown.escape.prevent="cancelTitleEdit" />
+                    <span class="visually-hidden">{{
+                      t('form_dsl.build.group_title_hidden')
+                    }}</span>
+                    <input
+                      ref="titleInputRef"
+                      v-model="groupTitleModel"
+                      type="text"
+                      :placeholder="titlePlaceholder"
+                      @blur="onTitleBlur"
+                      @keydown.enter.prevent="onTitleConfirm"
+                      @keydown.escape.prevent="cancelTitleEdit"
+                    />
                   </label>
-                  <button type="button" class="form-build-icon-btn form-build-icon-btn--confirm" :title="t('formDsl.build.saveTitle')" @mousedown.prevent @click="onTitleConfirm">
+                  <button
+                    type="button"
+                    class="form-build-icon-btn form-build-icon-btn--confirm"
+                    :title="t('form_dsl.build.save_title')"
+                    @mousedown.prevent
+                    @click="onTitleConfirm"
+                  >
                     <IconCheck />
                   </button>
                 </div>
-                <p class="form-build-shell__guest-note">{{ t('formDsl.build.guestBannerNote') }}</p>
+                <p class="form-build-shell__guest-note">
+                  {{ t('form_dsl.build.guest_banner_note') }}
+                </p>
               </div>
             </template>
             <template v-else>
               <div v-if="!editingGroupTitle" class="form-build-group-title-display">
                 <h2
                   class="form-build-shell__group-heading"
-                  :class="{ 'form-build-shell__group-heading--placeholder': buildGroupHeadingMuted }"
+                  :class="{
+                    'form-build-shell__group-heading--placeholder': buildGroupHeadingMuted,
+                  }"
                 >
                   {{ buildGroupHeadingText }}
                 </h2>
-                <button type="button" class="form-build-icon-btn" :title="t('formDsl.build.editGroupTitle')" @click="startTitleEdit">
+                <button
+                  type="button"
+                  class="form-build-icon-btn"
+                  :title="t('form_dsl.build.edit_group_title')"
+                  @click="startTitleEdit"
+                >
                   <IconPencil />
                 </button>
               </div>
               <div v-else class="form-build-group-title-edit-row">
                 <label class="form-build-group-label-edit form-build-group-label-edit--grow">
-                  <span class="visually-hidden">{{ t('formDsl.build.groupTitleHidden') }}</span>
-                  <input ref="titleInputRef" v-model="groupTitleModel" type="text" :placeholder="titlePlaceholder" @blur="onTitleBlur" @keydown.enter.prevent="onTitleConfirm" @keydown.escape.prevent="cancelTitleEdit" />
+                  <span class="visually-hidden">{{ t('form_dsl.build.group_title_hidden') }}</span>
+                  <input
+                    ref="titleInputRef"
+                    v-model="groupTitleModel"
+                    type="text"
+                    :placeholder="titlePlaceholder"
+                    @blur="onTitleBlur"
+                    @keydown.enter.prevent="onTitleConfirm"
+                    @keydown.escape.prevent="cancelTitleEdit"
+                  />
                 </label>
-                <button type="button" class="form-build-icon-btn form-build-icon-btn--confirm" :title="t('formDsl.build.saveTitle')" @mousedown.prevent @click="onTitleConfirm">
+                <button
+                  type="button"
+                  class="form-build-icon-btn form-build-icon-btn--confirm"
+                  :title="t('form_dsl.build.save_title')"
+                  @mousedown.prevent
+                  @click="onTitleConfirm"
+                >
                   <IconCheck />
                 </button>
               </div>
-              <p v-if="isGuestMainInfoNote" class="form-build-shell__guest-note">{{ t('formDsl.build.guestMainNote') }}</p>
+              <p v-if="isGuestMainInfoNote" class="form-build-shell__guest-note">
+                {{ t('form_dsl.build.guest_main_note') }}
+              </p>
             </template>
           </div>
           <div class="form-build-shell__actions">
-            <button v-if="canDeleteSelf" type="button" class="form-build-icon-btn form-build-icon-btn--danger" :title="t('formDsl.build.removeGroup')" @click="onDeleteSelf">
+            <button
+              v-if="canDeleteSelf"
+              type="button"
+              class="form-build-icon-btn form-build-icon-btn--danger"
+              :title="t('form_dsl.build.remove_group')"
+              @click="onDeleteSelf"
+            >
               <IconTrash />
             </button>
-            <span v-if="!canMutateNode && !isGuestBanner" class="form-build-shell__locked" :title="t('formDsl.build.locked')">
+            <span
+              v-if="!canMutateNode && !isGuestBanner"
+              class="form-build-shell__locked"
+              :title="t('form_dsl.build.locked')"
+            >
               <IconLock />
             </span>
           </div>
@@ -121,14 +183,22 @@
           />
         </template>
       </div>
-      <button v-if="showAddChild" type="button" class="form-build-add-child form-build-add-child--in-group" @click="onAddChild">
-        {{ t('formDsl.build.addElement') }}
+      <button
+        v-if="showAddChild"
+        type="button"
+        class="form-build-add-child form-build-add-child--in-group"
+        @click="onAddChild"
+      >
+        {{ t('form_dsl.build.add_element') }}
       </button>
     </section>
 
     <div
       v-else
-      :class="[wrapperClass, { 'form-view-layout--horizontal-empty': isHorizontal && children.length === 0 }]"
+      :class="[
+        wrapperClass,
+        { 'form-view-layout--horizontal-empty': isHorizontal && children.length === 0 },
+      ]"
     >
       <template v-for="(child, idx) in children" :key="idx">
         <LayoutRenderer
@@ -149,16 +219,31 @@
           build-leaf="tree"
         />
       </template>
-      <button v-if="showAddChild && isHorizontal && children.length === 0" type="button" class="form-build-add-child form-build-add-child--horizontal-empty" @click="onAddChild">
-        {{ t('formDsl.build.addElement') }}
+      <button
+        v-if="showAddChild && isHorizontal && children.length === 0"
+        type="button"
+        class="form-build-add-child form-build-add-child--horizontal-empty"
+        @click="onAddChild"
+      >
+        {{ t('form_dsl.build.add_element') }}
       </button>
-      <button v-if="showAddChild && isHorizontal && children.length === 1" type="button" class="form-build-add-child form-build-add-child--horizontal-tail" @click="onAddChild">
-        {{ t('formDsl.build.addElement') }}
+      <button
+        v-if="showAddChild && isHorizontal && children.length === 1"
+        type="button"
+        class="form-build-add-child form-build-add-child--horizontal-tail"
+        @click="onAddChild"
+      >
+        {{ t('form_dsl.build.add_element') }}
       </button>
     </div>
 
-    <button v-if="showAddChild && !isGroup && !isHorizontal" type="button" class="form-build-add-child" @click="onAddChild">
-      {{ t('formDsl.build.addElement') }}
+    <button
+      v-if="showAddChild && !isGroup && !isHorizontal"
+      type="button"
+      class="form-build-add-child"
+      @click="onAddChild"
+    >
+      {{ t('form_dsl.build.add_element') }}
     </button>
   </div>
 </template>
@@ -193,21 +278,27 @@ const formBuild = inject(formBuildKey, null)
 
 const isStack = computed(() => props.node.type === 'stack')
 const isGroup = computed(() => props.node.type === 'group')
-const isVertical = computed(() => isStack.value && (props.node as FormStackNode).direction === 'vertical')
-const isHorizontal = computed(() => isStack.value && (props.node as FormStackNode).direction === 'horizontal')
+const isVertical = computed(
+  () => isStack.value && (props.node as FormStackNode).direction === 'vertical',
+)
+const isHorizontal = computed(
+  () => isStack.value && (props.node as FormStackNode).direction === 'horizontal',
+)
 
 const variant = computed(() => (formBuild ? formBuild.variant : 'guest'))
 
-const childGuestLocked = computed(() =>
-  props.guestSubtreeLocked || (variant.value === 'booking' && isGuestImmutableBuildGroup(props.node)),
+const childGuestLocked = computed(
+  () =>
+    props.guestSubtreeLocked ||
+    (variant.value === 'booking' && isGuestImmutableBuildGroup(props.node)),
 )
 
-const isGuestBanner = computed(() =>
-  variant.value === 'booking' && isGuestImmutableBuildGroup(props.node),
+const isGuestBanner = computed(
+  () => variant.value === 'booking' && isGuestImmutableBuildGroup(props.node),
 )
 
-const isGuestMainInfoNote = computed(() =>
-  variant.value === 'guest' && isGroup.value && (props.node as FormGroupNode).id === 'main',
+const isGuestMainInfoNote = computed(
+  () => variant.value === 'guest' && isGroup.value && (props.node as FormGroupNode).id === 'main',
 )
 
 const canMutateNode = computed(() =>
@@ -234,12 +325,12 @@ const resolvedGroupTitle = computed(() =>
 
 const titlePlaceholder = computed(() => {
   void locale.value
-  return t('formDsl.build.setTitlePlaceholder')
+  return t('form_dsl.build.set_title_placeholder')
 })
 
 const buildGroupHeadingText = computed(() => {
   void locale.value
-  return resolvedGroupTitle.value || t('formDsl.build.setTitlePlaceholder')
+  return resolvedGroupTitle.value || t('form_dsl.build.set_title_placeholder')
 })
 
 const buildGroupHeadingMuted = computed(() => !resolvedGroupTitle.value)
@@ -250,11 +341,11 @@ let groupTitleSnapshot = ''
 
 const groupTitleModel = computed({
   get() {
-    return isGroup.value ? (props.node as FormGroupNode).title ?? '' : ''
+    return isGroup.value ? ((props.node as FormGroupNode).title ?? '') : ''
   },
   set(v: string) {
     if (isGroup.value) {
-      (props.node as FormGroupNode).title = v
+      ;(props.node as FormGroupNode).title = v
       formBuild?.touch?.()
     }
   },
@@ -262,7 +353,9 @@ const groupTitleModel = computed({
 
 const layoutBadge = computed(() => {
   void locale.value
-  return isHorizontal.value ? t('formDsl.build.horizontalLayout') : t('formDsl.build.verticalLayout')
+  return isHorizontal.value
+    ? t('form_dsl.build.horizontal_layout')
+    : t('form_dsl.build.vertical_layout')
 })
 
 const children = computed(() => (props.node as { items?: FormNode[] }).items ?? [])
@@ -287,11 +380,11 @@ const layoutToggleTitle = computed(() => {
   void locale.value
   if (!canMutateNode.value) return ''
   if (isVertical.value && children.value.length > MAX_HORIZONTAL_LAYOUT_CHILDREN) {
-    return t('formDsl.build.layoutMaxChildren', { max: MAX_HORIZONTAL_LAYOUT_CHILDREN })
+    return t('form_dsl.build.layout_max_children', { max: MAX_HORIZONTAL_LAYOUT_CHILDREN })
   }
   return isVertical.value
-    ? t('formDsl.build.layoutSwitchHorizontal')
-    : t('formDsl.build.layoutSwitchVertical')
+    ? t('form_dsl.build.layout_switch_horizontal')
+    : t('form_dsl.build.layout_switch_vertical')
 })
 
 function isContainerNode(child: FormNode): boolean {
@@ -311,7 +404,7 @@ function onAddChild() {
 }
 
 function startTitleEdit() {
-  groupTitleSnapshot = isGroup.value ? (props.node as FormGroupNode).title ?? '' : ''
+  groupTitleSnapshot = isGroup.value ? ((props.node as FormGroupNode).title ?? '') : ''
   editingGroupTitle.value = true
   nextTick(() => {
     titleInputRef.value?.focus?.()
@@ -336,7 +429,7 @@ function onTitleBlur(e: FocusEvent) {
 
 function cancelTitleEdit() {
   if (isGroup.value) {
-    (props.node as FormGroupNode).title = groupTitleSnapshot
+    ;(props.node as FormGroupNode).title = groupTitleSnapshot
     formBuild?.touch?.()
   }
   editingGroupTitle.value = false

@@ -62,7 +62,8 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const data = await authApi.fetchAccount()
       accountEmail.value = data?.account?.email ?? null
-      const settings = data?.settings && typeof data.settings === 'object' ? { ...data.settings } : {}
+      const settings =
+        data?.settings && typeof data.settings === 'object' ? { ...data.settings } : {}
       userSettings.value = Object.keys(settings).length ? settings : null
       if (!hasPinnedLocale()) {
         const loc = settings.locale
@@ -74,9 +75,7 @@ export const useSettingsStore = defineStore('settings', () => {
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: unknown } }; message?: string }
       error.value =
-        formatApiError(err.response?.data?.error) ||
-        err.message ||
-        'Failed to load account'
+        formatApiError(err.response?.data?.error) || err.message || 'Failed to load account'
       throw e
     } finally {
       loading.value = false

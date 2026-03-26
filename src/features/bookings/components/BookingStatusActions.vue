@@ -5,7 +5,7 @@
       class="action-toolbar"
       :class="{ 'action-toolbar--inset': detailInset }"
       role="toolbar"
-      :aria-label="t('bookings.lifecycleToolbarAria')"
+      :aria-label="t('bookings.lifecycle_toolbar_aria')"
     >
       <button
         v-if="allowsCheckIn"
@@ -14,7 +14,7 @@
         :disabled="running"
         @click="openConfirm('checkIn')"
       >
-        {{ t('bookings.actionCheckIn') }}
+        {{ t('bookings.action_check_in') }}
       </button>
       <button
         v-if="allowsCheckOut"
@@ -23,7 +23,7 @@
         :disabled="running"
         @click="openConfirm('checkOut')"
       >
-        {{ t('bookings.actionCheckOut') }}
+        {{ t('bookings.action_check_out') }}
       </button>
       <button
         v-if="allowsCancel"
@@ -32,7 +32,7 @@
         :disabled="running"
         @click="openConfirm('cancel')"
       >
-        {{ t('bookings.actionCancelBooking') }}
+        {{ t('bookings.action_cancel_booking') }}
       </button>
     </div>
     <template v-else>
@@ -44,7 +44,7 @@
         :disabled="running"
         @click="openConfirm('checkIn')"
       >
-        {{ t('bookings.actionCheckIn') }}
+        {{ t('bookings.action_check_in') }}
       </button>
       <button
         v-if="allowsCheckOut"
@@ -54,7 +54,7 @@
         :disabled="running"
         @click="openConfirm('checkOut')"
       >
-        {{ t('bookings.actionCheckOut') }}
+        {{ t('bookings.action_check_out') }}
       </button>
       <button
         v-if="allowsCancel"
@@ -64,17 +64,12 @@
         :disabled="running"
         @click="openConfirm('cancel')"
       >
-        {{ t('bookings.actionCancelBooking') }}
+        {{ t('bookings.action_cancel_booking') }}
       </button>
     </template>
 
     <Teleport to="body">
-      <div
-        v-if="pending"
-        class="dialog-backdrop"
-        role="presentation"
-        @click.self="closeConfirm"
-      >
+      <div v-if="pending" class="dialog-backdrop" role="presentation" @click.self="closeConfirm">
         <div class="dialog" role="dialog" :aria-labelledby="dialogTitleId" aria-modal="true">
           <h2 :id="dialogTitleId" class="booking-status-dialog-title">{{ dialogTitle }}</h2>
           <p class="booking-status-dialog-body">{{ dialogBody }}</p>
@@ -145,23 +140,23 @@ const primaryActionModifierClass = computed(() => {
 })
 
 const dialogTitle = computed(() => {
-  if (pending.value === 'checkIn') return t('bookings.confirmCheckInTitle')
-  if (pending.value === 'checkOut') return t('bookings.confirmCheckOutTitle')
-  if (pending.value === 'cancel') return t('bookings.confirmCancelTitle')
+  if (pending.value === 'checkIn') return t('bookings.confirm_check_in_title')
+  if (pending.value === 'checkOut') return t('bookings.confirm_check_out_title')
+  if (pending.value === 'cancel') return t('bookings.confirm_cancel_title')
   return ''
 })
 
 const dialogBody = computed(() => {
-  if (pending.value === 'checkIn') return t('bookings.confirmCheckInBody')
-  if (pending.value === 'checkOut') return t('bookings.confirmCheckOutBody')
-  if (pending.value === 'cancel') return t('bookings.confirmCancelBody')
+  if (pending.value === 'checkIn') return t('bookings.confirm_check_in_body')
+  if (pending.value === 'checkOut') return t('bookings.confirm_check_out_body')
+  if (pending.value === 'cancel') return t('bookings.confirm_cancel_body')
   return ''
 })
 
 const dialogPrimaryLabel = computed(() => {
-  if (pending.value === 'checkIn') return t('bookings.actionCheckIn')
-  if (pending.value === 'checkOut') return t('bookings.actionCheckOut')
-  if (pending.value === 'cancel') return t('bookings.actionCancelBooking')
+  if (pending.value === 'checkIn') return t('bookings.action_check_in')
+  if (pending.value === 'checkOut') return t('bookings.action_check_out')
+  if (pending.value === 'cancel') return t('bookings.action_cancel_booking')
   return t('common.save')
 })
 
@@ -191,7 +186,7 @@ async function runPending() {
     if (kind === 'checkIn') await store.checkIn(id)
     else if (kind === 'checkOut') await store.checkOut(id)
     else if (kind === 'cancel') await store.cancel(id)
-    success(t('bookings.statusActionSuccess'))
+    success(t('bookings.status_action_success'))
     pending.value = null
     emit('updated')
   } catch {

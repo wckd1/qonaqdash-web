@@ -15,7 +15,7 @@ function addNotification(message, type = 'info', duration = 5000) {
 }
 
 function dismiss(id) {
-  const idx = state.items.findIndex(n => n.id === id)
+  const idx = state.items.findIndex((n) => n.id === id)
   if (idx !== -1) state.items.splice(idx, 1)
 }
 

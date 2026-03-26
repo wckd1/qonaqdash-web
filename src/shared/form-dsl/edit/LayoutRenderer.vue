@@ -2,41 +2,41 @@
   <template v-if="!nodeState.hidden">
     <GuestSectionWrapper
       v-if="isGuestGroup"
-      :node="(node as FormGroupNode)"
+      :node="node as FormGroupNode"
       :data="data"
       :errors-map="errorsMap"
       :disabled="effectiveDisabled"
       @update:data="updateData"
     />
     <component v-else :is="wrapperTag" :class="wrapperClass">
-    <h2 v-if="isGroup && groupTitle">{{ groupTitle }}</h2>
-    <div v-if="isGroup" class="form-view-layout__fields">
-      <component
-        v-for="(child, idx) in children"
-        :key="idx"
-        :is="getRenderer(child)"
-        :node="child"
-        :data="data"
-        :full-data="data"
-        :errors-map="errorsMap"
-        :disabled="effectiveDisabled"
-        @update:data="updateData"
-      />
-    </div>
-    <template v-else>
-      <component
-        v-for="(child, idx) in children"
-        :key="idx"
-        :is="getRenderer(child)"
-        :node="child"
-        :data="data"
-        :full-data="data"
-        :errors-map="errorsMap"
-        :disabled="effectiveDisabled"
-        @update:data="updateData"
-      />
-    </template>
-  </component>
+      <h2 v-if="isGroup && groupTitle">{{ groupTitle }}</h2>
+      <div v-if="isGroup" class="form-view-layout__fields">
+        <component
+          v-for="(child, idx) in children"
+          :key="idx"
+          :is="getRenderer(child)"
+          :node="child"
+          :data="data"
+          :full-data="data"
+          :errors-map="errorsMap"
+          :disabled="effectiveDisabled"
+          @update:data="updateData"
+        />
+      </div>
+      <template v-else>
+        <component
+          v-for="(child, idx) in children"
+          :key="idx"
+          :is="getRenderer(child)"
+          :node="child"
+          :data="data"
+          :full-data="data"
+          :errors-map="errorsMap"
+          :disabled="effectiveDisabled"
+          @update:data="updateData"
+        />
+      </template>
+    </component>
   </template>
 </template>
 
@@ -64,8 +64,12 @@ const effectiveDisabled = computed(() => props.disabled || nodeState.value.disab
 
 const isStack = computed(() => props.node.type === 'stack')
 const isGroup = computed(() => props.node.type === 'group')
-const isVertical = computed(() => isStack.value && (props.node as { direction?: string }).direction === 'vertical')
-const isHorizontal = computed(() => isStack.value && (props.node as { direction?: string }).direction === 'horizontal')
+const isVertical = computed(
+  () => isStack.value && (props.node as { direction?: string }).direction === 'vertical',
+)
+const isHorizontal = computed(
+  () => isStack.value && (props.node as { direction?: string }).direction === 'horizontal',
+)
 
 const isGuestGroup = computed(() => {
   if (!isGroup.value) return false

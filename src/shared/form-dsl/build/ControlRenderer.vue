@@ -41,8 +41,8 @@
               v-if="canMutate"
               type="button"
               class="form-build-icon-btn"
-              :title="t('formDsl.build.configure')"
-              :aria-label="t('formDsl.build.configureFieldAria')"
+              :title="t('form_dsl.build.configure')"
+              :aria-label="t('form_dsl.build.configure_field_aria')"
               @click="onConfigure"
             >
               <IconCog />
@@ -51,13 +51,18 @@
               v-if="canDelete"
               type="button"
               class="form-build-icon-btn form-build-icon-btn--danger"
-              :title="t('formDsl.build.remove')"
-              :aria-label="t('formDsl.build.removeFieldAria')"
+              :title="t('form_dsl.build.remove')"
+              :aria-label="t('form_dsl.build.remove_field_aria')"
               @click="onDelete"
             >
               <IconTrash />
             </button>
-            <span v-if="!canMutate" class="form-build-shell__locked" :title="t('formDsl.build.locked')"><IconLock /></span>
+            <span
+              v-if="!canMutate"
+              class="form-build-shell__locked"
+              :title="t('form_dsl.build.locked')"
+              ><IconLock
+            /></span>
           </div>
         </div>
         <div v-if="arrayItemChildren.length > 0" class="form-build-array-items">
@@ -84,8 +89,8 @@
           v-if="canMutate"
           type="button"
           class="form-build-icon-btn"
-          :title="t('formDsl.build.configure')"
-          :aria-label="t('formDsl.build.configureFieldAria')"
+          :title="t('form_dsl.build.configure')"
+          :aria-label="t('form_dsl.build.configure_field_aria')"
           @click="onConfigure"
         >
           <IconCog />
@@ -94,13 +99,15 @@
           v-if="canDelete"
           type="button"
           class="form-build-icon-btn form-build-icon-btn--danger"
-          :title="t('formDsl.build.remove')"
-          :aria-label="t('formDsl.build.removeFieldAria')"
+          :title="t('form_dsl.build.remove')"
+          :aria-label="t('form_dsl.build.remove_field_aria')"
           @click="onDelete"
         >
           <IconTrash />
         </button>
-        <span v-if="!canMutate" class="form-build-shell__locked" :title="t('formDsl.build.locked')"><IconLock /></span>
+        <span v-if="!canMutate" class="form-build-shell__locked" :title="t('form_dsl.build.locked')"
+          ><IconLock
+        /></span>
       </div>
     </div>
   </template>
@@ -163,39 +170,52 @@ const arrayItemChildren = computed<FormNode[]>(() => {
 
 function typeKeyForNode(type: string): string {
   switch (type) {
-    case 'string': return 'string'
-    case 'textarea': return 'textarea'
-    case 'email': return 'email'
-    case 'number': return 'number'
-    case 'checkbox': return 'checkbox'
-    case 'select': return 'select'
-    case 'date': return 'date'
-    case 'datetime': return 'dateTime'
-    case 'date-range': return 'dateRange'
-    case 'number-range': return 'numberRange'
-    case 'array': return 'array'
-    case 'button': return 'button'
-    default: return type
+    case 'string':
+      return 'string'
+    case 'textarea':
+      return 'textarea'
+    case 'email':
+      return 'email'
+    case 'number':
+      return 'number'
+    case 'checkbox':
+      return 'checkbox'
+    case 'select':
+      return 'select'
+    case 'date':
+      return 'date'
+    case 'datetime':
+      return 'date_time'
+    case 'date-range':
+      return 'date_range'
+    case 'number-range':
+      return 'number_range'
+    case 'array':
+      return 'array'
+    case 'button':
+      return 'button'
+    default:
+      return type
   }
 }
 
 function translateNodeType(type: string): string {
   const suffix = typeKeyForNode(type)
-  const key = `formDsl.build.schemaType.${suffix}`
+  const key = `form_dsl.build.schema_type.${suffix}`
   return te(key) ? t(key) : type
 }
 
 function translateMetaPart(part: string): string {
-  if (part === 'required') return t('formDsl.build.meta.required')
-  if (part === 'dropdown') return t('formDsl.build.meta.dropdown')
+  if (part === 'required') return t('form_dsl.build.meta.required')
+  if (part === 'dropdown') return t('form_dsl.build.meta.dropdown')
   const mMin = part.match(/^min: (.+)$/)
-  if (mMin) return t('formDsl.build.meta.minColon', { n: mMin[1] })
+  if (mMin) return t('form_dsl.build.meta.min_colon', { n: mMin[1] })
   const mMax = part.match(/^max: (.+)$/)
-  if (mMax) return t('formDsl.build.meta.maxColon', { n: mMax[1] })
-  const mMinItems = part.match(/^minItems: (.+)$/)
-  if (mMinItems) return t('formDsl.build.meta.minItems', { n: mMinItems[1] })
-  const mMaxItems = part.match(/^maxItems: (.+)$/)
-  if (mMaxItems) return t('formDsl.build.meta.maxItems', { n: mMaxItems[1] })
+  if (mMax) return t('form_dsl.build.meta.max_colon', { n: mMax[1] })
+  const mMinItems = part.match(/^min_items: (.+)$/)
+  if (mMinItems) return t('form_dsl.build.meta.min_items', { n: mMinItems[1] })
+  const mMaxItems = part.match(/^max_items: (.+)$/)
+  if (mMaxItems) return t('form_dsl.build.meta.max_items', { n: mMaxItems[1] })
   return part
 }
 
@@ -208,22 +228,24 @@ const descriptionText = computed(() => {
     const arrNode = n as FormArrayNode
     const tpl = arrNode.item
     if (tpl && (tpl.type === 'group' || tpl.type === 'stack')) {
-      parts.push(t('formDsl.build.schemaType.arrayOf', { item: t('formDsl.build.schemaType.object') }))
+      parts.push(
+        t('form_dsl.build.schema_type.array_of', { item: t('form_dsl.build.schema_type.object') }),
+      )
     } else if (tpl) {
-      parts.push(t('formDsl.build.schemaType.arrayOf', { item: translateNodeType(tpl.type) }))
+      parts.push(t('form_dsl.build.schema_type.array_of', { item: translateNodeType(tpl.type) }))
     } else {
       parts.push(translateNodeType('array'))
     }
-    if (arrNode.minItems != null) parts.push(`minItems: ${arrNode.minItems}`)
-    if (arrNode.maxItems != null) parts.push(`maxItems: ${arrNode.maxItems}`)
+    if (arrNode.min_items != null) parts.push(`min_items: ${arrNode.min_items}`)
+    if (arrNode.max_items != null) parts.push(`max_items: ${arrNode.max_items}`)
   } else {
     parts.push(translateNodeType(n.type))
   }
 
   if ('validation' in n && n.validation) {
     if (n.validation.required) parts.push('required')
-    if (n.validation.minLength != null) parts.push(`min: ${n.validation.minLength}`)
-    if (n.validation.maxLength != null) parts.push(`max: ${n.validation.maxLength}`)
+    if (n.validation.min_length != null) parts.push(`min: ${n.validation.min_length}`)
+    if (n.validation.max_length != null) parts.push(`max: ${n.validation.max_length}`)
     if (n.validation.min != null) parts.push(`min: ${n.validation.min}`)
     if (n.validation.max != null) parts.push(`max: ${n.validation.max}`)
   }

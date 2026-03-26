@@ -16,7 +16,7 @@
         class="form-entity-section__profile-cta"
         :to="{ name: 'guest-detail', params: { id: linkedGuestId } }"
       >
-        {{ t('bookings.openGuestProfile') }}
+        {{ t('bookings.open_guest_profile') }}
       </router-link>
     </template>
     <template v-else-if="isGroup">
@@ -64,8 +64,12 @@ const nodeState = computed(() => evaluateNodeState(props.node, props.data))
 
 const isStack = computed(() => props.node.type === 'stack')
 const isGroup = computed(() => props.node.type === 'group')
-const isVertical = computed(() => isStack.value && (props.node as { direction?: string }).direction === 'vertical')
-const isHorizontal = computed(() => isStack.value && (props.node as { direction?: string }).direction === 'horizontal')
+const isVertical = computed(
+  () => isStack.value && (props.node as { direction?: string }).direction === 'vertical',
+)
+const isHorizontal = computed(
+  () => isStack.value && (props.node as { direction?: string }).direction === 'horizontal',
+)
 
 const isGuestGroup = computed(() => {
   if (!isGroup.value) return false

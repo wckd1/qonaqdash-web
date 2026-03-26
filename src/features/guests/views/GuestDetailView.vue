@@ -26,18 +26,14 @@
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-else-if="notFound" class="error-message">
-    {{ t('guests.notFound') }}
-    <router-link to="/guests" class="inline-link">{{ t('guests.backToList') }}</router-link>
+    {{ t('guests.not_found') }}
+    <router-link to="/guests" class="inline-link">{{ t('guests.back_to_list') }}</router-link>
   </p>
   <template v-else-if="currentGuest">
     <div class="guest-detail-body">
       <div class="guest-detail-form">
         <template v-if="guestForm">
-          <FormView
-            v-if="!editing"
-            :definition="guestForm.definition"
-            :data="guestForm.data"
-          />
+          <FormView v-if="!editing" :definition="guestForm.definition" :data="guestForm.data" />
           <template v-else>
             <FormEdit
               :definition="guestForm.definition"
@@ -47,40 +43,42 @@
             />
           </template>
         </template>
-        <p v-else class="section-placeholder">{{ t('guests.detailsLoading') }}</p>
+        <p v-else class="section-placeholder">{{ t('guests.details_loading') }}</p>
       </div>
       <section v-if="guestId" class="related-records" aria-labelledby="related-records-heading">
-      <h2 id="related-records-heading">{{ t('guests.bookingsHeading') }}</h2>
-      <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
-      <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
-      <p v-else-if="!previousBookings.length" class="empty-state">{{ t('guests.noBookings') }}</p>
-      <table v-else class="list-table" role="grid">
-        <thead>
-          <tr>
-            <th scope="col">{{ t('fields.checkIn') }}</th>
-            <th scope="col">{{ t('fields.checkOut') }}</th>
-            <th scope="col">{{ t('fields.status') }}</th>
-            <th scope="col" class="list-table__col--actions"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="b in previousBookings" :key="b.id">
-            <td :data-label="t('fields.checkIn')">{{ formatDate(b.check_in) }}</td>
-            <td :data-label="t('fields.checkOut')">{{ formatDate(b.check_out) }}</td>
-            <td :data-label="t('fields.status')">
-              <BookingStatusBadge :status="b.status" />
-            </td>
-            <td class="list-table__cell--actions">
-              <router-link
-                :to="{ name: 'booking-detail', params: { id: b.id } }"
-                class="list-table__action"
-              >
-                {{ t('common.view') }}
-              </router-link>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <h2 id="related-records-heading">{{ t('guests.bookings_heading') }}</h2>
+        <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
+        <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
+        <p v-else-if="!previousBookings.length" class="empty-state">
+          {{ t('guests.no_bookings') }}
+        </p>
+        <table v-else class="list-table" role="grid">
+          <thead>
+            <tr>
+              <th scope="col">{{ t('fields.check_in') }}</th>
+              <th scope="col">{{ t('fields.check_out') }}</th>
+              <th scope="col">{{ t('fields.status') }}</th>
+              <th scope="col" class="list-table__col--actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="b in previousBookings" :key="b.id">
+              <td :data-label="t('fields.check_in')">{{ formatDate(b.stay?.check_in) }}</td>
+              <td :data-label="t('fields.check_out')">{{ formatDate(b.stay?.check_out) }}</td>
+              <td :data-label="t('fields.status')">
+                <BookingStatusBadge :status="b.status" />
+              </td>
+              <td class="list-table__cell--actions">
+                <router-link
+                  :to="{ name: 'booking-detail', params: { id: b.id } }"
+                  class="list-table__action"
+                >
+                  {{ t('common.view') }}
+                </router-link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </div>
   </template>
@@ -95,11 +93,16 @@
     >
       <div class="dialog" role="dialog" :aria-labelledby="blockDialogTitleId" aria-modal="true">
         <h2 :id="blockDialogTitleId" class="guest-block-dialog-title">
-          {{ t('guests.confirmBlockTitle') }}
+          {{ t('guests.confirm_block_title') }}
         </h2>
-        <p class="guest-block-dialog-body">{{ t('guests.confirmBlockBody') }}</p>
+        <p class="guest-block-dialog-body">{{ t('guests.confirm_block_body') }}</p>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" :disabled="removing" @click="closeBlockConfirm">
+          <button
+            type="button"
+            class="btn-secondary"
+            :disabled="removing"
+            @click="closeBlockConfirm"
+          >
             {{ t('common.cancel') }}
           </button>
           <button
@@ -128,7 +131,7 @@ import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormResponse'
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
-import type { BookingListItem } from '@/features/bookings/api'
+import type { GuestBookingListItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
@@ -169,7 +172,7 @@ const guestForm = computed(() =>
   ),
 )
 
-const previousBookings = ref<BookingListItem[]>([])
+const previousBookings = ref<GuestBookingListItem[]>([])
 const bookingsLoading = ref(false)
 const bookingsLoadError = ref('')
 
@@ -183,18 +186,20 @@ function formatDate(iso) {
 }
 
 /**
- * Guest name from API: response has "data" with "firstName" and "lastName" (camelCase).
+ * Guest name from API: response has "data" with "first_name" and "last_name".
  */
 const guestDisplayName = computed(() => {
   void locale.value
   const g = currentGuest.value
-  if (!g) return t('pageTitle.guest')
+  if (!g) return t('page_title.guest')
   const data = g as Record<string, unknown>
-  const first = (data.firstName ?? data.first_name ?? '') as string
-  const last = (data.lastName ?? data.last_name ?? '') as string
+  const first = (data.first_name ?? '') as string
+  const last = (data.last_name ?? '') as string
   const parts = [first, last].filter(Boolean)
   const email = data.email
-  return parts.length ? parts.join(' ') : ((typeof email === 'string' ? email : '') || t('pageTitle.guest'))
+  return parts.length
+    ? parts.join(' ')
+    : (typeof email === 'string' ? email : '') || t('page_title.guest')
 })
 
 async function load() {
@@ -214,7 +219,7 @@ async function load() {
       store.clearCurrentGuest()
       notFound.value = true
     } else {
-      loadError.value = formatUnknownApiError(err) || t('guests.guestLoadFailed')
+      loadError.value = formatUnknownApiError(err) || t('guests.guest_load_failed')
     }
   }
 }
@@ -227,7 +232,7 @@ async function loadBookings() {
   try {
     previousBookings.value = await fetchGuestBookings(id)
   } catch (err: unknown) {
-    bookingsLoadError.value = formatUnknownApiError(err) || t('guests.bookingsLoadFailed')
+    bookingsLoadError.value = formatUnknownApiError(err) || t('guests.bookings_load_failed')
     previousBookings.value = []
   } finally {
     bookingsLoading.value = false
@@ -272,7 +277,7 @@ async function onSave() {
     await store.updateGuest(guestId.value, editFormData.value)
     editing.value = false
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('guests.saveEditFailed')
+    const msg = formatUnknownApiError(err) || t('guests.save_edit_failed')
     const serverErrors = httpErrorData(err)?.errors
     errorsMap.value =
       serverErrors && typeof serverErrors === 'object'
@@ -287,9 +292,13 @@ watch(guestId, (id) => {
   if (id && currentGuest.value) loadBookings()
 })
 
-watch(currentGuest, (guest) => {
-  if (guest && guestId.value) loadBookings()
-}, { immediate: true })
+watch(
+  currentGuest,
+  (guest) => {
+    if (guest && guestId.value) loadBookings()
+  },
+  { immediate: true },
+)
 
 watch(
   [guestDisplayName, locale],
@@ -315,7 +324,7 @@ async function confirmBlock() {
   try {
     await store.deleteGuest(id)
     await store.fetchGuests({})
-    success(t('guests.blockSuccess'))
+    success(t('guests.block_success'))
     blockConfirmOpen.value = false
     await router.replace({ name: 'guests' })
   } catch {

@@ -26,7 +26,7 @@
           <input
             v-model="password"
             type="password"
-            :placeholder="t('auth.invite.passwordPlaceholder')"
+            :placeholder="t('auth.invite.password_placeholder')"
             autocomplete="new-password"
             required
             minlength="8"
@@ -35,11 +35,11 @@
         </label>
 
         <label>
-          {{ t('auth.invite.confirmPassword') }}
+          {{ t('auth.invite.confirm_password') }}
           <input
             v-model="confirmPassword"
             type="password"
-            :placeholder="t('auth.invite.confirmPasswordPlaceholder')"
+            :placeholder="t('auth.invite.confirm_password_placeholder')"
             autocomplete="new-password"
             required
             minlength="8"
@@ -54,8 +54,8 @@
     </template>
 
     <template #footer>
-      {{ t('auth.invite.footerPrompt') }}
-      <router-link :to="{ name: 'login' }">{{ t('auth.invite.footerSignIn') }}</router-link>
+      {{ t('auth.invite.footer_prompt') }}
+      <router-link :to="{ name: 'login' }">{{ t('auth.invite.footer_sign_in') }}</router-link>
     </template>
   </AuthLayout>
 </template>
@@ -95,7 +95,7 @@ onMounted(async () => {
   const token = route.params.token
   const tok = typeof token === 'string' ? token : Array.isArray(token) ? token[0] : ''
   if (!tok) {
-    loadError.value = t('auth.invite.loadErrorInvalid')
+    loadError.value = t('auth.invite.load_error_invalid')
     inviteLoading.value = false
     return
   }
@@ -104,9 +104,9 @@ onMounted(async () => {
   } catch (err: unknown) {
     if (httpErrorResponse(err)) {
       const msg = formatApiError(httpErrorData(err)?.error)
-      loadError.value = msg || t('auth.invite.loadErrorInvalid')
+      loadError.value = msg || t('auth.invite.load_error_invalid')
     } else {
-      loadError.value = formatUnknownApiError(err) || t('auth.login.errorNetwork')
+      loadError.value = formatUnknownApiError(err) || t('auth.login.error_network')
     }
   } finally {
     inviteLoading.value = false
@@ -117,14 +117,14 @@ async function handleSubmit() {
   formError.value = ''
 
   if (password.value !== confirmPassword.value) {
-    formError.value = t('auth.invite.passwordMismatch')
+    formError.value = t('auth.invite.password_mismatch')
     return
   }
 
   const token = route.params.token
   const tok = typeof token === 'string' ? token : Array.isArray(token) ? token[0] : ''
   if (!tok) {
-    formError.value = t('auth.invite.loadErrorInvalid')
+    formError.value = t('auth.invite.load_error_invalid')
     return
   }
 
@@ -137,9 +137,9 @@ async function handleSubmit() {
   } catch (err: unknown) {
     if (httpErrorResponse(err)) {
       const msg = formatApiError(httpErrorData(err)?.error)
-      formError.value = msg || t('auth.invite.submitError')
+      formError.value = msg || t('auth.invite.submit_error')
     } else {
-      formError.value = formatUnknownApiError(err) || t('auth.login.errorNetwork')
+      formError.value = formatUnknownApiError(err) || t('auth.login.error_network')
     }
   } finally {
     submitting.value = false

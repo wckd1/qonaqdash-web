@@ -40,24 +40,24 @@ export const INPUT_NODE_TYPES: ReadonlySet<string> = new Set([
 export interface FormCondition {
   bind: string
   equals?: unknown
-  notEquals?: unknown
+  not_equals?: unknown
   in?: unknown[]
-  notIn?: unknown[]
+  not_in?: unknown[]
   exists?: true
 }
 
 export type FormConditionOrArray = FormCondition | FormCondition[]
 
 export interface FormActionStep {
-  type: 'setValue' | 'toggleValue' | 'clearValue'
+  type: 'set_value' | 'toggle_value' | 'clear_value'
   bind: string
   value?: unknown
 }
 
 export interface FormValidation {
   required?: boolean
-  minLength?: number
-  maxLength?: number
+  min_length?: number
+  max_length?: number
   min?: number
   max?: number
 }
@@ -76,10 +76,10 @@ export interface FormNodeOptions {
 }
 
 interface FormNodeConditions {
-  visibleWhen?: FormConditionOrArray
-  hiddenWhen?: FormConditionOrArray
-  enabledWhen?: FormConditionOrArray
-  disabledWhen?: FormConditionOrArray
+  visible_when?: FormConditionOrArray
+  hidden_when?: FormConditionOrArray
+  enabled_when?: FormConditionOrArray
+  disabled_when?: FormConditionOrArray
 }
 
 export interface FormStackNode extends FormNodeConditions {
@@ -98,7 +98,16 @@ export interface FormGroupNode extends FormNodeConditions {
 }
 
 export interface FormInputNode extends FormNodeConditions {
-  type: 'string' | 'textarea' | 'email' | 'number' | 'checkbox' | 'date' | 'datetime' | 'date-range' | 'number-range'
+  type:
+    | 'string'
+    | 'textarea'
+    | 'email'
+    | 'number'
+    | 'checkbox'
+    | 'date'
+    | 'datetime'
+    | 'date-range'
+    | 'number-range'
   id: string
   label?: string
   bind: string
@@ -125,8 +134,8 @@ export interface FormArrayNode extends FormNodeConditions {
   id: string
   label?: string
   bind: string
-  minItems?: number
-  maxItems?: number
+  min_items?: number
+  max_items?: number
   item: FormNode
   options?: FormNodeOptions
 }

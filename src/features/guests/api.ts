@@ -36,9 +36,7 @@ export function parseGuestDetailPayload(raw: unknown): GuestDetailPayload {
 }
 
 export function fetchGuests(params: { q?: string } = {}) {
-  const config = params.q?.trim()
-    ? { params: { q: params.q.trim() } }
-    : {}
+  const config = params.q?.trim() ? { params: { q: params.q.trim() } } : {}
   return api.get('/api/guests', config).then(({ data }) => data.guests ?? data ?? [])
 }
 
@@ -100,7 +98,10 @@ export function fetchGuestFormSchema() {
 /**
  * Save guest form definition from builder. PUT /api/guests/form/schema
  */
-export function updateGuestFormSchema(body: { definition: FormNode; data?: Record<string, unknown> }) {
+export function updateGuestFormSchema(body: {
+  definition: FormNode
+  data?: Record<string, unknown>
+}) {
   return api.put('/api/guests/form/schema', body).then(({ data }) => data)
 }
 
@@ -108,7 +109,10 @@ export function createGuest(data: Record<string, unknown>) {
   return api.post('/api/guests', data).then(({ data: res }) => parseGuestDetailPayload(res).data)
 }
 
-export function updateGuest(id: string, data: Record<string, unknown>): Promise<GuestDetailPayload> {
+export function updateGuest(
+  id: string,
+  data: Record<string, unknown>,
+): Promise<GuestDetailPayload> {
   return api.put(`/api/guests/${id}`, data).then(({ data: res }) => parseGuestDetailPayload(res))
 }
 

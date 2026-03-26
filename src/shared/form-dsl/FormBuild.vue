@@ -17,7 +17,9 @@
     @click.self="addingParent = null"
   >
     <article class="form-build-modal">
-      <h3 id="form-build-add-title" class="form-build-modal__title">{{ t('formDsl.build.modalAddTitle') }}</h3>
+      <h3 id="form-build-add-title" class="form-build-modal__title">
+        {{ t('form_dsl.build.modal_add_title') }}
+      </h3>
       <div class="form-build-modal__list">
         <button
           v-for="opt in addTypeOptions"
@@ -30,7 +32,9 @@
         </button>
       </div>
       <footer class="form-build-modal__footer">
-        <button type="button" class="btn-secondary" @click="addingParent = null">{{ t('common.cancel') }}</button>
+        <button type="button" class="btn-secondary" @click="addingParent = null">
+          {{ t('common.cancel') }}
+        </button>
       </footer>
     </article>
   </div>
@@ -44,42 +48,46 @@
     @click.self="closeConfigure"
   >
     <article class="form-build-modal form-build-modal--wide">
-      <h3 id="form-build-cfg-title" class="form-build-modal__title">{{ t('formDsl.build.modalFieldSettingsTitle') }}</h3>
+      <h3 id="form-build-cfg-title" class="form-build-modal__title">
+        {{ t('form_dsl.build.modal_field_settings_title') }}
+      </h3>
       <label>
-        {{ t('formDsl.build.fieldLabel') }}
+        {{ t('form_dsl.build.field_label') }}
         <input v-model="fieldSettings.label" type="text" />
       </label>
       <label>
-        {{ t('formDsl.build.fieldType') }}
+        {{ t('form_dsl.build.field_type') }}
         <select v-model="fieldSettings.type">
-          <option value="Text">{{ t('formDsl.build.typeText') }}</option>
-          <option value="Email">{{ t('formDsl.build.typeEmail') }}</option>
-          <option value="Date">{{ t('formDsl.build.typeDate') }}</option>
-          <option value="Number">{{ t('formDsl.build.typeNumber') }}</option>
-          <option value="Enum">{{ t('formDsl.build.typeEnum') }}</option>
+          <option value="Text">{{ t('form_dsl.build.type_text') }}</option>
+          <option value="Email">{{ t('form_dsl.build.type_email') }}</option>
+          <option value="Date">{{ t('form_dsl.build.type_date') }}</option>
+          <option value="Number">{{ t('form_dsl.build.type_number') }}</option>
+          <option value="Enum">{{ t('form_dsl.build.type_enum') }}</option>
         </select>
       </label>
       <label v-if="fieldSettings.type === 'Enum'">
-        {{ t('formDsl.build.optionsComma') }}
+        {{ t('form_dsl.build.options_comma') }}
         <input v-model="fieldSettings.options" type="text" />
       </label>
       <label class="form-build-modal__check">
         <input v-model="fieldSettings.required" type="checkbox" />
-        {{ t('formDsl.build.requiredField') }}
+        {{ t('form_dsl.build.required_field') }}
       </label>
       <label v-if="fieldSettings.type !== 'Enum'">
-        {{ t('formDsl.build.defaultValue') }}
+        {{ t('form_dsl.build.default_value') }}
         <input v-model="defaultString" type="text" />
       </label>
       <label v-else>
-        {{ t('formDsl.build.defaultValue') }}
+        {{ t('form_dsl.build.default_value') }}
         <select v-model="defaultString">
-          <option value="">{{ t('formDsl.build.defaultNone') }}</option>
+          <option value="">{{ t('form_dsl.build.default_none') }}</option>
           <option v-for="opt in enumOptionList" :key="opt" :value="opt">{{ opt }}</option>
         </select>
       </label>
       <footer class="form-build-modal__footer">
-        <button type="button" class="btn-secondary" @click="closeConfigure">{{ t('common.cancel') }}</button>
+        <button type="button" class="btn-secondary" @click="closeConfigure">
+          {{ t('common.cancel') }}
+        </button>
         <button type="button" @click="saveConfigure">{{ t('common.save') }}</button>
       </footer>
     </article>
@@ -129,13 +137,13 @@ const addTypeOptions = computed(() => {
 function addTypeLabel(type: string): string {
   switch (type) {
     case 'VerticalStack':
-      return t('formDsl.build.verticalLayout')
+      return t('form_dsl.build.vertical_layout')
     case 'HorizontalStack':
-      return t('formDsl.build.horizontalLayout')
+      return t('form_dsl.build.horizontal_layout')
     case 'Group':
-      return t('formDsl.build.addTypeGroup')
+      return t('form_dsl.build.add_type_group')
     case 'Field':
-      return t('formDsl.build.addTypeField')
+      return t('form_dsl.build.add_type_field')
     default:
       return type
   }

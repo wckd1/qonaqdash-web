@@ -5,15 +5,15 @@ export type { AuthTokenPair } from '@/shared/types/auth'
 
 export function login(email: string, password: string): Promise<AuthTokenPair> {
   return api.post('/api/auth/login', { email, password }).then(({ data }) => ({
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
   }))
 }
 
 export function completeInvite(token: string, password: string): Promise<AuthTokenPair> {
   return api.post(`/api/auth/invite/${token}`, { password }).then(({ data }) => ({
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token,
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
   }))
 }
 
@@ -24,12 +24,12 @@ export function fetchInvite(token: string) {
 /**
  * Exchange refresh JWT for a new access/refresh pair. Uses transport without main API interceptors.
  */
-export function refreshTokens(refreshToken: string): Promise<AuthTokenPair> {
+export function refreshTokens(currentRefreshToken: string): Promise<AuthTokenPair> {
   return refreshTransport
-    .post('/api/auth/refresh', { refresh_token: refreshToken })
+    .post('/api/auth/refresh', { refresh_token: currentRefreshToken })
     .then(({ data }) => ({
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
     }))
 }
 

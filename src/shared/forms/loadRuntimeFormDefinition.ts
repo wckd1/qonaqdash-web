@@ -31,10 +31,7 @@ function formatIfNoneMatch(hash: string): string {
   return t.startsWith('"') ? t : `"${t}"`
 }
 
-function parseOkBody(
-  d: Record<string, unknown>,
-  fallbackHash: string,
-): LoadedRuntimeForm {
+function parseOkBody(d: Record<string, unknown>, fallbackHash: string): LoadedRuntimeForm {
   const h = String(d?.hash ?? fallbackHash ?? '').trim()
   const rawData = d.data
   const data: Record<string, unknown> =
@@ -98,8 +95,7 @@ export async function loadRuntimeFormDefinition(
 
   const lookupKey = etagForRequest.trim()
   const hasLocalCopy =
-    lookupKey.length > 0 &&
-    getCachedFormDefinition(formId, mode, lookupKey) != null
+    lookupKey.length > 0 && getCachedFormDefinition(formId, mode, lookupKey) != null
 
   const headers: Record<string, string> = {}
   if (hasLocalCopy) {

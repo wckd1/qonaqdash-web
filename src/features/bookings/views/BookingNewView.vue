@@ -1,12 +1,7 @@
 <template>
   <header class="page-header">
-    <h1>{{ t('pageTitle.bookingNew') }}</h1>
-    <button
-      v-if="bookingForm"
-      type="button"
-      :disabled="submitting"
-      @click="onSubmit"
-    >
+    <h1>{{ t('page_title.booking_new') }}</h1>
+    <button v-if="bookingForm" type="button" :disabled="submitting" @click="onSubmit">
       {{ submitting ? t('common.saving') : t('common.save') }}
     </button>
   </header>
@@ -61,10 +56,10 @@ provide(availableRoomsKey, availableRooms)
 
 watch(
   () => {
-    const raw = formData.value.booking
+    const raw = formData.value.stay
     if (!raw || typeof raw !== 'object') return [undefined, undefined] as const
     const b = raw as Record<string, unknown>
-    return [b.checkIn, b.checkOut] as const
+    return [b.check_in, b.check_out] as const
   },
   async ([checkIn, checkOut]) => {
     if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
@@ -87,21 +82,21 @@ watch(
 )
 
 async function mergeRouteQueryIntoForm() {
-  const raw = formData.value.booking
+  const raw = formData.value.stay
   if (!raw || typeof raw !== 'object') return
-  const booking = raw as Record<string, unknown>
+  const stay = raw as Record<string, unknown>
   const q = route.query
   const checkIn = typeof q.checkIn === 'string' ? q.checkIn : ''
   const checkOut = typeof q.checkOut === 'string' ? q.checkOut : ''
   const roomId = typeof q.roomId === 'string' ? q.roomId : ''
-  if (checkIn) booking.checkIn = checkIn
-  if (checkOut) booking.checkOut = checkOut
+  if (checkIn) stay.check_in = checkIn
+  if (checkOut) stay.check_out = checkOut
   if (roomId) {
     try {
       const list = await fetchRooms()
       const room = list.find((r) => r.id === roomId)
       if (room?.room_type_id) {
-        booking.rooms = [{ roomType: room.room_type_id, roomID: room.id }]
+        stay.rooms = [{ room_type: room.room_type_id, room_id: room.id }]
       }
     } catch {
       /* keep existing rooms */
@@ -119,12 +114,12 @@ onMounted(async () => {
     if (!formData.value.guest) formData.value.guest = {}
     const guestObj = formData.value.guest as Record<string, unknown>
     if (guestObj.id === undefined) guestObj.id = null
-    if (!formData.value.booking) formData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
-    const bookingObj = formData.value.booking as Record<string, unknown>
-    if (!Array.isArray(bookingObj.rooms)) bookingObj.rooms = []
+    if (!formData.value.stay) formData.value.stay = { check_in: '', check_out: '', rooms: [] }
+    const stayObj = formData.value.stay as Record<string, unknown>
+    if (!Array.isArray(stayObj.rooms)) stayObj.rooms = []
     await mergeRouteQueryIntoForm()
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('bookings.formLoadFailed')
+    loadError.value = formatUnknownApiError(err) || t('bookings.form_load_failed')
   } finally {
     loading.value = false
   }
@@ -140,7 +135,10 @@ watch(
 
 async function onSubmit() {
   errorsMap.value = {}
-  const { valid, errorsMap: clientErrors } = validateFormData(bookingForm.value?.definition, formData.value)
+  const { valid, errorsMap: clientErrors } = validateFormData(
+    bookingForm.value?.definition,
+    formData.value,
+  )
   if (!valid) {
     errorsMap.value = clientErrors
     scrollToFirstFormError()
@@ -153,7 +151,7 @@ async function onSubmit() {
     await store.createBooking(payload)
     router.push('/bookings')
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('bookings.createFailed')
+    const msg = formatUnknownApiError(err) || t('bookings.create_failed')
     const serverErrors = httpErrorData(err)?.errors
     if (
       httpErrorResponse(err) &&

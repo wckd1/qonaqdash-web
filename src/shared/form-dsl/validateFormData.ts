@@ -1,7 +1,7 @@
 /**
  * Client-side validation for FormDSL forms.
  * Walks the definition tree, reads `validation` on input nodes, checks the companion data.
- * Condition-aware: nodes hidden by visibleWhen / hiddenWhen / options.hidden are skipped.
+ * Condition-aware: nodes hidden by visible_when / hidden_when / options.hidden are skipped.
  */
 
 import type { FormNode, FormValidation } from '@/shared/types/forms'
@@ -60,11 +60,11 @@ function walkNode(
     const value = getValueByPath(data, path)
     const arr = Array.isArray(value) ? value : []
 
-    if (node.minItems != null && arr.length < node.minItems) {
-      addError(errorsMap, fullBind, localizeValidationError('minItems', { min: node.minItems }))
+    if (node.min_items != null && arr.length < node.min_items) {
+      addError(errorsMap, fullBind, localizeValidationError('min_items', { min: node.min_items }))
     }
-    if (node.maxItems != null && arr.length > node.maxItems) {
-      addError(errorsMap, fullBind, localizeValidationError('maxItems', { max: node.maxItems }))
+    if (node.max_items != null && arr.length > node.max_items) {
+      addError(errorsMap, fullBind, localizeValidationError('max_items', { max: node.max_items }))
     }
 
     const itemNode = node.item
@@ -95,7 +95,8 @@ function validateField(
 ): void {
   if (!validation) return
 
-  const isEmpty = value == null || value === '' || (typeof value === 'string' && value.trim() === '')
+  const isEmpty =
+    value == null || value === '' || (typeof value === 'string' && value.trim() === '')
 
   if (validation.required && isEmpty) {
     addError(errorsMap, bind, localizeValidationError('required'))
@@ -105,11 +106,19 @@ function validateField(
   if (isEmpty) return
 
   if (typeof value === 'string') {
-    if (validation.minLength != null && value.length < validation.minLength) {
-      addError(errorsMap, bind, localizeValidationError('minLength', { min: validation.minLength }))
+    if (validation.min_length != null && value.length < validation.min_length) {
+      addError(
+        errorsMap,
+        bind,
+        localizeValidationError('min_length', { min: validation.min_length }),
+      )
     }
-    if (validation.maxLength != null && value.length > validation.maxLength) {
-      addError(errorsMap, bind, localizeValidationError('maxLength', { max: validation.maxLength }))
+    if (validation.max_length != null && value.length > validation.max_length) {
+      addError(
+        errorsMap,
+        bind,
+        localizeValidationError('max_length', { max: validation.max_length }),
+      )
     }
   }
 

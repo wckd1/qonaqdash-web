@@ -20,9 +20,7 @@
           searchContext &&
           pickerAnchorEl &&
           !pickerDismissed &&
-          (searchContext.debouncing ||
-            searchContext.loading ||
-            searchContext.results.length > 0)
+          (searchContext.debouncing || searchContext.loading || searchContext.results.length > 0)
         "
         ref="dropdownEl"
         class="guest-section-edit__dropdown guest-section-edit__dropdown--floating"
@@ -32,12 +30,12 @@
       >
         <div class="guest-section-edit__dropdown-header">
           <span :id="guestPickerTitleId" class="guest-section-edit__dropdown-title">
-            {{ t('bookings.guestPickerTitle') }}
+            {{ t('bookings.guest_picker_title') }}
           </span>
           <button
             type="button"
             class="guest-section-edit__dropdown-close"
-            :aria-label="t('bookings.guestPickerClose')"
+            :aria-label="t('bookings.guest_picker_close')"
             @click="dismissPicker"
           >
             <svg
@@ -61,7 +59,7 @@
             role="status"
             aria-live="polite"
           >
-            {{ t('bookings.guestPickerSearching') }}
+            {{ t('bookings.guest_picker_searching') }}
           </p>
           <div v-else role="listbox">
             <button
@@ -124,9 +122,7 @@ const { t } = useI18n()
 const guestPickerTitleId = useId()
 
 const searchGuestsFn = inject(guestSearchKey, undefined)
-const searchContext = searchGuestsFn
-  ? useGuestSearch(() => props.data, searchGuestsFn)
-  : null
+const searchContext = searchGuestsFn ? useGuestSearch(() => props.data, searchGuestsFn) : null
 
 const pickerAnchorEl = shallowRef<HTMLElement | null>(null)
 const pickerDismissed = ref(false)
@@ -139,9 +135,7 @@ function updateDropdownPosition() {
   const visible =
     searchContext &&
     !pickerDismissed.value &&
-    (searchContext.debouncing ||
-      searchContext.loading ||
-      searchContext.results.length > 0)
+    (searchContext.debouncing || searchContext.loading || searchContext.results.length > 0)
   if (!el || !visible) {
     dropdownStyle.value = undefined
     return
@@ -242,8 +236,8 @@ function updateData(val: Record<string, unknown>) {
 }
 
 function guestOptionLabel(g: Record<string, unknown>): string {
-  const last = (g.last_name ?? g.lastName ?? '') as string
-  const first = (g.first_name ?? g.firstName ?? '') as string
+  const last = (g.last_name ?? '') as string
+  const first = (g.first_name ?? '') as string
   const named = [last, first].filter(Boolean).join(' ')
   const email = String(g.email ?? '').trim()
   if (named) return named
@@ -253,8 +247,8 @@ function guestOptionLabel(g: Record<string, unknown>): string {
 function guestOptionContactLine(g: Record<string, unknown>): string {
   const email = String(g.email ?? '').trim()
   const phone = String(g.phone ?? '').trim()
-  const last = (g.last_name ?? g.lastName ?? '') as string
-  const first = (g.first_name ?? g.firstName ?? '') as string
+  const last = (g.last_name ?? '') as string
+  const first = (g.first_name ?? '') as string
   const hasName = Boolean([last, first].filter(Boolean).join(' '))
   if (hasName) {
     if (email && phone) return `${email} · ${phone}`
@@ -288,8 +282,7 @@ function onSelectGuest(apiGuest: Record<string, unknown>) {
 
 .guest-section-edit__dropdown {
   background: var(--surface-1, #fff);
-  border: 2px solid
-    color-mix(in srgb, var(--brand-primary) 52%, var(--border-subtle));
+  border: 2px solid color-mix(in srgb, var(--brand-primary) 52%, var(--border-subtle));
   border-radius: var(--content-area-radius, 0.5rem);
   box-shadow: var(--shadow-md, 0 4px 6px -1px rgb(0 0 0 / 0.1));
   box-sizing: border-box;
@@ -353,8 +346,8 @@ function onSelectGuest(apiGuest: Record<string, unknown>) {
   max-height: calc(
     5 *
       (
-        2 * var(--space-sm) + 1.25 * var(--text-body-size) + var(--space-xs) +
-          1.25 * var(--text-caption-size)
+        2 * var(--space-sm) + 1.25 * var(--text-body-size) + var(--space-xs) + 1.25 *
+          var(--text-caption-size)
       )
   );
   min-height: 0;

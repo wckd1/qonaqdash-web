@@ -1,12 +1,7 @@
 <template>
   <header class="page-header">
-    <h1>{{ t('pageTitle.guestNew') }}</h1>
-    <button
-      v-if="guestForm"
-      type="button"
-      :disabled="submitting"
-      @click="onSubmit"
-    >
+    <h1>{{ t('page_title.guest_new') }}</h1>
+    <button v-if="guestForm" type="button" :disabled="submitting" @click="onSubmit">
       {{ submitting ? t('common.saving') : t('common.save') }}
     </button>
   </header>
@@ -56,7 +51,7 @@ onMounted(async () => {
     guestForm.value = template as GuestFormRuntime
     formData.value = { ...(guestForm.value.data ?? {}) }
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('guests.formLoadFailed')
+    loadError.value = formatUnknownApiError(err) || t('guests.form_load_failed')
     guestForm.value = null
     formData.value = {}
   } finally {
@@ -79,7 +74,7 @@ async function onSubmit() {
     await store.createGuest(formData.value)
     router.push('/guests')
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('guests.saveFailed')
+    const msg = formatUnknownApiError(err) || t('guests.save_failed')
     const serverErrors = httpErrorData(err)?.errors
     if (
       httpErrorResponse(err) &&

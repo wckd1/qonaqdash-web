@@ -29,12 +29,6 @@ Queue for API work the frontend needs from the backend. Contract sources remain 
 
 ---
 
-## Open requests
-
-*(Add new items below this line.)*
-
----
-
 ## Template (copy for each request)
 
 ```markdown
@@ -55,3 +49,9 @@ Queue for API work the frontend needs from the backend. Contract sources remain 
 ```
 
 Remove the fenced code block wrapper when pasting a real item; keep the `---` after each item so blocks stay visually separated.
+
+---
+
+## Open requests
+
+*(Add new items below this line.)*

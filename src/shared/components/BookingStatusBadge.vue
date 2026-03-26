@@ -1,10 +1,5 @@
 <template>
-  <span
-    v-if="status"
-    class="status-chip"
-    :class="chipClass"
-    :aria-label="label"
-  >
+  <span v-if="status" class="status-chip" :class="chipClass" :aria-label="label">
     {{ label }}
   </span>
 </template>
@@ -25,7 +20,7 @@ const label = computed(() => {
   const raw = (props.status || '').trim()
   const n = normalizeBookingStatus(raw)
   if (n) {
-    const path = `bookings.statusChip.${n}`
+    const path = `bookings.status_chip.${n}`
     if (te(path)) return t(path)
   }
   return raw || '—'

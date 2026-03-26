@@ -1,14 +1,14 @@
 <template>
   <div class="toast-container">
     <TransitionGroup name="toast">
-      <div
-        v-for="n in notifications"
-        :key="n.id"
-        class="toast"
-        :class="`toast--${n.type}`"
-      >
+      <div v-for="n in notifications" :key="n.id" class="toast" :class="`toast--${n.type}`">
         <span class="toast-message">{{ n.message }}</span>
-        <button type="button" class="toast-close" @click="dismiss(n.id)" :aria-label="t('common.dismissToast')">
+        <button
+          type="button"
+          class="toast-close"
+          @click="dismiss(n.id)"
+          :aria-label="t('common.dismiss_toast')"
+        >
           &times;
         </button>
       </div>

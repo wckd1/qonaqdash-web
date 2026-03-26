@@ -5,11 +5,16 @@
       ref="cellMenuEl"
       class="reservation-cell-menu"
       role="menu"
-      :aria-label="t('grid.cellMenuAria')"
+      :aria-label="t('grid.cell_menu_aria')"
       :style="{ top: `${cellMenu.y}px`, left: `${cellMenu.x}px` }"
     >
-      <button type="button" class="reservation-cell-menu-item" role="menuitem" @click="onPickCreateBooking">
-        {{ t('grid.createBooking') }}
+      <button
+        type="button"
+        class="reservation-cell-menu-item"
+        role="menuitem"
+        @click="onPickCreateBooking"
+      >
+        {{ t('grid.create_booking') }}
       </button>
     </div>
   </Teleport>
@@ -20,7 +25,7 @@
       ref="barMenuEl"
       class="reservation-cell-menu reservation-bar-menu"
       role="menu"
-      :aria-label="t('grid.barMenuAria')"
+      :aria-label="t('grid.bar_menu_aria')"
       :style="{ top: `${barMenu.y}px`, left: `${barMenu.x}px` }"
     >
       <BookingStatusActions
@@ -32,7 +37,10 @@
     </div>
   </Teleport>
 
-  <div class="reservation-grid-root" :class="{ 'reservation-grid-root--selecting': selectPointerDown }">
+  <div
+    class="reservation-grid-root"
+    :class="{ 'reservation-grid-root--selecting': selectPointerDown }"
+  >
     <div class="reservation-grid-scroll">
       <div class="reservation-grid-stage">
         <div
@@ -49,7 +57,9 @@
             :class="{ 'reservation-grid-head--today': isSameDay(day, today) }"
           >
             <span class="reservation-grid-head-day">{{ format(day, 'd') }}</span>
-            <span class="reservation-grid-head-mon">{{ format(day, 'MMM', { locale: dateFnsLocale }) }}</span>
+            <span class="reservation-grid-head-mon">{{
+              format(day, 'MMM', { locale: dateFnsLocale })
+            }}</span>
           </div>
 
           <template v-for="row in gridRows" :key="row.key">
@@ -113,7 +123,7 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { format, startOfDay, isSameDay } from 'date-fns'
-import type { BookingGridEntry } from '@/features/bookings/api'
+import type { BookingItem } from '@/features/bookings/api'
 import type { Room } from '@/shared/types/property'
 import { listDaysInclusive, formatLocalYmd } from '@/features/bookings/utils/gridDates'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
@@ -148,7 +158,7 @@ type BarLayout = {
 const props = withDefaults(
   defineProps<{
     rooms: RoomRow[]
-    entries: BookingGridEntry[]
+    entries: BookingItem[]
     rangeFrom: Date
     rangeTo: Date
   }>(),
@@ -217,7 +227,7 @@ const days = computed(() => listDaysInclusive(props.rangeFrom, props.rangeTo))
  */
 function cellAriaLabel(roomNumber, day) {
   void locale.value
-  return t('grid.cellAria', { number: roomNumber, date: formatLocalYmd(day) })
+  return t('grid.cell_aria', { number: roomNumber, date: formatLocalYmd(day) })
 }
 
 const gridRows = computed((): GridRow[] => {
@@ -227,7 +237,8 @@ const gridRows = computed((): GridRow[] => {
   for (const room of props.rooms) {
     const tid = room.room_type_id ?? '__none__'
     if (tid !== prevTypeKey) {
-      const name = (room.room_type_name && String(room.room_type_name).trim()) || t('rooms.otherType')
+      const name =
+        (room.room_type_name && String(room.room_type_name).trim()) || t('rooms.other_type')
       rows.push({ kind: 'type-header', key: `th-${tid}`, title: name })
       prevTypeKey = tid
     }
@@ -308,42 +319,49 @@ const barLayouts = computed((): BarLayout[] => {
   const layouts: BarLayout[] = []
   const tops = roomTopOffsetById.value
   for (const e of props.entries) {
-    const rid = e.room_id
-    if (rid == null) continue
-    const rowTop = tops.get(rid)
-    if (rowTop === undefined) continue
-
-    const checkIn = new Date(e.check_in)
-    const checkOut = new Date(e.check_out)
+    const checkIn = new Date(e.stay.check_in)
+    const checkOut = new Date(e.stay.check_out)
     if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) continue
 
     const geom = barGeometry(checkIn, checkOut)
     if (!geom) continue
     const { left, width } = geom
-    const top = rowTop + 4
-    const fn = (e.guest_first_name || '').trim()
-    const ln = (e.guest_last_name || '').trim()
-    const label = [fn, ln].filter(Boolean).join(' ') || t('grid.barFallback')
-    layouts.push({
-      key: `${e.booking_id}-${rid}-${e.check_in}`,
-      bookingId: e.booking_id,
-      panelBooking: {
-        id: e.booking_id,
-        check_in: e.check_in,
-        check_out: e.check_out,
-        status: e.status,
-        guest: {
-          first_name: e.guest_first_name ?? '',
-          last_name: e.guest_last_name ?? '',
-        },
+
+    const fn = (e.guest.first_name || '').trim()
+    const ln = (e.guest.last_name || '').trim()
+    const label = [fn, ln].filter(Boolean).join(' ') || t('grid.bar_fallback')
+
+    const panel: GridPanelBooking = {
+      id: e.id,
+      status: e.status,
+      guest: {
+        first_name: e.guest.first_name ?? '',
+        last_name: e.guest.last_name ?? '',
       },
-      left,
-      width,
-      top,
-      label,
-      statusClass: statusClass(e.status),
-      ariaLabel: t('grid.barAria', { label, status: e.status }),
-    })
+      stay: {
+        check_in: e.stay.check_in,
+        check_out: e.stay.check_out,
+      },
+    }
+
+    for (const room of e.stay.rooms) {
+      const rid = room.room_id
+      if (rid == null) continue
+      const rowTop = tops.get(rid)
+      if (rowTop === undefined) continue
+      const top = rowTop + 4
+      layouts.push({
+        key: `${e.id}-${rid}-${e.stay.check_in}`,
+        bookingId: e.id,
+        panelBooking: panel,
+        left,
+        width,
+        top,
+        label,
+        statusClass: statusClass(e.status),
+        ariaLabel: t('grid.bar_aria', { label, status: e.status }),
+      })
+    }
   }
   return layouts
 })
@@ -372,8 +390,10 @@ function openBarMenuAt(x, y, bookingId, status) {
     let nx = state.x
     let ny = state.y
     const pad = 8
-    if (nx + rect.width > window.innerWidth - pad) nx = Math.max(pad, window.innerWidth - rect.width - pad)
-    if (ny + rect.height > window.innerHeight - pad) ny = Math.max(pad, window.innerHeight - rect.height - pad)
+    if (nx + rect.width > window.innerWidth - pad)
+      nx = Math.max(pad, window.innerWidth - rect.width - pad)
+    if (ny + rect.height > window.innerHeight - pad)
+      ny = Math.max(pad, window.innerHeight - rect.height - pad)
     if (nx < pad) nx = pad
     if (ny < pad) ny = pad
     barMenu.value = { ...state, x: nx, y: ny }
@@ -418,8 +438,10 @@ function openCellMenuAt(x, y, roomId, rangeFirst, rangeLast) {
     let nx = state.x
     let ny = state.y
     const pad = 8
-    if (nx + rect.width > window.innerWidth - pad) nx = Math.max(pad, window.innerWidth - rect.width - pad)
-    if (ny + rect.height > window.innerHeight - pad) ny = Math.max(pad, window.innerHeight - rect.height - pad)
+    if (nx + rect.width > window.innerWidth - pad)
+      nx = Math.max(pad, window.innerWidth - rect.width - pad)
+    if (ny + rect.height > window.innerHeight - pad)
+      ny = Math.max(pad, window.innerHeight - rect.height - pad)
     if (nx < pad) nx = pad
     if (ny < pad) ny = pad
     cellMenu.value = { ...state, x: nx, y: ny }
@@ -503,7 +525,7 @@ function goToNewBooking(roomId, firstDay, lastDay) {
 }
 
 function onDocumentPointerDown(event) {
-  const t = /** @type {Node | null} */ (event.target)
+  const t = /** @type {Node | null} */ event.target
   if (cellMenu.value) {
     const el = cellMenuEl.value
     if (!el?.contains(t)) closeCellMenu()

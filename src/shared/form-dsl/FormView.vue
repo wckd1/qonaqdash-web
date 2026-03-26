@@ -1,9 +1,6 @@
 <template>
   <div v-if="definition" :class="rootClass">
-    <LayoutRenderer
-      :node="definition"
-      :data="data"
-    />
+    <LayoutRenderer :node="definition" :data="data" />
   </div>
 </template>
 

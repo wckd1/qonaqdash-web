@@ -34,6 +34,5 @@ export interface GuestPickerAnchorContext {
   clearPickerAnchor: (el: HTMLElement | null) => void
 }
 
-export const guestPickerAnchorKey: InjectionKey<GuestPickerAnchorContext> = Symbol(
-  'guestPickerAnchor',
-)
+export const guestPickerAnchorKey: InjectionKey<GuestPickerAnchorContext> =
+  Symbol('guestPickerAnchor')

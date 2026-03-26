@@ -1,6 +1,6 @@
 <template>
   <header class="page-header">
-    <h1>{{ t('bookings.formSettingsTitle') }}</h1>
+    <h1>{{ t('bookings.form_settings_title') }}</h1>
     <div class="page-header-actions">
       <button type="button" class="btn-secondary" :disabled="loading || saving" @click="onReset">
         {{ t('common.reset') }}
@@ -13,7 +13,7 @@
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-if="saveError" class="error-message">{{ saveError }}</p>
-  <div v-else-if="loading" class="loading-state">{{ t('formSettings.loadingSchema') }}</div>
+  <div v-else-if="loading" class="loading-state">{{ t('form_settings.loading_schema') }}</div>
   <FormBuild
     v-else-if="formReady"
     :definition="definitionDraft"
@@ -52,8 +52,8 @@ function normalizeFormData(data: Record<string, unknown>): Record<string, unknow
   const next = JSON.parse(JSON.stringify(data ?? {}))
   if (!next.guest) next.guest = {}
   if (next.guest.id === undefined) next.guest.id = null
-  if (!next.booking) next.booking = { checkIn: '', checkOut: '', rooms: [] }
-  if (!Array.isArray(next.booking.rooms)) next.booking.rooms = []
+  if (!next.stay) next.stay = { check_in: '', check_out: '', rooms: [] }
+  if (!Array.isArray(next.stay.rooms)) next.stay.rooms = []
   return next
 }
 
@@ -66,7 +66,7 @@ async function loadForm() {
     formData.value = normalizeFormData(res.data ?? {})
     hasLoaded.value = true
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('formSettings.loadFailed')
+    loadError.value = formatUnknownApiError(err) || t('form_settings.load_failed')
     hasLoaded.value = false
   } finally {
     loading.value = false
@@ -90,9 +90,9 @@ async function onSave() {
     if (res.definition) definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     if (res.data) formData.value = normalizeFormData(res.data)
     bookingStore.replaceBookingFormTemplate(res)
-    success(t('formSettings.saved'))
+    success(t('form_settings.saved'))
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('formSettings.saveFailed')
+    const msg = formatUnknownApiError(err) || t('form_settings.save_failed')
     saveError.value = msg
     notifyError(msg)
   } finally {

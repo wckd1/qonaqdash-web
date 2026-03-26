@@ -1,24 +1,54 @@
-import type { FormNode } from './forms'
+import type { FormNode, FormRef } from './forms'
 import type { GuestFormFields } from './guests'
 
-/** List row from GET /api/bookings (guest display snake_case). */
-export interface BookingListItem {
-  id: string
-  guest_id: string
+/** Guest info nested in BookingItem (matches bookinghttp.BookingGuestInfo). */
+export interface BookingGuestInfo {
+  id?: string
+  first_name?: string
+  last_name?: string
+  email?: string
+  phone?: string
+}
+
+/** Room row nested in BookingItem.stay (matches bookinghttp.BookingRoomData). */
+export interface BookingRoomData {
+  room_type: string
+  room_type_label?: string
+  room_id?: string
+  room_id_label?: string
+}
+
+/** Stay data nested in BookingItem (matches bookinghttp.BookingStayData). */
+export interface BookingStayData {
   check_in: string
   check_out: string
+  rooms: BookingRoomData[]
+}
+
+/** Unified booking shape returned by ALL booking endpoints (matches bookinghttp.BookingItem). */
+export interface BookingItem {
+  id: string
   status: string
-  guest_name?: string
-  guest?: { first_name?: string; last_name?: string; email?: string }
+  _form?: FormRef
+  guest: BookingGuestInfo
+  stay: BookingStayData
+}
+
+/** Request body for POST/PUT /api/bookings (matches bookinghttp.BookingDataRequest). */
+export interface BookingDataRequest {
+  guest: BookingGuestInfo
+  stay: BookingStayData
 }
 
 /**
- * GET /api/bookings/:id — `{ guest, booking }` data only (no definition).
- * Merge with `GET /api/bookings/form?target=view|edit` on the client.
+ * GET /api/bookings/:id detail data for form merge.
+ * `status` / `id` are root-level BookingItem fields preserved for UI (lifecycle actions, edit guard).
  */
 export interface BookingDetailData {
   guest: Record<string, unknown>
-  booking: Record<string, unknown>
+  stay: Record<string, unknown>
+  status?: string
+  id?: string
 }
 
 /** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */
@@ -35,46 +65,23 @@ export interface BookingFormResponse {
   guest?: Record<string, unknown>
 }
 
-/** Row from GET /api/bookings/grid (one row per booking × room). */
-export interface BookingGridEntry {
-  booking_id: string
-  room_type_id: string
-  room_id: string | null
-  guest_id: string | null
-  guest_first_name?: string
-  guest_last_name?: string
-  check_in: string
-  check_out: string
-  status: string
-}
-
-/** Typical flat booking payload returned by lifecycle PUTs (check-in, cancel, …). */
-export interface BookingFlat {
-  id: string
-  guest_id: string
-  check_in: string
-  check_out: string
-  status: string
-  version?: number
-}
-
-/** One element of `booking.rooms`. */
+/** One element of `stay.rooms` in form data. */
 export interface BookingFormRoomRowFields {
-  roomType: string | null
-  roomID: string | null
+  room_type: string | null
+  room_id: string | null
 }
 
 export type BookingFormRoomRow = BookingFormRoomRowFields & { [key: string]: unknown }
 
-/** `booking` branch: check-in/out and room rows; API may add `status` and other keys. */
-export interface BookingFormBookingBranchFields {
-  checkIn: string
-  checkOut: string
+/** `stay` branch: check-in/out and room rows; API may add `status` and other keys. */
+export interface BookingFormStayBranchFields {
+  check_in: string
+  check_out: string
   rooms: BookingFormRoomRow[]
   status?: string
 }
 
-export type BookingFormBookingBranch = BookingFormBookingBranchFields & {
+export type BookingFormStayBranch = BookingFormStayBranchFields & {
   [key: string]: unknown
 }
 
@@ -88,7 +95,7 @@ export type BookingFormGuestData = GuestFormFields & {
 
 export interface BookingFormRootFields {
   guest: BookingFormGuestData
-  booking: BookingFormBookingBranch
+  stay: BookingFormStayBranch
 }
 
 export type BookingFormRootData = BookingFormRootFields & { [key: string]: unknown }
@@ -100,12 +107,20 @@ export type BookingFormRootDataPartial = Partial<BookingFormRootFields> & {
 /** Deep-cloned booking `data` during edit; validate before API. */
 export interface BookingFormDataDraft {
   guest?: Record<string, unknown>
-  booking?: Record<string, unknown>
+  stay?: Record<string, unknown>
   [key: string]: unknown
 }
 
-/** Create / update booking body: `{ guest, booking }` only (no top-level `id`). */
+/** Create / update booking body: `{ guest, stay }` only (no top-level `id`). */
 export type CreateBookingPayload = {
   guest: BookingFormGuestData
-  booking: BookingFormBookingBranch
+  stay: BookingFormStayBranch
+}
+
+/** Guest booking list item from GET /api/guests/:id/bookings (matches guesthttp.GuestBookingListItem). */
+export interface GuestBookingListItem {
+  id: string
+  status: string
+  guest: { id?: string; first_name?: string; last_name?: string }
+  stay: { check_in: string; check_out: string }
 }

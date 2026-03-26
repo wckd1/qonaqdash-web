@@ -1,5 +1,6 @@
 /**
- * Booking lifecycle: `data.booking.status` on merged booking form envelope (detail data + runtime form).
+ * Booking lifecycle: `data.status` on merged booking form envelope (detail data + runtime form).
+ * Status is a root-level BookingItem field, not nested under `stay`.
  *
  * @param {Record<string, unknown> | null | undefined} bookingResponse
  * @returns {string | undefined}
@@ -7,9 +8,8 @@
 export function getBookingStatusFromResponse(bookingResponse) {
   if (!bookingResponse || typeof bookingResponse !== 'object') return undefined
   const data = bookingResponse.data
-  const booking = data && typeof data === 'object' ? data.booking : undefined
-  if (booking && typeof booking === 'object' && booking.status != null && booking.status !== '') {
-    return String(booking.status)
+  if (data && typeof data === 'object' && data.status != null && data.status !== '') {
+    return String(data.status)
   }
   return undefined
 }

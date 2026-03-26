@@ -328,9 +328,9 @@ main.app-main > .section-placeholder {
 }
 
 /* Pico: remove default bottom margin on buttons (we control spacing in layout) */
-[type="button"],
-[type="reset"],
-[type="submit"] {
+[type='button'],
+[type='reset'],
+[type='submit'] {
   margin-bottom: 0;
 }
 
@@ -338,14 +338,11 @@ main.app-main > .section-placeholder {
  * Button typography: Pico defaults to font-size 1rem on buttons; app uses label scale everywhere
  * (same as .page-header actions and .btn-add-outline — see design.html Buttons).
  */
-main.app-main
-  :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
+main.app-main :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
 main.app-main input[type='file']::file-selector-button,
-main.auth-page
-  :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
+main.auth-page :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
 main.auth-page input[type='file']::file-selector-button,
-main.ds-page
-  :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
+main.ds-page :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']),
 .dialog :is(button, [type='submit'], [type='button'], [type='reset'], [role='button']) {
   font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
@@ -365,7 +362,7 @@ ul {
 }
 
 /* Pico: remove default bottom margin on form elements (we control spacing in layout) */
-input:not([type="checkbox"], [type="radio"]),
+input:not([type='checkbox'], [type='radio']),
 select,
 textarea {
   margin-bottom: 0;
@@ -377,7 +374,7 @@ nav li {
 }
 
 /* Form elements: our padding (12px vertical, 18px horizontal); inputs height = text + padding */
-input:not([type="checkbox"], [type="radio"]),
+input:not([type='checkbox'], [type='radio']),
 select,
 textarea {
   padding: var(--form-element-padding-vertical) var(--form-element-padding-horizontal);
@@ -385,7 +382,7 @@ textarea {
   font-size: var(--text-label-size);
   font-family: inherit;
 }
-input:not([type="checkbox"], [type="radio"]),
+input:not([type='checkbox'], [type='radio']),
 select {
   min-height: unset;
   line-height: 1.25;
@@ -418,7 +415,9 @@ main.app-main > search {
   width: auto;
   margin-bottom: 0;
   box-sizing: border-box;
-  transition: border-color var(--pico-transition), box-shadow var(--pico-transition);
+  transition:
+    border-color var(--pico-transition),
+    box-shadow var(--pico-transition);
 }
 main.app-main > search:focus-within {
   border-color: var(--pico-form-element-active-border-color);
@@ -1307,7 +1306,9 @@ main .action-toolbar__btn--cancel:hover:not(:disabled) {
   padding: var(--space-sm) var(--space-md);
   color: var(--sidebar-text);
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
   overflow: hidden;
   white-space: nowrap;
   border: none;
@@ -1391,7 +1392,9 @@ main .action-toolbar__btn--cancel:hover:not(:disabled) {
   border-radius: var(--radius-md);
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-group-trigger::marker {
@@ -1577,7 +1580,9 @@ main .action-toolbar__btn--cancel:hover:not(:disabled) {
   color: var(--sidebar-text);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
   white-space: nowrap;
 }
 
@@ -2081,7 +2086,10 @@ main .btn-room-type-action {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 main .btn-room-type-action:hover {
@@ -2109,7 +2117,10 @@ main .btn-add-room {
   border-radius: var(--radius-sm);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 main .btn-add-room:hover {

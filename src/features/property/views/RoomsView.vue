@@ -1,20 +1,33 @@
 <template>
   <header class="page-header">
     <h1>{{ t('nav.rooms') }}</h1>
-    <button type="button" class="btn-add-outline" @click="openAddTypeDialog" :aria-label="t('rooms.addTypeAria')">
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <button
+      type="button"
+      class="btn-add-outline"
+      @click="openAddTypeDialog"
+      :aria-label="t('rooms.add_type_aria')"
+    >
+      <svg
+        class="btn-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      {{ t('rooms.addType') }}
+      {{ t('rooms.add_type') }}
     </button>
   </header>
 
   <SearchBar
     v-if="roomTypes.length"
     v-model="searchQuery"
-    :placeholder="t('rooms.searchPlaceholder')"
-    :aria-label="t('rooms.searchAria')"
+    :placeholder="t('rooms.search_placeholder')"
+    :aria-label="t('rooms.search_aria')"
     :searching="searching"
   />
 
@@ -25,25 +38,36 @@
       <template v-else>
         <div v-if="!roomTypes.length && !searchQuery" class="empty-state-widget">
           <div class="empty-state-widget__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
               <path d="M2 20h20" />
               <path d="M14 12v.01" />
             </svg>
           </div>
-          <h3 class="empty-state-widget__title">{{ t('rooms.emptyTitle') }}</h3>
-          <p class="empty-state-widget__description">{{ t('rooms.emptyDescription') }}</p>
+          <h3 class="empty-state-widget__title">{{ t('rooms.empty_title') }}</h3>
+          <p class="empty-state-widget__description">{{ t('rooms.empty_description') }}</p>
           <div class="empty-state-widget__actions">
-            <button type="button" class="primary" @click="openAddTypeDialog">{{ t('rooms.addType') }}</button>
+            <button type="button" class="primary" @click="openAddTypeDialog">
+              {{ t('rooms.add_type') }}
+            </button>
           </div>
         </div>
-        <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">{{ t('rooms.emptySearch') }}</p>
+        <p v-else-if="!roomTypes.length && searchQuery" class="empty-state">
+          {{ t('rooms.empty_search') }}
+        </p>
         <div v-else class="accordion-list">
           <details
             v-for="rt in roomTypes"
             :key="rt.id"
             class="accordion"
-            :open="!!searchQuery"
+            :open="!!searchQuery || expandedTypes.has(rt.id)"
           >
             <summary class="accordion-header">
               <span class="accordion-title">
@@ -63,49 +87,62 @@
                   type="button"
                   class="btn-room-type-action btn-room-type-action--danger"
                   @click.stop="openRemoveTypeConfirm(rt)"
-                  :aria-label="t('rooms.removeTypeAria', { name: rt.name })"
+                  :aria-label="t('rooms.remove_type_aria', { name: rt.name })"
                 >
-                  {{ t('rooms.removeTypeFromCatalog') }}
+                  {{ t('rooms.remove_type_from_catalog') }}
                 </button>
                 <button
                   type="button"
                   class="btn-add-room"
                   @click.stop="openAddRoomDialog(rt)"
-                  :aria-label="t('rooms.addRoomAria', { name: rt.name })"
+                  :aria-label="t('rooms.add_room_aria', { name: rt.name })"
                 >
-                  <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg
+                    class="btn-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  {{ t('rooms.addRoom') }}
+                  {{ t('rooms.add_room') }}
                 </button>
               </div>
             </summary>
             <div class="accordion-body">
               <table v-if="roomsByType(rt.id).length" class="list-table room-table" role="grid">
-                  <thead>
-                    <tr>
-                      <th scope="col">{{ t('fields.number') }}</th>
-                      <th scope="col" class="col-status">{{ t('fields.status') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="room in roomsByType(rt.id)"
-                      :key="room.id"
-                      class="room-row"
-                      :class="{ 'room-row--selected': selectedRoom?.room?.id === room.id }"
-                      @click="openPanel(room, rt)"
-                    >
-                      <td :data-label="t('fields.number')">{{ room.number }}</td>
-                      <td :data-label="t('fields.status')" class="col-status">
-                        <span v-if="room.status" class="room-status-badge" :class="statusBadgeClass(room.status)">{{ roomStatusLabel(room.status) }}</span>
-                        <span v-else class="room-status-empty">—</span>
-                      </td>
-                    </tr>
-                  </tbody>
+                <thead>
+                  <tr>
+                    <th scope="col">{{ t('fields.number') }}</th>
+                    <th scope="col" class="col-status">{{ t('fields.status') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="room in roomsByType(rt.id)"
+                    :key="room.id"
+                    class="room-row"
+                    :class="{ 'room-row--selected': selectedRoom?.room?.id === room.id }"
+                    @click="openPanel(room, rt)"
+                  >
+                    <td :data-label="t('fields.number')">{{ room.number }}</td>
+                    <td :data-label="t('fields.status')" class="col-status">
+                      <span
+                        v-if="room.status"
+                        class="room-status-badge"
+                        :class="statusBadgeClass(room.status)"
+                        >{{ roomStatusLabel(room.status) }}</span
+                      >
+                      <span v-else class="room-status-empty">—</span>
+                    </td>
+                  </tr>
+                </tbody>
               </table>
-              <p v-else class="room-list-empty">{{ t('rooms.emptyInType') }}</p>
+              <p v-else class="room-list-empty">{{ t('rooms.empty_in_type') }}</p>
             </div>
           </details>
         </div>
@@ -113,30 +150,31 @@
     </div>
 
     <Transition name="slide-panel">
-      <aside
-        v-if="selectedRoom"
-        class="side-panel"
-        aria-labelledby="side-panel-title"
-      >
+      <aside v-if="selectedRoom" class="side-panel" aria-labelledby="side-panel-title">
         <div class="side-panel-header">
-          <h2 id="side-panel-title">{{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}</h2>
+          <h2 id="side-panel-title">
+            {{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}
+          </h2>
           <button
             type="button"
             class="side-panel-close"
-            :aria-label="t('common.closePanel')"
+            :aria-label="t('common.close_panel')"
             @click="closePanel"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
             </svg>
           </button>
         </div>
-        <div
-          class="action-toolbar"
-          role="toolbar"
-          :aria-label="t('rooms.panelToolbarAria')"
-        >
+        <div class="action-toolbar" role="toolbar" :aria-label="t('rooms.panel_toolbar_aria')">
           <template v-if="!roomPanelEditing">
             <button
               type="button"
@@ -149,10 +187,10 @@
               type="button"
               class="action-toolbar__btn action-toolbar__btn--cancel"
               :disabled="removeRoomSaving"
-              :aria-label="t('rooms.removeRoomAria', { number: selectedRoom.room?.number ?? '' })"
+              :aria-label="t('rooms.remove_room_aria', { number: selectedRoom.room?.number ?? '' })"
               @click="openRemoveRoomConfirm"
             >
-              {{ t('rooms.removeRoomFromCatalog') }}
+              {{ t('rooms.remove_room_from_catalog') }}
             </button>
           </template>
           <template v-else>
@@ -179,30 +217,44 @@
           <p v-if="roomPanelError" class="form-error">{{ roomPanelError }}</p>
           <template v-if="!roomPanelEditing">
             <dl class="side-panel-dl">
-              <dt>{{ t('fields.roomType') }}</dt>
+              <dt>{{ t('fields.room_type') }}</dt>
               <dd>{{ selectedRoom.roomType?.name ?? '—' }}</dd>
               <dt>{{ t('fields.status') }}</dt>
               <dd>
-                <span v-if="selectedRoom.room?.status" class="room-status-badge" :class="statusBadgeClass(selectedRoom.room.status)">{{ roomStatusLabel(selectedRoom.room.status) }}</span>
+                <span
+                  v-if="selectedRoom.room?.status"
+                  class="room-status-badge"
+                  :class="statusBadgeClass(selectedRoom.room.status)"
+                  >{{ roomStatusLabel(selectedRoom.room.status) }}</span
+                >
                 <span v-else>—</span>
               </dd>
             </dl>
           </template>
           <form v-else class="side-panel-edit-form" @submit.prevent="submitRoomEdit">
             <label>
-              {{ t('fields.roomNumber') }}
-              <input v-model="editRoomForm.number" type="text" required :disabled="roomSaveSaving" />
+              {{ t('fields.room_number') }}
+              <input
+                v-model="editRoomForm.number"
+                type="text"
+                required
+                :disabled="roomSaveSaving"
+              />
             </label>
             <label>
-              {{ t('fields.roomType') }}
+              {{ t('fields.room_type') }}
               <select v-model="editRoomForm.room_type_id" required :disabled="roomSaveSaving">
-                <option v-for="opt in roomTypes" :key="opt.id" :value="opt.id">{{ opt.name }}</option>
+                <option v-for="opt in roomTypes" :key="opt.id" :value="opt.id">
+                  {{ opt.name }}
+                </option>
               </select>
             </label>
             <label>
               {{ t('fields.status') }}
               <select v-model="editRoomForm.status" required :disabled="roomSaveSaving">
-                <option v-for="s in ROOM_STATUSES" :key="s" :value="s">{{ t(`rooms.roomStatus.${s}`) }}</option>
+                <option v-for="s in ROOM_STATUSES" :key="s" :value="s">
+                  {{ t(`rooms.room_status.${s}`) }}
+                </option>
               </select>
             </label>
           </form>
@@ -214,19 +266,35 @@
   <!-- Add room type dialog -->
   <div v-if="addTypeOpen" class="dialog-backdrop" @click.self="closeAddTypeDialog">
     <div class="dialog" role="dialog" aria-labelledby="add-type-title">
-      <h2 id="add-type-title">{{ t('rooms.addTypeTitle') }}</h2>
+      <h2 id="add-type-title">{{ t('rooms.add_type_title') }}</h2>
       <form @submit.prevent="submitAddType">
         <label>
           {{ t('fields.name') }}
-          <input v-model="addTypeForm.name" type="text" :placeholder="t('rooms.namePlaceholder')" required :disabled="addTypeSaving" />
+          <input
+            ref="addTypeNameRef"
+            v-model="addTypeForm.name"
+            type="text"
+            :placeholder="t('rooms.name_placeholder')"
+            required
+            :disabled="addTypeSaving"
+          />
         </label>
         <label>
           {{ t('fields.description') }} <span class="optional">{{ t('common.optional') }}</span>
-          <input v-model="addTypeForm.description" type="text" :placeholder="t('rooms.descPlaceholder')" :disabled="addTypeSaving" />
+          <input
+            v-model="addTypeForm.description"
+            type="text"
+            :placeholder="t('rooms.desc_placeholder')"
+            :disabled="addTypeSaving"
+          />
         </label>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" @click="closeAddTypeDialog">{{ t('common.cancel') }}</button>
-          <button type="submit" :aria-busy="addTypeSaving" :disabled="addTypeSaving">{{ t('common.add') }}</button>
+          <button type="button" class="btn-secondary" @click="closeAddTypeDialog">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="submit" :aria-busy="addTypeSaving" :disabled="addTypeSaving">
+            {{ t('common.add') }}
+          </button>
         </div>
       </form>
     </div>
@@ -235,20 +303,35 @@
   <!-- Edit room type dialog -->
   <div v-if="editTypeOpen" class="dialog-backdrop" @click.self="closeEditTypeDialog">
     <div class="dialog" role="dialog" aria-labelledby="edit-type-title">
-      <h2 id="edit-type-title">{{ t('rooms.editTypeTitle') }}</h2>
+      <h2 id="edit-type-title">{{ t('rooms.edit_type_title') }}</h2>
       <p v-if="editTypeError" class="form-error">{{ editTypeError }}</p>
       <form @submit.prevent="submitEditType">
         <label>
           {{ t('fields.name') }}
-          <input v-model="editTypeForm.name" type="text" :placeholder="t('rooms.namePlaceholder')" required :disabled="editTypeSaving" />
+          <input
+            v-model="editTypeForm.name"
+            type="text"
+            :placeholder="t('rooms.name_placeholder')"
+            required
+            :disabled="editTypeSaving"
+          />
         </label>
         <label>
           {{ t('fields.description') }} <span class="optional">{{ t('common.optional') }}</span>
-          <input v-model="editTypeForm.description" type="text" :placeholder="t('rooms.descPlaceholder')" :disabled="editTypeSaving" />
+          <input
+            v-model="editTypeForm.description"
+            type="text"
+            :placeholder="t('rooms.desc_placeholder')"
+            :disabled="editTypeSaving"
+          />
         </label>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" @click="closeEditTypeDialog">{{ t('common.cancel') }}</button>
-          <button type="submit" :aria-busy="editTypeSaving" :disabled="editTypeSaving">{{ t('common.save') }}</button>
+          <button type="button" class="btn-secondary" @click="closeEditTypeDialog">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="submit" :aria-busy="editTypeSaving" :disabled="editTypeSaving">
+            {{ t('common.save') }}
+          </button>
         </div>
       </form>
     </div>
@@ -257,15 +340,28 @@
   <!-- Add room dialog -->
   <div v-if="addRoomOpen" class="dialog-backdrop" @click.self="closeAddRoomDialog">
     <div class="dialog" role="dialog" aria-labelledby="add-room-title">
-      <h2 id="add-room-title">{{ t('rooms.addRoomTitle', { name: addRoomType?.name ?? '' }) }}</h2>
+      <h2 id="add-room-title">
+        {{ t('rooms.add_room_title', { name: addRoomType?.name ?? '' }) }}
+      </h2>
       <form @submit.prevent="submitAddRoom">
         <label>
-          {{ t('fields.roomNumber') }}
-          <input v-model="addRoomForm.number" type="text" :placeholder="t('rooms.numberPlaceholder')" required :disabled="addRoomSaving" />
+          {{ t('fields.room_number') }}
+          <input
+            ref="addRoomNumberRef"
+            v-model="addRoomForm.number"
+            type="text"
+            :placeholder="t('rooms.number_placeholder')"
+            required
+            :disabled="addRoomSaving"
+          />
         </label>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" @click="closeAddRoomDialog">{{ t('common.cancel') }}</button>
-          <button type="submit" :aria-busy="addRoomSaving" :disabled="addRoomSaving">{{ t('common.add') }}</button>
+          <button type="button" class="btn-secondary" @click="closeAddRoomDialog">
+            {{ t('common.cancel') }}
+          </button>
+          <button type="submit" :aria-busy="addRoomSaving" :disabled="addRoomSaving">
+            {{ t('common.add') }}
+          </button>
         </div>
       </form>
     </div>
@@ -279,11 +375,18 @@
       @click.self="closeRemoveTypeConfirm"
     >
       <div class="dialog" role="dialog" aria-modal="true" :aria-labelledby="removeTypeTitleId">
-        <h2 :id="removeTypeTitleId">{{ t('rooms.confirmRemoveTypeTitle') }}</h2>
+        <h2 :id="removeTypeTitleId">{{ t('rooms.confirm_remove_type_title') }}</h2>
         <p v-if="removeTypeError" class="form-error">{{ removeTypeError }}</p>
-        <p class="rooms-confirm-body">{{ t('rooms.confirmRemoveTypeBody', { name: removeTypeTarget?.name ?? '' }) }}</p>
+        <p class="rooms-confirm-body">
+          {{ t('rooms.confirm_remove_type_body', { name: removeTypeTarget?.name ?? '' }) }}
+        </p>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" :disabled="removeTypeSaving" @click="closeRemoveTypeConfirm">
+          <button
+            type="button"
+            class="btn-secondary"
+            :disabled="removeTypeSaving"
+            @click="closeRemoveTypeConfirm"
+          >
             {{ t('common.cancel') }}
           </button>
           <button
@@ -292,7 +395,7 @@
             :disabled="removeTypeSaving"
             @click="confirmRemoveType"
           >
-            {{ removeTypeSaving ? t('common.loading') : t('rooms.removeTypeFromCatalog') }}
+            {{ removeTypeSaving ? t('common.loading') : t('rooms.remove_type_from_catalog') }}
           </button>
         </div>
       </div>
@@ -307,11 +410,18 @@
       @click.self="closeRemoveRoomConfirm"
     >
       <div class="dialog" role="dialog" aria-modal="true" :aria-labelledby="removeRoomTitleId">
-        <h2 :id="removeRoomTitleId">{{ t('rooms.confirmRemoveRoomTitle') }}</h2>
+        <h2 :id="removeRoomTitleId">{{ t('rooms.confirm_remove_room_title') }}</h2>
         <p v-if="removeRoomError" class="form-error">{{ removeRoomError }}</p>
-        <p class="rooms-confirm-body">{{ t('rooms.confirmRemoveRoomBody', { number: removeRoomTarget?.number ?? '' }) }}</p>
+        <p class="rooms-confirm-body">
+          {{ t('rooms.confirm_remove_room_body', { number: removeRoomTarget?.number ?? '' }) }}
+        </p>
         <div class="dialog-actions">
-          <button type="button" class="btn-secondary" :disabled="removeRoomSaving" @click="closeRemoveRoomConfirm">
+          <button
+            type="button"
+            class="btn-secondary"
+            :disabled="removeRoomSaving"
+            @click="closeRemoveRoomConfirm"
+          >
             {{ t('common.cancel') }}
           </button>
           <button
@@ -320,7 +430,7 @@
             :disabled="removeRoomSaving"
             @click="confirmRemoveRoom"
           >
-            {{ removeRoomSaving ? t('common.loading') : t('rooms.removeRoomFromCatalog') }}
+            {{ removeRoomSaving ? t('common.loading') : t('rooms.remove_room_from_catalog') }}
           </button>
         </div>
       </div>
@@ -329,7 +439,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, useId } from 'vue'
+import { ref, nextTick, onMounted, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import SearchBar from '@/shared/components/SearchBar.vue'
@@ -379,6 +489,10 @@ const addRoomOpen = ref(false)
 const addRoomType = ref<RoomType | null>(null)
 const addRoomForm = ref({ number: '' })
 const addRoomSaving = ref(false)
+const expandedTypes = ref<Set<string>>(new Set())
+
+const addTypeNameRef = ref<HTMLInputElement | null>(null)
+const addRoomNumberRef = ref<HTMLInputElement | null>(null)
 
 const removeRoomConfirmOpen = ref(false)
 const removeRoomTarget = ref<Room | null>(null)
@@ -405,7 +519,7 @@ function closePanel() {
 function roomStatusLabel(status) {
   if (!status) return '—'
   const s = String(status)
-  if (ROOM_STATUSES.includes(s)) return t(`rooms.roomStatus.${s}`)
+  if (ROOM_STATUSES.includes(s)) return t(`rooms.room_status.${s}`)
   return s
 }
 
@@ -458,7 +572,7 @@ async function submitRoomEdit() {
     selectedRoom.value = { room: updated, roomType: rt }
     roomPanelEditing.value = false
   } catch (err: unknown) {
-    roomPanelError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
+    roomPanelError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
     roomSaveSaving.value = false
   }
@@ -491,7 +605,7 @@ async function confirmRemoveRoom() {
     }
     closeRemoveRoomConfirm()
   } catch (err: unknown) {
-    removeRoomError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
+    removeRoomError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
     removeRoomSaving.value = false
   }
@@ -500,6 +614,7 @@ async function confirmRemoveRoom() {
 function openAddTypeDialog() {
   addTypeForm.value = { name: '', description: '' }
   addTypeOpen.value = true
+  nextTick(() => addTypeNameRef.value?.focus())
 }
 
 function closeAddTypeDialog() {
@@ -510,7 +625,11 @@ async function submitAddType() {
   if (!addTypeForm.value.name?.trim()) return
   addTypeSaving.value = true
   try {
-    await store.createRoomType(addTypeForm.value.name.trim(), addTypeForm.value.description?.trim() || '')
+    const created = await store.createRoomType(
+      addTypeForm.value.name.trim(),
+      addTypeForm.value.description?.trim() || '',
+    )
+    expandedTypes.value.add(created.id)
     closeAddTypeDialog()
   } catch {
     // Error surfaced by API client
@@ -545,7 +664,7 @@ async function submitEditType() {
     closeEditTypeDialog()
     syncSelectedRoomFromStore()
   } catch (err: unknown) {
-    editTypeError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
+    editTypeError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
     editTypeSaving.value = false
   }
@@ -576,7 +695,7 @@ async function confirmRemoveType() {
     }
     closeRemoveTypeConfirm()
   } catch (err: unknown) {
-    removeTypeError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
+    removeTypeError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
     removeTypeSaving.value = false
   }
@@ -586,6 +705,7 @@ function openAddRoomDialog(rt: RoomType) {
   addRoomType.value = rt
   addRoomForm.value = { number: '' }
   addRoomOpen.value = true
+  nextTick(() => addRoomNumberRef.value?.focus())
 }
 
 function closeAddRoomDialog() {
@@ -595,9 +715,11 @@ function closeAddRoomDialog() {
 
 async function submitAddRoom() {
   if (!addRoomType.value || !addRoomForm.value.number?.trim()) return
+  const typeId = addRoomType.value.id
   addRoomSaving.value = true
   try {
-    await store.createRoom(addRoomType.value.id, addRoomForm.value.number.trim())
+    await store.createRoom(typeId, addRoomForm.value.number.trim())
+    expandedTypes.value.add(typeId)
     closeAddRoomDialog()
   } catch {
     // Error surfaced by API client
@@ -643,7 +765,7 @@ async function load(params: { q?: string } = {}, isInitial = false) {
     await store.fetchRoomTypes(params)
     await store.fetchRooms(params)
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('rooms.loadFailed')
+    loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
     initialLoading.value = false
     searching.value = false

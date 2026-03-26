@@ -1,6 +1,6 @@
 <template>
   <header class="page-header">
-    <h1>{{ pageTitle }}</h1>
+    <h1>{{ page_title }}</h1>
     <div v-if="bookingId && bookingForm && !editing" class="page-header-actions">
       <button v-if="canEdit" type="button" class="btn-secondary" @click="startEdit">
         {{ t('common.edit') }}
@@ -25,8 +25,8 @@
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-else-if="notFound" class="error-message">
-    {{ t('bookings.notFound') }}
-    <router-link to="/bookings" class="inline-link">{{ t('bookings.backToList') }}</router-link>
+    {{ t('bookings.not_found') }}
+    <router-link to="/bookings" class="inline-link">{{ t('bookings.back_to_list') }}</router-link>
   </p>
   <p v-else-if="concurrentError" class="error-message">
     {{ concurrentError }}
@@ -34,11 +34,7 @@
   </p>
   <template v-else-if="currentBooking">
     <template v-if="bookingForm">
-      <FormView
-        v-if="!editing"
-        :definition="bookingForm.definition"
-        :data="bookingForm.data"
-      />
+      <FormView v-if="!editing" :definition="bookingForm.definition" :data="bookingForm.data" />
       <template v-else>
         <FormEdit
           :definition="bookingForm.definition"
@@ -48,7 +44,7 @@
         />
       </template>
     </template>
-    <p v-else class="section-placeholder">{{ t('bookings.detailsLoading') }}</p>
+    <p v-else class="section-placeholder">{{ t('bookings.details_loading') }}</p>
   </template>
   <div v-else class="loading-state">{{ t('common.loading') }}</div>
 </template>
@@ -111,7 +107,7 @@ const canEdit = computed(() => {
   return bookingStatusAllowsEdit(status)
 })
 
-/** Merged runtime form + GET /api/bookings/:id `{ guest, booking }` data. */
+/** Merged runtime form + GET /api/bookings/:id `{ guest, stay }` data. */
 const bookingForm = computed(() => normalizeBookingFormResponse(currentBooking.value ?? null))
 
 /** Title line from FormResponse (data.guest) or flat Booking (guest). */
@@ -122,18 +118,18 @@ const guestDisplayName = computed(() => {
   const flatGuest = b.guest as Record<string, unknown> | undefined
   const g = (data.guest as Record<string, unknown> | undefined) ?? flatGuest
   if (!g) return ''
-  const first = (g.firstName ?? g.first_name ?? '') as string
-  const last = (g.lastName ?? g.last_name ?? '') as string
+  const first = (g.first_name ?? '') as string
+  const last = (g.last_name ?? '') as string
   const parts = [first, last].filter(Boolean)
   const email = g.email
   return parts.length ? parts.join(' ') : ((typeof email === 'string' ? email : '') ?? '')
 })
 
-const pageTitle = computed(() => {
+const page_title = computed(() => {
   void locale.value
-  if (!currentBooking.value) return t('pageTitle.booking')
+  if (!currentBooking.value) return t('page_title.booking')
   const name = guestDisplayName.value
-  return name ? t('pageTitle.bookingWithGuest', { name }) : t('pageTitle.booking')
+  return name ? t('page_title.booking_with_guest', { name }) : t('page_title.booking')
 })
 
 async function load() {
@@ -149,18 +145,21 @@ async function load() {
       store.clearCurrentBooking()
       notFound.value = true
     } else {
-      loadError.value = formatUnknownApiError(err) || t('bookings.detailLoadFailed')
+      loadError.value = formatUnknownApiError(err) || t('bookings.detail_load_failed')
     }
   }
 }
 
 watch(editing, (isEdit) => {
   if (isEdit && bookingForm.value) {
-    editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {})) as BookingFormDataDraft
+    editFormData.value = JSON.parse(
+      JSON.stringify(bookingForm.value.data ?? {}),
+    ) as BookingFormDataDraft
     if (!editFormData.value.guest) editFormData.value.guest = {}
     if (editFormData.value.guest.id === undefined) editFormData.value.guest.id = null
-    if (!editFormData.value.booking) editFormData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
-    if (!Array.isArray(editFormData.value.booking.rooms)) editFormData.value.booking.rooms = []
+    if (!editFormData.value.stay)
+      editFormData.value.stay = { check_in: '', check_out: '', rooms: [] }
+    if (!Array.isArray(editFormData.value.stay.rooms)) editFormData.value.stay.rooms = []
     errorsMap.value = {}
   }
 })
@@ -168,7 +167,7 @@ watch(editing, (isEdit) => {
 watch(
   () =>
     editing.value
-      ? [editFormData.value?.booking?.checkIn, editFormData.value?.booking?.checkOut]
+      ? [editFormData.value?.stay?.check_in, editFormData.value?.stay?.check_out]
       : [null, null],
   async ([checkIn, checkOut]) => {
     if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
@@ -213,11 +212,14 @@ async function startEdit() {
 function cancelEdit() {
   editing.value = false
   if (bookingForm.value) {
-    editFormData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {})) as BookingFormDataDraft
+    editFormData.value = JSON.parse(
+      JSON.stringify(bookingForm.value.data ?? {}),
+    ) as BookingFormDataDraft
     if (!editFormData.value.guest) editFormData.value.guest = {}
     if (editFormData.value.guest.id === undefined) editFormData.value.guest.id = null
-    if (!editFormData.value.booking) editFormData.value.booking = { checkIn: '', checkOut: '', rooms: [] }
-    if (!Array.isArray(editFormData.value.booking.rooms)) editFormData.value.booking.rooms = []
+    if (!editFormData.value.stay)
+      editFormData.value.stay = { check_in: '', check_out: '', rooms: [] }
+    if (!Array.isArray(editFormData.value.stay.rooms)) editFormData.value.stay.rooms = []
   }
 }
 
@@ -227,10 +229,13 @@ async function onSave() {
   concurrentError.value = ''
   const forValidate = JSON.parse(JSON.stringify(editFormData.value))
   delete forValidate.status
-  if (forValidate.booking && typeof forValidate.booking === 'object') {
-    delete forValidate.booking.status
+  if (forValidate.stay && typeof forValidate.stay === 'object') {
+    delete forValidate.stay.status
   }
-  const { valid, errorsMap: clientErrors } = validateFormData(bookingForm.value?.definition, forValidate)
+  const { valid, errorsMap: clientErrors } = validateFormData(
+    bookingForm.value?.definition,
+    forValidate,
+  )
   if (!valid) {
     errorsMap.value = clientErrors
     scrollToFirstFormError()
@@ -241,18 +246,17 @@ async function onSave() {
     const payload = JSON.parse(JSON.stringify(editFormData.value))
     delete payload.id
     delete payload.status
-    if (payload.booking && typeof payload.booking === 'object') {
-      delete payload.booking.status
+    if (payload.stay && typeof payload.stay === 'object') {
+      delete payload.stay.status
     }
     await store.updateBooking(bookingId.value, payload as CreateBookingPayload)
     editing.value = false
   } catch (err: unknown) {
     if (httpErrorResponse(err)?.status === 409) {
-      concurrentError.value =
-        formatUnknownApiError(err) || t('bookings.concurrent')
+      concurrentError.value = formatUnknownApiError(err) || t('bookings.concurrent')
       await load()
     } else {
-      const msg = formatUnknownApiError(err) || t('bookings.saveFailed')
+      const msg = formatUnknownApiError(err) || t('bookings.save_failed')
       const serverErrors = httpErrorData(err)?.errors
       errorsMap.value =
         serverErrors && typeof serverErrors === 'object'
@@ -265,9 +269,9 @@ async function onSave() {
 }
 
 watch(
-  [pageTitle, locale],
+  [page_title, locale],
   () => {
-    document.title = formatDocumentTitle(pageTitle.value)
+    document.title = formatDocumentTitle(page_title.value)
   },
   { immediate: true },
 )

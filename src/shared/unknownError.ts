@@ -1,8 +1,10 @@
 /** `response.data` object when present. */
-export function httpErrorData(err: unknown): {
-  error?: unknown
-  errors?: Record<string, unknown>
-} | undefined {
+export function httpErrorData(err: unknown):
+  | {
+      error?: unknown
+      errors?: Record<string, unknown>
+    }
+  | undefined {
   const d = httpErrorResponse(err)?.data
   if (d && typeof d === 'object') return d as { error?: unknown; errors?: Record<string, unknown> }
   return undefined

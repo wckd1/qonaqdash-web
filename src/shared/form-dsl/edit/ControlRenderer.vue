@@ -1,88 +1,88 @@
 <template>
   <template v-if="!nodeState.hidden">
-  <template v-if="node.type === 'array'">
-    <div class="form-edit-control form-edit-control--full-width">
-      <ArrayRenderer
-        :node="node"
-        :data="data"
-        :full-data="fullData"
-        :errors-map="errorsMap"
-        :disabled="branchDisabled"
-        :bind-prefix="bindPrefix"
-        @update:data="emit('update:data', $event)"
-      />
-    </div>
-  </template>
-
-  <template v-else-if="node.type === 'button'">
-    <div class="form-edit-control form-edit-control--full-width form-edit-control--action">
-      <button
-        type="button"
-        class="form-edit-control__action-btn"
-        :disabled="branchDisabled"
-        @click="onButtonClick"
-      >
-        {{ buttonLabel }}
-      </button>
-    </div>
-  </template>
-
-  <template v-else>
-    <div class="form-edit-control">
-      <label :for="inputId">{{ label }}</label>
-      <div class="form-edit-control__input-wrap">
-        <template v-if="node.type === 'checkbox'">
-          <input
-            :id="inputId"
-            type="checkbox"
-            :checked="!!localValue"
-            :disabled="effectiveDisabled"
-            @change="onCheckboxChange"
-          />
-        </template>
-        <select
-          v-else-if="isSelect"
-          :id="inputId"
-          :value="selectValueForInput"
-          :disabled="effectiveDisabled"
-          @change="onSelectChange"
-        >
-          <option
-            v-for="opt in selectOptions"
-            :key="String(opt.value)"
-            :value="opt.value === null || opt.value === undefined ? '' : opt.value"
-            :disabled="opt.disabled"
-          >
-            {{ opt.label ?? String(opt.value ?? '') }}
-          </option>
-        </select>
-        <textarea
-          v-else-if="node.type === 'textarea'"
-          :id="inputId"
-          :value="inputDisplayValue"
-          :disabled="effectiveDisabled"
-          :placeholder="placeholder"
-          autocomplete="off"
-          @input="onInput"
-          @focus="onTextInputFocus"
-          @blur="onTextInputBlur"
+    <template v-if="node.type === 'array'">
+      <div class="form-edit-control form-edit-control--full-width">
+        <ArrayRenderer
+          :node="node"
+          :data="data"
+          :full-data="fullData"
+          :errors-map="errorsMap"
+          :disabled="branchDisabled"
+          :bind-prefix="bindPrefix"
+          @update:data="emit('update:data', $event)"
         />
-        <input
-          v-else
-          :id="inputId"
-          :value="inputDisplayValue"
-          :type="inputType"
-          :disabled="effectiveDisabled"
-          :placeholder="placeholder"
-          autocomplete="off"
-          @input="onInput"
-          @focus="onTextInputFocus"
-          @blur="onTextInputBlur"
-        />
-        <p v-if="errorMessage" class="form-field-error">{{ errorMessage }}</p>
       </div>
-    </div>
-  </template>
+    </template>
+
+    <template v-else-if="node.type === 'button'">
+      <div class="form-edit-control form-edit-control--full-width form-edit-control--action">
+        <button
+          type="button"
+          class="form-edit-control__action-btn"
+          :disabled="branchDisabled"
+          @click="onButtonClick"
+        >
+          {{ buttonLabel }}
+        </button>
+      </div>
+    </template>
+
+    <template v-else>
+      <div class="form-edit-control">
+        <label :for="inputId">{{ label }}</label>
+        <div class="form-edit-control__input-wrap">
+          <template v-if="node.type === 'checkbox'">
+            <input
+              :id="inputId"
+              type="checkbox"
+              :checked="!!localValue"
+              :disabled="effectiveDisabled"
+              @change="onCheckboxChange"
+            />
+          </template>
+          <select
+            v-else-if="isSelect"
+            :id="inputId"
+            :value="selectValueForInput"
+            :disabled="effectiveDisabled"
+            @change="onSelectChange"
+          >
+            <option
+              v-for="opt in selectOptions"
+              :key="String(opt.value)"
+              :value="opt.value === null || opt.value === undefined ? '' : opt.value"
+              :disabled="opt.disabled"
+            >
+              {{ opt.label ?? String(opt.value ?? '') }}
+            </option>
+          </select>
+          <textarea
+            v-else-if="node.type === 'textarea'"
+            :id="inputId"
+            :value="inputDisplayValue"
+            :disabled="effectiveDisabled"
+            :placeholder="placeholder"
+            autocomplete="off"
+            @input="onInput"
+            @focus="onTextInputFocus"
+            @blur="onTextInputBlur"
+          />
+          <input
+            v-else
+            :id="inputId"
+            :value="inputDisplayValue"
+            :type="inputType"
+            :disabled="effectiveDisabled"
+            :placeholder="placeholder"
+            autocomplete="off"
+            @input="onInput"
+            @focus="onTextInputFocus"
+            @blur="onTextInputBlur"
+          />
+          <p v-if="errorMessage" class="form-field-error">{{ errorMessage }}</p>
+        </div>
+      </div>
+    </template>
   </template>
 </template>
 
@@ -151,9 +151,13 @@ const valuePath = computed(() => {
 })
 
 const label = computed(() => resolveFormCatalogString(inputNode.value.label ?? ''))
-const buttonLabel = computed(() => resolveFormCatalogString((props.node as FormButtonNode).label ?? ''))
+const buttonLabel = computed(() =>
+  resolveFormCatalogString((props.node as FormButtonNode).label ?? ''),
+)
 const inputId = computed(() => `form-edit-${fullBind.value || 'ctrl'}`)
-const placeholder = computed(() => resolveFormCatalogString((props.node as FormInputNode).options?.placeholder ?? ''))
+const placeholder = computed(() =>
+  resolveFormCatalogString((props.node as FormInputNode).options?.placeholder ?? ''),
+)
 
 const localValue = computed({
   get() {
@@ -169,7 +173,7 @@ const localValue = computed({
 const inputDisplayValue = computed(() => {
   const val = localValue.value
   const n = props.node
-  if ((n.type === 'datetime') && val != null && typeof val === 'string') {
+  if (n.type === 'datetime' && val != null && typeof val === 'string') {
     return isoToDatetimeLocal(val) ?? ''
   }
   if (n.type === 'date' && val != null && typeof val === 'string') {
@@ -219,13 +223,13 @@ function executeActions(actions: FormActionStep[]) {
     const actionPath = bindToPath(action.bind)
     if (!actionPath.length) continue
     switch (action.type) {
-      case 'setValue':
+      case 'set_value':
         setValueByPath(next, actionPath, action.value)
         break
-      case 'clearValue':
+      case 'clear_value':
         setValueByPath(next, actionPath, null)
         break
-      case 'toggleValue': {
+      case 'toggle_value': {
         const cur = getValueByPath(next, actionPath)
         setValueByPath(next, actionPath, !cur)
         break
@@ -291,16 +295,16 @@ function roomTypeSelectionChanged(prev: unknown, next: unknown): boolean {
 }
 
 function applyRoomsRowRoomTypeSelect(newVal: unknown) {
-  const prev = (props.data as Record<string, unknown>)?.roomType
+  const prev = (props.data as Record<string, unknown>)?.room_type
   if (!roomTypeSelectionChanged(prev, newVal)) {
     setLocalValue(newVal)
     return
   }
   const nextRow = JSON.parse(JSON.stringify(props.data))
   setValueByPath(nextRow, valuePath.value, newVal)
-  nextRow.roomID = null
-  delete nextRow.roomID_label
-  delete nextRow.roomType_label
+  nextRow.room_id = null
+  delete nextRow.room_id_label
+  delete nextRow.room_type_label
   emit('update:data', nextRow)
 }
 
@@ -367,25 +371,25 @@ const participatesInGuestPicker = computed(() => {
 const isRoomIDInRoomsArray = computed(() => {
   const bind = (inputNode.value as { bind?: string }).bind ?? ''
   return (
-    bind === 'roomID' &&
+    bind === 'room_id' &&
     props.arrayItemIndex !== undefined &&
-    Array.isArray((props.fullData?.booking as Record<string, unknown> | undefined)?.rooms)
+    Array.isArray((props.fullData?.stay as Record<string, unknown> | undefined)?.rooms)
   )
 })
 
 const isRoomTypeInRoomsArray = computed(() => {
   const bind = (inputNode.value as { bind?: string }).bind ?? ''
   return (
-    bind === 'roomType' &&
+    bind === 'room_type' &&
     props.arrayItemIndex !== undefined &&
-    Array.isArray((props.fullData?.booking as Record<string, unknown> | undefined)?.rooms)
+    Array.isArray((props.fullData?.stay as Record<string, unknown> | undefined)?.rooms)
   )
 })
 
 const effectiveDisabled = computed(() => {
   if (branchDisabled.value) return true
   if (!isRoomIDInRoomsArray.value) return false
-  const rt = (props.data as Record<string, unknown>)?.roomType
+  const rt = (props.data as Record<string, unknown>)?.room_type
   return rt == null || rt === ''
 })
 
@@ -395,7 +399,7 @@ const selectOptions = computed((): FormSelectItem[] => {
   const items = selectNode.items ?? []
 
   if (isRoomIDInRoomsArray.value) {
-    const rt = (props.data as Record<string, unknown>)?.roomType
+    const rt = (props.data as Record<string, unknown>)?.room_type
     const roomTypeUnset = rt == null || rt === ''
     if (roomTypeUnset) {
       return items
@@ -407,7 +411,10 @@ const selectOptions = computed((): FormSelectItem[] => {
     }
     if (availableRooms?.value?.length) {
       const nullOpt = items.filter((o) => o.value == null)
-      const merged = buildRoomSelectItemsFromRooms(availableRooms.value, nullOpt.length ? nullOpt : undefined)
+      const merged = buildRoomSelectItemsFromRooms(
+        availableRooms.value,
+        nullOpt.length ? nullOpt : undefined,
+      )
       return getFilteredRoomSelectOptions(
         props.fullData,
         props.data as Record<string, unknown>,

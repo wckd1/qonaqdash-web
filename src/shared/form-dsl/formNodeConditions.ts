@@ -1,5 +1,5 @@
 /**
- * FormDSL condition evaluator: visibleWhen / hiddenWhen / enabledWhen / disabledWhen.
+ * FormDSL condition evaluator: visible_when / hidden_when / enabled_when / disabled_when.
  */
 
 import type { FormCondition, FormConditionOrArray } from '@/shared/types/forms'
@@ -17,14 +17,14 @@ function evaluateSingleCondition(cond: FormCondition, data: Record<string, unkno
   if ('equals' in cond) {
     return value === cond.equals
   }
-  if ('notEquals' in cond) {
-    return value !== cond.notEquals
+  if ('not_equals' in cond) {
+    return value !== cond.not_equals
   }
   if ('in' in cond && Array.isArray(cond.in)) {
     return cond.in.includes(value)
   }
-  if ('notIn' in cond && Array.isArray(cond.notIn)) {
-    return !cond.notIn.includes(value)
+  if ('not_in' in cond && Array.isArray(cond.not_in)) {
+    return !cond.not_in.includes(value)
   }
 
   return true
@@ -34,7 +34,10 @@ function evaluateSingleCondition(cond: FormCondition, data: Record<string, unkno
  * Evaluate condition(s) — single or array (logical AND).
  * Returns `true` when all conditions pass.
  */
-function evaluateConditions(conditions: FormConditionOrArray | undefined, data: Record<string, unknown>): boolean {
+function evaluateConditions(
+  conditions: FormConditionOrArray | undefined,
+  data: Record<string, unknown>,
+): boolean {
   if (conditions == null) return true
   if (Array.isArray(conditions)) {
     return conditions.every((c) => evaluateSingleCondition(c, data))
@@ -50,16 +53,19 @@ export interface NodeState {
 /**
  * Evaluate visibility and interactivity state for a FormDSL node.
  *
- * Priority: `hiddenWhen` overrides `visibleWhen`; `disabledWhen` overrides `enabledWhen`.
+ * Priority: `hidden_when` overrides `visible_when`; `disabled_when` overrides `enabled_when`.
  */
 export function evaluateNodeState(
-  node: {
-    visibleWhen?: FormConditionOrArray
-    hiddenWhen?: FormConditionOrArray
-    enabledWhen?: FormConditionOrArray
-    disabledWhen?: FormConditionOrArray
-    options?: { hidden?: boolean }
-  } | undefined | null,
+  node:
+    | {
+        visible_when?: FormConditionOrArray
+        hidden_when?: FormConditionOrArray
+        enabled_when?: FormConditionOrArray
+        disabled_when?: FormConditionOrArray
+        options?: { hidden?: boolean }
+      }
+    | undefined
+    | null,
   data: Record<string, unknown>,
 ): NodeState {
   if (!node) return { hidden: false, disabled: false }
@@ -69,20 +75,20 @@ export function evaluateNodeState(
   }
 
   let hidden = false
-  if (node.visibleWhen != null) {
-    hidden = !evaluateConditions(node.visibleWhen, data)
+  if (node.visible_when != null) {
+    hidden = !evaluateConditions(node.visible_when, data)
   }
-  if (node.hiddenWhen != null) {
-    const shouldHide = evaluateConditions(node.hiddenWhen, data)
+  if (node.hidden_when != null) {
+    const shouldHide = evaluateConditions(node.hidden_when, data)
     if (shouldHide) hidden = true
   }
 
   let disabled = false
-  if (node.enabledWhen != null) {
-    disabled = !evaluateConditions(node.enabledWhen, data)
+  if (node.enabled_when != null) {
+    disabled = !evaluateConditions(node.enabled_when, data)
   }
-  if (node.disabledWhen != null) {
-    const shouldDisable = evaluateConditions(node.disabledWhen, data)
+  if (node.disabled_when != null) {
+    const shouldDisable = evaluateConditions(node.disabled_when, data)
     if (shouldDisable) disabled = true
   }
 

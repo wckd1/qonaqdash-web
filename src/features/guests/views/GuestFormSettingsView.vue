@@ -1,6 +1,6 @@
 <template>
   <header class="page-header">
-    <h1>{{ t('guests.formSettingsTitle') }}</h1>
+    <h1>{{ t('guests.form_settings_title') }}</h1>
     <div class="page-header-actions">
       <button type="button" class="btn-secondary" :disabled="loading || saving" @click="onReset">
         {{ t('common.reset') }}
@@ -13,7 +13,7 @@
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-if="saveError" class="error-message">{{ saveError }}</p>
-  <div v-else-if="loading" class="loading-state">{{ t('formSettings.loadingSchema') }}</div>
+  <div v-else-if="loading" class="loading-state">{{ t('form_settings.loading_schema') }}</div>
   <FormBuild
     v-else-if="formReady"
     :definition="definitionDraft"
@@ -57,7 +57,7 @@ async function loadForm() {
     formData.value = JSON.parse(JSON.stringify(res.data ?? {}))
     hasLoaded.value = true
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('formSettings.loadFailed')
+    loadError.value = formatUnknownApiError(err) || t('form_settings.load_failed')
     hasLoaded.value = false
   } finally {
     loading.value = false
@@ -81,9 +81,9 @@ async function onSave() {
     if (res.definition) definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     if (res.data) formData.value = JSON.parse(JSON.stringify(res.data))
     guestStore.replaceGuestFormTemplate(res)
-    success(t('formSettings.saved'))
+    success(t('form_settings.saved'))
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('formSettings.saveFailed')
+    const msg = formatUnknownApiError(err) || t('form_settings.save_failed')
     saveError.value = msg
     notifyError(msg)
   } finally {

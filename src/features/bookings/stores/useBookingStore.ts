@@ -3,13 +3,13 @@ import { ref } from 'vue'
 import { type FormTemplate, snapshotForm } from '@/shared/forms/formSnapshot'
 import type {
   BookingFormResponse,
-  BookingListItem,
+  BookingItem,
   CreateBookingPayload,
 } from '@/features/bookings/api'
 import * as bookingsApi from '@/features/bookings/api'
 
 export const useBookingStore = defineStore('bookings', () => {
-  const bookings = ref<BookingListItem[]>([])
+  const bookings = ref<BookingItem[]>([])
   const currentBooking = ref<BookingFormResponse | null>(null)
   const currentBookingId = ref<string | null>(null)
 

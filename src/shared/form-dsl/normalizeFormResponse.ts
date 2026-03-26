@@ -17,7 +17,9 @@ export function overlayTemplateDataFromPayload(
   if (!apiPayload || typeof apiPayload !== 'object') return base
 
   const src =
-    apiPayload.data != null && typeof apiPayload.data === 'object' && !Array.isArray(apiPayload.data)
+    apiPayload.data != null &&
+    typeof apiPayload.data === 'object' &&
+    !Array.isArray(apiPayload.data)
       ? (apiPayload.data as Record<string, unknown>)
       : apiPayload
 
@@ -27,7 +29,11 @@ export function overlayTemplateDataFromPayload(
       continue
     }
     const snake = key.replace(/[A-Z]/g, (ch) => `_${ch.toLowerCase()}`)
-    if (snake !== key && Object.prototype.hasOwnProperty.call(src, snake) && src[snake] !== undefined) {
+    if (
+      snake !== key &&
+      Object.prototype.hasOwnProperty.call(src, snake) &&
+      src[snake] !== undefined
+    ) {
       base[key] = src[snake]
     }
   }

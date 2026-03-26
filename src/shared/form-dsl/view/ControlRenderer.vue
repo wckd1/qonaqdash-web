@@ -1,21 +1,15 @@
 <template>
   <template v-if="!nodeState.hidden">
-  <div
-    v-if="node.type === 'array'"
-    class="form-view-control--full-width"
-  >
-    <ArrayRenderer
-      :node="node"
-      :data="data"
-    />
-  </div>
+    <div v-if="node.type === 'array'" class="form-view-control--full-width">
+      <ArrayRenderer :node="node" :data="data" />
+    </div>
 
-  <template v-else-if="node.type === 'button'" />
+    <template v-else-if="node.type === 'button'" />
 
-  <template v-else>
-    <span class="form-view-control__label">{{ label }}:</span>
-    <span class="form-view-control__value">{{ displayValue }}</span>
-  </template>
+    <template v-else>
+      <span class="form-view-control__label">{{ label }}:</span>
+      <span class="form-view-control__value">{{ displayValue }}</span>
+    </template>
   </template>
 </template>
 
@@ -49,9 +43,7 @@ const fullBind = computed(() => {
 
 const path = computed(() => bindToPath(fullBind.value))
 
-const label = computed(() =>
-  resolveFormCatalogString(inputNode.value.label ?? ''),
-)
+const label = computed(() => resolveFormCatalogString(inputNode.value.label ?? ''))
 
 const rawValue = computed(() => getValueByPath(props.data, path.value))
 
@@ -74,7 +66,12 @@ const displayValue = computed(() => {
     return String(val ?? '')
   }
 
-  if ((n.type === 'datetime' || n.type === 'date') && val != null && typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
+  if (
+    (n.type === 'datetime' || n.type === 'date') &&
+    val != null &&
+    typeof val === 'string' &&
+    val.match(/^\d{4}-\d{2}-\d{2}/)
+  ) {
     const format = n.type === 'datetime' ? 'date-time' : 'date'
     return formatDateTime(val, undefined, { type: format })
   }

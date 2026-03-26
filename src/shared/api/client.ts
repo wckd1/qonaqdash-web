@@ -74,8 +74,7 @@ api.interceptors.response.use(
       const url = String(err.config?.url || '')
       const method = String(err.config?.method || '').toLowerCase()
       /** Wrong current password on profile update — must not clear session. */
-      const isAccountPut =
-        method === 'put' && url.includes('/api/account')
+      const isAccountPut = method === 'put' && url.includes('/api/account')
       /** Login / invite — no session recovery via refresh here. */
       const isPublicAuth =
         (method === 'post' && url.includes('/api/auth/login')) ||
@@ -84,9 +83,7 @@ api.interceptors.response.use(
 
       const errorCode = getApiErrorCode(data)
       const canTryRefresh =
-        errorCode === 'common.jwt_expired' &&
-        !err.config?.__authRefreshRetried &&
-        !isPublicAuth
+        errorCode === 'common.jwt_expired' && !err.config?.__authRefreshRetried && !isPublicAuth
 
       if (canTryRefresh) {
         err.config.__authRefreshRetried = true
@@ -102,8 +99,7 @@ api.interceptors.response.use(
           return api.request(err.config)
         } catch (refreshErr: unknown) {
           const refreshHadResponse =
-            isAxiosError(refreshErr) &&
-            !!(refreshErr as { response?: unknown }).response
+            isAxiosError(refreshErr) && !!(refreshErr as { response?: unknown }).response
           const noRefreshStored = !localStorage.getItem(REFRESH_TOKEN_KEY)
           if (refreshHadResponse || noRefreshStored) {
             await clearSessionAndRedirectLogin()
@@ -135,10 +131,7 @@ api.interceptors.response.use(
     }
 
     if (status === 409) {
-      showError(
-        formatApiError(data?.error) ||
-          'Conflict: the resource was modified. Please retry.',
-      )
+      showError(formatApiError(data?.error) || 'Conflict: the resource was modified. Please retry.')
       return Promise.reject(err)
     }
 

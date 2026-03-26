@@ -2,18 +2,26 @@
   <header class="page-header">
     <h1>{{ t('nav.guests') }}</h1>
     <router-link :to="{ name: 'guest-new' }" class="btn-add-outline">
-      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg
+        class="btn-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
-      {{ t('guests.newGuest') }}
+      {{ t('guests.new_guest') }}
     </router-link>
   </header>
 
   <SearchBar
     v-model="searchQuery"
-    :placeholder="t('guests.searchPlaceholder')"
-    :aria-label="t('guests.searchAria')"
+    :placeholder="t('guests.search_placeholder')"
+    :aria-label="t('guests.search_aria')"
     :searching="searching"
   />
 
@@ -24,44 +32,57 @@
       <template v-else>
         <div v-if="!guests.length && !searchQuery" class="empty-state-widget">
           <div class="empty-state-widget__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </div>
-          <h3 class="empty-state-widget__title">{{ t('guests.emptyTitle') }}</h3>
-          <p class="empty-state-widget__description">{{ t('guests.emptyDescription') }}</p>
+          <h3 class="empty-state-widget__title">{{ t('guests.empty_title') }}</h3>
+          <p class="empty-state-widget__description">{{ t('guests.empty_description') }}</p>
           <div class="empty-state-widget__actions">
-            <router-link :to="{ name: 'guest-new' }" class="primary" role="button">{{ t('guests.newGuest') }}</router-link>
-            <router-link :to="{ name: 'booking-new' }" class="btn-secondary" role="button">{{ t('guests.emptyNewBooking') }}</router-link>
+            <router-link :to="{ name: 'guest-new' }" class="primary" role="button">{{
+              t('guests.new_guest')
+            }}</router-link>
+            <router-link :to="{ name: 'booking-new' }" class="btn-secondary" role="button">{{
+              t('guests.empty_new_booking')
+            }}</router-link>
           </div>
         </div>
-        <p v-else-if="!guests.length && searchQuery" class="empty-state">{{ t('guests.emptySearch') }}</p>
+        <p v-else-if="!guests.length && searchQuery" class="empty-state">
+          {{ t('guests.empty_search') }}
+        </p>
         <table v-else-if="guests.length" class="list-table" role="grid">
-            <thead>
-              <tr>
-                <th scope="col">{{ t('fields.firstName') }}</th>
-                <th scope="col">{{ t('fields.lastName') }}</th>
-                <th scope="col">{{ t('fields.email') }}</th>
-                <th scope="col">{{ t('fields.phone') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="guest in guests"
-                :key="guest.id"
-                class="list-row"
-                :class="{ 'list-row--selected': selectedGuestId === guest.id }"
-                @click="openPanel(guest)"
-              >
-                <td :data-label="t('fields.firstName')">{{ guest.first_name ?? '—' }}</td>
-                <td :data-label="t('fields.lastName')">{{ guest.last_name ?? '—' }}</td>
-                <td :data-label="t('fields.email')">{{ guest.email ?? '—' }}</td>
-                <td :data-label="t('fields.phone')">{{ guest.phone ?? '—' }}</td>
-              </tr>
-            </tbody>
+          <thead>
+            <tr>
+              <th scope="col">{{ t('fields.first_name') }}</th>
+              <th scope="col">{{ t('fields.last_name') }}</th>
+              <th scope="col">{{ t('fields.email') }}</th>
+              <th scope="col">{{ t('fields.phone') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="guest in guests"
+              :key="guest.id"
+              class="list-row"
+              :class="{ 'list-row--selected': selectedGuestId === guest.id }"
+              @click="openPanel(guest)"
+            >
+              <td :data-label="t('fields.first_name')">{{ guest.first_name ?? '—' }}</td>
+              <td :data-label="t('fields.last_name')">{{ guest.last_name ?? '—' }}</td>
+              <td :data-label="t('fields.email')">{{ guest.email ?? '—' }}</td>
+              <td :data-label="t('fields.phone')">{{ guest.phone ?? '—' }}</td>
+            </tr>
+          </tbody>
         </table>
       </template>
     </div>
@@ -133,7 +154,7 @@ async function load(params: { q?: string } = {}, isInitial = false) {
   try {
     await store.fetchGuests(params)
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('guests.loadFailed')
+    loadError.value = formatUnknownApiError(err) || t('guests.load_failed')
   } finally {
     initialLoading.value = false
     searching.value = false

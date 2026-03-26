@@ -22,10 +22,10 @@ export function updateHotel(name: string): Promise<Hotel> {
  * @returns {Promise<RoomType[]>}
  */
 export function fetchRoomTypes(params: { q?: string } = {}): Promise<RoomType[]> {
-  const config = params.q?.trim()
-    ? { params: { q: params.q.trim() } }
-    : {}
-  return api.get('/api/property/room-types', config).then(({ data }) => data.room_types ?? data ?? [])
+  const config = params.q?.trim() ? { params: { q: params.q.trim() } } : {}
+  return api
+    .get('/api/property/room-types', config)
+    .then(({ data }) => data.room_types ?? data ?? [])
 }
 
 /**
@@ -70,9 +70,7 @@ export function deleteRoomType(id: string): Promise<void> {
  * @returns {Promise<Room[]>}
  */
 export function fetchRooms(params: { q?: string } = {}): Promise<Room[]> {
-  const config = params.q?.trim()
-    ? { params: { q: params.q.trim() } }
-    : {}
+  const config = params.q?.trim() ? { params: { q: params.q.trim() } } : {}
   return api.get('/api/property/rooms', config).then(({ data }) => data.rooms ?? data ?? [])
 }
 
@@ -145,15 +143,10 @@ export function fetchAvailableRooms(
     }
   }
   const ex = options.excludeBookingId
-  if (
-    params.from &&
-    params.to &&
-    typeof ex === 'string' &&
-    ex.trim() !== ''
-  ) {
+  if (params.from && params.to && typeof ex === 'string' && ex.trim() !== '') {
     params.exclude = ex.trim()
   }
   return api
     .get('/api/property/rooms/available', { params })
-    .then(({ data }) => (Array.isArray(data) ? data : data?.rooms ?? []))
+    .then(({ data }) => (Array.isArray(data) ? data : (data?.rooms ?? [])))
 }

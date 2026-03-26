@@ -2,11 +2,7 @@
   <div class="form-view-array">
     <label v-if="label" class="form-view-array__label">{{ label }}</label>
     <div v-if="items.length > 0" class="form-view-array__list">
-      <div
-        v-for="(item, index) in items"
-        :key="index"
-        class="form-view-array__item"
-      >
+      <div v-for="(item, index) in items" :key="index" class="form-view-array__item">
         <template v-for="(child, ci) in itemChildren" :key="ci">
           <ControlRenderer
             v-if="isLeafNode(child)"
@@ -15,11 +11,7 @@
             :full-data="data"
             :bind-prefix="`${fullBind}.${index}`"
           />
-          <LayoutRenderer
-            v-else
-            :node="child"
-            :data="data"
-          />
+          <LayoutRenderer v-else :node="child" :data="data" />
         </template>
       </div>
     </div>
@@ -49,9 +41,7 @@ const items = computed(() => {
   return Array.isArray(value) ? value : []
 })
 
-const label = computed(() =>
-  resolveFormCatalogString(props.node.label ?? ''),
-)
+const label = computed(() => resolveFormCatalogString(props.node.label ?? ''))
 
 const itemTemplate = computed(() => props.node.item)
 

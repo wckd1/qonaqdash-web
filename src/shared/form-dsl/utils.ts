@@ -13,7 +13,7 @@ import type { FormSelectItem } from '@/shared/types/forms'
 
 /**
  * Convert dot-path `bind` to path array.
- * @example bindToPath('guest.firstName') // ['guest', 'firstName']
+ * @example bindToPath('guest.first_name') // ['guest', 'first_name']
  */
 export function bindToPath(bind: string | undefined | null): string[] {
   if (!bind || typeof bind !== 'string') return []
@@ -21,9 +21,9 @@ export function bindToPath(bind: string | undefined | null): string[] {
 }
 
 /**
- * API often returns `{ field, field_label }` on the same object (e.g. roomType + roomType_label).
+ * API often returns `{ field, field_label }` on the same object (e.g. room_type + room_type_label).
  * Given the full dot-bind for the field, returns the dot-bind for the companion display field.
- * @example companionLabelFullBind('booking.rooms.0.roomType', 'roomType') → 'booking.rooms.0.roomType_label'
+ * @example companionLabelFullBind('booking.rooms.0.room_type', 'room_type') → 'booking.rooms.0.room_type_label'
  */
 export function companionLabelFullBind(fullFieldBind: string, fieldBind: string): string {
   if (!fieldBind || !fullFieldBind) return ''
@@ -37,15 +37,25 @@ export function companionLabelFullBind(fullFieldBind: string, fieldBind: string)
 /**
  * Read value at dot-path (array of keys).
  */
-export function getValueByPath(obj: Record<string, unknown> | undefined | null, path: string[]): unknown {
+export function getValueByPath(
+  obj: Record<string, unknown> | undefined | null,
+  path: string[],
+): unknown {
   if (!path?.length || obj == null) return undefined
-  return path.reduce<unknown>((acc, key) => (acc != null && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), obj)
+  return path.reduce<unknown>(
+    (acc, key) =>
+      acc != null && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined,
+    obj,
+  )
 }
 
 /**
  * Read value by bind string (convenience wrapper).
  */
-export function getValueByBind(obj: Record<string, unknown> | undefined | null, bind: string | undefined | null): unknown {
+export function getValueByBind(
+  obj: Record<string, unknown> | undefined | null,
+  bind: string | undefined | null,
+): unknown {
   return getValueByPath(obj, bindToPath(bind))
 }
 
@@ -73,11 +83,11 @@ export function setValueByPath(obj: Record<string, unknown>, path: string[], val
  * Fallback heading when a Group has no `title`.
  */
 export function humanizeGroupId(id: string | undefined): string {
-  if (id == null || id === '') return i18n.global.t('formDsl.groups.generic')
+  if (id == null || id === '') return i18n.global.t('form_dsl.groups.generic')
   const knownKeys: Record<string, string> = {
-    main: 'formDsl.groups.main',
-    booking: 'formDsl.groups.booking',
-    guest: 'formDsl.groups.guest',
+    main: 'form_dsl.groups.main',
+    booking: 'form_dsl.groups.booking',
+    guest: 'form_dsl.groups.guest',
   }
   if (knownKeys[id]) return i18n.global.t(knownKeys[id])
   return String(id)
@@ -110,13 +120,13 @@ export function resolveGroupTitle(node: { title?: string; id?: string }): string
 // ---------------------------------------------------------------------------
 
 /**
- * Build select items for roomID from API room list.
+ * Build select items for room_id from API room list.
  */
 export function buildRoomSelectItemsFromRooms(
   rooms: Array<{ id: string; number?: string; room_type_id?: string; room_type_name?: string }>,
   nullOption?: FormSelectItem[],
-): (FormSelectItem & { roomType?: string; roomTypeName?: string })[] {
-  const base: (FormSelectItem & { roomType?: string; roomTypeName?: string })[] =
+): (FormSelectItem & { room_type?: string; room_type_name?: string })[] {
+  const base: (FormSelectItem & { room_type?: string; room_type_name?: string })[] =
     Array.isArray(nullOption) && nullOption.length > 0
       ? nullOption.map((o) => ({ ...o }))
       : [{ value: null, label: '' }]
@@ -124,45 +134,50 @@ export function buildRoomSelectItemsFromRooms(
   const roomOpts = rooms.map((r) => ({
     value: r.id,
     label: r.number ?? r.id,
-    roomType: r.room_type_id,
-    roomTypeName: r.room_type_name,
+    room_type: r.room_type_id,
+    room_type_name: r.room_type_name,
   }))
   return [...base, ...roomOpts]
 }
 
 /**
- * Union of GET …/rooms/available rows and any `booking.rooms[].roomID` already chosen in the form.
+ * Union of GET …/rooms/available rows and any `booking.rooms[].room_id` already chosen in the form.
  */
 export function mergeAvailableRoomsWithFormRoomAssignments(
-  availableRooms: Array<{ id: string; number?: string; room_type_id?: string; room_type_name?: string }> | undefined,
+  availableRooms:
+    | Array<{ id: string; number?: string; room_type_id?: string; room_type_name?: string }>
+    | undefined,
   formData: Record<string, unknown> | undefined,
 ): Array<{ id: string; number?: string; room_type_id?: string; room_type_name?: string }> {
   const list = Array.isArray(availableRooms) ? availableRooms : []
-  const byId = new Map<string, { id: string; number?: string; room_type_id?: string; room_type_name?: string }>()
+  const byId = new Map<
+    string,
+    { id: string; number?: string; room_type_id?: string; room_type_name?: string }
+  >()
   for (const r of list) {
     const id = r?.id != null ? String(r.id) : ''
     if (!id) continue
     byId.set(id, { ...r, id })
   }
-  const rows = (formData?.booking as Record<string, unknown> | undefined)?.rooms
+  const rows = (formData?.stay as Record<string, unknown> | undefined)?.rooms
   if (!Array.isArray(rows)) return [...byId.values()]
   for (const row of rows) {
     const r = row as Record<string, unknown> | undefined
-    const id = r?.roomID
+    const id = r?.room_id
     if (id == null || id === '') continue
     const key = String(id)
     if (byId.has(key)) continue
-    const rt = r?.roomType
+    const rt = r?.room_type
     byId.set(key, {
       id: key,
       number:
-        typeof r?.roomID_label === 'string' && (r.roomID_label as string).trim() !== ''
-          ? (r.roomID_label as string)
+        typeof r?.room_id_label === 'string' && (r.room_id_label as string).trim() !== ''
+          ? (r.room_id_label as string)
           : key,
       room_type_id: rt != null && rt !== '' ? String(rt) : '',
       room_type_name:
-        typeof r?.roomType_label === 'string' && (r.roomType_label as string).trim() !== ''
-          ? (r.roomType_label as string)
+        typeof r?.room_type_label === 'string' && (r.room_type_label as string).trim() !== ''
+          ? (r.room_type_label as string)
           : undefined,
     })
   }
@@ -172,14 +187,17 @@ export function mergeAvailableRoomsWithFormRoomAssignments(
 /**
  * Room assigned to this row may be absent from GET …/rooms/available (still occupied by this booking).
  */
-function mergeAssignedRoomIntoSelectOptions(mapped: FormSelectItem[], rowItem: Record<string, unknown>): FormSelectItem[] {
-  const assignedId = rowItem?.roomID
+function mergeAssignedRoomIntoSelectOptions(
+  mapped: FormSelectItem[],
+  rowItem: Record<string, unknown>,
+): FormSelectItem[] {
+  const assignedId = rowItem?.room_id
   if (assignedId == null || assignedId === '') return mapped
   const hasAssigned = mapped.some((o) => o.value === assignedId)
   if (hasAssigned) return mapped
   const roomLabel =
-    typeof rowItem?.roomID_label === 'string' && (rowItem.roomID_label as string).trim() !== ''
-      ? (rowItem.roomID_label as string)
+    typeof rowItem?.room_id_label === 'string' && (rowItem.room_id_label as string).trim() !== ''
+      ? (rowItem.room_id_label as string)
       : String(assignedId)
   const nullIdx = mapped.findIndex((o) => o.value === null || o.value === '')
   const insertAt = nullIdx >= 0 ? nullIdx + 1 : 0
@@ -193,13 +211,13 @@ function mergeAssignedRoomIntoSelectOptions(mapped: FormSelectItem[], rowItem: R
 
 /**
  * Filter room select items for a single row in booking.rooms:
- * by roomType and exclude already-selected room IDs in other rows.
+ * by room_type and exclude already-selected room IDs in other rows.
  */
 export function getFilteredRoomSelectOptions(
   fullData: Record<string, unknown>,
   rowItem: Record<string, unknown>,
   currentIndex: number | undefined,
-  items: (FormSelectItem & { roomType?: string; roomTypeName?: string })[],
+  items: (FormSelectItem & { room_type?: string; room_type_name?: string })[],
 ): FormSelectItem[] {
   if (!Array.isArray(items)) return []
 
@@ -209,7 +227,7 @@ export function getFilteredRoomSelectOptions(
       label: resolveFormCatalogString(opt.label ?? String(opt.value ?? '')),
     }))
 
-  const currentRoomType = rowItem?.roomType
+  const currentRoomType = rowItem?.room_type
   const roomTypeKey =
     currentRoomType == null || currentRoomType === '' ? '' : String(currentRoomType)
   const roomTypeUnset = roomTypeKey === ''
@@ -221,8 +239,8 @@ export function getFilteredRoomSelectOptions(
     }))
   }
 
-  const booking = fullData?.booking as Record<string, unknown> | undefined
-  const rooms = booking?.rooms
+  const stay = fullData?.stay as Record<string, unknown> | undefined
+  const rooms = stay?.rooms
   if (!Array.isArray(rooms) || items.length === 0) {
     return mergeAssignedRoomIntoSelectOptions(mapItems(), rowItem)
   }
@@ -230,7 +248,7 @@ export function getFilteredRoomSelectOptions(
   const selectedInOtherRows = new Set(
     rooms
       .filter((_, idx) => idx !== currentIndex)
-      .map((r: Record<string, unknown>) => r?.roomID)
+      .map((r: Record<string, unknown>) => r?.room_id)
       .filter((id) => id != null),
   )
 
@@ -238,11 +256,11 @@ export function getFilteredRoomSelectOptions(
     .filter(
       (opt) =>
         (opt.value == null ||
-          opt.value === rowItem?.roomID ||
+          opt.value === rowItem?.room_id ||
           !selectedInOtherRows.has(opt.value)) &&
-        (opt.roomType === undefined ||
-          String(opt.roomType ?? '') === roomTypeKey ||
-          String(opt.roomTypeName ?? '') === roomTypeKey),
+        (opt.room_type === undefined ||
+          String(opt.room_type ?? '') === roomTypeKey ||
+          String(opt.room_type_name ?? '') === roomTypeKey),
     )
     .map((opt) => ({
       value: opt.value ?? null,
@@ -267,9 +285,7 @@ export function formatDateTime(
   if (isoString == null || typeof isoString !== 'string') return String(isoString ?? '')
   const date = new Date(isoString)
   if (Number.isNaN(date.getTime())) return isoString
-  const locale =
-    localeOverride ??
-    intlLocaleFromAppLocale(i18n.global.locale.value as 'en' | 'ru')
+  const locale = localeOverride ?? intlLocaleFromAppLocale(i18n.global.locale.value as 'en' | 'ru')
   if (options.type === 'date') {
     return new Intl.DateTimeFormat(locale, {
       day: '2-digit',

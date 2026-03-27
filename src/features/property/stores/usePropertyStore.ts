@@ -26,8 +26,13 @@ export const usePropertyStore = defineStore('property', () => {
     return hotel.value
   }
 
-  async function updateHotel(name: string, currency: string) {
-    hotel.value = await propertyApi.updateHotel({ name, currency })
+  async function updateHotel(
+    name: string,
+    currency: string,
+    check_in_hour: string,
+    check_out_hour: string,
+  ) {
+    hotel.value = await propertyApi.updateHotel({ name, currency, check_in_hour, check_out_hour })
     return hotel.value
   }
 

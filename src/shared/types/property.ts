@@ -5,6 +5,10 @@ export interface Hotel {
   name: string
   /** ISO 4217 alpha-3 (e.g. `KZT`). */
   currency: string
+  /** Default check-in time, e.g. `"14:00"`. */
+  check_in_hour: string
+  /** Default check-out time, e.g. `"12:00"`. */
+  check_out_hour: string
 }
 
 export interface RoomType {

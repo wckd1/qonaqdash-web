@@ -23,6 +23,21 @@
       </section>
 
       <section class="panel hotel-settings-view__section">
+        <h2 class="hotel-settings-view__heading">{{ t('hotel.hours_section') }}</h2>
+        <p class="hotel-settings-view__hint">{{ t('hotel.hours_hint') }}</p>
+        <div class="hotel-settings-view__row">
+          <label>
+            {{ t('hotel.check_in_hour') }}
+            <input v-model="checkInHour" type="time" :disabled="saving" />
+          </label>
+          <label>
+            {{ t('hotel.check_out_hour') }}
+            <input v-model="checkOutHour" type="time" :disabled="saving" />
+          </label>
+        </div>
+      </section>
+
+      <section class="panel hotel-settings-view__section">
         <h2 class="hotel-settings-view__heading">{{ t('hotel.currency_section') }}</h2>
         <p class="hotel-settings-view__hint">{{ t('hotel.currency_hint') }}</p>
         <label>
@@ -83,10 +98,17 @@ const name = ref('')
 const originalName = ref('')
 const currency = ref('USD')
 const originalCurrency = ref('USD')
+const checkInHour = ref('14:00')
+const originalCheckInHour = ref('14:00')
+const checkOutHour = ref('12:00')
+const originalCheckOutHour = ref('12:00')
 
 const dirty = computed(
   () =>
-    name.value.trim() !== originalName.value.trim() || currency.value !== originalCurrency.value,
+    name.value.trim() !== originalName.value.trim() ||
+    currency.value !== originalCurrency.value ||
+    checkInHour.value !== originalCheckInHour.value ||
+    checkOutHour.value !== originalCheckOutHour.value,
 )
 
 async function load() {
@@ -100,6 +122,16 @@ async function load() {
     const c = typeof data?.currency === 'string' && data.currency ? data.currency : 'USD'
     currency.value = c
     originalCurrency.value = c
+    const ci =
+      typeof data?.check_in_hour === 'string' && data.check_in_hour ? data.check_in_hour : '14:00'
+    checkInHour.value = ci
+    originalCheckInHour.value = ci
+    const co =
+      typeof data?.check_out_hour === 'string' && data.check_out_hour
+        ? data.check_out_hour
+        : '12:00'
+    checkOutHour.value = co
+    originalCheckOutHour.value = co
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('hotel.load_error')
   } finally {
@@ -144,13 +176,30 @@ async function onSave() {
 
   saving.value = true
   try {
-    const data = await propertyApi.updateHotel({ name: trimmed, currency: currency.value })
+    const data = await propertyApi.updateHotel({
+      name: trimmed,
+      currency: currency.value,
+      check_in_hour: checkInHour.value,
+      check_out_hour: checkOutHour.value,
+    })
     const n = typeof data?.name === 'string' ? data.name : trimmed
     name.value = n
     originalName.value = n
     const c = typeof data?.currency === 'string' && data.currency ? data.currency : currency.value
     currency.value = c
     originalCurrency.value = c
+    const ci =
+      typeof data?.check_in_hour === 'string' && data.check_in_hour
+        ? data.check_in_hour
+        : checkInHour.value
+    checkInHour.value = ci
+    originalCheckInHour.value = ci
+    const co =
+      typeof data?.check_out_hour === 'string' && data.check_out_hour
+        ? data.check_out_hour
+        : checkOutHour.value
+    checkOutHour.value = co
+    originalCheckOutHour.value = co
   } catch (err: unknown) {
     const msg = formatUnknownApiError(err)
     if (msg) validationError.value = msg
@@ -190,6 +239,12 @@ onMounted(load)
   font-weight: var(--text-caption-weight);
   line-height: 1.45;
   color: var(--ink-muted);
+}
+
+.hotel-settings-view__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
 }
 
 .hotel-confirm-body {

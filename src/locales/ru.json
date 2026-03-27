@@ -83,6 +83,10 @@
     "confirm_currency_title": "Сменить валюту?",
     "confirm_currency_body": "Смена валюты отеля повлияет на отображение всех существующих тарифов и цен. Суммы в прежней валюте не будут пересчитаны автоматически.",
     "confirm_currency_proceed": "Продолжить",
+    "hours_section": "Заезд / Выезд",
+    "hours_hint": "Время заезда и выезда по умолчанию для новых бронирований.",
+    "check_in_hour": "Время заезда",
+    "check_out_hour": "Время выезда",
     "currency_name": {
       "KZT": "Казахстанский тенге",
       "USD": "Доллар США",
@@ -484,7 +488,8 @@
     "entry_service_charge": "Сервисный сбор",
     "entry_payment": "Оплата",
     "entry_refund": "Возврат",
-    "entry_correction": "Исправление"
+    "entry_correction": "Исправление",
+    "entry_accommodation_correction": "Корректировка проживания"
   },
   "form_settings": {
     "loading_schema": "Загрузка схемы формы…",

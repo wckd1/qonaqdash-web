@@ -83,6 +83,10 @@
     "confirm_currency_title": "Change currency?",
     "confirm_currency_body": "Changing the hotel currency will affect how all existing rates and prices are displayed. Amounts stored in the previous currency will not be converted automatically.",
     "confirm_currency_proceed": "Proceed",
+    "hours_section": "Check-in / Check-out",
+    "hours_hint": "Default check-in and check-out times used for new bookings.",
+    "check_in_hour": "Check-in time",
+    "check_out_hour": "Check-out time",
     "currency_name": {
       "KZT": "Kazakhstani Tenge",
       "USD": "US Dollar",
@@ -484,7 +488,8 @@
     "entry_service_charge": "Service charge",
     "entry_payment": "Payment",
     "entry_refund": "Refund",
-    "entry_correction": "Correction"
+    "entry_correction": "Correction",
+    "entry_accommodation_correction": "Accommodation correction"
   },
   "form_settings": {
     "loading_schema": "Loading form schema…",

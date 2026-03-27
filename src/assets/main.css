@@ -305,6 +305,15 @@ main.app-main > section.list-content > .list-content__viewport {
   gap: var(--content-area-gap);
 }
 
+/* Folio tab: div fills remaining height; table scrolls, balance card pinned at bottom */
+main.app-main > .folio-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--content-area-gap);
+}
+
 /* Form routes: FormDSL root scrolls here (see FormEdit / FormView / FormBuild) */
 main.app-main > .form-content__viewport {
   flex: 1 1 auto;

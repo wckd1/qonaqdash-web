@@ -1,10 +1,10 @@
 <template>
-  <section v-if="visible" class="folio-section">
+  <div v-if="visible" class="folio-section">
     <div v-if="loading" class="loading-state">{{ t('common.loading') }}</div>
     <p v-else-if="loadError" class="error-message">{{ loadError }}</p>
 
     <template v-else-if="billData">
-      <div v-if="billData.entries.length" class="folio-section__table-wrap">
+      <section v-if="billData.entries.length" class="folio-section__table-wrap">
         <table class="list-table" role="grid">
           <thead>
             <tr>
@@ -35,26 +35,27 @@
               </td>
             </tr>
           </tbody>
-          <tfoot>
-            <tr class="folio-section__total-row">
-              <td colspan="2">{{ t('billing.outstanding_balance') }}</td>
-              <td
-                class="folio-section__col-amount"
-                :class="{
-                  'folio-section__amount--credit': billData.outstanding_balance < 0,
-                  'folio-section__amount--zero': billData.outstanding_balance === 0,
-                }"
-              >
-                {{ fmtMoney(billData.outstanding_balance) }}
-              </td>
-            </tr>
-          </tfoot>
         </table>
-      </div>
+      </section>
 
       <p v-else class="empty-state">{{ t('billing.no_entries') }}</p>
+
+      <section class="pricing-card folio-section__balance">
+        <div class="pricing-card__body">
+          <div class="pricing-card__row pricing-card__row--total">
+            <span>{{ t('billing.outstanding_balance') }}</span>
+            <span
+              :class="{
+                'pricing-card__amount--negative': billData.outstanding_balance <= 0,
+              }"
+            >
+              {{ fmtMoney(billData.outstanding_balance) }}
+            </span>
+          </div>
+        </div>
+      </section>
     </template>
-  </section>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -101,6 +102,7 @@ const visible = computed(
 
 const ENTRY_TYPE_KEYS: Record<string, string> = {
   accommodation_night: 'billing.entry_accommodation_night',
+  accommodation_correction: 'billing.entry_accommodation_correction',
   rule_adjustment: 'billing.entry_rule_adjustment',
   manual_adjustment: 'billing.entry_manual_adjustment',
   service_charge: 'billing.entry_service_charge',
@@ -128,7 +130,10 @@ function entryTitle(entry: LedgerEntry): string {
   const label = key ? t(key) : entry.entry_type
   const date = entry.metadata?.date ? fmtShortDate(entry.metadata.date) : ''
 
-  if (entry.entry_type === 'accommodation_night') {
+  if (
+    entry.entry_type === 'accommodation_night' ||
+    entry.entry_type === 'accommodation_correction'
+  ) {
     const rtName = roomTypeName(entry.metadata?.room_type_id)
     const head = date ? `${label} ${date}` : label
     return rtName ? `${head} — ${rtName}` : head
@@ -204,9 +209,16 @@ defineExpose({ reload: loadBill })
 
 <style scoped>
 .folio-section__table-wrap {
+  flex: 1;
+  min-height: 0;
   border-radius: var(--content-area-radius);
-  overflow: hidden;
+  overflow: hidden auto;
   box-shadow: var(--shadow-sm);
+  background: var(--pico-card-background-color);
+}
+
+.folio-section__table-wrap :deep(td) {
+  vertical-align: top;
 }
 
 .folio-section__col-amount {
@@ -227,10 +239,6 @@ defineExpose({ reload: loadBill })
   color: var(--ink-primary);
 }
 
-.folio-section__amount--zero {
-  color: var(--semantic-success);
-}
-
 .folio-section__entry-title {
   display: block;
   font-weight: var(--text-label-weight);
@@ -244,9 +252,13 @@ defineExpose({ reload: loadBill })
   margin-top: 2px;
 }
 
-.folio-section__total-row td {
-  font-weight: var(--text-heading-weight);
-  border-top: 1px solid var(--border-default);
-  border-bottom: none;
+.folio-section__balance {
+  flex-shrink: 0;
+}
+
+.folio-section__balance .pricing-card__row--total {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
 }
 </style>

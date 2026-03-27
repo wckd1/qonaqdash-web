@@ -51,7 +51,7 @@ import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
 
-import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
+import { guestSearchKey, availableRoomsKey, fieldConstraintsKey } from '@/shared/injectKeys'
 
 provide(guestSearchKey, (q) => fetchGuests({ q }))
 
@@ -73,6 +73,60 @@ const submitting = ref(false)
 const availableRooms = ref<Room[]>([])
 
 provide(availableRoomsKey, availableRooms)
+
+function formatDatetimeLocal(d: Date): string {
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  return `${y}-${mo}-${day}T${h}:${mi}`
+}
+
+function isoToDatetimeLocal(iso: string): string {
+  return formatDatetimeLocal(new Date(iso))
+}
+
+function parseHourMinute(hhmm: string): [number, number] {
+  const parts = hhmm.split(':')
+  return [parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0]
+}
+
+function todayWithHotelHour(hourSetting: string): string {
+  const now = new Date()
+  const [h, m] = parseHourMinute(hourSetting)
+  now.setHours(h, m, 0, 0)
+  return formatDatetimeLocal(now)
+}
+
+function applyDefaultHour(isoValue: string, hourSetting: string): string {
+  const d = new Date(isoValue)
+  if (Number.isNaN(d.getTime())) return isoValue
+  if (d.getHours() !== 0 || d.getMinutes() !== 0) return isoValue
+  const [h, m] = parseHourMinute(hourSetting)
+  d.setHours(h, m, 0, 0)
+  return d.toISOString()
+}
+
+const checkInMinLocal = computed(() =>
+  todayWithHotelHour(propertyStore.hotel?.check_in_hour || '14:00'),
+)
+
+const checkOutMinLocal = computed(() => {
+  const raw = formData.value.stay
+  if (!raw || typeof raw !== 'object') return checkInMinLocal.value
+  const stay = raw as Record<string, unknown>
+  const checkIn = typeof stay.check_in === 'string' ? stay.check_in : ''
+  return checkIn ? isoToDatetimeLocal(checkIn) : checkInMinLocal.value
+})
+
+const fieldConstraints = computed(() => ({
+  'stay.check_in': { min: checkInMinLocal.value },
+  'stay.check_out': { min: checkOutMinLocal.value },
+}))
+
+provide(fieldConstraintsKey, fieldConstraints)
 
 const stayBranch = computed(() => {
   const raw = formData.value.stay
@@ -121,6 +175,31 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => {
+    const raw = formData.value.stay
+    if (!raw || typeof raw !== 'object') return [undefined, undefined] as const
+    const b = raw as Record<string, unknown>
+    return [b.check_in, b.check_out] as const
+  },
+  ([checkIn, checkOut]) => {
+    const raw = formData.value.stay
+    if (!raw || typeof raw !== 'object') return
+    const stay = raw as Record<string, unknown>
+    const ciHour = propertyStore.hotel?.check_in_hour || '14:00'
+    const coHour = propertyStore.hotel?.check_out_hour || '12:00'
+
+    if (typeof checkIn === 'string' && checkIn) {
+      const corrected = applyDefaultHour(checkIn, ciHour)
+      if (corrected !== checkIn) stay.check_in = corrected
+    }
+    if (typeof checkOut === 'string' && checkOut) {
+      const corrected = applyDefaultHour(checkOut, coHour)
+      if (corrected !== checkOut) stay.check_out = corrected
+    }
+  },
+)
+
 async function mergeRouteQueryIntoForm() {
   const raw = formData.value.stay
   if (!raw || typeof raw !== 'object') return
@@ -147,10 +226,10 @@ async function mergeRouteQueryIntoForm() {
 onMounted(async () => {
   loading.value = true
   loadError.value = ''
-  propertyStore.fetchHotel()
+  const hotelPromise = propertyStore.fetchHotel()
   propertyStore.fetchRoomTypes()
   try {
-    const template = await store.fetchBookingForm()
+    const [template] = await Promise.all([store.fetchBookingForm(), hotelPromise])
     bookingForm.value = template as BookingFormRuntime
     formData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
     if (!formData.value.guest) formData.value.guest = {}
@@ -159,7 +238,17 @@ onMounted(async () => {
     if (!formData.value.stay) formData.value.stay = { check_in: '', check_out: '', rooms: [] }
     const stayObj = formData.value.stay as Record<string, unknown>
     if (!Array.isArray(stayObj.rooms)) stayObj.rooms = []
-    await mergeRouteQueryIntoForm()
+
+    const hasQueryDates = typeof route.query.checkIn === 'string' && route.query.checkIn
+    if (hasQueryDates) {
+      await mergeRouteQueryIntoForm()
+    } else {
+      const ciHour = propertyStore.hotel?.check_in_hour || '14:00'
+      const now = new Date()
+      const [h, m] = parseHourMinute(ciHour)
+      now.setHours(h, m, 0, 0)
+      stayObj.check_in = now.toISOString()
+    }
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('bookings.form_load_failed')
   } finally {

@@ -15,6 +15,7 @@
 
 export type LedgerEntryType =
   | 'accommodation_night'
+  | 'accommodation_correction'
   | 'rule_adjustment'
   | 'manual_adjustment'
   | 'service_charge'

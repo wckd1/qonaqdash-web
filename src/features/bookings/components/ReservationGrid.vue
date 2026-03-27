@@ -79,10 +79,12 @@
                 class="reservation-grid-cell"
                 :class="{
                   'reservation-grid-cell--today': isSameDay(day, today),
+                  'reservation-grid-cell--past': startOfDay(day) < todayStart,
                   'reservation-grid-cell--drag-select': rangeHighlightKeys.has(
                     `${row.room.id}-${startOfDay(day).getTime()}`,
                   ),
                 }"
+                :disabled="startOfDay(day) < todayStart"
                 :aria-label="cellAriaLabel(row.room.number, day)"
                 @mousedown.left.prevent="onCellMouseDown($event, row.room.id, day)"
                 @mouseenter="onCellMouseEnter(row.room.id, day)"
@@ -130,6 +132,7 @@ import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
+import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 
 type RoomRow = Room & { room_type_name?: string }
 
@@ -176,6 +179,8 @@ const settingsStore = useSettingsStore()
 const { locale: appLocale } = storeToRefs(settingsStore)
 const dateFnsLocale = computed(() => dateFnsLocaleForApp(appLocale.value))
 
+const propertyStore = usePropertyStore()
+
 const emit = defineEmits<{
   'select-booking': [booking: GridPanelBooking]
   'booking-updated': []
@@ -218,6 +223,7 @@ const rangeHighlightKeys = computed(() => {
 })
 
 const today = new Date()
+const todayStart = startOfDay(today)
 
 const days = computed(() => listDaysInclusive(props.rangeFrom, props.rangeTo))
 
@@ -469,7 +475,9 @@ function onCellMouseDown(event, roomId, day) {
 function onCellMouseEnter(roomId, day) {
   if (!selectPointerDown.value || !dragSelectState.value) return
   if (roomId !== dragSelectState.value.roomId) return
-  dragSelectState.value.endDay = startOfDay(day)
+  const d = startOfDay(day)
+  if (d < todayStart) return
+  dragSelectState.value.endDay = d
 }
 
 function onWindowMouseUp(event) {
@@ -494,24 +502,32 @@ function onPickCreateBooking() {
   goToNewBooking(roomId, rangeFirst, rangeLast)
 }
 
+function parseHourMinute(hhmm: string): [number, number] {
+  const parts = hhmm.split(':')
+  return [parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0]
+}
+
 /**
- * @param {Date} firstDay - First selected column (check-in day, 14:00).
- * @param {Date} lastDay - Last selected column: departure day for multi-day span (12:00 that day);
- *   if same as firstDay, one night → checkout next day 12:00.
+ * @param {Date} firstDay - First selected column (check-in day).
+ * @param {Date} lastDay - Last selected column: departure day for multi-day span;
+ *   if same as firstDay, one night → checkout next day.
  */
 function goToNewBooking(roomId, firstDay, lastDay) {
+  const [ciH, ciM] = parseHourMinute(propertyStore.hotel?.check_in_hour || '14:00')
+  const [coH, coM] = parseHourMinute(propertyStore.hotel?.check_out_hour || '12:00')
+
   const first = startOfDay(firstDay)
   const last = startOfDay(lastDay)
   const checkIn = new Date(first)
-  checkIn.setHours(14, 0, 0, 0)
+  checkIn.setHours(ciH, ciM, 0, 0)
   let checkOut
   if (first.getTime() === last.getTime()) {
     checkOut = new Date(last)
     checkOut.setDate(checkOut.getDate() + 1)
-    checkOut.setHours(12, 0, 0, 0)
+    checkOut.setHours(coH, coM, 0, 0)
   } else {
     checkOut = new Date(last)
-    checkOut.setHours(12, 0, 0, 0)
+    checkOut.setHours(coH, coM, 0, 0)
   }
 
   router.push({
@@ -801,6 +817,12 @@ onBeforeUnmount(() => {
 
 .reservation-grid-cell--today {
   background: color-mix(in srgb, var(--brand-primary) 8%, var(--pico-card-background-color));
+}
+
+.reservation-grid-cell--past {
+  background: color-mix(in srgb, var(--ink-tertiary) 4%, var(--pico-card-background-color));
+  cursor: default;
+  pointer-events: none;
 }
 
 .reservation-grid-cell--drag-select {

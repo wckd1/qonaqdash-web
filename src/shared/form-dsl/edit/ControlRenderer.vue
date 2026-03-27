@@ -72,6 +72,7 @@
             :id="inputId"
             :value="inputDisplayValue"
             :type="inputType"
+            :min="inputMin"
             :disabled="effectiveDisabled"
             :placeholder="placeholder"
             autocomplete="off"
@@ -106,7 +107,7 @@ import {
   getFilteredRoomSelectOptions,
   buildRoomSelectItemsFromRooms,
 } from '../utils'
-import { availableRoomsKey, guestPickerAnchorKey } from '@/shared/injectKeys'
+import { availableRoomsKey, guestPickerAnchorKey, fieldConstraintsKey } from '@/shared/injectKeys'
 import { evaluateNodeState } from '../formNodeConditions'
 
 const props = defineProps({
@@ -131,6 +132,7 @@ const branchDisabled = computed(() => {
 
 const availableRooms = inject(availableRoomsKey, null)
 const guestPickerAnchor = inject(guestPickerAnchorKey, null)
+const fieldConstraints = inject(fieldConstraintsKey, null)
 
 const inputNode = computed(() => props.node as FormInputNode | FormSelectNode)
 
@@ -356,6 +358,11 @@ const inputType = computed(() => {
   if (n.type === 'email') return 'email'
   if (n.type === 'number') return 'number'
   return 'text'
+})
+
+const inputMin = computed(() => {
+  if (!fieldConstraints?.value) return undefined
+  return fieldConstraints.value[fullBind.value]?.min
 })
 
 const isSelect = computed(() => props.node.type === 'select')

@@ -12,10 +12,22 @@ export function fetchHotel(): Promise<Hotel> {
 /**
  * @param body.name - Display name (trimmed server-side; required non-empty).
  * @param body.currency - ISO 4217 alpha-3 (required).
+ * @param body.check_in_hour - Default check-in time (e.g. "14:00").
+ * @param body.check_out_hour - Default check-out time (e.g. "12:00").
  */
-export function updateHotel(body: { name: string; currency: string }): Promise<Hotel> {
+export function updateHotel(body: {
+  name: string
+  currency: string
+  check_in_hour: string
+  check_out_hour: string
+}): Promise<Hotel> {
   return api
-    .put('/api/property/hotel', { name: body.name, currency: body.currency })
+    .put('/api/property/hotel', {
+      name: body.name,
+      currency: body.currency,
+      check_in_hour: body.check_in_hour,
+      check_out_hour: body.check_out_hour,
+    })
     .then(({ data }) => data)
 }
 

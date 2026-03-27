@@ -36,3 +36,7 @@ export interface GuestPickerAnchorContext {
 
 export const guestPickerAnchorKey: InjectionKey<GuestPickerAnchorContext> =
   Symbol('guestPickerAnchor')
+
+/** Per-field HTML constraints (min/max) provided by the host view for datetime/date inputs. */
+export type FieldConstraints = Record<string, { min?: string; max?: string }>
+export const fieldConstraintsKey: InjectionKey<Ref<FieldConstraints>> = Symbol('fieldConstraints')

@@ -131,39 +131,37 @@
                 </select>
 
                 <template v-if="cond.type === 'property'">
-                  <input
+                  <select
                     v-model="cond.field_id"
-                    type="text"
-                    :placeholder="t('pricing.rule_condition_field')"
                     :disabled="saving"
                     class="condition-row__field"
-                  />
+                    @change="onFieldChange(idx)"
+                  >
+                    <option value="" disabled>{{ t('pricing.rule_condition_field') }}</option>
+                    <option v-for="c in conditionCandidates" :key="c.field_id" :value="c.field_id">
+                      {{ t(c.label) }}
+                    </option>
+                  </select>
                   <select v-model="cond.operator" :disabled="saving" class="condition-row__field">
                     <option value="eq">{{ t('pricing.rule_condition_operator_eq') }}</option>
-                    <option value="in">{{ t('pricing.rule_condition_operator_in') }}</option>
+                    <option value="not_eq">
+                      {{ t('pricing.rule_condition_operator_not_eq') }}
+                    </option>
                   </select>
-                  <input
-                    v-if="cond.operator === 'eq'"
+                  <select
                     v-model="cond.value"
-                    type="text"
-                    :placeholder="t('pricing.rule_condition_value')"
-                    :disabled="saving"
+                    :disabled="saving || !cond.field_id"
                     class="condition-row__field"
-                  />
-                  <input
-                    v-else
-                    :value="cond.values.join(', ')"
-                    type="text"
-                    :placeholder="t('pricing.rule_condition_values')"
-                    :disabled="saving"
-                    class="condition-row__field"
-                    @input="
-                      cond.values = ($event.target as HTMLInputElement).value
-                        .split(',')
-                        .map((v: string) => v.trim())
-                        .filter(Boolean)
-                    "
-                  />
+                  >
+                    <option value="" disabled>{{ t('pricing.rule_condition_value') }}</option>
+                    <option
+                      v-for="opt in candidateByFieldId(cond.field_id)?.options ?? []"
+                      :key="opt.value"
+                      :value="opt.value"
+                    >
+                      {{ t(opt.label) }}
+                    </option>
+                  </select>
                 </template>
 
                 <template v-else-if="cond.type === 'specific_date'">
@@ -297,16 +295,20 @@ import { storeToRefs } from 'pinia'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
 import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
-import type { PricingRule, PricingCondition } from '@/shared/types/commercial'
+import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared/types/commercial'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { formatMoney, majorToMinor, minorToMajor } from '@/shared/lib/money'
 
 const { t, locale } = useI18n()
 const pricingStore = usePricingStore()
 const propertyStore = usePropertyStore()
-const { rules } = storeToRefs(pricingStore)
+const { rules, conditionCandidates } = storeToRefs(pricingStore)
 
 const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? 'USD')
+
+function candidateByFieldId(fieldId: string): ConditionCandidate | undefined {
+  return conditionCandidates.value.find((c) => c.field_id === fieldId)
+}
 
 const loading = ref(true)
 const loadError = ref('')
@@ -320,9 +322,8 @@ const nameInputRef = ref<HTMLInputElement | null>(null)
 interface ConditionFormState {
   type: PricingCondition['type']
   field_id: string
-  operator: 'eq' | 'in'
+  operator: 'eq' | 'not_eq'
   value: string
-  values: string[]
   date: string
   from: string
   to: string
@@ -368,14 +369,28 @@ function statusClass(status: string): Record<string, boolean> {
   }
 }
 
+function resolveFieldLabel(fieldId: string): string {
+  const raw = candidateByFieldId(fieldId)?.label
+  return raw ? t(raw) : fieldId
+}
+
+function resolveOptionLabel(fieldId: string, value: string): string {
+  const candidate = candidateByFieldId(fieldId)
+  const raw = candidate?.options.find((o) => o.value === value)?.label
+  return raw ? t(raw) : value
+}
+
 function conditionsSummary(rule: PricingRule): string {
   if (!rule.conditions?.length) return t('pricing.rule_no_conditions')
   return rule.conditions
     .map((c) => {
       switch (c.type) {
-        case 'property':
-          if (c.operator === 'eq') return `${c.field_id} = ${c.value ?? ''}`
-          return `${c.field_id} ∈ {${(c.values ?? []).join(', ')}}`
+        case 'property': {
+          const label = resolveFieldLabel(c.field_id)
+          const valLabel = resolveOptionLabel(c.field_id, c.value ?? '')
+          if (c.operator === 'not_eq') return `${label} ≠ ${valLabel}`
+          return `${label} = ${valLabel}`
+        }
         case 'specific_date':
           return c.date
         case 'date_range':
@@ -410,7 +425,11 @@ async function load() {
   loadError.value = ''
   loading.value = true
   try {
-    await Promise.all([pricingStore.fetchRules(true), propertyStore.fetchHotel()])
+    await Promise.all([
+      pricingStore.fetchRules(true),
+      pricingStore.fetchConditionCandidates(),
+      propertyStore.fetchHotel(),
+    ])
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('pricing.load_failed')
   } finally {
@@ -424,7 +443,6 @@ function conditionToFormState(c: PricingCondition): ConditionFormState {
     field_id: '',
     operator: 'eq',
     value: '',
-    values: [],
     date: '',
     from: '',
     to: '',
@@ -434,7 +452,6 @@ function conditionToFormState(c: PricingCondition): ConditionFormState {
       base.field_id = c.field_id
       base.operator = c.operator
       base.value = c.value ?? ''
-      base.values = c.values ? [...c.values] : []
       break
     case 'specific_date':
       base.date = c.date
@@ -450,10 +467,7 @@ function conditionToFormState(c: PricingCondition): ConditionFormState {
 function formStateToCondition(c: ConditionFormState): PricingCondition {
   switch (c.type) {
     case 'property':
-      if (c.operator === 'in') {
-        return { type: 'property', field_id: c.field_id, operator: 'in', values: c.values }
-      }
-      return { type: 'property', field_id: c.field_id, operator: 'eq', value: c.value }
+      return { type: 'property', field_id: c.field_id, operator: c.operator, value: c.value }
     case 'specific_date':
       return { type: 'specific_date', date: c.date }
     case 'date_range':
@@ -503,7 +517,6 @@ function addCondition() {
     field_id: '',
     operator: 'eq',
     value: '',
-    values: [],
     date: '',
     from: '',
     to: '',
@@ -514,12 +527,16 @@ function removeCondition(idx: number) {
   ruleForm.value.conditions.splice(idx, 1)
 }
 
+function onFieldChange(idx: number) {
+  const c = ruleForm.value.conditions[idx]
+  c.value = ''
+}
+
 function onConditionTypeChange(idx: number) {
   const c = ruleForm.value.conditions[idx]
   c.field_id = ''
   c.operator = 'eq'
   c.value = ''
-  c.values = []
   c.date = ''
   c.from = ''
   c.to = ''
@@ -837,29 +854,6 @@ onMounted(load)
   flex: 1;
   min-width: 120px;
   margin-bottom: 0;
-}
-
-.condition-row__checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  align-items: center;
-  flex: 1;
-  min-width: 120px;
-}
-
-.condition-row__check-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--text-caption-size);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.condition-row__check-label input[type='checkbox'] {
-  margin: 0;
-  width: auto;
 }
 
 .condition-row__remove {

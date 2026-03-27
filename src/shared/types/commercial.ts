@@ -8,7 +8,7 @@
 // ---------------------------------------------------------------------------
 
 export type ConditionType = 'property' | 'specific_date' | 'date_range'
-export type PropertyOperator = 'eq' | 'in'
+export type PropertyOperator = 'eq' | 'not_eq'
 export type RuleStatus = 'active' | 'disabled' | 'invalid'
 
 export interface PricingConditionProperty {
@@ -16,7 +16,6 @@ export interface PricingConditionProperty {
   field_id: string
   operator: PropertyOperator
   value?: string
-  values?: string[]
 }
 
 export interface PricingConditionSpecificDate {
@@ -75,6 +74,23 @@ export interface PricingRule {
   effect: PricingEffect
   created_at: string
   updated_at: string
+}
+
+// ---------------------------------------------------------------------------
+// Condition candidates (from booking form index)
+// ---------------------------------------------------------------------------
+
+export interface ConditionCandidateOption {
+  value: string
+  label: string
+}
+
+export interface ConditionCandidate {
+  field_id: string
+  type: string
+  label: string
+  bind: string
+  options: ConditionCandidateOption[]
 }
 
 // ---------------------------------------------------------------------------

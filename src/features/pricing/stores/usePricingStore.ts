@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as pricingApi from '@/features/pricing/api'
-import type { BaseRateItem, PricingRule } from '@/shared/types/commercial'
+import type { BaseRateItem, ConditionCandidate, PricingRule } from '@/shared/types/commercial'
 
 export const usePricingStore = defineStore('pricing', () => {
   const baseRates = ref<BaseRateItem[]>([])
+  const conditionCandidates = ref<ConditionCandidate[]>([])
   const rules = ref<PricingRule[]>([])
 
   let baseRatesFetched = false
+  let conditionCandidatesHash = ''
   let rulesFetched = false
 
   async function fetchBaseRates(force = false) {
@@ -19,6 +21,14 @@ export const usePricingStore = defineStore('pricing', () => {
   async function updateBaseRates(rates: BaseRateItem[]) {
     baseRates.value = await pricingApi.updateBaseRates(rates)
     return baseRates.value
+  }
+
+  async function fetchConditionCandidates() {
+    const result = await pricingApi.fetchConditionCandidates(conditionCandidatesHash || undefined)
+    if (result) {
+      conditionCandidates.value = result.conditions
+      conditionCandidatesHash = result.hash
+    }
   }
 
   async function fetchRules(force = false) {
@@ -48,9 +58,11 @@ export const usePricingStore = defineStore('pricing', () => {
 
   return {
     baseRates,
+    conditionCandidates,
     rules,
     fetchBaseRates,
     updateBaseRates,
+    fetchConditionCandidates,
     fetchRules,
     createRule,
     updateRule,

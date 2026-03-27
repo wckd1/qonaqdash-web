@@ -1,12 +1,13 @@
 import api from '@/shared/api/client'
 import type {
   BaseRateItem,
+  ConditionCandidate,
   PricingRule,
   PricingCondition,
   PricingEffect,
 } from '@/shared/types/commercial'
 
-export type { BaseRateItem, PricingRule, PricingCondition, PricingEffect }
+export type { BaseRateItem, ConditionCandidate, PricingRule, PricingCondition, PricingEffect }
 
 // ---------------------------------------------------------------------------
 // Base rates
@@ -20,6 +21,34 @@ export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRateItem[]> 
   return api
     .put('/api/property/pricing/base-rates', { rates })
     .then(({ data }) => data?.rates ?? [])
+}
+
+// ---------------------------------------------------------------------------
+// Condition candidates
+// ---------------------------------------------------------------------------
+
+export interface ConditionCandidatesResult {
+  conditions: ConditionCandidate[]
+  hash: string
+}
+
+export function fetchConditionCandidates(
+  ifNoneMatch?: string,
+): Promise<ConditionCandidatesResult | null> {
+  const headers: Record<string, string> = {}
+  if (ifNoneMatch) headers['If-None-Match'] = `"${ifNoneMatch}"`
+  return api
+    .get('/api/property/pricing/conditions', {
+      headers,
+      validateStatus: (s) => s === 200 || s === 304,
+    })
+    .then((res) => {
+      if (res.status === 304) return null
+      return {
+        conditions: res.data?.conditions ?? [],
+        hash: res.data?.hash ?? '',
+      }
+    })
 }
 
 // ---------------------------------------------------------------------------

@@ -1,18 +1,14 @@
 <template>
-  <section v-if="accommodation" class="accommodation-summary">
-    <div class="accommodation-summary__header">
-      <h3 class="accommodation-summary__title">{{ t('bookings.accommodation_title') }}</h3>
-      <span v-if="formattedQuotedAt" class="accommodation-summary__meta">
+  <section v-if="accommodation" class="pricing-card">
+    <div class="pricing-card__header">
+      <h3 class="pricing-card__title">{{ t('bookings.accommodation_title') }}</h3>
+      <span v-if="formattedQuotedAt" class="pricing-card__meta">
         {{ t('bookings.accommodation_quoted_at', { date: formattedQuotedAt }) }}
       </span>
     </div>
 
-    <div class="accommodation-summary__body">
-      <div
-        v-for="group in roomTypeGroups"
-        :key="group.roomTypeId"
-        class="accommodation-summary__row"
-      >
+    <div class="pricing-card__body">
+      <div v-for="group in roomTypeGroups" :key="group.roomTypeId" class="pricing-card__row">
         <span>
           <template v-if="group.roomCount > 1">{{ group.roomCount }} </template>
           {{ group.label }} &times; {{ t('quote.nights_count', group.nightCount) }}
@@ -24,10 +20,10 @@
         <div
           v-for="adj in perNightAdjustments"
           :key="adj.ruleId"
-          class="accommodation-summary__row accommodation-summary__row--adjustment"
+          class="pricing-card__row pricing-card__row--adjustment"
         >
           <span>{{ adj.ruleName }} &times; {{ t('quote.nights_count', adj.nightCount) }}</span>
-          <span :class="{ 'accommodation-summary__amount--negative': adj.total < 0 }">
+          <span :class="{ 'pricing-card__amount--negative': adj.total < 0 }">
             {{ fmtMoney(adj.total) }}
           </span>
         </div>
@@ -37,23 +33,23 @@
         <div
           v-for="adj in accommodation.total_adjustments"
           :key="adj.rule_id"
-          class="accommodation-summary__row accommodation-summary__row--adjustment"
+          class="pricing-card__row pricing-card__row--adjustment"
         >
           <span>{{ adj.rule_name }}</span>
-          <span :class="{ 'accommodation-summary__amount--negative': adj.amount < 0 }">
+          <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
             {{ fmtMoney(adj.amount) }}
           </span>
         </div>
       </template>
 
-      <div class="accommodation-summary__row accommodation-summary__row--total">
+      <div class="pricing-card__row pricing-card__row--total">
         <span>{{ t('quote.total') }}</span>
         <span>{{ fmtMoney(accommodation.grand_total) }}</span>
       </div>
     </div>
 
-    <div class="accommodation-summary__actions">
-      <button type="button" class="accommodation-summary__details-btn" @click="detailsOpen = true">
+    <div class="pricing-card__actions">
+      <button type="button" class="pricing-card__link-btn" @click="detailsOpen = true">
         {{ t('bookings.accommodation_view_details') }}
       </button>
     </div>
@@ -66,20 +62,20 @@
       role="presentation"
       @click.self="detailsOpen = false"
     >
-      <div class="dialog accommodation-detail-dialog" role="dialog" aria-modal="true">
-        <h2 class="accommodation-detail-dialog__title">{{ t('bookings.accommodation_title') }}</h2>
+      <div class="dialog pricing-detail-dialog" role="dialog" aria-modal="true">
+        <h2 class="pricing-detail-dialog__title">{{ t('bookings.accommodation_title') }}</h2>
 
-        <div class="accommodation-detail-dialog__body">
-          <div class="accommodation-detail__nights">
-            <div v-for="group in nightsByDate" :key="group.date" class="accommodation-date-group">
-              <div class="accommodation-date-group__header">{{ fmtDate(group.date) }}</div>
+        <div class="pricing-detail-dialog__body">
+          <div class="pricing-detail__nights">
+            <div v-for="group in nightsByDate" :key="group.date" class="pricing-date-group">
+              <div class="pricing-date-group__header">{{ fmtDate(group.date) }}</div>
 
-              <div v-for="(entry, idx) in group.entries" :key="idx" class="accommodation-night">
-                <div v-if="roomTypeName(entry.room_type_id)" class="accommodation-night__room-type">
+              <div v-for="(entry, idx) in group.entries" :key="idx" class="pricing-night">
+                <div v-if="roomTypeName(entry.room_type_id)" class="pricing-night__room-type">
                   {{ roomTypeName(entry.room_type_id) }}
                 </div>
 
-                <div class="accommodation-night__row">
+                <div class="pricing-night__row">
                   <span>{{ t('quote.base_rate') }}</span>
                   <span>{{ fmtMoney(entry.base_rate) }}</span>
                 </div>
@@ -87,15 +83,15 @@
                 <div
                   v-for="adj in entry.adjustments"
                   :key="adj.rule_id"
-                  class="accommodation-night__row accommodation-night__row--adjustment"
+                  class="pricing-night__row pricing-night__row--adjustment"
                 >
                   <span>{{ adj.rule_name }}</span>
-                  <span :class="{ 'accommodation-summary__amount--negative': adj.amount < 0 }">
+                  <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
                     {{ fmtMoney(adj.amount) }}
                   </span>
                 </div>
 
-                <div class="accommodation-night__row accommodation-night__row--subtotal">
+                <div class="pricing-night__row pricing-night__row--subtotal">
                   <span>{{ t('quote.night_subtotal') }}</span>
                   <span>{{ fmtMoney(entry.subtotal) }}</span>
                 </div>
@@ -104,8 +100,8 @@
           </div>
         </div>
 
-        <div class="accommodation-detail__footer">
-          <div class="accommodation-detail__row">
+        <div class="pricing-detail__footer">
+          <div class="pricing-detail__row">
             <span>{{ t('quote.subtotal') }}</span>
             <span>{{ fmtMoney(accommodation.nights_subtotal) }}</span>
           </div>
@@ -113,15 +109,15 @@
           <div
             v-for="adj in accommodation.total_adjustments"
             :key="adj.rule_id"
-            class="accommodation-detail__row accommodation-detail__row--adjustment"
+            class="pricing-detail__row pricing-detail__row--adjustment"
           >
             <span>{{ adj.rule_name }}</span>
-            <span :class="{ 'accommodation-summary__amount--negative': adj.amount < 0 }">
+            <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
               {{ fmtMoney(adj.amount) }}
             </span>
           </div>
 
-          <div class="accommodation-detail__row accommodation-detail__row--total">
+          <div class="pricing-detail__row pricing-detail__row--total">
             <span>{{ t('quote.total') }}</span>
             <span>{{ fmtMoney(accommodation.grand_total) }}</span>
           </div>
@@ -288,202 +284,3 @@ function roomTypeName(id: string): string {
   return props.roomTypeNames?.[id] ?? ''
 }
 </script>
-
-<style scoped>
-.accommodation-summary {
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--content-area-radius);
-  padding: var(--space-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.accommodation-summary__header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-sm);
-}
-
-.accommodation-summary__title {
-  font-size: var(--text-subheading-size);
-  font-weight: var(--text-subheading-weight);
-  letter-spacing: var(--text-subheading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
-.accommodation-summary__meta {
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-caption-weight);
-  color: var(--ink-tertiary);
-  white-space: nowrap;
-}
-
-.accommodation-summary__body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.accommodation-summary__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: var(--text-data-size);
-  color: var(--ink-secondary);
-}
-
-.accommodation-summary__row--adjustment {
-  font-size: var(--text-caption-size);
-  color: var(--ink-tertiary);
-  font-style: italic;
-  padding-left: var(--space-sm);
-}
-
-.accommodation-summary__row--total {
-  font-weight: var(--text-heading-weight);
-  font-size: var(--text-body-size);
-  color: var(--ink-primary);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--border-default);
-  margin-top: var(--space-xs);
-}
-
-.accommodation-summary__amount--negative {
-  color: var(--semantic-success);
-}
-
-.accommodation-summary__actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.accommodation-summary__details-btn {
-  all: unset;
-  cursor: pointer;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--brand-primary);
-}
-
-.accommodation-summary__details-btn:hover {
-  color: var(--brand-primary-hover);
-  text-decoration: underline;
-}
-
-/* ----- Detail dialog ----- */
-
-.accommodation-detail-dialog {
-  max-width: 520px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: 0;
-}
-
-.accommodation-detail-dialog__title {
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-  padding: var(--space-xl) var(--space-xl) 0;
-}
-
-.accommodation-detail-dialog__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: 0 var(--space-xl);
-}
-
-.accommodation-detail-dialog :deep(.dialog-actions) {
-  padding: 0 var(--space-xl) var(--space-xl);
-}
-
-.accommodation-detail__nights {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.accommodation-date-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.accommodation-date-group__header {
-  font-size: var(--text-label-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-primary);
-}
-
-.accommodation-night {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-left: var(--space-sm);
-}
-
-.accommodation-night__room-type {
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-secondary);
-}
-
-.accommodation-night__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding-left: var(--space-sm);
-  font-size: var(--text-caption-size);
-  color: var(--ink-secondary);
-}
-
-.accommodation-night__row--adjustment {
-  color: var(--ink-tertiary);
-  font-style: italic;
-}
-
-.accommodation-night__row--subtotal {
-  font-weight: var(--text-data-weight);
-  color: var(--ink-primary);
-}
-
-.accommodation-detail__footer {
-  border-top: 1px solid var(--border-subtle);
-  padding: var(--space-sm) var(--space-xl) 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.accommodation-detail__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: var(--text-data-size);
-  color: var(--ink-secondary);
-}
-
-.accommodation-detail__row--adjustment {
-  font-size: var(--text-caption-size);
-  color: var(--ink-tertiary);
-  font-style: italic;
-}
-
-.accommodation-detail__row--total {
-  font-weight: var(--text-heading-weight);
-  font-size: var(--text-body-size);
-  color: var(--ink-primary);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--border-default);
-  margin-top: var(--space-xs);
-}
-</style>

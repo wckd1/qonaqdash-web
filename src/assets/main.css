@@ -2349,6 +2349,239 @@ main .optional {
   width: auto;
 }
 
+/*
+ * Pricing card: bordered card for accommodation / quote summaries.
+ * Shared by AccommodationSummary and QuoteBreakdown.
+ */
+.pricing-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--content-area-radius);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.pricing-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.pricing-card__title {
+  font-size: var(--text-subheading-size);
+  font-weight: var(--text-subheading-weight);
+  letter-spacing: var(--text-subheading-tracking);
+  color: var(--ink-primary);
+  margin: 0;
+}
+
+.pricing-card__meta {
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-caption-weight);
+  color: var(--ink-tertiary);
+  white-space: nowrap;
+}
+
+.pricing-card__status {
+  font-size: var(--text-body-size);
+  color: var(--ink-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.pricing-card__status--error {
+  color: var(--semantic-error);
+}
+
+.pricing-card__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: pricing-card-spin 0.6s linear infinite;
+}
+
+@keyframes pricing-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pricing-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pricing-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--text-data-size);
+  color: var(--ink-secondary);
+}
+
+.pricing-card__row--adjustment {
+  font-size: var(--text-caption-size);
+  color: var(--ink-tertiary);
+  font-style: italic;
+  padding-left: var(--space-sm);
+}
+
+.pricing-card__row--total {
+  font-weight: var(--text-heading-weight);
+  font-size: var(--text-body-size);
+  color: var(--ink-primary);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border-default);
+  margin-top: var(--space-xs);
+}
+
+.pricing-card__amount--negative {
+  color: var(--semantic-success);
+}
+
+.pricing-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pricing-card__link-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--brand-primary);
+}
+
+.pricing-card__link-btn:hover {
+  color: var(--brand-primary-hover);
+  text-decoration: underline;
+}
+
+/*
+ * Pricing detail dialog: night-by-night breakdown overlay.
+ * Teleported to body; uses global `.dialog` base.
+ */
+.pricing-detail-dialog {
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: 0;
+}
+
+.pricing-detail-dialog__title {
+  font-size: var(--text-heading-size);
+  font-weight: var(--text-heading-weight);
+  letter-spacing: var(--text-heading-tracking);
+  color: var(--ink-primary);
+  margin: 0;
+  padding: var(--space-xl) var(--space-xl) 0;
+}
+
+.pricing-detail-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0 var(--space-xl);
+}
+
+.pricing-detail-dialog .dialog-actions {
+  padding: 0 var(--space-xl) var(--space-xl);
+}
+
+.pricing-detail__nights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pricing-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pricing-date-group__header {
+  font-size: var(--text-label-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-primary);
+}
+
+.pricing-night {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: var(--space-sm);
+}
+
+.pricing-night__room-type {
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+}
+
+.pricing-night__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-left: var(--space-sm);
+  font-size: var(--text-caption-size);
+  color: var(--ink-secondary);
+}
+
+.pricing-night__row--adjustment {
+  color: var(--ink-tertiary);
+  font-style: italic;
+}
+
+.pricing-night__row--subtotal {
+  font-weight: var(--text-data-weight);
+  color: var(--ink-primary);
+}
+
+.pricing-detail__footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-sm) var(--space-xl) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pricing-detail__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--text-data-size);
+  color: var(--ink-secondary);
+}
+
+.pricing-detail__row--adjustment {
+  font-size: var(--text-caption-size);
+  color: var(--ink-tertiary);
+  font-style: italic;
+}
+
+.pricing-detail__row--total {
+  font-weight: var(--text-heading-weight);
+  font-size: var(--text-body-size);
+  color: var(--ink-primary);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border-default);
+  margin-top: var(--space-xs);
+}
+
 /* ----- Auth layout (login / invite; standalone <main class="auth-page">) ----- */
 main.auth-page {
   display: flex;

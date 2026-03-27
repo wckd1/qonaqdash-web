@@ -1,20 +1,22 @@
 <template>
-  <section v-if="visible" class="page-footer quote-breakdown">
+  <section v-if="visible" class="pricing-card">
     <template v-if="loading || error || quote">
-      <h3 class="quote-breakdown__title">{{ t('quote.title') }}</h3>
+      <div class="pricing-card__header">
+        <h3 class="pricing-card__title">{{ t('quote.title') }}</h3>
+      </div>
 
-      <div v-if="loading" class="quote-breakdown__status">
-        <span class="quote-breakdown__spinner" aria-hidden="true" />
+      <div v-if="loading" class="pricing-card__status">
+        <span class="pricing-card__spinner" aria-hidden="true" />
         {{ t('quote.calculating') }}
       </div>
 
-      <div v-else-if="error" class="quote-breakdown__status quote-breakdown__status--error">
+      <div v-else-if="error" class="pricing-card__status pricing-card__status--error">
         {{ t('quote.error') }}
       </div>
 
       <template v-else-if="quote">
-        <div class="quote-summary">
-          <div v-for="group in roomTypeGroups" :key="group.roomTypeId" class="quote-summary__row">
+        <div class="pricing-card__body">
+          <div v-for="group in roomTypeGroups" :key="group.roomTypeId" class="pricing-card__row">
             <span>
               <template v-if="group.roomCount > 1">{{ group.roomCount }} </template>
               {{ group.label }} &times; {{ t('quote.nights_count', group.nightCount) }}
@@ -26,16 +28,16 @@
             <div
               v-for="adj in allAdjustments"
               :key="adj.ruleId"
-              class="quote-summary__row quote-summary__row--adjustment"
+              class="pricing-card__row pricing-card__row--adjustment"
             >
               <span>{{ adj.ruleName }} &times; {{ t('quote.nights_count', adj.nightCount) }}</span>
-              <span :class="{ 'quote-amount--negative': adj.total < 0 }">
+              <span :class="{ 'pricing-card__amount--negative': adj.total < 0 }">
                 {{ fmtMoney(adj.total) }}
               </span>
             </div>
           </template>
 
-          <div class="quote-summary__row quote-summary__row--total">
+          <div class="pricing-card__row pricing-card__row--total">
             <span>{{ t('quote.total') }}</span>
             <span>{{ fmtMoney(quote.grand_total) }}</span>
           </div>
@@ -43,13 +45,8 @@
       </template>
     </template>
 
-    <div class="quote-breakdown__actions">
-      <button
-        v-if="quote"
-        type="button"
-        class="quote-breakdown__details-btn"
-        @click="detailsOpen = true"
-      >
+    <div class="pricing-card__actions">
+      <button v-if="quote" type="button" class="pricing-card__link-btn" @click="detailsOpen = true">
         {{ t('quote.view_details') }}
       </button>
       <slot name="actions" />
@@ -63,20 +60,20 @@
       role="presentation"
       @click.self="detailsOpen = false"
     >
-      <div class="dialog quote-detail-dialog" role="dialog" aria-modal="true">
-        <h2 class="quote-detail-dialog__title">{{ t('quote.title') }}</h2>
+      <div class="dialog pricing-detail-dialog" role="dialog" aria-modal="true">
+        <h2 class="pricing-detail-dialog__title">{{ t('quote.title') }}</h2>
 
-        <div class="quote-detail-dialog__body">
-          <div class="quote-detail__nights">
-            <div v-for="group in nightsByDate" :key="group.date" class="quote-date-group">
-              <div class="quote-date-group__header">{{ fmtDate(group.date) }}</div>
+        <div class="pricing-detail-dialog__body">
+          <div class="pricing-detail__nights">
+            <div v-for="group in nightsByDate" :key="group.date" class="pricing-date-group">
+              <div class="pricing-date-group__header">{{ fmtDate(group.date) }}</div>
 
-              <div v-for="(entry, idx) in group.entries" :key="idx" class="quote-night">
-                <div v-if="roomTypeName(entry.room_type_id)" class="quote-night__room-type">
+              <div v-for="(entry, idx) in group.entries" :key="idx" class="pricing-night">
+                <div v-if="roomTypeName(entry.room_type_id)" class="pricing-night__room-type">
                   {{ roomTypeName(entry.room_type_id) }}
                 </div>
 
-                <div class="quote-night__row">
+                <div class="pricing-night__row">
                   <span>{{ t('quote.base_rate') }}</span>
                   <span>{{ fmtMoney(entry.base_rate) }}</span>
                 </div>
@@ -84,15 +81,15 @@
                 <div
                   v-for="adj in entry.adjustments"
                   :key="adj.rule_id"
-                  class="quote-night__row quote-night__row--adjustment"
+                  class="pricing-night__row pricing-night__row--adjustment"
                 >
                   <span>{{ adj.rule_name }}</span>
-                  <span :class="{ 'quote-amount--negative': adj.amount < 0 }">
+                  <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
                     {{ fmtMoney(adj.amount) }}
                   </span>
                 </div>
 
-                <div class="quote-night__row quote-night__row--subtotal">
+                <div class="pricing-night__row pricing-night__row--subtotal">
                   <span>{{ t('quote.night_subtotal') }}</span>
                   <span>{{ fmtMoney(entry.subtotal) }}</span>
                 </div>
@@ -101,8 +98,8 @@
           </div>
         </div>
 
-        <div class="quote-detail__footer">
-          <div class="quote-detail__row">
+        <div class="pricing-detail__footer">
+          <div class="pricing-detail__row">
             <span>{{ t('quote.subtotal') }}</span>
             <span>{{ fmtMoney(quote.nights_subtotal) }}</span>
           </div>
@@ -110,15 +107,15 @@
           <div
             v-for="adj in quote.total_adjustments"
             :key="adj.rule_id"
-            class="quote-detail__row quote-detail__row--adjustment"
+            class="pricing-detail__row pricing-detail__row--adjustment"
           >
             <span>{{ adj.rule_name }}</span>
-            <span :class="{ 'quote-amount--negative': adj.amount < 0 }">
+            <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
               {{ fmtMoney(adj.amount) }}
             </span>
           </div>
 
-          <div class="quote-detail__row quote-detail__row--total">
+          <div class="pricing-detail__row pricing-detail__row--total">
             <span>{{ t('quote.total') }}</span>
             <span>{{ fmtMoney(quote.grand_total) }}</span>
           </div>
@@ -285,219 +282,3 @@ function roomTypeName(id: string): string {
   return props.roomTypeNames?.[id] ?? ''
 }
 </script>
-
-<style scoped>
-/* ----- Footer summary ----- */
-
-.quote-breakdown {
-  background: var(--surface-1);
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.quote-breakdown__title {
-  font-size: var(--text-subheading-size);
-  font-weight: var(--text-subheading-weight);
-  letter-spacing: var(--text-subheading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-}
-
-.quote-breakdown__status {
-  font-size: var(--text-body-size);
-  color: var(--ink-tertiary);
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.quote-breakdown__status--error {
-  color: var(--semantic-error);
-}
-
-.quote-breakdown__spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border-default);
-  border-top-color: var(--brand-primary);
-  border-radius: 50%;
-  animation: quote-spin 0.6s linear infinite;
-}
-
-@keyframes quote-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.quote-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.quote-summary__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: var(--text-data-size);
-  color: var(--ink-secondary);
-}
-
-.quote-summary__row--adjustment {
-  font-size: var(--text-caption-size);
-  color: var(--ink-tertiary);
-  font-style: italic;
-  padding-left: var(--space-sm);
-}
-
-.quote-summary__row--total {
-  font-weight: var(--text-heading-weight);
-  font-size: var(--text-body-size);
-  color: var(--ink-primary);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--border-default);
-  margin-top: var(--space-xs);
-}
-
-.quote-breakdown__actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-xs);
-}
-
-.quote-breakdown__details-btn {
-  all: unset;
-  cursor: pointer;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--brand-primary);
-}
-
-.quote-breakdown__details-btn:hover {
-  color: var(--brand-primary-hover);
-  text-decoration: underline;
-}
-
-.quote-amount--negative {
-  color: var(--semantic-success);
-}
-
-/* ----- Detail dialog ----- */
-
-.quote-detail-dialog {
-  max-width: 520px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: 0;
-}
-
-.quote-detail-dialog__title {
-  font-size: var(--text-heading-size);
-  font-weight: var(--text-heading-weight);
-  letter-spacing: var(--text-heading-tracking);
-  color: var(--ink-primary);
-  margin: 0;
-  padding: var(--space-xl) var(--space-xl) 0;
-}
-
-.quote-detail-dialog__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: 0 var(--space-xl);
-}
-
-.quote-detail-dialog :deep(.dialog-actions) {
-  padding: 0 var(--space-xl) var(--space-xl);
-}
-
-.quote-detail__nights {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.quote-date-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.quote-date-group__header {
-  font-size: var(--text-label-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-primary);
-}
-
-.quote-night {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-left: var(--space-sm);
-}
-
-.quote-night__room-type {
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-secondary);
-}
-
-.quote-night__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding-left: var(--space-sm);
-  font-size: var(--text-caption-size);
-  color: var(--ink-secondary);
-}
-
-.quote-night__row--adjustment {
-  color: var(--ink-tertiary);
-  font-style: italic;
-}
-
-.quote-night__row--subtotal {
-  font-weight: var(--text-data-weight);
-  color: var(--ink-primary);
-}
-
-.quote-detail__footer {
-  border-top: 1px solid var(--border-subtle);
-  padding: var(--space-sm) var(--space-xl) 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.quote-detail__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: var(--text-data-size);
-  color: var(--ink-secondary);
-}
-
-.quote-detail__row--adjustment {
-  font-size: var(--text-caption-size);
-  color: var(--ink-tertiary);
-  font-style: italic;
-}
-
-.quote-detail__row--total {
-  font-weight: var(--text-heading-weight);
-  font-size: var(--text-body-size);
-  color: var(--ink-primary);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--border-default);
-  margin-top: var(--space-xs);
-}
-</style>

@@ -1,5 +1,6 @@
 import type { FormNode, FormRef } from './forms'
 import type { GuestFormFields } from './guests'
+import type { AccommodationSnapshot } from './commercial'
 
 /** Guest info nested in BookingItem (matches bookinghttp.BookingGuestInfo). */
 export interface BookingGuestInfo {
@@ -32,6 +33,7 @@ export interface BookingItem {
   _form?: FormRef
   guest: BookingGuestInfo
   stay: BookingStayData
+  accommodation?: AccommodationSnapshot
 }
 
 /** Request body for POST/PUT /api/bookings (matches bookinghttp.BookingDataRequest). */
@@ -49,6 +51,7 @@ export interface BookingDetailData {
   stay: Record<string, unknown>
   status?: string
   id?: string
+  accommodation?: AccommodationSnapshot
 }
 
 /** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */
@@ -63,6 +66,7 @@ export interface BookingFormResponse {
   definition?: FormNode
   data?: Record<string, unknown>
   guest?: Record<string, unknown>
+  accommodation?: AccommodationSnapshot
 }
 
 /** One element of `stay.rooms` in form data. */

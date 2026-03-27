@@ -12,6 +12,11 @@ import type {
   BookingFormDefinitionResponse,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
+import type {
+  AccommodationSnapshot,
+  StayQuoteNight,
+  StayQuoteAdjustment,
+} from '@/shared/types/commercial'
 
 export type {
   BookingDetailData,
@@ -34,6 +39,8 @@ export type {
   CreateBookingPayload,
 } from '@/shared/types/bookings'
 
+export type { AccommodationSnapshot } from '@/shared/types/commercial'
+
 export type { FormRef }
 
 export interface BookingDetailPayload {
@@ -41,17 +48,35 @@ export interface BookingDetailPayload {
   formRef: FormRef | null
 }
 
+function parseAccommodationSnapshot(raw: unknown): AccommodationSnapshot | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const o = raw as Record<string, unknown>
+  if (!Array.isArray(o.nights) || typeof o.grand_total !== 'number') return undefined
+  return {
+    calculated_at: typeof o.calculated_at === 'string' ? o.calculated_at : '',
+    version: typeof o.version === 'number' ? o.version : 0,
+    nights: o.nights as StayQuoteNight[],
+    nights_subtotal: typeof o.nights_subtotal === 'number' ? o.nights_subtotal : 0,
+    total_adjustments: Array.isArray(o.total_adjustments)
+      ? (o.total_adjustments as StayQuoteAdjustment[])
+      : [],
+    grand_total: o.grand_total,
+  }
+}
+
 export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const formRef = normalizeFormRef(o._form)
   const guest = (o.guest && typeof o.guest === 'object' ? o.guest : {}) as Record<string, unknown>
   const stay = (o.stay && typeof o.stay === 'object' ? o.stay : {}) as Record<string, unknown>
+  const accommodation = parseAccommodationSnapshot(o.accommodation)
   return {
     detail: {
       guest,
       stay,
       status: typeof o.status === 'string' ? o.status : undefined,
       id: typeof o.id === 'string' ? o.id : undefined,
+      accommodation,
     },
     formRef,
   }
@@ -135,6 +160,7 @@ export function mergeBookingDetailWithRuntimeForm(
       status: detail.status,
       id: detail.id,
     },
+    accommodation: detail.accommodation,
   }
 }
 

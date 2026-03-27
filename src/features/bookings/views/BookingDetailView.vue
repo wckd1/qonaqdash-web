@@ -34,7 +34,15 @@
   </p>
   <template v-else-if="currentBooking">
     <template v-if="bookingForm">
-      <FormView v-if="!editing" :definition="bookingForm.definition" :data="bookingForm.data" />
+      <template v-if="!editing">
+        <FormView :definition="bookingForm.definition" :data="bookingForm.data" />
+        <AccommodationSummary
+          v-if="currentBooking?.accommodation"
+          :accommodation="currentBooking.accommodation"
+          :currency="hotelCurrency"
+          :room-type-names="roomTypeNames"
+        />
+      </template>
       <template v-else>
         <FormEdit
           :definition="bookingForm.definition"
@@ -72,6 +80,7 @@ import {
   bookingStatusAllowsEdit,
 } from '@/features/bookings/bookingStatus'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
+import AccommodationSummary from '@/features/bookings/components/AccommodationSummary.vue'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'

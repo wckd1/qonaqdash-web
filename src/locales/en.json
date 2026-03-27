@@ -207,7 +207,10 @@
       "checked_in": "Checked in",
       "checked_out": "Checked out",
       "canceled": "Canceled"
-    }
+    },
+    "accommodation_title": "Pricing summary",
+    "accommodation_quoted_at": "Quoted {date}",
+    "accommodation_view_details": "View details"
   },
   "rooms": {
     "add_type": "Add type",

@@ -129,14 +129,16 @@ export interface QuoteSummary {
 
 // ---------------------------------------------------------------------------
 // Accommodation snapshot (embedded on booking aggregate after save)
+// Matches swagger bookinghttp.AccommodationResponse.
 // ---------------------------------------------------------------------------
 
 export interface AccommodationSnapshot {
-  quoted_at: string
-  currency: string
-  lines: QuoteLine[]
-  total_minor: number
-  pricing_context?: Record<string, string>
+  calculated_at: string
+  version: number
+  nights: StayQuoteNight[]
+  nights_subtotal: number
+  total_adjustments: StayQuoteAdjustment[]
+  grand_total: number
 }
 
 // ---------------------------------------------------------------------------

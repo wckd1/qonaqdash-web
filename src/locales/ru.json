@@ -207,7 +207,10 @@
       "checked_in": "Заселён",
       "checked_out": "Выселён",
       "canceled": "Отменено"
-    }
+    },
+    "accommodation_title": "Стоимость проживания",
+    "accommodation_quoted_at": "Рассчитано {date}",
+    "accommodation_view_details": "Подробнее"
   },
   "rooms": {
     "add_type": "Добавить тип",

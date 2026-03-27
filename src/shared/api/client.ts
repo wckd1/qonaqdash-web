@@ -64,6 +64,7 @@ api.interceptors.response.use(
     const { error: showError } = useNotification()
 
     if (!err.response) {
+      if (err.code === 'ERR_CANCELED') return Promise.reject(err)
       showError('Network error. Please check your connection.')
       return Promise.reject(err)
     }

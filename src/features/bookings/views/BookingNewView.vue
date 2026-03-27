@@ -1,13 +1,14 @@
 <template>
   <header class="page-header">
     <h1>{{ t('page_title.booking_new') }}</h1>
-    <button v-if="bookingForm" type="button" :disabled="submitting" @click="onSubmit">
-      {{ submitting ? t('common.saving') : t('common.save') }}
-    </button>
   </header>
 
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
+  <div v-else-if="submitting" class="creating-state">
+    <span class="creating-state__spinner" aria-hidden="true" />
+    {{ t('bookings.creating') }}
+  </div>
   <template v-else-if="bookingForm">
     <FormEdit
       :definition="bookingForm.definition"
@@ -15,23 +16,40 @@
       :errors-map="errorsMap"
       @update:data="formData = $event"
     />
+    <QuoteBreakdown
+      :quote="quote"
+      :currency="hotelCurrency"
+      :loading="quoteLoading"
+      :error="quoteError"
+      :room-type-names="roomTypeNames"
+    >
+      <template #actions>
+        <button type="button" @click="onSubmit">
+          {{ t('common.save') }}
+        </button>
+      </template>
+    </QuoteBreakdown>
   </template>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, provide, watch } from 'vue'
+import { ref, computed, onMounted, provide, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import type { Room } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
+import { useNotification } from '@/shared/composables/useNotification'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
+import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
+import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 
@@ -41,6 +59,8 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useBookingStore()
+const { error: showError } = useNotification()
+const propertyStore = usePropertyStore()
 
 const loading = ref(true)
 const loadError = ref('')
@@ -53,6 +73,26 @@ const submitting = ref(false)
 const availableRooms = ref<Room[]>([])
 
 provide(availableRoomsKey, availableRooms)
+
+const stayBranch = computed(() => {
+  const raw = formData.value.stay
+  if (!raw || typeof raw !== 'object') return null
+  return raw as Record<string, unknown>
+})
+
+const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? '')
+const roomTypeNames = computed(() => {
+  const map: Record<string, string> = {}
+  for (const rt of propertyStore.roomTypes) map[rt.id] = rt.name
+  return map
+})
+
+const { quote, quoteLoading, quoteError } = useBookingQuote(
+  () => String(stayBranch.value?.check_in ?? ''),
+  () => String(stayBranch.value?.check_out ?? ''),
+  () => (Array.isArray(stayBranch.value?.rooms) ? stayBranch.value!.rooms : []),
+  () => formData.value,
+)
 
 watch(
   () => {
@@ -107,6 +147,8 @@ async function mergeRouteQueryIntoForm() {
 onMounted(async () => {
   loading.value = true
   loadError.value = ''
+  propertyStore.fetchHotel()
+  propertyStore.fetchRoomTypes()
   try {
     const template = await store.fetchBookingForm()
     bookingForm.value = template as BookingFormRuntime
@@ -148,9 +190,10 @@ async function onSubmit() {
   try {
     const payload = JSON.parse(JSON.stringify(formData.value))
     delete payload.id
-    await store.createBooking(payload)
-    router.push('/bookings')
+    const created = await store.createBooking(payload)
+    router.push(`/bookings/${created.id}/details`)
   } catch (err: unknown) {
+    submitting.value = false
     const msg = formatUnknownApiError(err) || t('bookings.create_failed')
     const serverErrors = httpErrorData(err)?.errors
     if (
@@ -160,11 +203,8 @@ async function onSubmit() {
       !Array.isArray(serverErrors)
     ) {
       errorsMap.value = serverErrors as Record<string, string[]>
-    } else {
-      errorsMap.value = { '': [msg] }
     }
-  } finally {
-    submitting.value = false
+    showError(msg)
   }
 }
 </script>
@@ -179,5 +219,32 @@ async function onSubmit() {
 .loading-state {
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
+}
+
+.creating-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  flex: 1;
+  color: var(--ink-tertiary);
+  font-size: var(--text-body-size);
+}
+
+.creating-state__spinner {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-default);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: creating-spin 0.7s linear infinite;
+}
+
+@keyframes creating-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

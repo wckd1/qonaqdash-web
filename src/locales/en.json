@@ -120,6 +120,7 @@
     "clear_search": "Clear search",
     "dismiss_toast": "Dismiss",
     "add": "Add",
+    "close": "Close",
     "optional": "(optional)"
   },
   "fields": {
@@ -175,6 +176,7 @@
     "empty_search": "No bookings match your search.",
     "load_failed": "Failed to load bookings.",
     "form_load_failed": "Failed to load form.",
+    "creating": "Creating booking…",
     "create_failed": "Failed to create booking.",
     "detail_load_failed": "Failed to load booking.",
     "save_failed": "Failed to save booking.",
@@ -447,6 +449,18 @@
     "rule_status_disabled": "Disabled",
     "rule_status_invalid": "Invalid",
     "rule_invalid_reason": "Reason"
+  },
+  "quote": {
+    "title": "Price breakdown",
+    "calculating": "Calculating…",
+    "error": "Could not calculate price. Check dates and rooms.",
+    "base_rate": "Base rate",
+    "night_subtotal": "Night subtotal",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "nights_count": "1 night | {n} nights",
+    "applied_rules": "Applied rules",
+    "view_details": "View details"
   },
   "form_settings": {
     "loading_schema": "Loading form schema…",

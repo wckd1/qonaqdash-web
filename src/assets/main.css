@@ -198,6 +198,22 @@ main .page-header-actions {
   display: flex;
   gap: var(--space-sm);
 }
+
+/*
+ * Page footer: edge-to-edge container at the bottom of the main column.
+ * Negative margins cancel `.app-main` padding so the footer sits flush
+ * with the column edges. `margin-top: auto` pushes it down when content
+ * above doesn't fill the viewport.
+ */
+main .page-footer {
+  margin-left: calc(-1 * var(--space-sm));
+  margin-right: calc(-1 * var(--space-sm));
+  margin-bottom: calc(-1 * var(--space-sm));
+  margin-top: auto;
+  padding: var(--space-lg);
+  flex-shrink: 0;
+}
+
 /*
  * Secondary actions (Edit, Cancel, dialog dismiss, form builders): light surface + neutral border.
  * Not Pico `.secondary` (slate filled). Same look in header, body, dialogs, auth.

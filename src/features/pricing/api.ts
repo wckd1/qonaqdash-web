@@ -1,13 +1,23 @@
 import api from '@/shared/api/client'
 import type {
   BaseRateItem,
+  CalculateQuoteRequest,
   ConditionCandidate,
   PricingRule,
   PricingCondition,
   PricingEffect,
+  StayQuoteResponse,
 } from '@/shared/types/commercial'
 
-export type { BaseRateItem, ConditionCandidate, PricingRule, PricingCondition, PricingEffect }
+export type {
+  BaseRateItem,
+  CalculateQuoteRequest,
+  ConditionCandidate,
+  PricingRule,
+  PricingCondition,
+  PricingEffect,
+  StayQuoteResponse,
+}
 
 // ---------------------------------------------------------------------------
 // Base rates
@@ -86,4 +96,15 @@ export function updatePricingRule(
 
 export function deletePricingRule(id: string): Promise<void> {
   return api.delete(`/api/property/pricing/rules/${id}`).then(() => undefined)
+}
+
+// ---------------------------------------------------------------------------
+// Quote
+// ---------------------------------------------------------------------------
+
+export function fetchStayQuote(
+  body: CalculateQuoteRequest,
+  signal?: AbortSignal,
+): Promise<StayQuoteResponse> {
+  return api.post('/api/property/pricing/quote', body, { signal }).then(({ data }) => data)
 }

@@ -138,3 +138,44 @@ export interface AccommodationSnapshot {
   total_minor: number
   pricing_context?: Record<string, string>
 }
+
+// ---------------------------------------------------------------------------
+// Quote request / response (POST /api/property/pricing/quote per swagger)
+// ---------------------------------------------------------------------------
+
+export interface QuoteRoomInput {
+  room_type_id: string
+}
+
+export interface CalculateQuoteRequest {
+  check_in: string
+  check_out: string
+  rooms: QuoteRoomInput[]
+  booking_data?: Record<string, unknown>
+}
+
+export interface StayQuoteAdjustment {
+  rule_id: string
+  rule_name: string
+  type: EffectType
+  apply_to: EffectApplyTo
+  /** Raw rule value: basis points for percent, minor units for fixed. */
+  value: number
+  /** Computed adjustment amount in minor currency units. */
+  amount: number
+}
+
+export interface StayQuoteNight {
+  date: string
+  room_type_id: string
+  base_rate: number
+  adjustments: StayQuoteAdjustment[]
+  subtotal: number
+}
+
+export interface StayQuoteResponse {
+  nights: StayQuoteNight[]
+  nights_subtotal: number
+  total_adjustments: StayQuoteAdjustment[]
+  grand_total: number
+}

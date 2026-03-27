@@ -345,7 +345,6 @@ const isFormPage = computed(() => {
   const p = route.path
   return (
     p === '/guests/new' ||
-    p === '/bookings/new' ||
     p === '/manage/guests/form' ||
     p === '/manage/bookings/form' ||
     p === '/manage/hotel' ||

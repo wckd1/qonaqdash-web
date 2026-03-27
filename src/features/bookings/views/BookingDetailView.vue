@@ -42,6 +42,13 @@
           :errors-map="errorsMap"
           @update:data="editFormData = $event"
         />
+        <QuoteBreakdown
+          :quote="quote"
+          :currency="hotelCurrency"
+          :loading="quoteLoading"
+          :error="quoteError"
+          :room-type-names="roomTypeNames"
+        />
       </template>
     </template>
     <p v-else class="section-placeholder">{{ t('bookings.details_loading') }}</p>
@@ -56,6 +63,7 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms } from '@/features/property/api'
 import type { Room } from '@/shared/types/property'
@@ -66,11 +74,13 @@ import {
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
+import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
 import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormResponse'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
+import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
@@ -80,6 +90,7 @@ provide(guestSearchKey, (q) => fetchGuests({ q }))
 const { t, locale } = useI18n()
 const route = useRoute()
 const store = useBookingStore()
+const propertyStore = usePropertyStore()
 const { currentBooking } = storeToRefs(store)
 const loadError = ref('')
 const notFound = ref(false)
@@ -91,6 +102,27 @@ const submitting = ref(false)
 const availableRooms = ref<Room[]>([])
 
 provide(availableRoomsKey, availableRooms)
+
+const editStayBranch = computed(() => {
+  if (!editing.value) return null
+  const raw = editFormData.value.stay
+  if (!raw || typeof raw !== 'object') return null
+  return raw as Record<string, unknown>
+})
+
+const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? '')
+const roomTypeNames = computed(() => {
+  const map: Record<string, string> = {}
+  for (const rt of propertyStore.roomTypes) map[rt.id] = rt.name
+  return map
+})
+
+const { quote, quoteLoading, quoteError } = useBookingQuote(
+  () => String(editStayBranch.value?.check_in ?? ''),
+  () => String(editStayBranch.value?.check_out ?? ''),
+  () => (Array.isArray(editStayBranch.value?.rooms) ? editStayBranch.value!.rooms : []),
+  () => (editing.value ? editFormData.value : {}),
+)
 
 function routeParamId(): string | null {
   const id = route.params.id
@@ -138,6 +170,8 @@ async function load() {
   store.clearCurrentBooking()
   loadError.value = ''
   notFound.value = false
+  propertyStore.fetchHotel()
+  propertyStore.fetchRoomTypes()
   try {
     await store.fetchBooking(id, { formTarget: 'view' })
   } catch (err: unknown) {

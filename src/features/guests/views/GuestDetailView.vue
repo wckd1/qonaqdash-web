@@ -348,7 +348,7 @@ async function confirmBlock() {
   flex-wrap: nowrap;
   align-items: stretch;
   gap: var(--space-md);
-  padding: 0 var(--space-md) var(--space-md);
+  padding-bottom: var(--space-md);
   box-sizing: border-box;
   position: relative;
 }
@@ -397,11 +397,6 @@ async function confirmBlock() {
   min-width: 0;
   min-height: 0;
   width: 100%;
-  padding: var(--content-area-padding);
-  background: var(--surface-1);
-  border-radius: var(--content-area-radius);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-sm);
 }
 
 .empty-state {

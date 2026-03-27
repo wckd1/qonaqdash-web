@@ -42,6 +42,13 @@
       </div>
       <div class="side-panel-footer">
         <router-link
+          v-if="showFolioLink"
+          :to="{ name: 'booking-detail', params: { id: booking.id }, query: { tab: 'folio' } }"
+          class="btn-open-full-page"
+        >
+          {{ t('billing.folio_title') }}
+        </router-link>
+        <router-link
           :to="{ name: 'booking-detail', params: { id: booking.id } }"
           class="btn-open-full-page"
         >
@@ -91,6 +98,11 @@ const bookingForm = computed(() => normalizeBookingFormResponse(detailEntity.val
 const panelBookingStatus = computed(
   () => getBookingStatusFromResponse(detailEntity.value) ?? props.booking?.status,
 )
+
+const showFolioLink = computed(() => {
+  const s = panelBookingStatus.value
+  return s === 'checked_in' || s === 'checked_out' || s === 'canceled'
+})
 
 const panelStatusActionsVisible = computed(
   () =>

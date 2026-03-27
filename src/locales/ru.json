@@ -208,6 +208,9 @@
       "checked_out": "Выселён",
       "canceled": "Отменено"
     },
+    "tab_details": "Детали",
+    "tab_folio": "Счёт",
+    "detail_tabs_aria": "Разделы бронирования",
     "accommodation_title": "Стоимость проживания",
     "accommodation_quoted_at": "Рассчитано {date}",
     "accommodation_view_details": "Подробнее"
@@ -465,6 +468,24 @@
     "applied_rules": "Применённые правила",
     "view_details": "Подробнее"
   },
+  "billing": {
+    "folio_title": "Счёт",
+    "bill_status_open": "Открыт",
+    "bill_status_closed": "Закрыт",
+    "outstanding_balance": "К оплате",
+    "no_entries": "Записей пока нет.",
+    "load_failed": "Не удалось загрузить счёт.",
+    "col_description": "Описание",
+    "col_date": "Дата",
+    "col_amount": "Сумма",
+    "entry_accommodation_night": "Ночь",
+    "entry_rule_adjustment": "Корректировка тарифа",
+    "entry_manual_adjustment": "Ручная корректировка",
+    "entry_service_charge": "Сервисный сбор",
+    "entry_payment": "Оплата",
+    "entry_refund": "Возврат",
+    "entry_correction": "Исправление"
+  },
   "form_settings": {
     "loading_schema": "Загрузка схемы формы…",
     "load_failed": "Не удалось загрузить схему формы.",
@@ -535,6 +556,12 @@
       "grid_invalid_to_date": "Неверная дата «по» (формат ГГГГ-ММ-ДД).",
       "grid_from_before_to": "Дата «с» должна быть раньше «по».",
       "grid_from_to_required": "Укажите параметры from и to."
+    },
+    "billing": {
+      "bill_not_found": "Счёт для этого бронирования не найден.",
+      "bill_closed": "Счёт закрыт и не может быть изменён.",
+      "amount_required": "Укажите сумму.",
+      "description_required": "Укажите описание."
     },
     "property": {
       "hotel_not_found": "Отель для вашего аккаунта не найден. Если проблема повторяется, обратитесь в поддержку.",

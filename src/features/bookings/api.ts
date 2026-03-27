@@ -48,6 +48,17 @@ export interface BookingDetailPayload {
   formRef: FormRef | null
 }
 
+function parseNight(raw: unknown): StayQuoteNight {
+  const n = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  return {
+    date: typeof n.date === 'string' ? n.date : '',
+    room_type_id: typeof n.room_type_id === 'string' ? n.room_type_id : '',
+    base_rate: typeof n.base_rate === 'number' ? n.base_rate : 0,
+    adjustments: Array.isArray(n.adjustments) ? (n.adjustments as StayQuoteAdjustment[]) : [],
+    subtotal: typeof n.subtotal === 'number' ? n.subtotal : 0,
+  }
+}
+
 function parseAccommodationSnapshot(raw: unknown): AccommodationSnapshot | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const o = raw as Record<string, unknown>
@@ -55,7 +66,7 @@ function parseAccommodationSnapshot(raw: unknown): AccommodationSnapshot | undef
   return {
     calculated_at: typeof o.calculated_at === 'string' ? o.calculated_at : '',
     version: typeof o.version === 'number' ? o.version : 0,
-    nights: o.nights as StayQuoteNight[],
+    nights: o.nights.map(parseNight),
     nights_subtotal: typeof o.nights_subtotal === 'number' ? o.nights_subtotal : 0,
     total_adjustments: Array.isArray(o.total_adjustments)
       ? (o.total_adjustments as StayQuoteAdjustment[])

@@ -208,6 +208,9 @@
       "checked_out": "Checked out",
       "canceled": "Canceled"
     },
+    "tab_details": "Details",
+    "tab_folio": "Folio",
+    "detail_tabs_aria": "Booking sections",
     "accommodation_title": "Pricing summary",
     "accommodation_quoted_at": "Quoted {date}",
     "accommodation_view_details": "View details"
@@ -465,6 +468,24 @@
     "applied_rules": "Applied rules",
     "view_details": "View details"
   },
+  "billing": {
+    "folio_title": "Folio",
+    "bill_status_open": "Open",
+    "bill_status_closed": "Closed",
+    "outstanding_balance": "Outstanding balance",
+    "no_entries": "No entries yet.",
+    "load_failed": "Failed to load folio.",
+    "col_description": "Description",
+    "col_date": "Date",
+    "col_amount": "Amount",
+    "entry_accommodation_night": "Night",
+    "entry_rule_adjustment": "Rate adjustment",
+    "entry_manual_adjustment": "Manual adjustment",
+    "entry_service_charge": "Service charge",
+    "entry_payment": "Payment",
+    "entry_refund": "Refund",
+    "entry_correction": "Correction"
+  },
   "form_settings": {
     "loading_schema": "Loading form schema…",
     "load_failed": "Failed to load form schema.",
@@ -535,6 +556,12 @@
       "grid_invalid_to_date": "Invalid to date (use YYYY-MM-DD).",
       "grid_from_before_to": "From date must be before to date.",
       "grid_from_to_required": "From and to query parameters are required."
+    },
+    "billing": {
+      "bill_not_found": "No bill found for this booking.",
+      "bill_closed": "This bill is closed and cannot be modified.",
+      "amount_required": "Amount is required.",
+      "description_required": "Description is required."
     },
     "property": {
       "hotel_not_found": "Hotel not found for your account. Contact support if this persists.",

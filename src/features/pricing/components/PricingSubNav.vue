@@ -38,7 +38,7 @@ const items = computed(() => [
 
 <style scoped>
 .pricing-chrome {
-  padding: 0 var(--content-area-padding);
+  padding: 0;
 }
 
 .pricing-chrome__currency {

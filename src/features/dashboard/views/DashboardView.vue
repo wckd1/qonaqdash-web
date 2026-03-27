@@ -455,7 +455,7 @@ watch(
   background: transparent;
   border: none;
   box-shadow: none;
-  padding: 0 var(--space-md);
+  padding: 0;
   overflow: visible;
 }
 
@@ -471,7 +471,7 @@ watch(
   background: transparent;
   border: none;
   box-shadow: none;
-  padding: 0 var(--space-md) var(--space-md);
+  padding-bottom: var(--space-md);
   box-sizing: border-box;
 }
 

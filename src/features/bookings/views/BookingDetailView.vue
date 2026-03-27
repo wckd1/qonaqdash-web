@@ -35,12 +35,41 @@
   <template v-else-if="currentBooking">
     <template v-if="bookingForm">
       <template v-if="!editing">
-        <FormView :definition="bookingForm.definition" :data="bookingForm.data" />
-        <AccommodationSummary
-          v-if="currentBooking?.accommodation"
-          :accommodation="currentBooking.accommodation"
+        <nav v-if="showTabs" class="subnav" :aria-label="t('bookings.detail_tabs_aria')">
+          <button
+            type="button"
+            class="subnav__link"
+            :class="{ 'subnav__link--active': activeTab === 'details' }"
+            @click="activeTab = 'details'"
+          >
+            {{ t('bookings.tab_details') }}
+          </button>
+          <button
+            type="button"
+            class="subnav__link"
+            :class="{ 'subnav__link--active': activeTab === 'folio' }"
+            @click="activeTab = 'folio'"
+          >
+            {{ t('bookings.tab_folio') }}
+          </button>
+        </nav>
+
+        <template v-if="activeTab === 'details'">
+          <FormView :definition="bookingForm.definition" :data="bookingForm.data" />
+          <AccommodationSummary
+            v-if="currentBooking?.accommodation"
+            :accommodation="currentBooking.accommodation"
+            :currency="hotelCurrency"
+            :room-type-names="roomTypeNames"
+          />
+        </template>
+
+        <FolioSection
+          v-if="activeTab === 'folio'"
+          ref="folioRef"
+          :booking-id="bookingId"
+          :booking-status="getBookingStatusFromResponse(currentBooking)"
           :currency="hotelCurrency"
-          :room-type-names="roomTypeNames"
         />
       </template>
       <template v-else>
@@ -81,6 +110,7 @@ import {
 } from '@/features/bookings/bookingStatus'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 import AccommodationSummary from '@/features/bookings/components/AccommodationSummary.vue'
+import FolioSection from '@/features/billing/components/FolioSection.vue'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
@@ -109,6 +139,13 @@ const editFormData = ref<BookingFormDataDraft>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 const availableRooms = ref<Room[]>([])
+const folioRef = ref<InstanceType<typeof FolioSection> | null>(null)
+const activeTab = ref<'details' | 'folio'>('details')
+
+const showTabs = computed(() => {
+  const status = getBookingStatusFromResponse(currentBooking.value)
+  return status === 'checked_in' || status === 'checked_out' || status === 'canceled'
+})
 
 provide(availableRoomsKey, availableRooms)
 
@@ -241,6 +278,7 @@ watch(
     if (newId) load()
     editing.value = false
     concurrentError.value = ''
+    activeTab.value = route.query.tab === 'folio' ? 'folio' : 'details'
   },
   { immediate: true },
 )

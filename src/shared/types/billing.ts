@@ -27,6 +27,8 @@ export type LedgerEntryType =
 // ---------------------------------------------------------------------------
 
 export interface LedgerEntryMetadata {
+  date?: string
+  room_type_id?: string
   rule_id?: string
   manual_reason?: string
   origin_module?: string

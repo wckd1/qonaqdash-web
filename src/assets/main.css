@@ -177,8 +177,6 @@ h2 {
 /* Page layout: each route renders <header class="page-header"> (pinned) then route content. List/grid: outer section positions the shell; `.list-content__viewport` scrolls; list slide-panels are fixed full main-column height. Forms use `main > .form-content__viewport`. Dashboard grid chrome is scoped in `DashboardView.vue`. Detail column layouts: view scoped styles. */
 main .page-header {
   margin: 0;
-  padding-left: var(--space-md);
-  padding-right: var(--space-md);
   box-sizing: border-box;
   flex-shrink: 0;
   min-height: 2.75rem;
@@ -206,9 +204,9 @@ main .page-header-actions {
  * above doesn't fill the viewport.
  */
 main .page-footer {
-  margin-left: calc(-1 * var(--space-sm));
-  margin-right: calc(-1 * var(--space-sm));
-  margin-bottom: calc(-1 * var(--space-sm));
+  margin-left: calc(-1 * var(--space-lg));
+  margin-right: calc(-1 * var(--space-lg));
+  margin-bottom: calc(-1 * var(--space-lg));
   margin-top: auto;
   padding: var(--space-lg);
   flex-shrink: 0;
@@ -294,7 +292,6 @@ main.app-main > section.list-content {
   overflow: hidden;
   border: none;
   box-shadow: none;
-  padding: var(--space-md) var(--space-md) 0;
   background: transparent;
   box-sizing: border-box;
 }
@@ -315,7 +312,7 @@ main.app-main > .form-content__viewport {
   min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 var(--space-md) var(--space-md);
+  padding-bottom: var(--space-md);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -330,17 +327,13 @@ main.app-main > .not-found {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-md);
   box-sizing: border-box;
 }
 
-/* Direct copy/states under header (errors, loading) — align with page-header inset */
 main.app-main > .error-message,
 main.app-main > .loading-state,
 main.app-main > .section-placeholder {
   margin: 0;
-  padding-left: var(--space-md);
-  padding-right: var(--space-md);
   box-sizing: border-box;
 }
 
@@ -423,8 +416,6 @@ main.app-main > search {
   gap: 0;
   flex-shrink: 0;
   align-self: stretch;
-  margin-left: var(--space-md);
-  margin-right: var(--space-md);
   background: var(--pico-form-element-background-color);
   border: var(--pico-border-width) solid var(--pico-form-element-border-color);
   border-radius: var(--pico-border-radius);
@@ -964,18 +955,17 @@ main .form-entity-section__profile-cta:hover {
   display: flex;
   justify-content: flex-start;
   gap: var(--space-xs);
-  padding-left: var(--content-area-padding);
-  padding-right: var(--content-area-padding);
   border-bottom: 1px solid var(--border-default);
 }
 
 .subnav__link {
+  all: unset;
+  box-sizing: border-box;
   position: relative;
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-label-size);
   font-weight: var(--text-label-weight);
   color: var(--ink-secondary);
-  text-decoration: none;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -1023,8 +1013,6 @@ main .side-panel .action-toolbar {
  * Corner radius matches `.action-toolbar__btn` (--radius-md).
  */
 main .action-toolbar.action-toolbar--inset {
-  margin-left: var(--content-area-padding);
-  margin-right: var(--content-area-padding);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
@@ -1693,7 +1681,7 @@ main .action-toolbar__btn--cancel:hover:not(:disabled) {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  padding: var(--space-sm);
+  padding: var(--space-lg);
   background: var(--canvas);
   display: flex;
   flex-direction: column;
@@ -1929,6 +1917,12 @@ main .list-content .list-row--selected:hover {
   background: var(--semantic-info-bg);
 }
 
+main .related-records table.list-table {
+  border-radius: var(--content-area-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
 main .related-records table.list-table tbody tr:hover {
   background: var(--surface-2);
 }
@@ -2023,6 +2017,7 @@ main .side-panel-footer {
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--border-subtle);
   display: flex;
+  gap: var(--space-sm);
   justify-content: flex-end;
 }
 

@@ -185,7 +185,7 @@ This workflow sits **alongside** the repo **definition of done** (API contract: 
 
 ### Typography
 
-- **Body**: Work Sans (`--font-body`) — 0.9rem default (`--text-body-size`), 400 weight
+- **Body**: Inter (`--font-body`) — 0.9rem default (`--text-body-size`), 400 weight
 - **Headings**: Manrope (`--font-display`) — 1.15rem (`--text-heading-size`), 700 weight
 - **Scale**: label 0.8125rem, data 0.85rem, caption 0.75rem. Form input labels use body size for readability.
 - **Buttons** (app surfaces): `--text-label-size` and `--text-label-weight` on all primary chrome — not Pico’s default 1rem button text. See `main.css` (`main.app-main`, `main.auth-page`, `.dialog`).
@@ -243,5 +243,5 @@ flowchart LR
 - **Property config**: under Settings (rarely changed)
 - **Form customization**: simple "Add Field" UI with live preview
 - **Auth**: centered card layout
-- **Visual**: design system in main.css + [design.html](design.html); Work Sans + Manrope; dark sidebar + light content area; canvas + teal accent; content area with gap and rounded panel; forms vertical, labels body-size; corporate but joyful
+- **Visual**: design system in main.css + [design.html](design.html); Inter + Manrope; dark sidebar + light content area; canvas + teal accent; content area with gap and rounded panel; forms vertical, labels body-size; corporate but joyful
 - **Page layout**: See [Page templates](#page-templates) and [App screens catalog](#app-screens-catalog); shared selectors in `main.css`, screen-specific layout in views.

@@ -176,6 +176,8 @@ function typeKeyForNode(type: string): string {
       return 'textarea'
     case 'email':
       return 'email'
+    case 'phone':
+      return 'phone'
     case 'number':
       return 'number'
     case 'checkbox':

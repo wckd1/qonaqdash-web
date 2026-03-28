@@ -748,6 +748,20 @@ main .form-entity-section__profile-cta:hover {
 .form-edit-control__input-wrap {
   min-width: 0;
 }
+.form-edit-control__email-wrap {
+  position: relative;
+}
+.form-edit-control__email-ghost {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  color: var(--ink-tertiary);
+  pointer-events: none;
+  white-space: nowrap;
+  font-size: var(--text-label-size);
+}
 .form-edit-control__input-wrap button {
   font-size: var(--text-label-size);
 }

@@ -5,14 +5,25 @@
     <form @submit.prevent="handleSubmit">
       <label>
         {{ t('auth.login.email') }} <abbr class="required" :title="t('common.required')">*</abbr>
-        <input
-          v-model="email"
-          type="email"
-          :placeholder="t('auth.login.email_placeholder')"
-          autocomplete="email"
-          required
-          :disabled="loading"
-        />
+        <div class="form-edit-control__email-wrap">
+          <input
+            v-model="email"
+            type="email"
+            :placeholder="t('auth.login.email_placeholder')"
+            autocomplete="email"
+            required
+            :disabled="loading"
+            @input="onEmailInput"
+            @focus="onEmailFocus"
+            @blur="onEmailBlur"
+          />
+          <span
+            v-if="emailGhost"
+            class="form-edit-control__email-ghost"
+            :style="{ left: emailGhost.offsetPx + 'px' }"
+            >{{ emailGhost.suffix }}</span
+          >
+        </div>
       </label>
 
       <label>
@@ -43,6 +54,7 @@ import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
+import { computeEmailGhost, type EmailGhostHint } from '@/shared/form-dsl/emailGhost'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -54,6 +66,20 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const formError = ref('')
+const emailGhost = ref<EmailGhostHint | null>(null)
+
+function onEmailInput(e: Event) {
+  const el = e.target as HTMLInputElement
+  emailGhost.value = computeEmailGhost(el.value, el)
+}
+
+function onEmailFocus(e: FocusEvent) {
+  emailGhost.value = computeEmailGhost(email.value, e.target as HTMLInputElement)
+}
+
+function onEmailBlur() {
+  emailGhost.value = null
+}
 
 async function handleSubmit() {
   formError.value = ''

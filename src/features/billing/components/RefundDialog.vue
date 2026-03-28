@@ -28,6 +28,7 @@
                 required
                 :placeholder="amountPlaceholder"
                 class="billing-dialog__amount-input"
+                @beforeinput="onAmountBeforeInput"
               />
               <span class="billing-dialog__currency">{{ currencyHint }}</span>
             </div>
@@ -69,6 +70,7 @@ import {
   formatMoney,
 } from '@/shared/lib/money'
 import { useNotification } from '@/shared/composables/useNotification'
+import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const props = defineProps<{
   bookingId: string
@@ -102,6 +104,10 @@ const currencyHint = computed(() => getCurrencySymbol(props.currency))
 const canSubmit = computed(
   () => selectedPaymentId.value !== '' && typeof amount.value === 'number' && amount.value > 0,
 )
+
+function onAmountBeforeInput(e: Event) {
+  guardNumberBeforeInput(e as InputEvent, { min: 0 })
+}
 
 function paymentOptionLabel(entry: LedgerEntry): string {
   const abs = Math.abs(entry.balance_delta)

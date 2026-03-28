@@ -234,6 +234,7 @@
                     required
                     :disabled="saving"
                     class="rule-form__amount-input"
+                    @beforeinput="onEffectBeforeInput"
                   />
                   <span class="rule-form__amount-symbol">{{ effectSymbol }}</span>
                 </div>
@@ -314,6 +315,7 @@ import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared/types/commercial'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
+import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const { t, locale } = useI18n()
 const pricingStore = usePricingStore()
@@ -325,6 +327,10 @@ const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? 'USD')
 const effectSymbol = computed(() =>
   ruleForm.value.effect.type === 'percent' ? '%' : getCurrencySymbol(hotelCurrency.value),
 )
+
+function onEffectBeforeInput(e: Event) {
+  guardNumberBeforeInput(e as InputEvent)
+}
 
 function candidateByFieldId(fieldId: string): ConditionCandidate | undefined {
   return conditionCandidates.value.find((c) => c.field_id === fieldId)

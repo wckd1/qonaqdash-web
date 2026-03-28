@@ -34,7 +34,12 @@
 
             <label>
               {{ t('pricing.rule_effect_value') }}
-              <input v-model.number="draft.displayValue" type="number" step="any" />
+              <input
+                v-model.number="draft.displayValue"
+                type="number"
+                step="any"
+                @beforeinput="onEffectBeforeInput"
+              />
             </label>
 
             <label>
@@ -73,6 +78,7 @@ import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ManualAdjustmentInput, EffectType, EffectApplyTo } from '@/shared/types/commercial'
 import { majorToMinor } from '@/shared/lib/money'
+import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const props = defineProps<{
   modelValue: ManualAdjustmentInput[]
@@ -108,6 +114,10 @@ function openDialog() {
 }
 
 const canApply = computed(() => draft.name.trim().length > 0)
+
+function onEffectBeforeInput(e: Event) {
+  guardNumberBeforeInput(e as InputEvent)
+}
 
 function apply() {
   const rawValue = typeof draft.displayValue === 'number' ? draft.displayValue : 0

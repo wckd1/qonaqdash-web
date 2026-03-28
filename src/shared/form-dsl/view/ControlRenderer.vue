@@ -20,6 +20,7 @@ import ArrayRenderer from './ArrayRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { bindToPath, getValueByPath, formatDateTime, companionLabelFullBind } from '../utils'
 import { evaluateNodeState } from '../formNodeConditions'
+import { formatPhoneDisplay } from '../phoneMask'
 
 const props = defineProps({
   node: { type: Object as () => FormNode, required: true },
@@ -74,6 +75,10 @@ const displayValue = computed(() => {
   ) {
     const format = n.type === 'datetime' ? 'date-time' : 'date'
     return formatDateTime(val, undefined, { type: format })
+  }
+
+  if (n.type === 'phone' && val != null && typeof val === 'string' && val.length > 0) {
+    return formatPhoneDisplay(val)
   }
 
   if (typeof val === 'boolean') {

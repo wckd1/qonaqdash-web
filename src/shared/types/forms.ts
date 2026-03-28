@@ -16,6 +16,7 @@ export type FormNodeType =
   | 'string'
   | 'textarea'
   | 'email'
+  | 'phone'
   | 'number'
   | 'checkbox'
   | 'select'
@@ -28,6 +29,7 @@ export const INPUT_NODE_TYPES: ReadonlySet<string> = new Set([
   'string',
   'textarea',
   'email',
+  'phone',
   'number',
   'checkbox',
   'select',
@@ -102,6 +104,7 @@ export interface FormInputNode extends FormNodeConditions {
     | 'string'
     | 'textarea'
     | 'email'
+    | 'phone'
     | 'number'
     | 'checkbox'
     | 'date'

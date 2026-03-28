@@ -18,6 +18,7 @@
                 required
                 :placeholder="amountPlaceholder"
                 class="billing-dialog__amount-input"
+                @beforeinput="onAmountBeforeInput"
               />
               <span class="billing-dialog__currency">{{ currencyHint }}</span>
             </div>
@@ -53,6 +54,7 @@ import { useI18n } from 'vue-i18n'
 import { recordPayment } from '@/features/billing/api'
 import { majorToMinor, getCurrencyExponent, getCurrencySymbol } from '@/shared/lib/money'
 import { useNotification } from '@/shared/composables/useNotification'
+import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const props = defineProps<{
   bookingId: string
@@ -83,6 +85,10 @@ const amountPlaceholder = computed(() => {
 const currencyHint = computed(() => getCurrencySymbol(props.currency))
 
 const canSubmit = computed(() => typeof amount.value === 'number' && amount.value > 0)
+
+function onAmountBeforeInput(e: Event) {
+  guardNumberBeforeInput(e as InputEvent, { min: 0 })
+}
 
 onMounted(() => {
   nextTick(() => amountRef.value?.focus())

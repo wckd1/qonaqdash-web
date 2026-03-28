@@ -52,6 +52,7 @@
                     :value="editedMajorRate(rt.id)"
                     :disabled="saving"
                     class="base-rates__amount-input"
+                    @beforeinput="onRateBeforeInput"
                     @input="onRateInput(rt.id, $event)"
                   />
                   <span class="base-rates__currency">{{ currencySymbol }}</span>
@@ -79,6 +80,7 @@ import {
   getCurrencySymbol,
 } from '@/shared/lib/money'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const { t } = useI18n()
 const propertyStore = usePropertyStore()
@@ -116,6 +118,10 @@ function editedMajorRate(rtId: string): number {
   const minorOverride = edits.value.get(rtId)
   const minor = minorOverride ?? rateForRoomType(rtId)
   return minorToMajor(minor, currencyCode.value)
+}
+
+function onRateBeforeInput(e: Event) {
+  guardNumberBeforeInput(e as InputEvent, { min: 0 })
 }
 
 function onRateInput(id: string, event: Event) {

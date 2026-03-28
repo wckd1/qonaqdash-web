@@ -70,6 +70,40 @@
             @focus="onTextInputFocus"
             @blur="onTextInputBlur"
           />
+          <div v-else-if="node.type === 'email'" class="form-edit-control__email-wrap">
+            <input
+              :id="inputId"
+              :value="inputDisplayValue"
+              type="email"
+              inputmode="email"
+              :disabled="effectiveDisabled"
+              :placeholder="placeholder"
+              autocomplete="off"
+              @input="onInput"
+              @focus="onEmailFocus"
+              @blur="onEmailBlur"
+            />
+            <span
+              v-if="emailGhostState"
+              class="form-edit-control__email-ghost"
+              :style="{ left: emailGhostState.offsetPx + 'px' }"
+              >{{ emailGhostState.suffix }}</span
+            >
+          </div>
+          <input
+            v-else-if="node.type === 'phone'"
+            :id="inputId"
+            :value="phoneDisplayValue"
+            type="tel"
+            inputmode="tel"
+            :disabled="effectiveDisabled"
+            :placeholder="placeholder"
+            autocomplete="off"
+            @beforeinput="onBeforeInput"
+            @input="onPhoneInput"
+            @focus="onTextInputFocus"
+            @blur="onTextInputBlur"
+          />
           <input
             v-else
             :id="inputId"
@@ -79,6 +113,7 @@
             :disabled="effectiveDisabled"
             :placeholder="placeholder"
             autocomplete="off"
+            @beforeinput="onBeforeInput"
             @input="onInput"
             @focus="onTextInputFocus"
             @blur="onTextInputBlur"
@@ -91,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type {
   FormNode,
@@ -113,6 +148,9 @@ import {
 } from '../utils'
 import { availableRoomsKey, guestPickerAnchorKey, fieldConstraintsKey } from '@/shared/injectKeys'
 import { evaluateNodeState } from '../formNodeConditions'
+import { guardBeforeInput } from '../inputGuard'
+import { extractPhoneDigits, formatPhoneValue, computePhoneCursorPosition } from '../phoneMask'
+import { computeEmailGhost, type EmailGhostHint } from '../emailGhost'
 
 const props = defineProps({
   node: { type: Object as () => FormNode, required: true },
@@ -166,9 +204,16 @@ const buttonLabel = computed(() =>
   resolveFormCatalogString((props.node as FormButtonNode).label ?? ''),
 )
 const inputId = computed(() => `form-edit-${fullBind.value || 'ctrl'}`)
-const placeholder = computed(() =>
-  resolveFormCatalogString((props.node as FormInputNode).options?.placeholder ?? ''),
-)
+const placeholder = computed(() => {
+  const explicit = resolveFormCatalogString(
+    (props.node as FormInputNode).options?.placeholder ?? '',
+  )
+  if (explicit) return explicit
+
+  if (props.node.type === 'email') return 'name@domain.com'
+  if (props.node.type === 'phone') return '+X XXX XXX XX XX'
+  return ''
+})
 
 const localValue = computed({
   get() {
@@ -192,6 +237,14 @@ const inputDisplayValue = computed(() => {
   }
   return val === null || val === undefined ? '' : String(val)
 })
+
+const phoneDisplayValue = computed(() => {
+  const val = localValue.value
+  if (val == null || val === '') return ''
+  return formatPhoneValue(String(val))
+})
+
+const emailGhostState = ref<EmailGhostHint | null>(null)
 
 function isoToDatetimeLocal(isoString: string): string {
   const date = new Date(isoString)
@@ -273,6 +326,27 @@ function onTextInputBlur(e: FocusEvent) {
   guestPickerAnchor?.clearPickerAnchor(el instanceof HTMLElement ? el : null)
 }
 
+function onEmailFocus(e: FocusEvent) {
+  onTextInputFocus(e)
+  const el = e.target as HTMLInputElement
+  emailGhostState.value = computeEmailGhost(el.value, el)
+}
+
+function onEmailBlur(e: FocusEvent) {
+  emailGhostState.value = null
+  onTextInputBlur(e)
+}
+
+// ---------------------------------------------------------------------------
+// beforeinput guard
+// ---------------------------------------------------------------------------
+
+function onBeforeInput(e: Event) {
+  const n = props.node
+  const validation = 'validation' in n ? (n as FormInputNode).validation : undefined
+  guardBeforeInput(e as InputEvent, n.type, validation)
+}
+
 // ---------------------------------------------------------------------------
 // Input handlers
 // ---------------------------------------------------------------------------
@@ -290,6 +364,27 @@ function onInput(e: Event) {
   } else {
     setLocalValue(raw)
   }
+
+  if (n.type === 'email') {
+    emailGhostState.value = computeEmailGhost(raw, e.target as HTMLInputElement)
+  }
+}
+
+function onPhoneInput(e: Event) {
+  const input = e.target as HTMLInputElement
+  const cursorPos = input.selectionStart ?? 0
+  const beforeCursor = input.value.slice(0, cursorPos)
+  const digitsBefore = (beforeCursor.match(/\d/g) || []).length
+  const hadPlus = input.value.startsWith('+')
+
+  const raw = extractPhoneDigits(input.value)
+  const formatted = formatPhoneValue(raw)
+
+  input.value = formatted
+  const newPos = computePhoneCursorPosition(formatted, digitsBefore, hadPlus)
+  input.setSelectionRange(newPos, newPos)
+
+  setLocalValue(raw)
 }
 
 function onCheckboxChange(e: Event) {

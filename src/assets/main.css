@@ -2438,6 +2438,18 @@ main .optional {
   padding-left: var(--space-sm);
 }
 
+.pricing-card__row--total-adj {
+  font-size: var(--text-caption-size);
+  color: var(--ink-tertiary);
+  font-style: italic;
+}
+
+.pricing-card__row:not(.pricing-card__row--total-adj) + .pricing-card__row--total-adj {
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px dashed var(--border-default);
+}
+
 .pricing-card__row--total {
   font-weight: var(--text-heading-weight);
   font-size: var(--text-body-size);
@@ -2447,15 +2459,40 @@ main .optional {
   margin-top: var(--space-xs);
 }
 
+.pricing-card__amount-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pricing-card__remove-adj {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--semantic-error);
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.pricing-card__remove-adj:hover {
+  opacity: 1;
+}
+
 .pricing-card__amount--negative {
   color: var(--semantic-success);
 }
 
 .pricing-card__actions {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.pricing-card__action--push {
+  margin-left: auto;
 }
 
 .pricing-card__link-btn {
@@ -2572,6 +2609,12 @@ main .optional {
 }
 
 .pricing-detail__row--adjustment {
+  font-size: var(--text-caption-size);
+  color: var(--ink-tertiary);
+  font-style: italic;
+}
+
+.pricing-detail__row--total-adj {
   font-size: var(--text-caption-size);
   color: var(--ink-tertiary);
   font-style: italic;

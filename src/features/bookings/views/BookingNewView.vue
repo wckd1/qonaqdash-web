@@ -22,9 +22,15 @@
       :loading="quoteLoading"
       :error="quoteError"
       :room-type-names="roomTypeNames"
+      @remove-manual-adjustment="removeManualAdjustment"
     >
       <template #actions>
-        <button type="button" @click="onSubmit">
+        <ManualAdjustmentEditor
+          v-if="quote"
+          v-model="manualAdjustments"
+          :currency="hotelCurrency"
+        />
+        <button type="button" class="pricing-card__action--push" @click="onSubmit">
           {{ t('common.save') }}
         </button>
       </template>
@@ -47,6 +53,8 @@ import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { useNotification } from '@/shared/composables/useNotification'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
+import ManualAdjustmentEditor from '@/features/bookings/components/ManualAdjustmentEditor.vue'
+import type { ManualAdjustmentInput } from '@/shared/types/commercial'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
@@ -70,6 +78,7 @@ const bookingForm = ref<BookingFormRuntime | null>(null)
 const formData = ref<Record<string, unknown>>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
+const manualAdjustments = ref<ManualAdjustmentInput[]>([])
 const availableRooms = ref<Room[]>([])
 
 provide(availableRoomsKey, availableRooms)
@@ -141,11 +150,23 @@ const roomTypeNames = computed(() => {
   return map
 })
 
+function removeManualAdjustment(name: string) {
+  manualAdjustments.value = manualAdjustments.value.filter((a) => a.name !== name)
+}
+
+const guestId = computed(() => {
+  const g = formData.value.guest as Record<string, unknown> | undefined
+  const id = g?.id
+  return typeof id === 'string' && id ? id : undefined
+})
+
 const { quote, quoteLoading, quoteError } = useBookingQuote(
   () => String(stayBranch.value?.check_in ?? ''),
   () => String(stayBranch.value?.check_out ?? ''),
   () => (Array.isArray(stayBranch.value?.rooms) ? stayBranch.value!.rooms : []),
   () => formData.value,
+  guestId,
+  manualAdjustments,
 )
 
 watch(
@@ -279,6 +300,9 @@ async function onSubmit() {
   try {
     const payload = JSON.parse(JSON.stringify(formData.value))
     delete payload.id
+    if (manualAdjustments.value.length) {
+      payload.adjustments = JSON.parse(JSON.stringify(manualAdjustments.value))
+    }
     const created = await store.createBooking(payload)
     router.push(`/bookings/${created.id}/details`)
   } catch (err: unknown) {

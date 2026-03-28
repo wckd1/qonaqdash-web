@@ -1,6 +1,6 @@
 import type { FormNode, FormRef } from './forms'
 import type { GuestFormFields } from './guests'
-import type { AccommodationSnapshot } from './commercial'
+import type { AccommodationSnapshot, ManualAdjustmentInput } from './commercial'
 
 /** Guest info nested in BookingItem (matches bookinghttp.BookingGuestInfo). */
 export interface BookingGuestInfo {
@@ -52,6 +52,7 @@ export interface BookingDetailData {
   status?: string
   id?: string
   accommodation?: AccommodationSnapshot
+  adjustments?: ManualAdjustmentInput[]
 }
 
 /** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */
@@ -67,6 +68,7 @@ export interface BookingFormResponse {
   data?: Record<string, unknown>
   guest?: Record<string, unknown>
   accommodation?: AccommodationSnapshot
+  adjustments?: ManualAdjustmentInput[]
 }
 
 /** One element of `stay.rooms` in form data. */
@@ -115,10 +117,11 @@ export interface BookingFormDataDraft {
   [key: string]: unknown
 }
 
-/** Create / update booking body: `{ guest, stay }` only (no top-level `id`). */
+/** Create / update booking body: `{ guest, stay, adjustments? }` (no top-level `id`). */
 export type CreateBookingPayload = {
   guest: BookingFormGuestData
   stay: BookingFormStayBranch
+  adjustments?: ManualAdjustmentInput[]
 }
 
 /** Guest booking list item from GET /api/guests/:id/bookings (matches guesthttp.GuestBookingListItem). */

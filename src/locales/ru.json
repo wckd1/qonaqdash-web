@@ -195,11 +195,11 @@
     "form_guest_info": "Информация о госте",
     "form_booking_details": "Детали бронирования",
     "action_check_in": "Заселить",
-    "action_check_out": "Выселить",
+    "action_check_out": "Отметить выезд",
     "action_cancel_booking": "Отменить бронирование",
     "confirm_check_in_title": "Заселить гостя?",
     "confirm_check_in_body": "Статус бронирования сменится на «Заселён».",
-    "confirm_check_out_title": "Выселить гостя?",
+    "confirm_check_out_title": "Отметить выезд гостя?",
     "confirm_check_out_body": "Бронирование будет отмечено как завершённое (выезд).",
     "confirm_cancel_title": "Отменить бронирование?",
     "confirm_cancel_body": "Бронирование получит статус «Отменено». Его по-прежнему можно открыть в списке.",
@@ -209,7 +209,7 @@
     "status_chip": {
       "confirmed": "Подтверждено",
       "checked_in": "Заселён",
-      "checked_out": "Выселён",
+      "checked_out": "Выехал",
       "canceled": "Отменено"
     },
     "tab_details": "Детали",
@@ -471,6 +471,16 @@
     "nights_count": "{n} ночь | {n} ночи | {n} ночей",
     "applied_rules": "Применённые правила",
     "view_details": "Подробнее"
+  },
+  "adjustments": {
+    "title": "Ручные корректировки",
+    "change_price": "Изменить цену",
+    "add_title": "Добавить корректировку",
+    "name_label": "Название",
+    "name_placeholder": "напр. VIP-кампания",
+    "apply": "Применить",
+    "remove_aria": "Удалить корректировку {idx}",
+    "remove_label": "Удалить корректировку"
   },
   "billing": {
     "folio_title": "Счёт",

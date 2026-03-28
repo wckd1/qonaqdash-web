@@ -103,28 +103,19 @@ export interface BaseRateItem {
 }
 
 // ---------------------------------------------------------------------------
-// Quote breakdown (server-returned, never computed client-side)
+// Adjustment sources (§6.3 integration.md)
 // ---------------------------------------------------------------------------
 
-export interface QuoteAdjustment {
-  rule_id?: string
-  label?: string
-  amount_minor: number
-}
+export type AdjustmentSource = 'rule' | 'manual' | 'system'
 
-export interface QuoteLine {
-  date: string
-  base_amount_minor: number
-  adjustments: QuoteAdjustment[]
-  total_minor: number
-}
+// ---------------------------------------------------------------------------
+// Manual adjustment input (quote request + booking create/update body)
+// Matches propertyhttp.QuoteManualAdjustmentDTO.
+// ---------------------------------------------------------------------------
 
-export interface QuoteSummary {
-  lines: QuoteLine[]
-  subtotal_minor: number
-  total_adjustments_minor: number
-  total_minor: number
-  currency: string
+export interface ManualAdjustmentInput {
+  name: string
+  effect: PricingEffect
 }
 
 // ---------------------------------------------------------------------------
@@ -154,11 +145,14 @@ export interface CalculateQuoteRequest {
   check_out: string
   rooms: QuoteRoomInput[]
   booking_data?: Record<string, unknown>
+  guest_id?: string
+  manual_adjustments?: ManualAdjustmentInput[]
 }
 
 export interface StayQuoteAdjustment {
-  rule_id: string
-  rule_name: string
+  source: AdjustmentSource
+  source_id: string | null
+  name: string
   type: EffectType
   apply_to: EffectApplyTo
   /** Raw rule value: basis points for percent, minor units for fixed. */

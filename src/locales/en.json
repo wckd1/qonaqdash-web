@@ -472,6 +472,16 @@
     "applied_rules": "Applied rules",
     "view_details": "View details"
   },
+  "adjustments": {
+    "title": "Manual adjustments",
+    "change_price": "Change price",
+    "add_title": "Add adjustment",
+    "name_label": "Adjustment name",
+    "name_placeholder": "e.g. VIP Campaign",
+    "apply": "Apply",
+    "remove_aria": "Remove adjustment {idx}",
+    "remove_label": "Remove adjustment"
+  },
   "billing": {
     "folio_title": "Folio",
     "bill_status_open": "Open",

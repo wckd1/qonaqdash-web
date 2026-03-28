@@ -19,10 +19,15 @@
       <template v-if="perNightAdjustments.length">
         <div
           v-for="adj in perNightAdjustments"
-          :key="adj.ruleId"
+          :key="adj.key"
           class="pricing-card__row pricing-card__row--adjustment"
         >
-          <span>{{ adj.ruleName }} &times; {{ t('quote.nights_count', adj.nightCount) }}</span>
+          <span>
+            {{ adj.name }}
+            <template v-if="adj.nightCount > 0">
+              &times; {{ t('quote.nights_count', adj.nightCount) }}
+            </template>
+          </span>
           <span :class="{ 'pricing-card__amount--negative': adj.total < 0 }">
             {{ fmtMoney(adj.total) }}
           </span>
@@ -31,11 +36,11 @@
 
       <template v-if="accommodation.total_adjustments.length">
         <div
-          v-for="adj in accommodation.total_adjustments"
-          :key="adj.rule_id"
-          class="pricing-card__row pricing-card__row--adjustment"
+          v-for="(adj, adjIdx) in accommodation.total_adjustments"
+          :key="`${adj.source}:${adj.source_id ?? adjIdx}`"
+          class="pricing-card__row pricing-card__row--total-adj"
         >
-          <span>{{ adj.rule_name }}</span>
+          <span>{{ adj.name }}</span>
           <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
             {{ fmtMoney(adj.amount) }}
           </span>
@@ -81,11 +86,11 @@
                 </div>
 
                 <div
-                  v-for="adj in entry.adjustments"
-                  :key="adj.rule_id"
+                  v-for="(adj, adjIdx) in entry.adjustments"
+                  :key="`${adj.source}:${adj.source_id ?? adjIdx}`"
                   class="pricing-night__row pricing-night__row--adjustment"
                 >
-                  <span>{{ adj.rule_name }}</span>
+                  <span>{{ adj.name }}</span>
                   <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
                     {{ fmtMoney(adj.amount) }}
                   </span>
@@ -107,11 +112,11 @@
           </div>
 
           <div
-            v-for="adj in accommodation.total_adjustments"
-            :key="adj.rule_id"
-            class="pricing-detail__row pricing-detail__row--adjustment"
+            v-for="(adj, adjIdx) in accommodation.total_adjustments"
+            :key="`${adj.source}:${adj.source_id ?? adjIdx}`"
+            class="pricing-detail__row pricing-detail__row--total-adj"
           >
-            <span>{{ adj.rule_name }}</span>
+            <span>{{ adj.name }}</span>
             <span :class="{ 'pricing-card__amount--negative': adj.amount < 0 }">
               {{ fmtMoney(adj.amount) }}
             </span>
@@ -157,8 +162,8 @@ interface RoomTypeGroup {
 }
 
 interface AggregatedAdjustment {
-  ruleId: string
-  ruleName: string
+  key: string
+  name: string
   total: number
   nightCount: number
 }
@@ -199,22 +204,24 @@ const roomTypeGroups = computed<RoomTypeGroup[]>(() => {
   return result
 })
 
+function adjustmentKey(adj: { source: string; source_id?: string | null; name: string }): string {
+  return `${adj.source}:${adj.source_id ?? ''}:${adj.name}`
+}
+
 const perNightAdjustments = computed<AggregatedAdjustment[]>(() => {
   if (!props.accommodation) return []
-  const map = new Map<
-    string,
-    { dates: Set<string>; total: number; ruleId: string; ruleName: string }
-  >()
+  const map = new Map<string, { dates: Set<string>; total: number; key: string; name: string }>()
   for (const night of props.accommodation.nights) {
     for (const adj of night.adjustments) {
-      const existing = map.get(adj.rule_id)
+      const k = adjustmentKey(adj)
+      const existing = map.get(k)
       if (existing) {
         existing.total += adj.amount
         existing.dates.add(night.date)
       } else {
-        map.set(adj.rule_id, {
-          ruleId: adj.rule_id,
-          ruleName: adj.rule_name,
+        map.set(k, {
+          key: k,
+          name: adj.name,
           total: adj.amount,
           dates: new Set([night.date]),
         })
@@ -224,8 +231,8 @@ const perNightAdjustments = computed<AggregatedAdjustment[]>(() => {
   const result: AggregatedAdjustment[] = []
   for (const [, data] of map) {
     result.push({
-      ruleId: data.ruleId,
-      ruleName: data.ruleName,
+      key: data.key,
+      name: data.name,
       total: data.total,
       nightCount: data.dates.size,
     })

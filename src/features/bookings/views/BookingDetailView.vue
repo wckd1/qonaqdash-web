@@ -85,7 +85,16 @@
           :loading="quoteLoading"
           :error="quoteError"
           :room-type-names="roomTypeNames"
-        />
+          @remove-manual-adjustment="removeManualAdjustment"
+        >
+          <template #actions>
+            <ManualAdjustmentEditor
+              v-if="quote"
+              v-model="editManualAdjustments"
+              :currency="hotelCurrency"
+            />
+          </template>
+        </QuoteBreakdown>
       </template>
     </template>
     <p v-else class="section-placeholder">{{ t('bookings.details_loading') }}</p>
@@ -114,6 +123,8 @@ import FolioSection from '@/features/billing/components/FolioSection.vue'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
+import ManualAdjustmentEditor from '@/features/bookings/components/ManualAdjustmentEditor.vue'
+import type { ManualAdjustmentInput } from '@/shared/types/commercial'
 import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormResponse'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
@@ -136,6 +147,7 @@ const notFound = ref(false)
 const concurrentError = ref('')
 const editing = ref(false)
 const editFormData = ref<BookingFormDataDraft>({})
+const editManualAdjustments = ref<ManualAdjustmentInput[]>([])
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 const availableRooms = ref<Room[]>([])
@@ -157,10 +169,22 @@ const editStayBranch = computed(() => {
 })
 
 const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? '')
+
+function removeManualAdjustment(name: string) {
+  editManualAdjustments.value = editManualAdjustments.value.filter((a) => a.name !== name)
+}
+
 const roomTypeNames = computed(() => {
   const map: Record<string, string> = {}
   for (const rt of propertyStore.roomTypes) map[rt.id] = rt.name
   return map
+})
+
+const editGuestId = computed(() => {
+  if (!editing.value) return undefined
+  const g = editFormData.value.guest as Record<string, unknown> | undefined
+  const id = g?.id
+  return typeof id === 'string' && id ? id : undefined
 })
 
 const { quote, quoteLoading, quoteError } = useBookingQuote(
@@ -168,6 +192,8 @@ const { quote, quoteLoading, quoteError } = useBookingQuote(
   () => String(editStayBranch.value?.check_out ?? ''),
   () => (Array.isArray(editStayBranch.value?.rooms) ? editStayBranch.value!.rooms : []),
   () => (editing.value ? editFormData.value : {}),
+  editGuestId,
+  () => (editing.value ? editManualAdjustments.value : []),
 )
 
 function routeParamId(): string | null {
@@ -240,6 +266,9 @@ watch(editing, (isEdit) => {
     if (!editFormData.value.stay)
       editFormData.value.stay = { check_in: '', check_out: '', rooms: [] }
     if (!Array.isArray(editFormData.value.stay.rooms)) editFormData.value.stay.rooms = []
+    editManualAdjustments.value = currentBooking.value?.adjustments
+      ? JSON.parse(JSON.stringify(currentBooking.value.adjustments))
+      : []
     errorsMap.value = {}
   }
 })
@@ -292,6 +321,7 @@ async function startEdit() {
 
 function cancelEdit() {
   editing.value = false
+  editManualAdjustments.value = []
   if (bookingForm.value) {
     editFormData.value = JSON.parse(
       JSON.stringify(bookingForm.value.data ?? {}),
@@ -329,6 +359,9 @@ async function onSave() {
     delete payload.status
     if (payload.stay && typeof payload.stay === 'object') {
       delete payload.stay.status
+    }
+    if (editManualAdjustments.value.length) {
+      payload.adjustments = JSON.parse(JSON.stringify(editManualAdjustments.value))
     }
     await store.updateBooking(bookingId.value, payload as CreateBookingPayload)
     editing.value = false

@@ -14,8 +14,10 @@ import type {
 } from '@/shared/types/bookings'
 import type {
   AccommodationSnapshot,
+  ManualAdjustmentInput,
   StayQuoteNight,
   StayQuoteAdjustment,
+  PricingEffect,
 } from '@/shared/types/commercial'
 
 export type {
@@ -39,7 +41,7 @@ export type {
   CreateBookingPayload,
 } from '@/shared/types/bookings'
 
-export type { AccommodationSnapshot } from '@/shared/types/commercial'
+export type { AccommodationSnapshot, ManualAdjustmentInput } from '@/shared/types/commercial'
 
 export type { FormRef }
 
@@ -75,12 +77,32 @@ function parseAccommodationSnapshot(raw: unknown): AccommodationSnapshot | undef
   }
 }
 
+function parseManualAdjustments(raw: unknown): ManualAdjustmentInput[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined
+  const result: ManualAdjustmentInput[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const a = item as Record<string, unknown>
+    const name = typeof a.name === 'string' ? a.name : ''
+    const eff =
+      a.effect && typeof a.effect === 'object' ? (a.effect as Record<string, unknown>) : {}
+    const effect: PricingEffect = {
+      type: eff.type === 'percent' ? 'percent' : 'fixed',
+      value: typeof eff.value === 'number' ? eff.value : 0,
+      apply_to: eff.apply_to === 'per_night' ? 'per_night' : 'total',
+    }
+    result.push({ name, effect })
+  }
+  return result.length > 0 ? result : undefined
+}
+
 export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const formRef = normalizeFormRef(o._form)
   const guest = (o.guest && typeof o.guest === 'object' ? o.guest : {}) as Record<string, unknown>
   const stay = (o.stay && typeof o.stay === 'object' ? o.stay : {}) as Record<string, unknown>
   const accommodation = parseAccommodationSnapshot(o.accommodation)
+  const adjustments = parseManualAdjustments(o.adjustments)
   return {
     detail: {
       guest,
@@ -88,6 +110,7 @@ export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
       status: typeof o.status === 'string' ? o.status : undefined,
       id: typeof o.id === 'string' ? o.id : undefined,
       accommodation,
+      adjustments,
     },
     formRef,
   }
@@ -172,6 +195,7 @@ export function mergeBookingDetailWithRuntimeForm(
       id: detail.id,
     },
     accommodation: detail.accommodation,
+    adjustments: detail.adjustments,
   }
 }
 

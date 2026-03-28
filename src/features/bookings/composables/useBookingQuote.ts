@@ -1,6 +1,6 @@
 import { ref, watch, computed, onScopeDispose, toValue, type MaybeRefOrGetter } from 'vue'
 import { fetchStayQuote } from '@/features/pricing/api'
-import type { StayQuoteResponse } from '@/shared/types/commercial'
+import type { StayQuoteResponse, ManualAdjustmentInput } from '@/shared/types/commercial'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 500
@@ -13,15 +13,18 @@ interface QuoteRoomLike {
 /**
  * Debounced, abort-safe booking quote composable.
  *
- * Watches check-in, check-out, rooms, and form data for changes;
- * after a 500 ms debounce it calls POST /api/property/pricing/quote.
- * Stale responses are discarded via sequential request IDs and AbortController.
+ * Watches check-in, check-out, rooms, form data, guest ID, and manual
+ * adjustments for changes; after a 500 ms debounce it calls
+ * POST /api/property/pricing/quote. Stale responses are discarded via
+ * sequential request IDs and AbortController.
  */
 export function useBookingQuote(
   checkIn: MaybeRefOrGetter<string>,
   checkOut: MaybeRefOrGetter<string>,
   rooms: MaybeRefOrGetter<QuoteRoomLike[]>,
   bookingData: MaybeRefOrGetter<Record<string, unknown>>,
+  guestId?: MaybeRefOrGetter<string | undefined>,
+  manualAdjustments?: MaybeRefOrGetter<ManualAdjustmentInput[]>,
 ) {
   const quote = ref<StayQuoteResponse | null>(null)
   const quoteLoading = ref(false)
@@ -51,7 +54,9 @@ export function useBookingQuote(
       const co = toValue(checkOut)
       const rts = validRoomTypeIds().join('|')
       const bd = JSON.stringify(toValue(bookingData))
-      return `${ci}::${co}::${rts}::${bd}`
+      const gid = guestId ? (toValue(guestId) ?? '') : ''
+      const ma = manualAdjustments ? JSON.stringify(toValue(manualAdjustments)) : '[]'
+      return `${ci}::${co}::${rts}::${bd}::${gid}::${ma}`
     },
     () => {
       if (timer != null) {
@@ -82,6 +87,9 @@ export function useBookingQuote(
     const co = toValue(checkOut)
     const rts = validRoomTypeIds()
 
+    const gid = guestId ? toValue(guestId) : undefined
+    const ma = manualAdjustments ? toValue(manualAdjustments) : undefined
+
     try {
       const result = await fetchStayQuote(
         {
@@ -89,6 +97,8 @@ export function useBookingQuote(
           check_out: co,
           rooms: rts.map((room_type_id) => ({ room_type_id })),
           booking_data: toValue(bookingData),
+          guest_id: gid || undefined,
+          manual_adjustments: ma?.length ? ma : undefined,
         },
         ctl.signal,
       )

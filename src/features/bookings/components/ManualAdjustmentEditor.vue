@@ -152,11 +152,6 @@ function apply() {
   gap: var(--space-sm);
 }
 
-.adjustment-dialog__effect-grid select,
-.adjustment-dialog__effect-grid input {
-  height: 2.625rem;
-}
-
 .adjustment-dialog__hint {
   font-size: var(--text-caption-size);
   font-weight: var(--text-caption-weight);

@@ -29,7 +29,10 @@
 
     <template v-else>
       <div class="form-edit-control">
-        <label :for="inputId">{{ label }}</label>
+        <label :for="inputId"
+          >{{ label }}
+          <abbr v-if="isRequired" class="required" :title="t('common.required')">*</abbr>
+        </label>
         <div class="form-edit-control__input-wrap">
           <template v-if="node.type === 'checkbox'">
             <input
@@ -89,6 +92,7 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type {
   FormNode,
   FormInputNode,
@@ -121,6 +125,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:data'])
+const { t } = useI18n()
 
 const ruleModel = computed(() => props.fullData ?? props.data)
 const nodeState = computed(() => evaluateNodeState(props.node, ruleModel.value))
@@ -153,6 +158,10 @@ const valuePath = computed(() => {
 })
 
 const label = computed(() => resolveFormCatalogString(inputNode.value.label ?? ''))
+const isRequired = computed(() => {
+  const n = props.node as FormInputNode | FormSelectNode
+  return !!n.validation?.required
+})
 const buttonLabel = computed(() =>
   resolveFormCatalogString((props.node as FormButtonNode).label ?? ''),
 )

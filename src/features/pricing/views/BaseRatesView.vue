@@ -44,16 +44,17 @@
             <tr v-for="rt in roomTypes" :key="rt.id">
               <td>{{ rt.name }}</td>
               <td class="base-rates__col-rate">
-                <div class="base-rates__input-group">
+                <div class="base-rates__amount-wrap">
                   <input
                     type="number"
                     min="0"
                     :step="rateInputStep"
                     :value="editedMajorRate(rt.id)"
                     :disabled="saving"
+                    class="base-rates__amount-input"
                     @input="onRateInput(rt.id, $event)"
                   />
-                  <span class="base-rates__currency">{{ currencyCode }}</span>
+                  <span class="base-rates__currency">{{ currencySymbol }}</span>
                 </div>
               </td>
             </tr>
@@ -71,7 +72,12 @@ import { storeToRefs } from 'pinia'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
-import { minorToMajor, majorToMinor, getCurrencyExponent } from '@/shared/lib/money'
+import {
+  minorToMajor,
+  majorToMinor,
+  getCurrencyExponent,
+  getCurrencySymbol,
+} from '@/shared/lib/money'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const { t } = useI18n()
@@ -88,6 +94,7 @@ const saveError = ref('')
 const edits = ref<Map<string, number>>(new Map())
 
 const currencyCode = computed(() => hotel.value?.currency ?? 'USD')
+const currencySymbol = computed(() => getCurrencySymbol(currencyCode.value))
 
 const rateInputStep = computed(() => {
   const exp = getCurrencyExponent(currencyCode.value)
@@ -190,29 +197,29 @@ onMounted(async () => {
   width: 14rem;
 }
 
-.base-rates__input-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
+.base-rates__amount-wrap {
+  position: relative;
 }
 
-.base-rates__input-group input {
-  flex: 1;
-  margin-bottom: 0;
+.base-rates__amount-input {
+  padding-right: var(--space-xl);
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
-.base-rates__input-group input::-webkit-outer-spin-button,
-.base-rates__input-group input::-webkit-inner-spin-button {
+.base-rates__amount-input::-webkit-outer-spin-button,
+.base-rates__amount-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
 .base-rates__currency {
-  flex-shrink: 0;
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  color: var(--ink-secondary);
+  position: absolute;
+  right: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-tertiary);
+  font-size: var(--text-label-size);
+  pointer-events: none;
 }
 </style>

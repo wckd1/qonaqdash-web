@@ -471,6 +471,32 @@
         font-size: var(--text-body-size);
         color: var(--ink-secondary);
       }
+
+      /* Form swatch: money amount with inline currency symbol */
+      .ds-amount-wrap {
+        position: relative;
+        display: block;
+      }
+      .ds-amount-input {
+        padding-right: var(--space-xl) !important;
+      }
+      .ds-amount-input::-webkit-inner-spin-button,
+      .ds-amount-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .ds-amount-input {
+        -moz-appearance: textfield;
+      }
+      .ds-amount-currency {
+        position: absolute;
+        right: var(--space-md);
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--ink-tertiary);
+        font-size: var(--text-label-size);
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
@@ -814,9 +840,9 @@
       <section class="ds-section" id="typography">
         <h2>Typography</h2>
         <p class="ds-note">
-          <strong>Inter</strong> body (<code>--font-body</code>),
-          <strong>Manrope</strong> headings (<code>--font-display</code>). Latin + Cyrillic. Weights
-          400–700 from Google Fonts (load in the product HTML shell).
+          <strong>Inter</strong> body (<code>--font-body</code>), <strong>Manrope</strong> headings
+          (<code>--font-display</code>). Latin + Cyrillic. Weights 400–700 from Google Fonts (load
+          in the product HTML shell).
         </p>
         <div class="ds-subsection">
           <h3>Type scale</h3>
@@ -1589,18 +1615,56 @@
           Full-width create, edit, and schema-driven detail: vertical stack; labels at readable size
           (<code>--text-label-size</code>); section header + description + field grid. Inputs:
           <code>--form-element-padding-vertical</code>,
-          <code>--form-element-padding-horizontal</code>; controls <code>--control-bg</code>,
-          <code>--control-border</code>, <code>--control-focus-ring</code>. Page-level and inline
-          messages: <a href="#states">Loading, states &amp; form messages</a> → Form-level vs
-          field-level.
+          <code>--form-element-padding-horizontal</code>,
+          <code>--form-element-height</code> (unified across input &amp; select); controls
+          <code>--control-bg</code>, <code>--control-border</code>,
+          <code>--control-focus-ring</code>. Page-level and inline messages:
+          <a href="#states">Loading, states &amp; form messages</a> → Form-level vs field-level.
         </p>
+
         <div class="form-section-preview">
-          <h3 class="form-section-header">New guest</h3>
-          <p class="form-section-desc">Required fields are marked with an asterisk.</p>
+          <h3 class="form-section-header">Form section — field types</h3>
+          <p class="form-section-desc">
+            All input types share the same height via <code>--form-element-height</code>.
+          </p>
+
           <div class="form-grid">
-            <label>First name <input type="text" placeholder="John" /></label>
-            <label>Last name <input type="text" placeholder="Smith" /></label>
-            <label>Email <input type="email" placeholder="john@example.com" /></label>
+            <label
+              >Text input <span class="optional">(optional)</span>
+              <input type="text" placeholder="John Smith" />
+            </label>
+
+            <label
+              >Email <abbr class="required" title="Required">*</abbr>
+              <input type="email" placeholder="john@example.com" required />
+            </label>
+
+            <label
+              >Select
+              <select>
+                <option value="" disabled selected>Choose an option…</option>
+                <option>Option A</option>
+                <option>Option B</option>
+                <option>Option C</option>
+              </select>
+            </label>
+
+            <label>Date <input type="date" /></label>
+
+            <label>Date &amp; time <input type="datetime-local" /></label>
+
+            <label
+              >Money amount
+              <span class="ds-amount-wrap">
+                <input type="number" placeholder="0.00" class="ds-amount-input" />
+                <span class="ds-amount-currency">₸</span>
+              </span>
+            </label>
+
+            <label
+              >Textarea
+              <textarea rows="3" placeholder="Additional notes…"></textarea>
+            </label>
           </div>
         </div>
       </section>

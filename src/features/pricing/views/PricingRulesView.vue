@@ -36,42 +36,52 @@
           {{ t('pricing.rules_empty') }}
         </p>
 
-        <div v-else class="pricing-list">
-          <div v-for="rule in rules" :key="rule.id" class="pricing-list__item pricing-rule-card">
-            <div class="pricing-list__info pricing-rule-card__info">
-              <div class="pricing-rule-card__header">
-                <strong class="pricing-list__name">{{ rule.name }}</strong>
-                <span class="pricing-rule-card__status" :class="statusClass(rule.status)">
+        <table v-else class="list-table">
+          <thead>
+            <tr>
+              <th scope="col">{{ t('pricing.col_name') }}</th>
+              <th scope="col">{{ t('pricing.col_rule') }}</th>
+              <th scope="col">{{ t('pricing.col_status') }}</th>
+              <th scope="col" class="list-table__col--actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="rule in rules" :key="rule.id">
+              <td>
+                <strong>{{ rule.name }}</strong>
+                <p v-if="rule.invalid_reason" class="pricing-rule__invalid-reason">
+                  {{ rule.invalid_reason.message }}
+                </p>
+              </td>
+              <td>
+                <span class="pricing-rule__summary">
+                  <span>{{ conditionsSummary(rule) }}</span>
+                  <span class="pricing-rule__arrow">&rarr;</span>
+                  <span class="pricing-rule__effect">{{ effectSummary(rule) }}</span>
+                </span>
+              </td>
+              <td>
+                <span class="pricing-rule__status" :class="statusClass(rule.status)">
                   {{ statusLabel(rule.status) }}
                 </span>
-              </div>
-              <div class="pricing-rule-card__details">
-                <span class="pricing-rule-card__conditions">
-                  {{ conditionsSummary(rule) }}
-                </span>
-                <span class="pricing-rule-card__arrow">&rarr;</span>
-                <span class="pricing-rule-card__effect">
-                  {{ effectSummary(rule) }}
-                </span>
-              </div>
-              <p v-if="rule.invalid_reason" class="pricing-rule-card__invalid-reason">
-                {{ rule.invalid_reason.message }}
-              </p>
-            </div>
-            <div class="pricing-list__actions">
-              <button type="button" class="btn-secondary" @click="openEditDialog(rule)">
-                {{ t('common.edit') }}
-              </button>
-              <button
-                type="button"
-                class="btn-secondary btn-secondary--danger"
-                @click="openDeleteConfirm(rule)"
-              >
-                {{ t('pricing.remove') }}
-              </button>
-            </div>
-          </div>
-        </div>
+              </td>
+              <td class="list-table__cell--actions">
+                <div class="list-table__actions">
+                  <button type="button" class="list-table__action" @click="openEditDialog(rule)">
+                    {{ t('common.edit') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="list-table__action list-table__action--danger"
+                    @click="openDeleteConfirm(rule)"
+                  >
+                    {{ t('pricing.remove') }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </template>
   </div>
@@ -92,6 +102,7 @@
           <div class="rule-form__top">
             <label class="rule-form__field rule-form__field--grow">
               {{ t('pricing.rule_name') }}
+              <abbr class="required" :title="t('common.required')">*</abbr>
               <input
                 ref="nameInputRef"
                 v-model="ruleForm.name"
@@ -214,13 +225,18 @@
               </label>
               <label class="rule-form__field">
                 {{ t('pricing.rule_effect_value') }}
-                <input
-                  v-model.number="ruleForm.effect.displayValue"
-                  type="number"
-                  step="any"
-                  required
-                  :disabled="saving"
-                />
+                <abbr class="required" :title="t('common.required')">*</abbr>
+                <div class="rule-form__amount-wrap">
+                  <input
+                    v-model.number="ruleForm.effect.displayValue"
+                    type="number"
+                    step="any"
+                    required
+                    :disabled="saving"
+                    class="rule-form__amount-input"
+                  />
+                  <span class="rule-form__amount-symbol">{{ effectSymbol }}</span>
+                </div>
                 <small class="rule-form__hint">
                   {{
                     ruleForm.effect.type === 'percent'
@@ -297,7 +313,7 @@ import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared/types/commercial'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
-import { formatMoney, majorToMinor, minorToMajor } from '@/shared/lib/money'
+import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
 
 const { t, locale } = useI18n()
 const pricingStore = usePricingStore()
@@ -305,6 +321,10 @@ const propertyStore = usePropertyStore()
 const { rules, conditionCandidates } = storeToRefs(pricingStore)
 
 const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? 'USD')
+
+const effectSymbol = computed(() =>
+  ruleForm.value.effect.type === 'percent' ? '%' : getCurrencySymbol(hotelCurrency.value),
+)
 
 function candidateByFieldId(fieldId: string): ConditionCandidate | undefined {
   return conditionCandidates.value.find((c) => c.field_id === fieldId)
@@ -363,9 +383,9 @@ function statusLabel(status: string): string {
 
 function statusClass(status: string): Record<string, boolean> {
   return {
-    'pricing-rule-card__status--active': status === 'active',
-    'pricing-rule-card__status--disabled': status === 'disabled',
-    'pricing-rule-card__status--invalid': status === 'invalid',
+    'pricing-rule__status--active': status === 'active',
+    'pricing-rule__status--disabled': status === 'disabled',
+    'pricing-rule__status--invalid': status === 'invalid',
   }
 }
 
@@ -663,85 +683,7 @@ onMounted(load)
   color: var(--ink-secondary);
 }
 
-.pricing-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.pricing-list__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm, 6px);
-  background: var(--surface-1);
-}
-
-.pricing-list__info {
-  min-width: 0;
-  flex: 1;
-}
-
-.pricing-list__name {
-  font-size: var(--text-body-size);
-}
-
-.pricing-list__actions {
-  display: flex;
-  gap: var(--space-xs);
-  flex-shrink: 0;
-}
-
-.btn-secondary--danger {
-  color: var(--semantic-error);
-  border-color: var(--semantic-error);
-}
-
-.btn-secondary--danger:hover {
-  background-color: var(--semantic-error-bg, #fef2f2);
-}
-
-/* Rule card */
-.pricing-rule-card__header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-xs) var(--space-sm);
-  margin-bottom: var(--space-xs);
-}
-
-.pricing-rule-card__status {
-  font-size: var(--text-caption-size);
-  font-weight: var(--text-label-weight);
-  padding: 1px 6px;
-  border-radius: 3px;
-}
-
-.pricing-rule-card__status--active {
-  background-color: var(--semantic-success-bg, #ecfdf5);
-  color: var(--semantic-success);
-}
-
-.pricing-rule-card__status--disabled {
-  background-color: var(--control-bg);
-  color: var(--ink-muted);
-}
-
-.pricing-rule-card__status--invalid {
-  background-color: var(--semantic-error-bg, #fef2f2);
-  color: var(--semantic-error);
-}
-
-.pricing-rule-card__invalid-reason {
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-caption-size);
-  color: var(--semantic-error);
-}
-
-.pricing-rule-card__details {
+.pricing-rule__summary {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -750,13 +692,50 @@ onMounted(load)
   color: var(--ink-secondary);
 }
 
-.pricing-rule-card__arrow {
+.pricing-rule__arrow {
   color: var(--ink-muted);
 }
 
-.pricing-rule-card__effect {
+.pricing-rule__effect {
   font-weight: var(--text-label-weight);
   color: var(--ink-primary);
+}
+
+.pricing-rule__status {
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.pricing-rule__status--active {
+  background-color: var(--semantic-success-bg, #ecfdf5);
+  color: var(--semantic-success);
+}
+
+.pricing-rule__status--disabled {
+  background-color: var(--control-bg);
+  color: var(--ink-muted);
+}
+
+.pricing-rule__status--invalid {
+  background-color: var(--semantic-error-bg, #fef2f2);
+  color: var(--semantic-error);
+}
+
+.pricing-rule__invalid-reason {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--text-caption-size);
+  color: var(--semantic-error);
+}
+
+.list-table__action--danger {
+  color: var(--semantic-error);
+}
+
+.list-table__action--danger:hover {
+  color: var(--semantic-error);
 }
 
 /* Dialog wide */
@@ -770,16 +749,12 @@ onMounted(load)
   gap: var(--space-sm);
 }
 
-.rule-form__top :is(input, select) {
-  height: 2.75rem;
-}
-
 .rule-form__field--grow {
   flex: 1;
 }
 
 .rule-form__field--status {
-  flex: 0 0 160px;
+  flex: 0 0 240px;
 }
 
 .rule-form__columns {
@@ -799,6 +774,32 @@ onMounted(load)
 
 .rule-form__field {
   min-width: 0;
+}
+
+.rule-form__amount-wrap {
+  position: relative;
+}
+
+.rule-form__amount-input {
+  padding-right: var(--space-xl);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.rule-form__amount-input::-webkit-outer-spin-button,
+.rule-form__amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.rule-form__amount-symbol {
+  position: absolute;
+  right: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-tertiary);
+  font-size: var(--text-label-size);
+  pointer-events: none;
 }
 
 .rule-form__hint {

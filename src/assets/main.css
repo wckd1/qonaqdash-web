@@ -102,6 +102,10 @@
   /* ----- Form elements: input/select/textarea padding (used by Pico and search bar) ----- */
   --form-element-padding-vertical: 12px;
   --form-element-padding-horizontal: 18px;
+  --form-element-content-height: 25px;
+  --form-element-height: calc(
+    var(--form-element-content-height) + 2 * var(--form-element-padding-vertical) + 2px
+  );
   --pico-form-element-spacing-vertical: var(--form-element-padding-vertical);
   --pico-form-element-spacing-horizontal: var(--form-element-padding-horizontal);
 
@@ -154,6 +158,13 @@
   --pico-primary-hover-border: var(--brand-primary-hover);
   --pico-primary-hover-underline: var(--brand-primary-hover);
   --pico-primary-focus: var(--brand-focus-ring);
+}
+
+/* Unify total height across input and select so they always match. */
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+select {
+  height: var(--form-element-height);
+  box-sizing: border-box;
 }
 
 /* Base heading styles: one h1 per page (page title), h2 for sections/panels. Design consistent across pages. */
@@ -2341,6 +2352,12 @@ main .room-list-empty {
 main .optional {
   font-weight: var(--text-body-weight);
   color: var(--ink-tertiary);
+}
+
+abbr.required {
+  color: var(--semantic-error);
+  text-decoration: none;
+  font-weight: var(--text-label-weight);
 }
 
 .dialog .dialog-actions {

@@ -4,7 +4,7 @@
 
     <form @submit.prevent="handleSubmit">
       <label>
-        {{ t('auth.login.email') }}
+        {{ t('auth.login.email') }} <abbr class="required" :title="t('common.required')">*</abbr>
         <input
           v-model="email"
           type="email"
@@ -16,7 +16,7 @@
       </label>
 
       <label>
-        {{ t('auth.login.password') }}
+        {{ t('auth.login.password') }} <abbr class="required" :title="t('common.required')">*</abbr>
         <input
           v-model="password"
           type="password"

@@ -234,6 +234,7 @@
           <form v-else class="side-panel-edit-form" @submit.prevent="submitRoomEdit">
             <label>
               {{ t('fields.room_number') }}
+              <abbr class="required" :title="t('common.required')">*</abbr>
               <input
                 v-model="editRoomForm.number"
                 type="text"
@@ -243,6 +244,7 @@
             </label>
             <label>
               {{ t('fields.room_type') }}
+              <abbr class="required" :title="t('common.required')">*</abbr>
               <select v-model="editRoomForm.room_type_id" required :disabled="roomSaveSaving">
                 <option v-for="opt in roomTypes" :key="opt.id" :value="opt.id">
                   {{ opt.name }}
@@ -250,7 +252,7 @@
               </select>
             </label>
             <label>
-              {{ t('fields.status') }}
+              {{ t('fields.status') }} <abbr class="required" :title="t('common.required')">*</abbr>
               <select v-model="editRoomForm.status" required :disabled="roomSaveSaving">
                 <option v-for="s in ROOM_STATUSES" :key="s" :value="s">
                   {{ t(`rooms.room_status.${s}`) }}
@@ -269,7 +271,7 @@
       <h2 id="add-type-title">{{ t('rooms.add_type_title') }}</h2>
       <form @submit.prevent="submitAddType">
         <label>
-          {{ t('fields.name') }}
+          {{ t('fields.name') }} <abbr class="required" :title="t('common.required')">*</abbr>
           <input
             ref="addTypeNameRef"
             v-model="addTypeForm.name"
@@ -307,7 +309,7 @@
       <p v-if="editTypeError" class="form-error">{{ editTypeError }}</p>
       <form @submit.prevent="submitEditType">
         <label>
-          {{ t('fields.name') }}
+          {{ t('fields.name') }} <abbr class="required" :title="t('common.required')">*</abbr>
           <input
             v-model="editTypeForm.name"
             type="text"
@@ -346,6 +348,7 @@
       <form @submit.prevent="submitAddRoom">
         <label>
           {{ t('fields.room_number') }}
+          <abbr class="required" :title="t('common.required')">*</abbr>
           <input
             ref="addRoomNumberRef"
             v-model="addRoomForm.number"

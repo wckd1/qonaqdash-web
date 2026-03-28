@@ -23,6 +23,7 @@
       <form @submit.prevent="handleSubmit">
         <label>
           {{ t('auth.invite.password') }}
+          <abbr class="required" :title="t('common.required')">*</abbr>
           <input
             v-model="password"
             type="password"
@@ -36,6 +37,7 @@
 
         <label>
           {{ t('auth.invite.confirm_password') }}
+          <abbr class="required" :title="t('common.required')">*</abbr>
           <input
             v-model="confirmPassword"
             type="password"

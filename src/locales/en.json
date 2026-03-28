@@ -125,7 +125,9 @@
     "dismiss_toast": "Dismiss",
     "add": "Add",
     "close": "Close",
-    "optional": "(optional)"
+    "optional": "(optional)",
+    "required": "Required",
+    "actions": "Actions"
   },
   "fields": {
     "first_name": "First name",
@@ -201,6 +203,8 @@
     "confirm_check_in_body": "This booking will move to checked-in status.",
     "confirm_check_out_title": "Check out guest?",
     "confirm_check_out_body": "This booking will be marked as checked out.",
+    "checkout_unpaid_notice": "The guest's bill has an outstanding balance. The bill will remain open after check-out.",
+    "checkout_force_unpaid_label": "Check out with unpaid balance",
     "confirm_cancel_title": "Cancel this booking?",
     "confirm_cancel_body": "The booking will be marked as canceled. You can still open it from the list.",
     "status_action_success": "Booking updated.",
@@ -416,6 +420,9 @@
     "base_rates_col_rate": "Rate / night",
     "base_rates_save_failed": "Failed to save base rate.",
     "subnav_aria": "Pricing configuration sections",
+    "col_name": "Name",
+    "col_rule": "Rule",
+    "col_status": "Status",
     "rules_title": "Pricing rules",
     "rules_hint": "Rules adjust accommodation rates. Each rule's conditions are AND-ed; if all match, the effect is applied.",
     "rules_empty": "No pricing rules defined yet.",
@@ -495,11 +502,29 @@
     "entry_accommodation_night": "Night",
     "entry_rule_adjustment": "Rate adjustment",
     "entry_manual_adjustment": "Manual adjustment",
+    "entry_system_adjustment": "System adjustment",
     "entry_service_charge": "Service charge",
     "entry_payment": "Payment",
     "entry_refund": "Refund",
     "entry_correction": "Correction",
-    "entry_accommodation_correction": "Accommodation correction"
+    "entry_accommodation_correction": "Accommodation correction",
+    "record_payment": "Record Payment",
+    "record_refund": "Record Refund",
+    "add_adjustment": "Adjust Balance",
+    "amount_label": "Amount",
+    "description_label": "Description",
+    "payment_desc_placeholder": "e.g. Full payment",
+    "refund_desc_placeholder": "e.g. Partial refund",
+    "adjustment_desc_placeholder": "e.g. Late checkout fee",
+    "select_payment": "Payment to reverse",
+    "select_payment_placeholder": "Select a payment…",
+    "adjustment_direction": "Direction",
+    "direction_charge": "Charge (guest owes more)",
+    "direction_credit": "Credit (reduce balance)",
+    "payment_success": "Payment recorded.",
+    "refund_success": "Refund recorded.",
+    "adjustment_success": "Adjustment added.",
+    "actions_aria": "Folio actions"
   },
   "form_settings": {
     "loading_schema": "Loading form schema…",
@@ -570,13 +595,15 @@
       "grid_invalid_from_date": "Invalid from date (use YYYY-MM-DD).",
       "grid_invalid_to_date": "Invalid to date (use YYYY-MM-DD).",
       "grid_from_before_to": "From date must be before to date.",
-      "grid_from_to_required": "From and to query parameters are required."
+      "grid_from_to_required": "From and to query parameters are required.",
+      "outstanding_balance": "This booking has an outstanding balance. Record a payment or force check-out."
     },
     "billing": {
       "bill_not_found": "No bill found for this booking.",
       "bill_closed": "This bill is closed and cannot be modified.",
       "amount_required": "Amount is required.",
-      "description_required": "Description is required."
+      "description_required": "Description is required.",
+      "refund_exceeds_payment": "Refund amount exceeds the remaining balance of this payment."
     },
     "property": {
       "hotel_not_found": "Hotel not found for your account. Contact support if this persists.",

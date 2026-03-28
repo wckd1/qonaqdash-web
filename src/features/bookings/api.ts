@@ -242,8 +242,10 @@ export function checkIn(id: string): Promise<BookingItem> {
   return api.put(`/api/bookings/${id}/check-in`).then(({ data }) => data)
 }
 
-export function checkOut(id: string): Promise<BookingItem> {
-  return api.put(`/api/bookings/${id}/check-out`).then(({ data }) => data)
+export function checkOut(id: string, options?: { forceUnpaid?: boolean }): Promise<BookingItem> {
+  return api
+    .put(`/api/bookings/${id}/check-out`, { force_unpaid: options?.forceUnpaid ?? true })
+    .then(({ data }) => data)
 }
 
 export function cancel(id: string): Promise<BookingItem> {

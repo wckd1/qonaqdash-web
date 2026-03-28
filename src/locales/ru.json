@@ -125,7 +125,9 @@
     "dismiss_toast": "Закрыть",
     "add": "Добавить",
     "close": "Закрыть",
-    "optional": "(необязательно)"
+    "optional": "(необязательно)",
+    "required": "Обязательное поле",
+    "actions": "Действия"
   },
   "fields": {
     "first_name": "Имя",
@@ -201,6 +203,8 @@
     "confirm_check_in_body": "Статус бронирования сменится на «Заселён».",
     "confirm_check_out_title": "Отметить выезд гостя?",
     "confirm_check_out_body": "Бронирование будет отмечено как завершённое (выезд).",
+    "checkout_unpaid_notice": "По счёту гостя есть непогашенный остаток. Счёт останется открытым после выезда.",
+    "checkout_force_unpaid_label": "Выезд с непогашенным балансом",
     "confirm_cancel_title": "Отменить бронирование?",
     "confirm_cancel_body": "Бронирование получит статус «Отменено». Его по-прежнему можно открыть в списке.",
     "status_action_success": "Бронирование обновлено.",
@@ -416,6 +420,9 @@
     "base_rates_col_rate": "Тариф / ночь",
     "base_rates_save_failed": "Не удалось сохранить базовый тариф.",
     "subnav_aria": "Разделы настройки тарифов",
+    "col_name": "Название",
+    "col_rule": "Правило",
+    "col_status": "Статус",
     "rules_title": "Тарифные правила",
     "rules_hint": "Правила корректируют стоимость проживания. Все условия одного правила объединяются по AND; если все совпали — эффект применяется.",
     "rules_empty": "Тарифных правил пока нет.",
@@ -495,11 +502,29 @@
     "entry_accommodation_night": "Ночь",
     "entry_rule_adjustment": "Корректировка тарифа",
     "entry_manual_adjustment": "Ручная корректировка",
+    "entry_system_adjustment": "Системная корректировка",
     "entry_service_charge": "Сервисный сбор",
     "entry_payment": "Оплата",
     "entry_refund": "Возврат",
     "entry_correction": "Исправление",
-    "entry_accommodation_correction": "Корректировка проживания"
+    "entry_accommodation_correction": "Корректировка проживания",
+    "record_payment": "Записать оплату",
+    "record_refund": "Записать возврат",
+    "add_adjustment": "Корректировка",
+    "amount_label": "Сумма",
+    "description_label": "Описание",
+    "payment_desc_placeholder": "напр. Полная оплата",
+    "refund_desc_placeholder": "напр. Частичный возврат",
+    "adjustment_desc_placeholder": "напр. Поздний выезд",
+    "select_payment": "Оплата для возврата",
+    "select_payment_placeholder": "Выберите оплату…",
+    "adjustment_direction": "Направление",
+    "direction_charge": "Начисление (гость должен больше)",
+    "direction_credit": "Скидка (уменьшить баланс)",
+    "payment_success": "Оплата записана.",
+    "refund_success": "Возврат записан.",
+    "adjustment_success": "Корректировка добавлена.",
+    "actions_aria": "Действия по счёту"
   },
   "form_settings": {
     "loading_schema": "Загрузка схемы формы…",
@@ -570,13 +595,15 @@
       "grid_invalid_from_date": "Неверная дата «с» (формат ГГГГ-ММ-ДД).",
       "grid_invalid_to_date": "Неверная дата «по» (формат ГГГГ-ММ-ДД).",
       "grid_from_before_to": "Дата «с» должна быть раньше «по».",
-      "grid_from_to_required": "Укажите параметры from и to."
+      "grid_from_to_required": "Укажите параметры from и to.",
+      "outstanding_balance": "По бронированию есть непогашенный баланс. Запишите оплату или выполните принудительный выезд."
     },
     "billing": {
       "bill_not_found": "Счёт для этого бронирования не найден.",
       "bill_closed": "Счёт закрыт и не может быть изменён.",
       "amount_required": "Укажите сумму.",
-      "description_required": "Укажите описание."
+      "description_required": "Укажите описание.",
+      "refund_exceeds_payment": "Сумма возврата превышает остаток по этой оплате."
     },
     "property": {
       "hotel_not_found": "Отель для вашего аккаунта не найден. Если проблема повторяется, обратитесь в поддержку.",

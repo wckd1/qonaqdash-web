@@ -92,8 +92,8 @@ export const useBookingStore = defineStore('bookings', () => {
     return mutateAndRefresh(id, () => bookingsApi.checkIn(id))
   }
 
-  async function checkOut(id: string) {
-    return mutateAndRefresh(id, () => bookingsApi.checkOut(id))
+  async function checkOut(id: string, options?: { forceUnpaid?: boolean }) {
+    return mutateAndRefresh(id, () => bookingsApi.checkOut(id, options))
   }
 
   async function cancel(id: string) {

@@ -4,6 +4,51 @@
     <p v-else-if="loadError" class="error-message">{{ loadError }}</p>
 
     <template v-else-if="billData">
+      <section class="pricing-card folio-section__balance">
+        <div class="pricing-card__body">
+          <div class="pricing-card__row pricing-card__row--total">
+            <span>{{ t('billing.outstanding_balance') }}</span>
+            <span
+              :class="{
+                'pricing-card__amount--negative': billData.outstanding_balance <= 0,
+              }"
+            >
+              {{ fmtMoney(billData.outstanding_balance) }}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div
+        v-if="billIsOpen"
+        class="action-toolbar action-toolbar--inset"
+        role="toolbar"
+        :aria-label="t('billing.actions_aria')"
+      >
+        <button
+          type="button"
+          class="action-toolbar__btn action-toolbar__btn--check-in"
+          @click="activeDialog = 'payment'"
+        >
+          {{ t('billing.record_payment') }}
+        </button>
+        <button
+          v-if="paymentEntries.length"
+          type="button"
+          class="action-toolbar__btn action-toolbar__btn--check-out"
+          @click="activeDialog = 'refund'"
+        >
+          {{ t('billing.record_refund') }}
+        </button>
+        <button
+          type="button"
+          class="action-toolbar__btn action-toolbar__btn--check-out"
+          @click="activeDialog = 'adjustment'"
+        >
+          {{ t('billing.add_adjustment') }}
+        </button>
+      </div>
+
       <section v-if="billData.entries.length" class="folio-section__table-wrap">
         <table class="list-table" role="grid">
           <thead>
@@ -40,20 +85,30 @@
 
       <p v-else class="empty-state">{{ t('billing.no_entries') }}</p>
 
-      <section class="pricing-card folio-section__balance">
-        <div class="pricing-card__body">
-          <div class="pricing-card__row pricing-card__row--total">
-            <span>{{ t('billing.outstanding_balance') }}</span>
-            <span
-              :class="{
-                'pricing-card__amount--negative': billData.outstanding_balance <= 0,
-              }"
-            >
-              {{ fmtMoney(billData.outstanding_balance) }}
-            </span>
-          </div>
-        </div>
-      </section>
+      <PaymentDialog
+        v-if="activeDialog === 'payment' && props.bookingId"
+        :booking-id="props.bookingId"
+        :currency="props.currency"
+        @close="activeDialog = null"
+        @success="onMutationSuccess"
+      />
+
+      <RefundDialog
+        v-if="activeDialog === 'refund' && props.bookingId"
+        :booking-id="props.bookingId"
+        :currency="props.currency"
+        :payment-entries="paymentEntries"
+        @close="activeDialog = null"
+        @success="onMutationSuccess"
+      />
+
+      <AdjustmentDialog
+        v-if="activeDialog === 'adjustment' && props.bookingId"
+        :booking-id="props.bookingId"
+        :currency="props.currency"
+        @close="activeDialog = null"
+        @success="onMutationSuccess"
+      />
     </template>
   </div>
 </template>
@@ -67,6 +122,9 @@ import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { formatMoney } from '@/shared/lib/money'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import PaymentDialog from '@/features/billing/components/PaymentDialog.vue'
+import RefundDialog from '@/features/billing/components/RefundDialog.vue'
+import AdjustmentDialog from '@/features/billing/components/AdjustmentDialog.vue'
 
 const props = defineProps<{
   bookingId: string | null | undefined
@@ -79,6 +137,20 @@ const { t, locale } = useI18n()
 const propertyStore = usePropertyStore()
 const { roomTypes } = storeToRefs(propertyStore)
 propertyStore.fetchRoomTypes()
+
+type DialogKind = 'payment' | 'refund' | 'adjustment' | null
+const activeDialog = ref<DialogKind>(null)
+
+const billIsOpen = computed(() => billData.value?.bill.status === 'open')
+
+const paymentEntries = computed(() =>
+  (billData.value?.entries ?? []).filter((e) => e.entry_type === 'payment'),
+)
+
+function onMutationSuccess() {
+  activeDialog.value = null
+  loadBill()
+}
 
 function roomTypeName(id: string | undefined): string | undefined {
   if (!id) return undefined
@@ -105,6 +177,7 @@ const ENTRY_TYPE_KEYS: Record<string, string> = {
   accommodation_correction: 'billing.entry_accommodation_correction',
   rule_adjustment: 'billing.entry_rule_adjustment',
   manual_adjustment: 'billing.entry_manual_adjustment',
+  system_adjustment: 'billing.entry_system_adjustment',
   service_charge: 'billing.entry_service_charge',
   payment: 'billing.entry_payment',
   refund: 'billing.entry_refund',
@@ -215,6 +288,7 @@ defineExpose({ reload: loadBill })
   overflow: hidden auto;
   box-shadow: var(--shadow-sm);
   background: var(--pico-card-background-color);
+  margin-bottom: 0;
 }
 
 .folio-section__table-wrap :deep(td) {
@@ -254,6 +328,7 @@ defineExpose({ reload: loadBill })
 
 .folio-section__balance {
   flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 .folio-section__balance .pricing-card__row--total {

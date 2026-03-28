@@ -33,7 +33,6 @@ export interface LedgerEntryMetadata {
   rule_id?: string
   manual_reason?: string
   origin_module?: string
-  payment_method?: string
   external_ref?: string
   idempotency_key?: string
   reverses_entry_id?: string

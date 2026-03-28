@@ -16,13 +16,6 @@
     </div>
   </header>
 
-  <BookingStatusActions
-    v-if="bookingId && bookingForm && !editing"
-    :booking-id="bookingId"
-    :status="getBookingStatusFromResponse(currentBooking)"
-    detail-inset
-  />
-
   <p v-if="loadError" class="error-message">{{ loadError }}</p>
   <p v-else-if="notFound" class="error-message">
     {{ t('bookings.not_found') }}
@@ -55,6 +48,12 @@
         </nav>
 
         <template v-if="activeTab === 'details'">
+          <BookingStatusActions
+            v-if="bookingId"
+            :booking-id="bookingId"
+            :status="getBookingStatusFromResponse(currentBooking)"
+            detail-inset
+          />
           <FormView :definition="bookingForm.definition" :data="bookingForm.data" />
           <AccommodationSummary
             v-if="currentBooking?.accommodation"

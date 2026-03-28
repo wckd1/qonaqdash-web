@@ -73,6 +73,18 @@
         <div class="dialog" role="dialog" :aria-labelledby="dialogTitleId" aria-modal="true">
           <h2 :id="dialogTitleId" class="booking-status-dialog-title">{{ dialogTitle }}</h2>
           <p class="booking-status-dialog-body">{{ dialogBody }}</p>
+
+          <template v-if="pending === 'checkOut'">
+            <hr class="booking-status-dialog-separator" />
+            <p class="booking-status-dialog-body booking-status-dialog-body--warning">
+              {{ t('bookings.checkout_unpaid_notice') }}
+            </p>
+            <label class="booking-status-dialog-check">
+              <input v-model="forceUnpaidAck" type="checkbox" />
+              {{ t('bookings.checkout_force_unpaid_label') }}
+            </label>
+          </template>
+
           <div class="dialog-actions">
             <button type="button" class="btn-secondary" :disabled="running" @click="closeConfirm">
               {{ t('common.cancel') }}
@@ -81,7 +93,7 @@
               type="button"
               class="action-toolbar__btn"
               :class="primaryActionModifierClass"
-              :disabled="running"
+              :disabled="running || !canConfirm"
               @click="runPending"
             >
               {{ running ? t('common.loading') : dialogPrimaryLabel }}
@@ -122,6 +134,7 @@ const { success } = useNotification()
 
 const pending = ref(null)
 const running = ref(false)
+const forceUnpaidAck = ref(false)
 const dialogTitleId = useId()
 
 const allowsCheckIn = computed(() => bookingStatusAllowsCheckIn(props.status))
@@ -131,6 +144,11 @@ const allowsCancel = computed(() => bookingStatusAllowsCancel(props.status))
 const hasAnyAction = computed(
   () => allowsCheckIn.value || allowsCheckOut.value || allowsCancel.value,
 )
+
+const canConfirm = computed(() => {
+  if (pending.value === 'checkOut') return forceUnpaidAck.value
+  return true
+})
 
 const primaryActionModifierClass = computed(() => {
   if (pending.value === 'checkIn') return 'action-toolbar__btn--check-in'
@@ -169,6 +187,7 @@ watch(
 )
 
 function openConfirm(kind) {
+  forceUnpaidAck.value = false
   pending.value = kind
 }
 
@@ -184,7 +203,7 @@ async function runPending() {
   running.value = true
   try {
     if (kind === 'checkIn') await store.checkIn(id)
-    else if (kind === 'checkOut') await store.checkOut(id)
+    else if (kind === 'checkOut') await store.checkOut(id, { forceUnpaid: forceUnpaidAck.value })
     else if (kind === 'cancel') await store.cancel(id)
     success(t('bookings.status_action_success'))
     pending.value = null
@@ -207,5 +226,30 @@ async function runPending() {
   margin: 0 0 var(--space-lg);
   font-size: var(--text-body-size);
   color: var(--ink-secondary);
+}
+
+.booking-status-dialog-separator {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 0 0 var(--space-md);
+}
+
+.booking-status-dialog-body--warning {
+  margin-bottom: var(--space-sm);
+  color: var(--ink-secondary);
+}
+
+.booking-status-dialog-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--text-body-size);
+  margin-bottom: var(--space-lg);
+  cursor: pointer;
+}
+
+.booking-status-dialog-check input[type='checkbox'] {
+  margin: 0;
+  flex-shrink: 0;
 }
 </style>

@@ -22,6 +22,7 @@
   /* ----- Typography ----- */
   --font-body: 'Inter', sans-serif;
   --font-display: 'Manrope', sans-serif;
+  --font-brand: 'Playfair Display', serif;
 
   --text-heading-size: 1.15rem;
   --text-heading-weight: 700;
@@ -1319,14 +1320,14 @@ main .action-toolbar__btn--cancel:hover:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: 1rem;
 }
 
 .topbar .brand-name {
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: var(--text-body-size);
-  font-weight: var(--text-body-weight);
+  font-weight: 700;
   color: var(--ink-primary);
 }
 
@@ -2695,15 +2696,16 @@ main.auth-page .auth-brand .brand-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: 1.875rem;
   margin-bottom: var(--space-lg);
   animation: auth-brand-fade-in 0.6s ease-out 0.2s both;
 }
 
 main.auth-page .auth-brand .brand-name {
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: 1.5rem;
+  font-weight: 700;
   color: var(--ink-inverse);
   margin-bottom: var(--space-xs);
   letter-spacing: 0.01em;

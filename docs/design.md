@@ -79,7 +79,7 @@ SaaS for all hotel categories -- from a single apartment owner to large internat
 
 1. **Bookings** -- reservation grid (home/default landing page)
 2. **Guests** -- guest list
-3. **Settings** -- property config, form customization, account
+3. **Management** -- property config, form customization, account
 
 Only 3 items in the sidebar for MVP. Clean and non-intimidating for small operators.
 
@@ -129,9 +129,9 @@ Each row is an **implemented** route. **Extends** refers to [Page templates](#pa
 
 | Route                           | View                          | Template        | Routine actions & content                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------------------- | ----------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/manage/hotel`                 | `HotelSettingsView.vue`       | **T4**          | Hotel display name form (`GET`/`PUT` hotel).                                                                                                                                                                                                                                                                                                                                                                                      |
-| `/manage/rooms`                 | `RoomsView.vue`               | **T1** + custom | Accordion room types; room tables; **side panel** for room detail / edit / remove (`.side-panel*` + local scoped form). In-panel `.action-toolbar` for edit/save/cancel pattern.                                                                                                                                                                                                                                                  |
-| `/manage/pricing/base-rates`    | `BaseRatesView.vue`           | **T4**          | Header: title. **PricingSubNav** with currency display (read-only, link to Hotel settings). Editable table of room types with inline base rate inputs. Saves on change.                                                                                                                                                                                                                                                           |
+| `/manage/hotel`                 | `HotelSettingsView.vue`       | **T4**          | Page title "Hotel". **PropertySubNav** (General / Rooms tabs). General tab: hotel display name, check-in/out hours, currency form (`GET`/`PUT` hotel).                                                                                                                                                                                                                                                                            |
+| `/manage/rooms`                 | `RoomsView.vue`               | **T1** + custom | Same page title "Hotel" + **PropertySubNav**. Rooms tab: accordion room types; room tables; **side panel** for room detail / edit / remove (`.side-panel*` + local scoped form). In-panel `.action-toolbar` for edit/save/cancel pattern.                                                                                                                                                                                          |
+| `/manage/pricing/base-rates`    | `BaseRatesView.vue`           | **T4**          | Header: title. **PricingSubNav** with currency display (read-only, link to Hotel). Editable table of room types with inline base rate inputs. Saves on change.                                                                                                                                                                                                                                                                    |
 | `/manage/pricing/rules`         | `PricingRulesView.vue`        | **T4**          | Same header + **PricingSubNav**. Panel: rules list ordered by priority; each card shows name, priority, status badge (active/disabled/invalid), conditions summary → effect summary. **Add / Edit**: wide dialog with name, priority, status select; conditions fieldset (typed rows: property / specific_date / date_range with type-specific inputs); effect fieldset (type, value, apply_to). Delete confirm dialog. |
 | `/manage/guests/form`           | `GuestFormSettingsView.vue`   | **T4**          | Form builder + preview (`FormBuild`).                                                                                                                                                                                                                                                                                                                                                                                             |
 | `/manage/bookings/form`         | `BookingFormSettingsView.vue` | **T4**          | Same builder pattern for booking template.                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -146,7 +146,7 @@ Each row is an **implemented** route. **Extends** refers to [Page templates](#pa
 ### Product notes (cross-cutting)
 
 - **Today timeline strip** (above grid): described in product vision; implement when scheduled — not required for template table above.
-- **Settings “vertical tabs”**: MVP uses **sidebar** entries (`/manage/hotel`, `/manage/rooms`, `/manage/pricing/*`, form URLs) rather than a single settings shell with left tabs.
+- **Management “vertical tabs”**: MVP uses **sidebar** entries (`/manage/hotel`, `/manage/rooms`, `/manage/pricing/*`, form URLs) rather than a single management shell with left tabs.
 - **Pricing sub-navigation**: Two pricing config routes (`base-rates`, `rules`) share **`PricingSubNav`** — a currency display line plus a `.subnav` tab bar (design-system component; `router-link-exact-active` underline). Above the tabs, a read-only currency badge links to Hotel settings. Base rates is the default/first tab.
 - **Form customization UX** (add field, reorder, locked core fields, live preview): `GuestFormSettingsView` / `BookingFormSettingsView`.
 
@@ -235,12 +235,12 @@ flowchart LR
 ## Summary of Key Decisions
 
 - **Landing page**: reservation grid with collapsible today-timeline
-- **Navigation**: 3-item collapsible sidebar (Bookings, Guests, Settings)
+- **Navigation**: 3-item collapsible sidebar (Bookings, Guests, Management)
 - **Grid style**: Cloudbeds/Mews Gantt timeline with flexible date range
 - **Booking creation**: click/drag on grid OR "New Booking" button -> full page form
 - **Guest picker**: search-as-you-type in name fields, select locks form, reset to clear
 - **Detail views**: side panel for quick info, full page for deep editing (consistent everywhere)
-- **Property config**: under Settings (rarely changed)
+- **Property config**: under Management (rarely changed)
 - **Form customization**: simple "Add Field" UI with live preview
 - **Auth**: centered card layout
 - **Visual**: design system in main.css + [design.html](design.html); Inter + Manrope; dark sidebar + light content area; canvas + teal accent; content area with gap and rounded panel; forms vertical, labels body-size; corporate but joyful

@@ -103,15 +103,15 @@
 
           <details
             class="nav-group"
-            :open="sidebarCollapsed || settingsNavOpen"
-            @toggle="onSettingsNavToggle"
+            :open="sidebarCollapsed || manageNavOpen"
+            @toggle="onManageNavToggle"
           >
             <summary
               class="nav-group-trigger"
               :aria-label="
-                settingsNavOpen ? t('layout.collapse_settings') : t('layout.expand_settings')
+                manageNavOpen ? t('layout.collapse_management') : t('layout.expand_management')
               "
-              aria-controls="sidebar-settings-items"
+              aria-controls="sidebar-manage-items"
             >
               <svg
                 class="nav-icon"
@@ -133,7 +133,7 @@
                 <line x1="9" y1="8" x2="15" y2="8" />
                 <line x1="17" y1="16" x2="23" y2="16" />
               </svg>
-              <span class="nav-label">{{ t('nav.settings') }}</span>
+              <span class="nav-label">{{ t('nav.management') }}</span>
               <svg
                 class="nav-group-chevron"
                 viewBox="0 0 24 24"
@@ -149,11 +149,14 @@
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </summary>
-            <div id="sidebar-settings-items" class="nav-group__items">
+            <div id="sidebar-manage-items" class="nav-group__items">
               <router-link
                 to="/manage/hotel"
                 class="nav-link nav-sublink"
-                :class="{ 'nav-link--active': $route.path === '/manage/hotel' }"
+                :class="{
+                  'nav-link--active':
+                    $route.path === '/manage/hotel' || $route.path === '/manage/rooms',
+                }"
               >
                 <svg
                   class="nav-icon"
@@ -170,25 +173,6 @@
                   <path d="M6 12V8h12v4" />
                 </svg>
                 <span class="nav-label">{{ t('nav.hotel') }}</span>
-              </router-link>
-              <router-link
-                to="/manage/rooms"
-                class="nav-link nav-sublink"
-                :class="{ 'nav-link--active': $route.path === '/manage/rooms' }"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <span class="nav-label">{{ t('nav.rooms') }}</span>
               </router-link>
               <router-link
                 to="/manage/pricing/rules"
@@ -212,9 +196,12 @@
                 <span class="nav-label">{{ t('nav.pricing') }}</span>
               </router-link>
               <router-link
-                to="/manage/guests/form"
+                to="/manage/forms"
                 class="nav-link nav-sublink"
-                :class="{ 'nav-link--active': $route.path.startsWith('/manage/guests') }"
+                :class="{
+                  'nav-link--active':
+                    $route.path.startsWith('/manage/forms'),
+                }"
               >
                 <svg
                   class="nav-icon"
@@ -225,33 +212,13 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
                 </svg>
-                <span class="nav-label">{{ t('nav.guest_form') }}</span>
-              </router-link>
-              <router-link
-                to="/manage/bookings/form"
-                class="nav-link nav-sublink"
-                :class="{ 'nav-link--active': $route.path.startsWith('/manage/bookings') }"
-              >
-                <svg
-                  class="nav-icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                <span class="nav-label">{{ t('nav.booking_form') }}</span>
+                <span class="nav-label">{{ t('nav.forms') }}</span>
               </router-link>
               <router-link
                 to="/manage/reports"
@@ -365,8 +332,7 @@ const isFormPage = computed(() => {
   const p = route.path
   return (
     p === '/guests/new' ||
-    p === '/manage/guests/form' ||
-    p === '/manage/bookings/form' ||
+    p.startsWith('/manage/forms') ||
     p === '/manage/hotel' ||
     p.startsWith('/manage/pricing') ||
     p === '/profile'
@@ -376,28 +342,28 @@ const userAreaRef = ref<HTMLElement | null>(null)
 
 const sidebarCollapsed = ref(localStorage.getItem('sidebar_collapsed') === 'true')
 const userMenuOpen = ref(false)
-/** Settings subnav: closed by default; opens when visiting /manage/* or user toggles. */
-const settingsNavOpen = ref(false)
+/** Management subnav: closed by default; opens when visiting /manage/* or user toggles. */
+const manageNavOpen = ref(false)
 
-function onSettingsNavToggle(e) {
+function onManageNavToggle(e) {
   const el = e.target
   if (!(el instanceof HTMLDetailsElement)) return
   if (sidebarCollapsed.value) {
     el.open = true
     return
   }
-  settingsNavOpen.value = el.open
+  manageNavOpen.value = el.open
 }
 
 watch(
   () => route.path,
   (p, oldP) => {
     if (oldP === undefined) {
-      if (p.startsWith('/manage/')) settingsNavOpen.value = true
+      if (p.startsWith('/manage/')) manageNavOpen.value = true
       return
     }
     if (p.startsWith('/manage/') && !oldP.startsWith('/manage/')) {
-      settingsNavOpen.value = true
+      manageNavOpen.value = true
     }
   },
   { immediate: true },

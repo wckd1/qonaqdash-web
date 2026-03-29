@@ -2103,14 +2103,20 @@ main .btn-open-full-page:hover {
 main .accordion-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-micro);
+  background: var(--surface-1);
+  border-radius: var(--content-area-radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 main .accordion {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-2);
-  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+main .accordion + .accordion {
+  border-top: 1px solid var(--border-subtle);
 }
 
 main .accordion-header {
@@ -2124,8 +2130,8 @@ main .accordion-header {
   min-height: 44px;
 }
 
-main .accordion[open] .accordion-header {
-  margin-bottom: 0;
+main .accordion[open] > .accordion-header {
+  background: var(--surface-2);
 }
 
 main .accordion-header::-webkit-details-marker {
@@ -2224,8 +2230,8 @@ main .accordion-body {
 }
 
 main .accordion-body table.list-table.room-table {
-  margin: var(--space-micro);
-  border-radius: var(--radius-md);
+  margin: 0;
+  border-radius: 0;
 }
 
 main table.list-table.room-table .col-status {
@@ -2319,8 +2325,8 @@ main .room-status-empty {
 }
 
 main .room-list-empty {
-  margin: var(--space-micro);
-  padding: var(--space-sm) 0;
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
   font-size: var(--text-caption-size);
   color: var(--ink-tertiary);
 }

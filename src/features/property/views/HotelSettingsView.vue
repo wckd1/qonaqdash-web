@@ -8,6 +8,8 @@
     </div>
   </header>
 
+  <PropertySubNav />
+
   <div class="form-content__viewport hotel-settings-view">
     <p v-if="loadError" class="error-message">{{ loadError }}</p>
     <div v-else-if="loading" class="loading-state">{{ t('common.loading') }}</div>
@@ -83,6 +85,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import * as propertyApi from '@/features/property/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { CURRENCY_CODES, getCurrencySymbol } from '@/shared/lib/money'

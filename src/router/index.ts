@@ -79,12 +79,17 @@ const routes = [
         component: () => import('@/features/billing/views/ReportsView.vue'),
       },
       {
-        path: 'manage/guests/form',
+        path: 'manage/forms',
+        name: 'manage-forms',
+        component: () => import('@/shared/views/FormsOverviewView.vue'),
+      },
+      {
+        path: 'manage/forms/guests',
         name: 'manage-guests-form',
         component: () => import('@/features/guests/views/GuestFormSettingsView.vue'),
       },
       {
-        path: 'manage/bookings/form',
+        path: 'manage/forms/bookings',
         name: 'manage-bookings-form',
         component: () => import('@/features/bookings/views/BookingFormSettingsView.vue'),
       },

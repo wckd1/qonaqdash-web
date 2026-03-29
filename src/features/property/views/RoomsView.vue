@@ -1,6 +1,6 @@
 <template>
   <header class="page-header">
-    <h1>{{ t('nav.rooms') }}</h1>
+    <h1>{{ t('hotel.title') }}</h1>
     <button
       type="button"
       class="btn-add-outline"
@@ -22,6 +22,8 @@
       {{ t('rooms.add_type') }}
     </button>
   </header>
+
+  <PropertySubNav />
 
   <SearchBar
     v-if="roomTypes.length"
@@ -78,24 +80,24 @@
                 <button
                   type="button"
                   class="btn-room-type-action"
-                  @click.stop="openEditTypeDialog(rt)"
                   :aria-label="t('common.edit')"
+                  @click.stop="openEditTypeDialog(rt)"
                 >
                   {{ t('common.edit') }}
                 </button>
                 <button
                   type="button"
                   class="btn-room-type-action btn-room-type-action--danger"
-                  @click.stop="openRemoveTypeConfirm(rt)"
                   :aria-label="t('rooms.remove_type_aria', { name: rt.name })"
+                  @click.stop="openRemoveTypeConfirm(rt)"
                 >
                   {{ t('rooms.remove_type_from_catalog') }}
                 </button>
                 <button
                   type="button"
                   class="btn-add-room"
-                  @click.stop="openAddRoomDialog(rt)"
                   :aria-label="t('rooms.add_room_aria', { name: rt.name })"
+                  @click.stop="openAddRoomDialog(rt)"
                 >
                   <svg
                     class="btn-icon"
@@ -445,6 +447,7 @@
 import { ref, nextTick, onMounted, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
+import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import type { Room, RoomType } from '@/shared/types/property'

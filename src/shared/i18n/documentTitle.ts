@@ -16,8 +16,8 @@ export function formatDocumentTitle(pagePart) {
 /** @type {Record<string, string>} */
 const ROUTE_TITLE_KEYS = {
   dashboard: 'page_title.dashboard',
-  'manage-hotel': 'page_title.hotel_settings',
-  rooms: 'page_title.rooms',
+  'manage-hotel': 'page_title.hotel',
+  rooms: 'page_title.hotel',
   guests: 'page_title.guests',
   'guest-new': 'page_title.guest_new',
   'guest-detail': 'page_title.guest',
@@ -27,6 +27,7 @@ const ROUTE_TITLE_KEYS = {
   'manage-pricing-base-rates': 'page_title.pricing_base_rates',
   'manage-pricing-rules': 'page_title.pricing_rules',
   'manage-reports': 'page_title.reports',
+  'manage-forms': 'page_title.forms',
   'manage-guests-form': 'page_title.guest_form_settings',
   'manage-bookings-form': 'page_title.booking_form_settings',
   profile: 'page_title.profile',

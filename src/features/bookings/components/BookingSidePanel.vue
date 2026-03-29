@@ -43,7 +43,7 @@
       <div class="side-panel-footer">
         <router-link
           v-if="showFolioLink"
-          :to="{ name: 'booking-detail', params: { id: booking.id }, query: { tab: 'folio' } }"
+          :to="{ name: 'booking-detail', params: { id: booking.id }, hash: '#folio' }"
           class="btn-open-full-page"
         >
           {{ t('billing.folio_title') }}

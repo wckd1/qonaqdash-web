@@ -441,6 +441,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useHashTab } from '@/shared/composables/useHashTab'
 import { storeToRefs } from 'pinia'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import {
@@ -471,7 +472,7 @@ const { hotel } = storeToRefs(propertyStore)
 
 const currencyCode = computed(() => hotel.value?.currency ?? 'USD')
 
-const activeTab = ref<TabId>('overview')
+const activeTab = useHashTab<TabId>('overview', ['overview', 'ledger', 'outstanding'] as const)
 const ledgerGrouping = ref<LedgerGrouping>('entries')
 
 const tabs = computed(() => [

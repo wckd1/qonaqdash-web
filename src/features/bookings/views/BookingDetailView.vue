@@ -105,6 +105,7 @@
 import { ref, computed, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import { useHashTab } from '@/shared/composables/useHashTab'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
@@ -151,7 +152,7 @@ const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 const availableRooms = ref<Room[]>([])
 const folioRef = ref<InstanceType<typeof FolioSection> | null>(null)
-const activeTab = ref<'details' | 'folio'>('details')
+const activeTab = useHashTab('details', ['details', 'folio'] as const)
 
 const showTabs = computed(() => {
   const status = getBookingStatusFromResponse(currentBooking.value)
@@ -306,7 +307,6 @@ watch(
     if (newId) load()
     editing.value = false
     concurrentError.value = ''
-    activeTab.value = route.query.tab === 'folio' ? 'folio' : 'details'
   },
   { immediate: true },
 )

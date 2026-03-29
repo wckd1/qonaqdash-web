@@ -144,7 +144,11 @@
           @booking-updated="onGridBookingUpdated"
         />
       </div>
-      <BookingSidePanel :booking="selectedBooking" @close="selectedBooking = null" />
+      <BookingSidePanel
+        :booking="selectedBooking"
+        @close="selectedBooking = null"
+        @booking-updated="onGridBookingUpdated"
+      />
     </section>
   </div>
 </template>

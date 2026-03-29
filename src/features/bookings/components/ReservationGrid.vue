@@ -225,6 +225,37 @@ const rangeHighlightKeys = computed(() => {
 const today = new Date()
 const todayStart = startOfDay(today)
 
+const occupiedCellKeys = computed(() => {
+  const set = new Set<string>()
+  for (const entry of props.entries) {
+    const ciDate = new Date(entry.stay.check_in)
+    const coDate = new Date(entry.stay.check_out)
+    if (Number.isNaN(ciDate.getTime()) || Number.isNaN(coDate.getTime())) continue
+    const ciMs = startOfDay(ciDate).getTime()
+    const coMs = startOfDay(coDate).getTime()
+    for (const room of entry.stay.rooms) {
+      if (!room.room_id) continue
+      for (let cursor = ciMs; cursor < coMs; cursor += dayMs) {
+        set.add(`${room.room_id}-${cursor}`)
+      }
+    }
+  }
+  return set
+})
+
+function isCellOccupied(roomId: string, day: Date): boolean {
+  return occupiedCellKeys.value.has(`${roomId}-${startOfDay(day).getTime()}`)
+}
+
+function hasOccupiedInRange(roomId: string, a: Date, b: Date): boolean {
+  const first = a.getTime() <= b.getTime() ? a.getTime() : b.getTime()
+  const last = a.getTime() <= b.getTime() ? b.getTime() : a.getTime()
+  for (let cursor = first; cursor <= last; cursor += dayMs) {
+    if (occupiedCellKeys.value.has(`${roomId}-${cursor}`)) return true
+  }
+  return false
+}
+
 const days = computed(() => listDaysInclusive(props.rangeFrom, props.rangeTo))
 
 /**
@@ -458,6 +489,7 @@ function openCellMenuFromContext(event, roomId, day) {
   cancelDragSelect()
   closeCellMenu()
   closeBarMenu()
+  if (isCellOccupied(roomId, day)) return
   const d = startOfDay(day)
   openCellMenuAt(event.clientX, event.clientY, roomId, d, d)
 }
@@ -466,6 +498,7 @@ function onCellMouseDown(event, roomId, day) {
   if (event.button !== 0) return
   closeCellMenu()
   closeBarMenu()
+  if (isCellOccupied(roomId, day)) return
   selectPointerDown.value = true
   const d = startOfDay(day)
   dragSelectState.value = { roomId, startDay: d, endDay: d }
@@ -477,6 +510,7 @@ function onCellMouseEnter(roomId, day) {
   if (roomId !== dragSelectState.value.roomId) return
   const d = startOfDay(day)
   if (d < todayStart) return
+  if (hasOccupiedInRange(roomId, dragSelectState.value.startDay, d)) return
   dragSelectState.value.endDay = d
 }
 

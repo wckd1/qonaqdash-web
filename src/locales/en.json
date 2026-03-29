@@ -691,7 +691,9 @@
       "hotel_invalid_currency": "Invalid currency code.",
       "room_type_invalid_base_rate": "Base rate must not be negative.",
       "invalid_room_status": "Invalid room status.",
-      "room_status_required": "Room status is required.",
+      "room_status_required": "Room status is required."
+    },
+    "pricing": {
       "pricing_rule_name_required": "Rule name is required.",
       "pricing_rule_priority_required": "Rule priority is required.",
       "pricing_rule_invalid_condition": "One or more conditions are invalid.",
@@ -700,7 +702,12 @@
       "pricing_rule_priority_taken": "This priority number is already used by another rule.",
       "pricing_rule_not_found": "Pricing rule not found.",
       "pricing_rule_invalid_status": "Invalid rule status.",
-      "pricing_rule_invalid_date_range": "Invalid date range in condition."
+      "pricing_rule_invalid_date_range": "Invalid date range in condition.",
+      "pricing_rule_condition_field_not_found": "A condition references a field that no longer exists.",
+      "pricing_rule_condition_value_not_found": "A condition references an option value that no longer exists.",
+      "invalid_base_rate": "Base rate must not be negative.",
+      "room_type_not_found": "Unknown room type in base-rate update.",
+      "not_found": "No stored quote for this booking yet."
     }
   }
 }

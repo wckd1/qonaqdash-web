@@ -15,7 +15,7 @@ interface QuoteRoomLike {
  *
  * Watches check-in, check-out, rooms, form data, guest ID, and manual
  * adjustments for changes; after a 500 ms debounce it calls
- * POST /api/property/pricing/quote. Stale responses are discarded via
+ * POST /api/pricing/quote. Stale responses are discarded via
  * sequential request IDs and AbortController.
  */
 export function useBookingQuote(
@@ -25,6 +25,8 @@ export function useBookingQuote(
   bookingData: MaybeRefOrGetter<Record<string, unknown>>,
   guestId?: MaybeRefOrGetter<string | undefined>,
   manualAdjustments?: MaybeRefOrGetter<ManualAdjustmentInput[]>,
+  /** Existing booking id — send as `booking_id` on POST /api/pricing/quote. */
+  bookingId?: MaybeRefOrGetter<string | undefined>,
 ) {
   const quote = ref<StayQuoteResponse | null>(null)
   const quoteLoading = ref(false)
@@ -56,7 +58,8 @@ export function useBookingQuote(
       const bd = JSON.stringify(toValue(bookingData))
       const gid = guestId ? (toValue(guestId) ?? '') : ''
       const ma = manualAdjustments ? JSON.stringify(toValue(manualAdjustments)) : '[]'
-      return `${ci}::${co}::${rts}::${bd}::${gid}::${ma}`
+      const bid = bookingId ? (toValue(bookingId) ?? '') : ''
+      return `${ci}::${co}::${rts}::${bd}::${gid}::${ma}::${bid}`
     },
     () => {
       if (timer != null) {
@@ -89,6 +92,7 @@ export function useBookingQuote(
 
     const gid = guestId ? toValue(guestId) : undefined
     const ma = manualAdjustments ? toValue(manualAdjustments) : undefined
+    const bid = bookingId ? toValue(bookingId) : undefined
 
     try {
       const result = await fetchStayQuote(
@@ -99,6 +103,7 @@ export function useBookingQuote(
           booking_data: toValue(bookingData),
           guest_id: gid || undefined,
           manual_adjustments: ma?.length ? ma : undefined,
+          booking_id: bid || undefined,
         },
         ctl.signal,
       )

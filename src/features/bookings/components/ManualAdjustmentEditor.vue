@@ -34,12 +34,16 @@
 
             <label>
               {{ t('pricing.rule_effect_value') }}
-              <input
-                v-model.number="draft.displayValue"
-                type="number"
-                step="any"
-                @beforeinput="onEffectBeforeInput"
-              />
+              <div class="adjustment-dialog__amount-wrap">
+                <input
+                  v-model.number="draft.displayValue"
+                  type="number"
+                  step="any"
+                  class="adjustment-dialog__amount-input"
+                  @beforeinput="onEffectBeforeInput"
+                />
+                <span class="adjustment-dialog__amount-symbol">{{ effectSymbol }}</span>
+              </div>
             </label>
 
             <label>
@@ -77,7 +81,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ManualAdjustmentInput, EffectType, EffectApplyTo } from '@/shared/types/commercial'
-import { majorToMinor } from '@/shared/lib/money'
+import { majorToMinor, getCurrencySymbol } from '@/shared/lib/money'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const props = defineProps<{
@@ -93,6 +97,10 @@ const { t } = useI18n()
 const dialogOpen = ref(false)
 
 const buttonLabel = computed(() => t('adjustments.change_price'))
+
+const effectSymbol = computed(() =>
+  draft.effectType === 'percent' ? '%' : getCurrencySymbol(props.currency),
+)
 
 const draft = reactive({
   name: '',
@@ -160,6 +168,31 @@ function apply() {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: var(--space-sm);
+}
+
+.adjustment-dialog__amount-wrap {
+  position: relative;
+  margin-top: calc(var(--pico-spacing) * 0.25);
+}
+
+.adjustment-dialog__amount-input {
+  padding-right: var(--space-xl);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.adjustment-dialog__amount-input::-webkit-outer-spin-button,
+.adjustment-dialog__amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.adjustment-dialog__amount-symbol {
+  position: absolute;
+  right: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-tertiary);
 }
 
 .adjustment-dialog__hint {

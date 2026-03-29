@@ -33,7 +33,8 @@ export interface BookingItem {
   _form?: FormRef
   guest: BookingGuestInfo
   stay: BookingStayData
-  accommodation?: AccommodationSnapshot
+  /** Live billing balance; nullable (omitted when zero). */
+  outstanding_balance?: number
 }
 
 /** Request body for POST/PUT /api/bookings (matches bookinghttp.BookingDataRequest). */
@@ -43,16 +44,14 @@ export interface BookingDataRequest {
 }
 
 /**
- * GET /api/bookings/:id detail data for form merge.
- * `status` / `id` are root-level BookingItem fields preserved for UI (lifecycle actions, edit guard).
+ * GET /api/bookings/:id aggregate (guest + stay + status). Pricing lives under
+ * GET /api/pricing/bookings/{id}/quote — merged into `BookingFormResponse` by the client.
  */
 export interface BookingDetailData {
   guest: Record<string, unknown>
   stay: Record<string, unknown>
   status?: string
   id?: string
-  accommodation?: AccommodationSnapshot
-  adjustments?: ManualAdjustmentInput[]
 }
 
 /** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */

@@ -1,5 +1,8 @@
 import api from '@/shared/api/client'
+import { parseStoredBookingQuoteResponse } from '@/shared/lib/accommodationQuoteParse'
+import { httpErrorResponse } from '@/shared/unknownError'
 import type {
+  AccommodationSnapshot,
   BaseRateItem,
   CalculateQuoteRequest,
   ConditionCandidate,
@@ -21,17 +24,23 @@ export type {
   StayQuoteResponse,
 }
 
+/** Stored quote from GET /api/pricing/bookings/{bookingId}/quote. */
+export interface StoredBookingQuote {
+  accommodation: AccommodationSnapshot
+  manual_adjustments: ManualAdjustmentInput[]
+}
+
 // ---------------------------------------------------------------------------
 // Base rates
 // ---------------------------------------------------------------------------
 
 export function fetchBaseRates(): Promise<BaseRateItem[]> {
-  return api.get('/api/property/pricing/base-rates').then(({ data }) => data?.rates ?? [])
+  return api.get('/api/pricing/base-rates').then(({ data }) => data?.rates ?? [])
 }
 
 export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRateItem[]> {
   return api
-    .put('/api/property/pricing/base-rates', { rates })
+    .put('/api/pricing/base-rates', { rates })
     .then(({ data }) => data?.rates ?? [])
 }
 
@@ -50,7 +59,7 @@ export function fetchConditionCandidates(
   const headers: Record<string, string> = {}
   if (ifNoneMatch) headers['If-None-Match'] = `"${ifNoneMatch}"`
   return api
-    .get('/api/property/pricing/conditions', {
+    .get('/api/pricing/conditions', {
       headers,
       validateStatus: (s) => s === 200 || s === 304,
     })
@@ -78,26 +87,26 @@ export interface CreatePricingRulePayload {
 export type UpdatePricingRulePayload = CreatePricingRulePayload
 
 export function fetchPricingRules(): Promise<PricingRule[]> {
-  return api.get('/api/property/pricing/rules').then(({ data }) => data ?? [])
+  return api.get('/api/pricing/rules').then(({ data }) => data ?? [])
 }
 
 export function fetchPricingRule(id: string): Promise<PricingRule> {
-  return api.get(`/api/property/pricing/rules/${id}`).then(({ data }) => data)
+  return api.get(`/api/pricing/rules/${id}`).then(({ data }) => data)
 }
 
 export function createPricingRule(body: CreatePricingRulePayload): Promise<PricingRule> {
-  return api.post('/api/property/pricing/rules', body).then(({ data }) => data)
+  return api.post('/api/pricing/rules', body).then(({ data }) => data)
 }
 
 export function updatePricingRule(
   id: string,
   body: UpdatePricingRulePayload,
 ): Promise<PricingRule> {
-  return api.put(`/api/property/pricing/rules/${id}`, body).then(({ data }) => data)
+  return api.put(`/api/pricing/rules/${id}`, body).then(({ data }) => data)
 }
 
 export function deletePricingRule(id: string): Promise<void> {
-  return api.delete(`/api/property/pricing/rules/${id}`).then(() => undefined)
+  return api.delete(`/api/pricing/rules/${id}`).then(() => undefined)
 }
 
 // ---------------------------------------------------------------------------
@@ -108,5 +117,21 @@ export function fetchStayQuote(
   body: CalculateQuoteRequest,
   signal?: AbortSignal,
 ): Promise<StayQuoteResponse> {
-  return api.post('/api/property/pricing/quote', body, { signal }).then(({ data }) => data)
+  return api.post('/api/pricing/quote', body, { signal }).then(({ data }) => data)
+}
+
+/**
+ * Stored accommodation snapshot + manual adjustments for round-trip updates.
+ * 404 (`pricing.not_found` per Swagger) → null.
+ */
+export async function fetchStoredBookingQuote(
+  bookingId: string,
+): Promise<StoredBookingQuote | null> {
+  try {
+    const { data } = await api.get(`/api/pricing/bookings/${encodeURIComponent(bookingId)}/quote`)
+    return parseStoredBookingQuoteResponse(data)
+  } catch (err: unknown) {
+    if (httpErrorResponse(err)?.status === 404) return null
+    throw err
+  }
 }

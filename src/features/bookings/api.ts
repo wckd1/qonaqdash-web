@@ -12,13 +12,11 @@ import type {
   BookingFormDefinitionResponse,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
-import type {
-  AccommodationSnapshot,
-  ManualAdjustmentInput,
-  StayQuoteNight,
-  StayQuoteAdjustment,
-  PricingEffect,
-} from '@/shared/types/commercial'
+import type { AccommodationSnapshot, ManualAdjustmentInput } from '@/shared/types/commercial'
+import {
+  fetchStoredBookingQuote,
+  type StoredBookingQuote,
+} from '@/features/pricing/api'
 
 export type {
   BookingDetailData,
@@ -50,67 +48,17 @@ export interface BookingDetailPayload {
   formRef: FormRef | null
 }
 
-function parseNight(raw: unknown): StayQuoteNight {
-  const n = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-  return {
-    date: typeof n.date === 'string' ? n.date : '',
-    room_type_id: typeof n.room_type_id === 'string' ? n.room_type_id : '',
-    base_rate: typeof n.base_rate === 'number' ? n.base_rate : 0,
-    adjustments: Array.isArray(n.adjustments) ? (n.adjustments as StayQuoteAdjustment[]) : [],
-    subtotal: typeof n.subtotal === 'number' ? n.subtotal : 0,
-  }
-}
-
-function parseAccommodationSnapshot(raw: unknown): AccommodationSnapshot | undefined {
-  if (!raw || typeof raw !== 'object') return undefined
-  const o = raw as Record<string, unknown>
-  if (!Array.isArray(o.nights) || typeof o.grand_total !== 'number') return undefined
-  return {
-    calculated_at: typeof o.calculated_at === 'string' ? o.calculated_at : '',
-    version: typeof o.version === 'number' ? o.version : 0,
-    nights: o.nights.map(parseNight),
-    nights_subtotal: typeof o.nights_subtotal === 'number' ? o.nights_subtotal : 0,
-    total_adjustments: Array.isArray(o.total_adjustments)
-      ? (o.total_adjustments as StayQuoteAdjustment[])
-      : [],
-    grand_total: o.grand_total,
-  }
-}
-
-function parseManualAdjustments(raw: unknown): ManualAdjustmentInput[] | undefined {
-  if (!Array.isArray(raw) || raw.length === 0) return undefined
-  const result: ManualAdjustmentInput[] = []
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') continue
-    const a = item as Record<string, unknown>
-    const name = typeof a.name === 'string' ? a.name : ''
-    const eff =
-      a.effect && typeof a.effect === 'object' ? (a.effect as Record<string, unknown>) : {}
-    const effect: PricingEffect = {
-      type: eff.type === 'percent' ? 'percent' : 'fixed',
-      value: typeof eff.value === 'number' ? eff.value : 0,
-      apply_to: eff.apply_to === 'per_night' ? 'per_night' : 'total',
-    }
-    result.push({ name, effect })
-  }
-  return result.length > 0 ? result : undefined
-}
-
 export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
   const formRef = normalizeFormRef(o._form)
   const guest = (o.guest && typeof o.guest === 'object' ? o.guest : {}) as Record<string, unknown>
   const stay = (o.stay && typeof o.stay === 'object' ? o.stay : {}) as Record<string, unknown>
-  const accommodation = parseAccommodationSnapshot(o.accommodation)
-  const adjustments = parseManualAdjustments(o.adjustments)
   return {
     detail: {
       guest,
       stay,
       status: typeof o.status === 'string' ? o.status : undefined,
       id: typeof o.id === 'string' ? o.id : undefined,
-      accommodation,
-      adjustments,
     },
     formRef,
   }
@@ -180,11 +128,12 @@ export function invalidateBookingRuntimeFormCache(): void {
 }
 
 /**
- * Merge `GET /api/bookings/:id` data with runtime form definition.
+ * Merge aggregate detail + runtime form + optional stored quote from pricing.
  */
 export function mergeBookingDetailWithRuntimeForm(
   detail: BookingDetailData,
   form: Pick<BookingFormDefinitionResponse, 'definition'>,
+  storedQuote?: StoredBookingQuote | null,
 ): BookingFormResponse {
   return {
     definition: form.definition,
@@ -194,21 +143,25 @@ export function mergeBookingDetailWithRuntimeForm(
       status: detail.status,
       id: detail.id,
     },
-    accommodation: detail.accommodation,
-    adjustments: detail.adjustments,
+    accommodation: storedQuote?.accommodation,
+    adjustments:
+      storedQuote?.manual_adjustments?.length ? storedQuote.manual_adjustments : undefined,
   }
 }
 
 /**
- * Booking detail + optional `_form` meta, then runtime form (hash-keyed cache).
+ * Booking aggregate + `GET /api/pricing/bookings/{id}/quote` + runtime form (hash-keyed cache).
  */
 export async function fetchBookingWithRuntimeForm(
   id: string,
   target: 'edit' | 'view' = 'view',
 ): Promise<BookingFormResponse> {
-  const { detail, formRef } = await fetchBooking(id)
+  const [{ detail, formRef }, storedQuote] = await Promise.all([
+    fetchBooking(id),
+    fetchStoredBookingQuote(id),
+  ])
   const form = await loadBookingRuntimeForm(target, formRef?.hash, { force: false })
-  return mergeBookingDetailWithRuntimeForm(detail, form)
+  return mergeBookingDetailWithRuntimeForm(detail, form, storedQuote)
 }
 
 export function fetchBookingFormDefinition(): Promise<{

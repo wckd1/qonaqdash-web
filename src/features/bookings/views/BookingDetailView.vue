@@ -194,6 +194,7 @@ const { quote, quoteLoading, quoteError } = useBookingQuote(
   () => (editing.value ? editFormData.value : {}),
   editGuestId,
   () => (editing.value ? editManualAdjustments.value : []),
+  () => (editing.value ? (bookingId.value ?? undefined) : undefined),
 )
 
 function routeParamId(): string | null {

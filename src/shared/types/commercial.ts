@@ -119,8 +119,8 @@ export interface ManualAdjustmentInput {
 }
 
 // ---------------------------------------------------------------------------
-// Accommodation snapshot (embedded on booking aggregate after save)
-// Matches swagger bookinghttp.AccommodationResponse.
+// Accommodation snapshot (stored quote; GET /api/pricing/bookings/{id}/quote)
+// Matches pricing snapshot shape (nights, totals, adjustments).
 // ---------------------------------------------------------------------------
 
 export interface AccommodationSnapshot {
@@ -133,7 +133,7 @@ export interface AccommodationSnapshot {
 }
 
 // ---------------------------------------------------------------------------
-// Quote request / response (POST /api/property/pricing/quote per swagger)
+// Quote request / response (POST /api/pricing/quote per swagger)
 // ---------------------------------------------------------------------------
 
 export interface QuoteRoomInput {
@@ -147,6 +147,8 @@ export interface CalculateQuoteRequest {
   booking_data?: Record<string, unknown>
   guest_id?: string
   manual_adjustments?: ManualAdjustmentInput[]
+  /** When recalculating for an existing reservation (POST /api/pricing/quote). */
+  booking_id?: string
 }
 
 export interface StayQuoteAdjustment {

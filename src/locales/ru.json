@@ -691,7 +691,9 @@
       "hotel_invalid_currency": "Неверный код валюты.",
       "room_type_invalid_base_rate": "Базовый тариф не может быть отрицательным.",
       "invalid_room_status": "Недопустимый статус номера.",
-      "room_status_required": "Укажите статус номера.",
+      "room_status_required": "Укажите статус номера."
+    },
+    "pricing": {
       "pricing_rule_name_required": "Укажите название правила.",
       "pricing_rule_priority_required": "Укажите приоритет правила.",
       "pricing_rule_invalid_condition": "Одно или несколько условий недопустимы.",
@@ -700,7 +702,12 @@
       "pricing_rule_priority_taken": "Этот номер приоритета уже занят другим правилом.",
       "pricing_rule_not_found": "Правило не найдено.",
       "pricing_rule_invalid_status": "Недопустимый статус правила.",
-      "pricing_rule_invalid_date_range": "Недопустимый диапазон дат в условии."
+      "pricing_rule_invalid_date_range": "Недопустимый диапазон дат в условии.",
+      "pricing_rule_condition_field_not_found": "Условие ссылается на поле, которое больше не существует.",
+      "pricing_rule_condition_value_not_found": "Условие ссылается на вариант значения, который больше не существует.",
+      "invalid_base_rate": "Базовый тариф не может быть отрицательным.",
+      "room_type_not_found": "Неизвестный тип номера при обновлении тарифов.",
+      "not_found": "Для этого бронирования ещё нет сохранённого расчёта цены."
     }
   }
 }

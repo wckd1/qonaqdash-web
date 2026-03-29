@@ -133,7 +133,6 @@ import type {
   FormInputNode,
   FormSelectNode,
   FormSelectItem,
-  FormArrayNode,
   FormButtonNode,
   FormActionStep,
 } from '@/shared/types/forms'
@@ -198,7 +197,7 @@ const valuePath = computed(() => {
 const label = computed(() => resolveFormCatalogString(inputNode.value.label ?? ''))
 const isRequired = computed(() => {
   const n = props.node as FormInputNode | FormSelectNode
-  return !!n.validation?.required
+  return !!(n as FormInputNode | FormSelectNode).rules?.required
 })
 const buttonLabel = computed(() =>
   resolveFormCatalogString((props.node as FormButtonNode).label ?? ''),
@@ -343,8 +342,8 @@ function onEmailBlur(e: FocusEvent) {
 
 function onBeforeInput(e: Event) {
   const n = props.node
-  const validation = 'validation' in n ? (n as FormInputNode).validation : undefined
-  guardBeforeInput(e as InputEvent, n.type, validation)
+  const rules = (n as FormInputNode | FormSelectNode).rules
+  guardBeforeInput(e as InputEvent, n.type, rules)
 }
 
 // ---------------------------------------------------------------------------

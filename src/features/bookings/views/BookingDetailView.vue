@@ -127,8 +127,8 @@ import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
 import ManualAdjustmentEditor from '@/features/bookings/components/ManualAdjustmentEditor.vue'
 import type { ManualAdjustmentInput } from '@/shared/types/commercial'
 import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormResponse'
-import { formatUnknownApiError } from '@/shared/i18n/apiError'
-import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
+import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
+import { httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
@@ -371,12 +371,14 @@ async function onSave() {
       concurrentError.value = formatUnknownApiError(err) || t('bookings.concurrent')
       await load()
     } else {
-      const msg = formatUnknownApiError(err) || t('bookings.save_failed')
-      const serverErrors = httpErrorData(err)?.errors
-      errorsMap.value =
-        serverErrors && typeof serverErrors === 'object'
-          ? (serverErrors as Record<string, string[]>)
-          : { '': [msg] }
+      const mapped = formErrorsMapFromHttpError(err)
+      if (mapped) {
+        errorsMap.value = mapped
+        scrollToFirstFormError()
+      } else {
+        const msg = formatUnknownApiError(err) || t('bookings.save_failed')
+        errorsMap.value = { '': [msg] }
+      }
     }
   } finally {
     submitting.value = false

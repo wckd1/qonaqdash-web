@@ -161,7 +161,7 @@ function openAddMenu(parent: FormNode) {
   if (
     parent.type === 'stack' &&
     (parent as { direction?: string }).direction === 'horizontal' &&
-    ((parent as { items?: FormNode[] }).items?.length ?? 0) >= MAX_HORIZONTAL_LAYOUT_CHILDREN
+    ((parent as { children?: FormNode[] }).children?.length ?? 0) >= MAX_HORIZONTAL_LAYOUT_CHILDREN
   ) {
     return
   }

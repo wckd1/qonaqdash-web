@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { FormNode, FormInputNode, FormSelectNode, FormArrayNode } from '@/shared/types/forms'
+import type { FormNode, FormInputNode, FormSelectNode } from '@/shared/types/forms'
 import ArrayRenderer from './ArrayRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { bindToPath, getValueByPath, formatDateTime, companionLabelFullBind } from '../utils'

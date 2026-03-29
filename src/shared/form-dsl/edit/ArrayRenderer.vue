@@ -93,13 +93,13 @@ const canRemove = computed(() => items.value.length > minItems.value)
 
 const label = computed(() => resolveFormCatalogString(props.node.label ?? ''))
 
-const itemTemplate = computed(() => props.node.item)
+const itemTemplate = computed(() => props.node.child)
 
 const itemChildren = computed<FormNode[]>(() => {
   const tpl = itemTemplate.value
   if (!tpl) return []
   if (tpl.type === 'group' || tpl.type === 'stack') {
-    return (tpl as { items?: FormNode[] }).items ?? []
+    return (tpl as { children?: FormNode[] }).children ?? []
   }
   return [tpl]
 })
@@ -120,7 +120,7 @@ function addItem() {
   const newItem: Record<string, unknown> = {}
   const tpl = itemTemplate.value
   if (tpl && (tpl.type === 'group' || tpl.type === 'stack')) {
-    for (const child of (tpl as { items?: FormNode[] }).items ?? []) {
+    for (const child of (tpl as { children?: FormNode[] }).children ?? []) {
       if ('bind' in child && typeof child.bind === 'string') {
         newItem[child.bind] = child.type === 'checkbox' ? false : ''
       }

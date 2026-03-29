@@ -89,7 +89,7 @@ const groupTitle = computed(() =>
   isGroup.value ? resolveGroupTitle(props.node as { title?: string; id?: string }) : '',
 )
 
-const children = computed(() => (props.node as { items?: FormNode[] }).items ?? [])
+const children = computed(() => (props.node as { children?: FormNode[] }).children ?? [])
 
 function getRenderer(child: FormNode) {
   if (child.type === 'stack' || child.type === 'group') return LayoutRenderer

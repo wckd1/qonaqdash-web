@@ -121,6 +121,7 @@ import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { formBuildKey } from '@/shared/injectKeys'
 import { canMutateBuildNode } from './buildChangability'
 import type { FormNode, FormArrayNode } from '@/shared/types/forms'
+import { isInputNode } from '@/shared/types/forms'
 import IconTrash from './icons/IconTrash.vue'
 import IconLock from './icons/IconLock.vue'
 import IconCog from './icons/IconCog.vue'
@@ -160,10 +161,10 @@ const label = computed(() => {
 const arrayItemChildren = computed<FormNode[]>(() => {
   if (props.node.type !== 'array') return []
   const arrNode = props.node as FormArrayNode
-  const tpl = arrNode.item
+  const tpl = arrNode.child
   if (!tpl) return []
   if (tpl.type === 'group' || tpl.type === 'stack') {
-    return (tpl as { items?: FormNode[] }).items ?? []
+    return (tpl as { children?: FormNode[] }).children ?? []
   }
   return [tpl]
 })
@@ -228,7 +229,7 @@ const descriptionText = computed(() => {
 
   if (n.type === 'array') {
     const arrNode = n as FormArrayNode
-    const tpl = arrNode.item
+    const tpl = arrNode.child
     if (tpl && (tpl.type === 'group' || tpl.type === 'stack')) {
       parts.push(
         t('form_dsl.build.schema_type.array_of', { item: t('form_dsl.build.schema_type.object') }),
@@ -244,12 +245,13 @@ const descriptionText = computed(() => {
     parts.push(translateNodeType(n.type))
   }
 
-  if ('validation' in n && n.validation) {
-    if (n.validation.required) parts.push('required')
-    if (n.validation.min_length != null) parts.push(`min: ${n.validation.min_length}`)
-    if (n.validation.max_length != null) parts.push(`max: ${n.validation.max_length}`)
-    if (n.validation.min != null) parts.push(`min: ${n.validation.min}`)
-    if (n.validation.max != null) parts.push(`max: ${n.validation.max}`)
+  const fieldRules = isInputNode(n) ? n.rules : undefined
+  if (fieldRules) {
+    if (fieldRules.required) parts.push('required')
+    if (fieldRules.min_length != null) parts.push(`min: ${fieldRules.min_length}`)
+    if (fieldRules.max_length != null) parts.push(`max: ${fieldRules.max_length}`)
+    if (fieldRules.min != null) parts.push(`min: ${fieldRules.min}`)
+    if (fieldRules.max != null) parts.push(`max: ${fieldRules.max}`)
   }
 
   if (n.type === 'select') {

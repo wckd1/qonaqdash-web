@@ -2,13 +2,17 @@
  * Build-mode (WYSIWYG) changability for FormBuild (which nodes can be mutated).
  */
 
-import type { FormNode } from '@/shared/types/forms'
+import type { FormArrayNode, FormGroupNode, FormNode, FormStackNode } from '@/shared/types/forms'
 
 export function isBuildChangable(node: FormNode | undefined): boolean {
   if (!node || typeof node !== 'object') return true
   if (node.options?.locked) return false
-  if ('items' in node && Array.isArray(node.items)) {
-    return node.items.every((c) => isBuildChangable(c as FormNode))
+  if (node.type === 'stack' || node.type === 'group') {
+    const ch = (node as FormStackNode | FormGroupNode).children ?? []
+    return ch.every((c) => isBuildChangable(c))
+  }
+  if (node.type === 'array') {
+    return isBuildChangable((node as FormArrayNode).child)
   }
   return true
 }

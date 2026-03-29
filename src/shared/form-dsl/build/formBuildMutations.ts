@@ -11,9 +11,9 @@ function generateFieldId(): string {
   return `field_${Math.random().toString(36).slice(2, 9)}`
 }
 
-function getItems(node: FormNode): FormNode[] | null {
-  if ((node.type === 'stack' || node.type === 'group') && Array.isArray(node.items)) {
-    return node.items
+function getLayoutChildren(node: FormNode): FormNode[] | null {
+  if ((node.type === 'stack' || node.type === 'group') && Array.isArray(node.children)) {
+    return node.children
   }
   return null
 }
@@ -23,7 +23,7 @@ export function findAncestors(root: FormNode, target: FormNode): { ancestors: Fo
   function walk(items: FormNode[], ancestors: FormNode[]): { ancestors: FormNode[] } | null {
     for (const el of items) {
       if (el === target) return { ancestors }
-      const kids = getItems(el)
+      const kids = getLayoutChildren(el)
       if (kids?.length) {
         const r = walk(kids, [...ancestors, el])
         if (r) return r
@@ -31,7 +31,7 @@ export function findAncestors(root: FormNode, target: FormNode): { ancestors: Fo
     }
     return null
   }
-  const top = getItems(root)
+  const top = getLayoutChildren(root)
   if (!top) return null
   return walk(top, [root])
 }
@@ -53,7 +53,7 @@ export function findNodeContext(root: FormNode, target: FormNode): NodeContext |
       if (el === target) {
         return { parentItems: items, index: i, node: el, ancestors }
       }
-      const kids = getItems(el)
+      const kids = getLayoutChildren(el)
       if (kids?.length) {
         const r = walk(kids, [...ancestors, el])
         if (r) return r
@@ -61,7 +61,7 @@ export function findNodeContext(root: FormNode, target: FormNode): NodeContext |
     }
     return null
   }
-  const top = getItems(root)
+  const top = getLayoutChildren(root)
   if (!top) return null
   return walk(top, [root])
 }
@@ -102,7 +102,7 @@ export function toggleLayoutDirection(element: FormNode): boolean {
   if (element.type !== 'stack') return false
   const stack = element as FormStackNode
   if (stack.direction === 'vertical') {
-    const n = stack.items?.length ?? 0
+    const n = stack.children?.length ?? 0
     if (n > MAX_HORIZONTAL_LAYOUT_CHILDREN) return false
     stack.direction = 'horizontal'
     return true
@@ -116,14 +116,14 @@ export function toggleLayoutDirection(element: FormNode): boolean {
 
 export function addBuildChild(parent: FormNode, type: string): void {
   if (!parent) return
-  const items = getItems(parent)
-  if (!items && !('items' in parent)) return
+  if (parent.type !== 'stack' && parent.type !== 'group') return
+  const items = getLayoutChildren(parent)
 
   if (parent.type === 'stack' && (parent as FormStackNode).direction === 'horizontal') {
     if ((items?.length ?? 0) >= MAX_HORIZONTAL_LAYOUT_CHILDREN) return
   }
 
-  const parentItems = items ?? ((parent as FormStackNode | FormGroupNode).items = [])
+  const parentItems = items ?? ((parent as FormStackNode | FormGroupNode).children = [])
   const id = generateFieldId()
 
   if (type === 'Field') {
@@ -142,7 +142,7 @@ export function addBuildChild(parent: FormNode, type: string): void {
       type: 'group',
       id,
       title: '',
-      items: [],
+      children: [],
     }
     parentItems.push(newGroup)
     return
@@ -152,7 +152,7 @@ export function addBuildChild(parent: FormNode, type: string): void {
     const newStack: FormStackNode = {
       type: 'stack',
       direction: type === 'HorizontalStack' ? 'horizontal' : 'vertical',
-      items: [],
+      children: [],
     }
     parentItems.push(newStack)
     return
@@ -191,7 +191,7 @@ export function readControlFieldSettings(node: FormNode): FieldSettingsDraft {
     type: uiType,
     options: selectItems,
     default: null,
-    required: input.validation?.required ?? false,
+    required: input.rules?.required ?? false,
   }
 }
 
@@ -228,14 +228,22 @@ export function applyControlFieldSettings(node: FormNode, settings: FieldSetting
       raw.type = 'string'
   }
 
-  const validation = (raw.validation ?? {}) as Record<string, unknown>
+  delete raw.validation
+  const existing = raw.rules
+  const rules: Record<string, unknown> = {
+    ...(existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? (existing as Record<string, unknown>)
+      : {}),
+  }
   if (settings.required) {
-    validation.required = true
-    raw.validation = validation
+    rules.required = true
+    raw.rules = rules
   } else {
-    delete validation.required
-    if (Object.keys(validation).length === 0) {
-      delete raw.validation
+    delete rules.required
+    if (Object.keys(rules).length === 0) {
+      delete raw.rules
+    } else {
+      raw.rules = rules
     }
   }
 }

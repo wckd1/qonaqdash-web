@@ -4,24 +4,24 @@
  * whether to block the input. No flicker, no cursor issues.
  */
 
-import type { FormNodeType, FormValidation } from '@/shared/types/forms'
+import type { FormFieldRules, FormNodeType } from '@/shared/types/forms'
 
 /** Guard for standalone number inputs outside FormDSL. */
-export function guardNumberBeforeInput(e: InputEvent, validation?: FormValidation): void {
+export function guardNumberBeforeInput(e: InputEvent, rules?: FormFieldRules): void {
   if (!e.data) return
-  guardNumberInput(e, validation)
+  guardNumberInput(e, rules)
 }
 
 export function guardBeforeInput(
   e: InputEvent,
   nodeType: FormNodeType,
-  validation?: FormValidation,
+  rules?: FormFieldRules,
 ): void {
   if (!e.data) return
 
   switch (nodeType) {
     case 'number':
-      guardNumberInput(e, validation)
+      guardNumberInput(e, rules)
       break
     case 'phone':
       guardPhoneInput(e)
@@ -29,9 +29,9 @@ export function guardBeforeInput(
   }
 }
 
-function guardNumberInput(e: InputEvent, validation?: FormValidation): void {
+function guardNumberInput(e: InputEvent, rules?: FormFieldRules): void {
   const data = e.data!
-  const minAllowsNegative = validation?.min == null || validation.min < 0
+  const minAllowsNegative = rules?.min == null || rules.min < 0
 
   for (const char of data) {
     if (/\d/.test(char)) continue

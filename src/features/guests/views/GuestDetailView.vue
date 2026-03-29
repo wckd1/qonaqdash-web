@@ -132,8 +132,8 @@ import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormRespo
 import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import type { GuestBookingListItem } from '@/features/bookings/api'
-import { formatUnknownApiError } from '@/shared/i18n/apiError'
-import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
+import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
+import { httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
@@ -277,12 +277,14 @@ async function onSave() {
     await store.updateGuest(guestId.value, editFormData.value)
     editing.value = false
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('guests.save_edit_failed')
-    const serverErrors = httpErrorData(err)?.errors
-    errorsMap.value =
-      serverErrors && typeof serverErrors === 'object'
-        ? (serverErrors as Record<string, string[]>)
-        : { '': [msg] }
+    const mapped = formErrorsMapFromHttpError(err)
+    if (mapped) {
+      errorsMap.value = mapped
+      scrollToFirstFormError()
+    } else {
+      const msg = formatUnknownApiError(err) || t('guests.save_edit_failed')
+      errorsMap.value = { '': [msg] }
+    }
   } finally {
     submitting.value = false
   }

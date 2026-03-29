@@ -43,13 +43,13 @@ const items = computed(() => {
 
 const label = computed(() => resolveFormCatalogString(props.node.label ?? ''))
 
-const itemTemplate = computed(() => props.node.item)
+const itemTemplate = computed(() => props.node.child)
 
 const itemChildren = computed<FormNode[]>(() => {
   const tpl = itemTemplate.value
   if (!tpl) return []
   if (tpl.type === 'group' || tpl.type === 'stack') {
-    return (tpl as { items?: FormNode[] }).items ?? []
+    return (tpl as { children?: FormNode[] }).children ?? []
   }
   return [tpl]
 })

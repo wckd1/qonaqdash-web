@@ -358,7 +358,7 @@ const layoutBadge = computed(() => {
     : t('form_dsl.build.vertical_layout')
 })
 
-const children = computed(() => (props.node as { items?: FormNode[] }).items ?? [])
+const children = computed(() => (props.node as { children?: FormNode[] }).children ?? [])
 
 const showAddChild = computed(() => {
   if (!formBuild) return false

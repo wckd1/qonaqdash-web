@@ -617,7 +617,8 @@
       "auth_header_missing": "No authorization header is provided.",
       "auth_header_invalid": "Invalid authorization header format.",
       "jwt_expired": "Your session has expired. Please sign in again.",
-      "jwt_invalid": "Invalid or expired token."
+      "jwt_invalid": "Invalid or expired token.",
+      "validation_failed": "Some fields need your attention. Check the messages below."
     },
     "iam": {
       "invite_token_expired": "This invitation link has expired.",
@@ -639,6 +640,9 @@
       "email_password_required": "Email and password are required.",
       "secret_key_missing": "Secret key is required.",
       "secret_key_invalid": "Invalid secret key."
+    },
+    "validation": {
+      "required": "This field is required."
     },
     "guest": {
       "not_found": "Guest not found.",

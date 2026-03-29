@@ -1,11 +1,16 @@
 /**
  * Client-side validation for FormDSL forms.
- * Walks the definition tree, reads `validation` on input nodes, checks the companion data.
+ * Walks the definition tree, reads `rules` on input nodes.
  * Condition-aware: nodes hidden by visible_when / hidden_when / options.hidden are skipped.
  */
 
-import type { FormNode, FormValidation } from '@/shared/types/forms'
-import { INPUT_NODE_TYPES } from '@/shared/types/forms'
+import {
+  INPUT_NODE_TYPES,
+  type FormFieldRules,
+  type FormInputNode,
+  type FormNode,
+  type FormSelectNode,
+} from '@/shared/types/forms'
 import { bindToPath, getValueByPath } from './utils'
 import { localizeValidationError } from './formValidationI18n'
 import { evaluateNodeState } from './formNodeConditions'
@@ -41,14 +46,14 @@ function walkNode(
   if (hidden) return
 
   if (node.type === 'stack') {
-    for (const child of node.items ?? []) {
+    for (const child of node.children ?? []) {
       walkNode(child, data, bindPrefix, errorsMap)
     }
     return
   }
 
   if (node.type === 'group') {
-    for (const child of node.items ?? []) {
+    for (const child of node.children ?? []) {
       walkNode(child, data, bindPrefix, errorsMap)
     }
     return
@@ -67,10 +72,10 @@ function walkNode(
       addError(errorsMap, fullBind, localizeValidationError('max_items', { max: node.max_items }))
     }
 
-    const itemNode = node.item
-    if (itemNode) {
+    const rowTemplate = node.child
+    if (rowTemplate) {
       for (let i = 0; i < arr.length; i++) {
-        walkNode(itemNode, data, `${fullBind}.${i}`, errorsMap)
+        walkNode(rowTemplate, data, `${fullBind}.${i}`, errorsMap)
       }
     }
     return
@@ -79,26 +84,26 @@ function walkNode(
   if (node.type === 'button') return
 
   if (INPUT_NODE_TYPES.has(node.type) && 'bind' in node) {
-    const inputNode = node as { bind: string; validation?: FormValidation }
+    const inputNode = node as FormInputNode | FormSelectNode
     const fullBind = bindPrefix ? `${bindPrefix}.${inputNode.bind}` : inputNode.bind
     const path = bindToPath(fullBind)
     const value = getValueByPath(data, path)
-    validateField(fullBind, value, inputNode.validation, errorsMap)
+    validateField(fullBind, value, inputNode.rules, errorsMap)
   }
 }
 
 function validateField(
   bind: string,
   value: unknown,
-  validation: FormValidation | undefined,
+  rules: FormFieldRules | undefined,
   errorsMap: Record<string, string[]>,
 ): void {
-  if (!validation) return
+  if (!rules) return
 
   const isEmpty =
     value == null || value === '' || (typeof value === 'string' && value.trim() === '')
 
-  if (validation.required && isEmpty) {
+  if (rules.required && isEmpty) {
     addError(errorsMap, bind, localizeValidationError('required'))
     return
   }
@@ -106,28 +111,20 @@ function validateField(
   if (isEmpty) return
 
   if (typeof value === 'string') {
-    if (validation.min_length != null && value.length < validation.min_length) {
-      addError(
-        errorsMap,
-        bind,
-        localizeValidationError('min_length', { min: validation.min_length }),
-      )
+    if (rules.min_length != null && value.length < rules.min_length) {
+      addError(errorsMap, bind, localizeValidationError('min_length', { min: rules.min_length }))
     }
-    if (validation.max_length != null && value.length > validation.max_length) {
-      addError(
-        errorsMap,
-        bind,
-        localizeValidationError('max_length', { max: validation.max_length }),
-      )
+    if (rules.max_length != null && value.length > rules.max_length) {
+      addError(errorsMap, bind, localizeValidationError('max_length', { max: rules.max_length }))
     }
   }
 
   if (typeof value === 'number') {
-    if (validation.min != null && value < validation.min) {
-      addError(errorsMap, bind, localizeValidationError('min', { limit: validation.min }))
+    if (rules.min != null && value < rules.min) {
+      addError(errorsMap, bind, localizeValidationError('min', { limit: rules.min }))
     }
-    if (validation.max != null && value > validation.max) {
-      addError(errorsMap, bind, localizeValidationError('max', { limit: validation.max }))
+    if (rules.max != null && value > rules.max) {
+      addError(errorsMap, bind, localizeValidationError('max', { limit: rules.max }))
     }
   }
 }

@@ -17,7 +17,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const accountEmail = ref(null)
   const userSettings = ref(null)
   const loading = ref(false)
-  const error = ref(null)
+  const error = ref<string | null>(null)
 
   function syncVueI18n(code) {
     i18n.global.locale.value = code

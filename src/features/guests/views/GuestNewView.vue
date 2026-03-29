@@ -23,9 +23,8 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
-import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import type { FormNode } from '@/shared/types/forms'
-import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
@@ -74,16 +73,12 @@ async function onSubmit() {
     await store.createGuest(formData.value)
     router.push('/guests')
   } catch (err: unknown) {
-    const msg = formatUnknownApiError(err) || t('guests.save_failed')
-    const serverErrors = httpErrorData(err)?.errors
-    if (
-      httpErrorResponse(err) &&
-      serverErrors &&
-      typeof serverErrors === 'object' &&
-      !Array.isArray(serverErrors)
-    ) {
-      errorsMap.value = serverErrors as Record<string, string[]>
+    const mapped = formErrorsMapFromHttpError(err)
+    if (mapped) {
+      errorsMap.value = mapped
+      scrollToFirstFormError()
     } else {
+      const msg = formatUnknownApiError(err) || t('guests.save_failed')
       errorsMap.value = { '': [msg] }
     }
   } finally {

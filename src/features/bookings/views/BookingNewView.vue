@@ -48,9 +48,7 @@ import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import type { Room } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
-import { formatUnknownApiError } from '@/shared/i18n/apiError'
-import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
-import { useNotification } from '@/shared/composables/useNotification'
+import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
 import ManualAdjustmentEditor from '@/features/bookings/components/ManualAdjustmentEditor.vue'
@@ -67,7 +65,6 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useBookingStore()
-const { error: showError } = useNotification()
 const propertyStore = usePropertyStore()
 
 const loading = ref(true)
@@ -307,17 +304,14 @@ async function onSubmit() {
     router.push(`/bookings/${created.id}/details`)
   } catch (err: unknown) {
     submitting.value = false
-    const msg = formatUnknownApiError(err) || t('bookings.create_failed')
-    const serverErrors = httpErrorData(err)?.errors
-    if (
-      httpErrorResponse(err) &&
-      serverErrors &&
-      typeof serverErrors === 'object' &&
-      !Array.isArray(serverErrors)
-    ) {
-      errorsMap.value = serverErrors as Record<string, string[]>
+    const mapped = formErrorsMapFromHttpError(err)
+    if (mapped) {
+      errorsMap.value = mapped
+      scrollToFirstFormError()
+    } else {
+      const msg = formatUnknownApiError(err) || t('bookings.create_failed')
+      errorsMap.value = { '': [msg] }
     }
-    showError(msg)
   }
 }
 </script>

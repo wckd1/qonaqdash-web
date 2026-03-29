@@ -56,7 +56,8 @@ export interface FormActionStep {
   value?: unknown
 }
 
-export interface FormValidation {
+/** Field constraint rules on FormDSL input/select nodes (API key: `rules`). */
+export interface FormFieldRules {
   required?: boolean
   min_length?: number
   max_length?: number
@@ -87,7 +88,7 @@ interface FormNodeConditions {
 export interface FormStackNode extends FormNodeConditions {
   type: 'stack'
   direction: 'vertical' | 'horizontal'
-  items: FormNode[]
+  children: FormNode[]
   options?: FormNodeOptions
 }
 
@@ -95,7 +96,7 @@ export interface FormGroupNode extends FormNodeConditions {
   type: 'group'
   id: string
   title?: string
-  items: FormNode[]
+  children: FormNode[]
   options?: FormNodeOptions
 }
 
@@ -114,7 +115,8 @@ export interface FormInputNode extends FormNodeConditions {
   id: string
   label?: string
   bind: string
-  validation?: FormValidation
+  /** Constraint rules (required, lengths, numeric bounds). */
+  rules?: FormFieldRules
   actions?: FormActionStep[]
   readonly?: boolean
   options?: FormNodeOptions
@@ -126,7 +128,7 @@ export interface FormSelectNode extends FormNodeConditions {
   label?: string
   bind: string
   items: FormSelectItem[]
-  validation?: FormValidation
+  rules?: FormFieldRules
   actions?: FormActionStep[]
   readonly?: boolean
   options?: FormNodeOptions
@@ -139,7 +141,7 @@ export interface FormArrayNode extends FormNodeConditions {
   bind: string
   min_items?: number
   max_items?: number
-  item: FormNode
+  child: FormNode
   options?: FormNodeOptions
 }
 

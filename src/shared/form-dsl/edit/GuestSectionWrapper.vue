@@ -224,7 +224,7 @@ watch(
 
 const groupTitle = computed(() => resolveGroupTitle(props.node))
 
-const children = computed(() => props.node.items ?? [])
+const children = computed(() => props.node.children ?? [])
 
 function getRenderer(child: FormNode) {
   if (child.type === 'stack' || child.type === 'group') return LayoutRenderer

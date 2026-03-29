@@ -2964,3 +2964,26 @@ body {
 #app {
   height: 100%;
 }
+
+/* ---------- Print ---------- */
+@media print {
+  .app-layout {
+    height: auto;
+    overflow: visible;
+  }
+
+  .topbar,
+  .sidebar {
+    display: none !important;
+  }
+
+  .app-layout-body {
+    overflow: visible;
+  }
+
+  .app-main {
+    padding: 0;
+    overflow: visible;
+    container-type: normal;
+  }
+}

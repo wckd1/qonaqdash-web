@@ -74,6 +74,11 @@ const routes = [
         component: () => import('@/features/pricing/views/PricingRulesView.vue'),
       },
       {
+        path: 'manage/reports',
+        name: 'manage-reports',
+        component: () => import('@/features/billing/views/ReportsView.vue'),
+      },
+      {
         path: 'manage/guests/form',
         name: 'manage-guests-form',
         component: () => import('@/features/guests/views/GuestFormSettingsView.vue'),

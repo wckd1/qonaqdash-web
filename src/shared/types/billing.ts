@@ -77,3 +77,83 @@ export interface BillSummary {
   /** `SUM(balance_delta)` — positive = guest owes; zero/negative = overpaid. */
   outstanding_balance_minor: number
 }
+
+// ---------------------------------------------------------------------------
+// Report DTOs (GET /api/billing/reports/*)
+// ---------------------------------------------------------------------------
+
+export interface ReportPeriod {
+  from: string
+  to: string
+}
+
+export interface ReportLedgerEntry {
+  id: string
+  booking_id: string
+  entry_type: LedgerEntryType
+  balance_delta: number
+  description?: string
+  metadata?: LedgerEntryMetadata
+  created_at: string
+}
+
+export interface LedgerListResponse {
+  entries: ReportLedgerEntry[]
+}
+
+export interface OverviewResponse {
+  period: ReportPeriod
+  accommodation: number
+  rule_adjustments: number
+  manual_adjustments: number
+  service_charges: number
+  total_charges: number
+  payments: number
+  refunds: number
+  corrections: number
+  total_outstanding: number
+}
+
+export interface DailyBreakdownRow {
+  date: string
+  charges: number
+  payments: number
+  refunds: number
+  net: number
+  entries_count: number
+}
+
+export interface DailyBreakdownResponse {
+  period: ReportPeriod
+  days: DailyBreakdownRow[]
+}
+
+export interface MonthlyBreakdownRow {
+  month: string
+  charges: number
+  payments: number
+  refunds: number
+  net: number
+  entries_count: number
+}
+
+export interface MonthlyBreakdownResponse {
+  period: ReportPeriod
+  months: MonthlyBreakdownRow[]
+}
+
+export interface OutstandingBillDTO {
+  bill_id: string
+  booking_id: string
+  guest_id: string
+  status: string
+  opened_at: string
+  total_charges: number
+  total_payments: number
+  outstanding: number
+}
+
+export interface OutstandingBalancesResponse {
+  bills: OutstandingBillDTO[]
+  total_outstanding: number
+}

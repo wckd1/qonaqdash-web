@@ -26,6 +26,7 @@ const ROUTE_TITLE_KEYS = {
   'booking-detail': 'page_title.booking',
   'manage-pricing-base-rates': 'page_title.pricing_base_rates',
   'manage-pricing-rules': 'page_title.pricing_rules',
+  'manage-reports': 'page_title.reports',
   'manage-guests-form': 'page_title.guest_form_settings',
   'manage-bookings-form': 'page_title.booking_form_settings',
   profile: 'page_title.profile',

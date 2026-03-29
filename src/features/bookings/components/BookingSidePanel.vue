@@ -26,6 +26,7 @@
         v-if="panelStatusActionsVisible"
         :booking-id="booking!.id"
         :status="panelBookingStatus"
+        :outstanding-balance-minor="detailEntity?.outstanding_balance"
         @updated="onBookingStatusMutation"
       />
       <div class="side-panel-body">

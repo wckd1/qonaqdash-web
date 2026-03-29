@@ -52,6 +52,8 @@ export interface BookingDetailData {
   stay: Record<string, unknown>
   status?: string
   id?: string
+  /** Live billing balance from aggregate; omitted when zero. */
+  outstanding_balance?: number
 }
 
 /** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */
@@ -68,6 +70,8 @@ export interface BookingFormResponse {
   guest?: Record<string, unknown>
   accommodation?: AccommodationSnapshot
   adjustments?: ManualAdjustmentInput[]
+  /** From booking aggregate; omitted when zero. Used for check-out force-unpaid gating. */
+  outstanding_balance?: number
 }
 
 /** One element of `stay.rooms` in form data. */

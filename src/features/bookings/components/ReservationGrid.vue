@@ -31,6 +31,7 @@
       <BookingStatusActions
         :booking-id="barMenu.bookingId"
         :status="barMenu.status"
+        :outstanding-balance-minor="barMenu.outstandingBalanceMinor"
         layout="menu"
         @updated="onBarBookingStatusUpdated"
       />
@@ -138,7 +139,13 @@ type RoomRow = Room & { room_type_name?: string }
 
 type CellMenuState = { roomId: string; rangeFirst: Date; rangeLast: Date; x: number; y: number }
 
-type BarMenuState = { x: number; y: number; bookingId: string; status: string }
+type BarMenuState = {
+  x: number
+  y: number
+  bookingId: string
+  status: string
+  outstandingBalanceMinor?: number
+}
 
 type DragSelectState = { roomId: string; startDay: Date; endDay: Date }
 
@@ -156,6 +163,7 @@ type BarLayout = {
   label: string
   statusClass: string
   ariaLabel: string
+  outstandingBalanceMinor?: number
 }
 
 const props = withDefaults(
@@ -397,6 +405,8 @@ const barLayouts = computed((): BarLayout[] => {
         label,
         statusClass: statusClass(e.status),
         ariaLabel: t('grid.bar_aria', { label, status: e.status }),
+        outstandingBalanceMinor:
+          typeof e.outstanding_balance === 'number' ? e.outstanding_balance : undefined,
       })
     }
   }
@@ -411,13 +421,20 @@ function closeBarMenu() {
   barMenu.value = null
 }
 
-function openBarMenuAt(x, y, bookingId, status) {
+function openBarMenuAt(
+  x: number,
+  y: number,
+  bookingId: string,
+  status: string | undefined,
+  outstandingBalanceMinor?: number,
+) {
   closeCellMenu()
   barMenu.value = {
     x,
     y,
     bookingId,
     status: status ?? '',
+    outstandingBalanceMinor,
   }
   nextTick(() => {
     const el = barMenuEl.value
@@ -440,7 +457,13 @@ function openBarMenuAt(x, y, bookingId, status) {
 function openBarMenuFromContext(event, bar) {
   cancelDragSelect()
   closeCellMenu()
-  openBarMenuAt(event.clientX, event.clientY, bar.bookingId, bar.panelBooking?.status)
+  openBarMenuAt(
+    event.clientX,
+    event.clientY,
+    bar.bookingId,
+    bar.panelBooking?.status,
+    bar.outstandingBalanceMinor,
+  )
 }
 
 function onBarBookingStatusUpdated() {

@@ -59,6 +59,8 @@ export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
       stay,
       status: typeof o.status === 'string' ? o.status : undefined,
       id: typeof o.id === 'string' ? o.id : undefined,
+      outstanding_balance:
+        typeof o.outstanding_balance === 'number' ? o.outstanding_balance : undefined,
     },
     formRef,
   }
@@ -146,6 +148,7 @@ export function mergeBookingDetailWithRuntimeForm(
     accommodation: storedQuote?.accommodation,
     adjustments:
       storedQuote?.manual_adjustments?.length ? storedQuote.manual_adjustments : undefined,
+    outstanding_balance: detail.outstanding_balance,
   }
 }
 
@@ -197,7 +200,7 @@ export function checkIn(id: string): Promise<BookingItem> {
 
 export function checkOut(id: string, options?: { forceUnpaid?: boolean }): Promise<BookingItem> {
   return api
-    .put(`/api/bookings/${id}/check-out`, { force_unpaid: options?.forceUnpaid ?? true })
+    .put(`/api/bookings/${id}/check-out`, { force_unpaid: options?.forceUnpaid ?? false })
     .then(({ data }) => data)
 }
 

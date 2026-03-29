@@ -52,6 +52,7 @@
             v-if="bookingId"
             :booking-id="bookingId"
             :status="getBookingStatusFromResponse(currentBooking)"
+            :outstanding-balance-minor="currentBooking?.outstanding_balance"
             detail-inset
           />
           <FormView :definition="bookingForm.definition" :data="bookingForm.data" />

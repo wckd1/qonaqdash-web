@@ -74,7 +74,7 @@
           <h2 :id="dialogTitleId" class="booking-status-dialog-title">{{ dialogTitle }}</h2>
           <p class="booking-status-dialog-body">{{ dialogBody }}</p>
 
-          <template v-if="pending === 'checkOut'">
+          <template v-if="pending === 'checkOut' && checkoutRequiresForceAck">
             <hr class="booking-status-dialog-separator" />
             <p class="booking-status-dialog-body booking-status-dialog-body--warning">
               {{ t('bookings.checkout_unpaid_notice') }}
@@ -120,6 +120,11 @@ const props = defineProps({
   bookingId: { type: String, required: true },
   /** From list row, grid entry, or FormResponse (via getBookingStatusFromResponse). */
   status: { type: String, default: undefined },
+  /**
+   * Outstanding balance (minor units) from booking aggregate / grid.
+   * When > 0, check-out requires acknowledging force-unpaid; otherwise normal check-out.
+   */
+  outstandingBalanceMinor: { type: Number, default: undefined },
   /** `row`: toolbar strip; `menu`: grid context menu items. */
   layout: { type: String, default: 'row' },
   /** Full-page in `main`: add `action-toolbar--inset` for horizontal inset + `--radius-md` shell (see main.css). */
@@ -145,8 +150,14 @@ const hasAnyAction = computed(
   () => allowsCheckIn.value || allowsCheckOut.value || allowsCancel.value,
 )
 
+/** True when guest still owes (per `BookingItem.outstanding_balance` / detail aggregate). */
+const checkoutRequiresForceAck = computed(() => {
+  const v = props.outstandingBalanceMinor
+  return typeof v === 'number' && v > 0
+})
+
 const canConfirm = computed(() => {
-  if (pending.value === 'checkOut') return forceUnpaidAck.value
+  if (pending.value === 'checkOut' && checkoutRequiresForceAck.value) return forceUnpaidAck.value
   return true
 })
 
@@ -203,7 +214,10 @@ async function runPending() {
   running.value = true
   try {
     if (kind === 'checkIn') await store.checkIn(id)
-    else if (kind === 'checkOut') await store.checkOut(id, { forceUnpaid: forceUnpaidAck.value })
+    else if (kind === 'checkOut')
+      await store.checkOut(id, {
+        forceUnpaid: checkoutRequiresForceAck.value ? forceUnpaidAck.value : false,
+      })
     else if (kind === 'cancel') await store.cancel(id)
     success(t('bookings.status_action_success'))
     pending.value = null

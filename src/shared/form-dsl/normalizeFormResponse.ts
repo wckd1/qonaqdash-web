@@ -46,6 +46,25 @@ export interface NormalizedFormEnvelope {
   data: Record<string, unknown>
 }
 
+export function composeEntityFormFromTemplate(
+  entity: Record<string, unknown> | null | undefined,
+  template: { definition?: FormNode; data?: Record<string, unknown> } | null | undefined,
+): NormalizedFormEnvelope | null {
+  if (!entity) return null
+  if (!template?.definition) return null
+  const templateData =
+    template.data && typeof template.data === 'object' && !Array.isArray(template.data)
+      ? template.data
+      : {}
+  const templateKeys = Object.keys(templateData)
+  const data =
+    templateKeys.length > 0 ? overlayTemplateDataFromPayload(entity, templateData) : { ...entity }
+  return {
+    definition: template.definition,
+    data,
+  }
+}
+
 /**
  * Normalize guest form response from API.
  */
@@ -69,22 +88,7 @@ export function composeGuestFormFromEntity(
   if (!guestEntity) return null
   const fromApi = normalizeGuestFormResponse(guestEntity)
   if (fromApi) return fromApi
-  if (!template?.definition) return null
-  const templateData =
-    template.data && typeof template.data === 'object' && !Array.isArray(template.data)
-      ? template.data
-      : {}
-  const templateKeys = Object.keys(templateData)
-  const data =
-    templateKeys.length > 0
-      ? overlayTemplateDataFromPayload(guestEntity, templateData)
-      : guestEntity && typeof guestEntity === 'object'
-        ? { ...guestEntity }
-        : {}
-  return {
-    definition: template.definition,
-    data,
-  }
+  return composeEntityFormFromTemplate(guestEntity, template)
 }
 
 /**

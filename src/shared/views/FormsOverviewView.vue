@@ -23,6 +23,16 @@
         {{ t('common.edit') }}
       </router-link>
     </section>
+
+    <section class="panel forms-overview__card">
+      <div class="forms-overview__body">
+        <h2 class="forms-overview__heading">{{ t('forms.employee_title') }}</h2>
+        <p class="forms-overview__description">{{ t('forms.employee_description') }}</p>
+      </div>
+      <router-link to="/manage/forms/employees" class="forms-overview__action">
+        {{ t('common.edit') }}
+      </router-link>
+    </section>
   </div>
 </template>
 

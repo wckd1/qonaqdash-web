@@ -15,6 +15,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const locale = ref(resolveInitialLocale())
   /** From last `GET /api/account` — for sidebar / profile. */
   const accountEmail = ref(null)
+  const profileFirstName = ref<string | null>(null)
+  const profileLastName = ref<string | null>(null)
   const userSettings = ref(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -62,6 +64,10 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const data = await authApi.fetchAccount()
       accountEmail.value = data?.account?.email ?? null
+      profileFirstName.value =
+        typeof data?.profile?.first_name === 'string' ? data.profile.first_name : null
+      profileLastName.value =
+        typeof data?.profile?.last_name === 'string' ? data.profile.last_name : null
       const settings =
         data?.settings && typeof data.settings === 'object' ? { ...data.settings } : {}
       userSettings.value = Object.keys(settings).length ? settings : null
@@ -82,14 +88,27 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  function resetState() {
+    accountEmail.value = null
+    profileFirstName.value = null
+    profileLastName.value = null
+    userSettings.value = null
+    loading.value = false
+    error.value = null
+    initLocale()
+  }
+
   return {
     locale,
     accountEmail,
+    profileFirstName,
+    profileLastName,
     userSettings,
     loading,
     error,
     setLocale,
     initLocale,
     fetchUserSettings,
+    resetState,
   }
 })

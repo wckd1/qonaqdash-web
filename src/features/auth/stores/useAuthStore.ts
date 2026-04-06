@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const orgId = computed(() => user.value?.orgId ?? null)
   const hotelId = computed(() => user.value?.hotelId ?? null)
+  const employeeId = computed(() => user.value?.employeeId ?? null)
   const userId = computed(() => user.value?.sub ?? null)
 
   function setTokens(access, refresh) {
@@ -55,6 +56,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   function logout() {
     clearTokens()
+    void import('@/features/property/stores/usePropertyStore').then(({ usePropertyStore }) => {
+      usePropertyStore().resetState()
+    })
+    void import('@/shared/stores/useSettingsStore').then(({ useSettingsStore }) => {
+      useSettingsStore().resetState()
+    })
+    void import('@/features/employees/stores/useEmployeeStore').then(({ useEmployeeStore }) => {
+      useEmployeeStore().resetState()
+    })
   }
 
   return {
@@ -64,6 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     orgId,
     hotelId,
+    employeeId,
     userId,
     setTokens,
     login,

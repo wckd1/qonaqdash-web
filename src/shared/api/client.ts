@@ -1,11 +1,17 @@
 import axios, { type AxiosInstance, isAxiosError } from 'axios'
 import { formatApiError, getApiErrorCode } from '@/shared/i18n/apiError'
 
-function isGuestOrBookingEntityWrite(method: string, path: string): boolean {
+function isInlineValidatedEntityWrite(method: string, path: string): boolean {
   const p = path.split('?')[0]
   const m = method.toLowerCase()
-  if (m === 'post') return p === '/api/guests' || p === '/api/bookings'
-  if (m === 'put') return /^\/api\/guests\/[^/]+$/.test(p) || /^\/api\/bookings\/[^/]+$/.test(p)
+  if (m === 'post') return p === '/api/guests' || p === '/api/bookings' || p === '/api/employees'
+  if (m === 'put') {
+    return (
+      /^\/api\/guests\/[^/]+$/.test(p) ||
+      /^\/api\/bookings\/[^/]+$/.test(p) ||
+      /^\/api\/employees\/[^/]+$/.test(p)
+    )
+  }
   return false
 }
 import { useNotification } from '@/shared/composables/useNotification'
@@ -147,7 +153,7 @@ api.interceptors.response.use(
     if (
       status === 422 &&
       getApiErrorCode(data) === 'common.validation_failed' &&
-      isGuestOrBookingEntityWrite(method, url)
+      isInlineValidatedEntityWrite(method, url)
     ) {
       return Promise.reject(err)
     }

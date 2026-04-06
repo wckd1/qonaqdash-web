@@ -1,3 +1,5 @@
+import type { JwtClaims } from '@/shared/types/auth'
+
 const TOKEN_KEY = 'access_token'
 
 function decode(token) {
@@ -12,15 +14,20 @@ function decode(token) {
 }
 
 export function useJwt() {
-  function getClaims(token) {
+  function getClaims(token): JwtClaims | null {
     const raw = token ?? localStorage.getItem(TOKEN_KEY)
     const payload = decode(raw)
     if (!payload) return null
     return {
-      sub: payload.sub,
-      email: payload.email,
-      orgId: payload.org_id,
-      hotelId: payload.hotel_id,
+      sub: typeof payload.sub === 'string' ? payload.sub : null,
+      email: typeof payload.email === 'string' ? payload.email : null,
+      orgId: typeof payload.org_id === 'string' ? payload.org_id : null,
+      hotelId: typeof payload.hotel_id === 'string' ? payload.hotel_id : null,
+      employeeId: typeof payload.employee_id === 'string' ? payload.employee_id : null,
+      tokenUse:
+        payload.token_use === 'access' || payload.token_use === 'refresh'
+          ? payload.token_use
+          : null,
     }
   }
 

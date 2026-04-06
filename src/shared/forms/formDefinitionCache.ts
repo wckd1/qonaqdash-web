@@ -1,6 +1,6 @@
 import type { FormRef, FormNode } from '@/shared/types/forms'
 
-export type FormDomainId = 'guest' | 'booking'
+export type FormDomainId = 'guest' | 'booking' | 'employee'
 
 export type RuntimeFormMode = 'view' | 'edit'
 
@@ -81,7 +81,7 @@ function storageKeysForFormId(formId: FormDomainId): string[] {
   return keys
 }
 
-/** Drop all cached runtime definitions for guest or booking (e.g. after PUT …/form/schema). */
+/** Drop all cached runtime definitions for a form domain (e.g. after PUT …/form/schema). */
 export function clearFormDefinitionsFor(formId: FormDomainId): void {
   for (const k of storageKeysForFormId(formId)) {
     try {

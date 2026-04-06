@@ -18,6 +18,9 @@ const ROUTE_TITLE_KEYS = {
   dashboard: 'page_title.dashboard',
   'manage-hotel': 'page_title.hotel',
   rooms: 'page_title.hotel',
+  employees: 'page_title.employees',
+  'employee-new': 'page_title.employee_new',
+  'employee-detail': 'page_title.employee',
   guests: 'page_title.guests',
   'guest-new': 'page_title.guest_new',
   'guest-detail': 'page_title.guest',
@@ -30,6 +33,7 @@ const ROUTE_TITLE_KEYS = {
   'manage-forms': 'page_title.forms',
   'manage-guests-form': 'page_title.guest_form_settings',
   'manage-bookings-form': 'page_title.booking_form_settings',
+  'manage-employees-form': 'page_title.employee_form_settings',
   profile: 'page_title.profile',
   'not-found': 'page_title.not_found',
 }

@@ -110,6 +110,15 @@ export const usePropertyStore = defineStore('property', () => {
     rooms.value = rooms.value.filter((r) => r.id !== id)
   }
 
+  function resetState() {
+    hotel.value = null
+    roomTypes.value = []
+    rooms.value = []
+    fullRoomTypesHydrated.value = false
+    fullRoomsHydrated.value = false
+    hotelFetched = false
+  }
+
   return {
     hotel,
     roomTypes,
@@ -124,5 +133,6 @@ export const usePropertyStore = defineStore('property', () => {
     createRoom,
     updateRoom,
     deleteRoom,
+    resetState,
   }
 })

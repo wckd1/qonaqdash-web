@@ -5,8 +5,8 @@
         <button
           class="collapse-btn"
           type="button"
-          @click="toggleSidebar"
           :aria-label="t('layout.toggle_sidebar')"
+          @click="toggleSidebar"
         >
           <svg
             viewBox="0 0 24 24"
@@ -99,6 +99,30 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
             <span class="nav-label">{{ t('nav.guests') }}</span>
+          </router-link>
+
+          <router-link
+            to="/employees"
+            class="nav-link"
+            :class="{ 'nav-link--active': $route.path.startsWith('/employees') }"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9 3h6" />
+              <path d="M10 3v3" />
+              <path d="M14 3v3" />
+              <rect x="5" y="6" width="14" height="15" rx="2" />
+              <circle cx="12" cy="11" r="2.5" />
+              <path d="M8.5 18a4.5 4.5 0 0 1 7 0" />
+            </svg>
+            <span class="nav-label">{{ t('nav.employees') }}</span>
           </router-link>
 
           <details
@@ -199,8 +223,7 @@
                 to="/manage/forms"
                 class="nav-link nav-sublink"
                 :class="{
-                  'nav-link--active':
-                    $route.path.startsWith('/manage/forms'),
+                  'nav-link--active': $route.path.startsWith('/manage/forms'),
                 }"
               >
                 <svg
@@ -261,7 +284,7 @@
             </div>
             <div class="user-info">
               <span class="user-name">{{ userName }}</span>
-              <span class="user-role">{{ t('layout.administrator') }}</span>
+              <span class="user-role">{{ userContextLabel }}</span>
             </div>
           </button>
 
@@ -317,12 +340,15 @@ import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
+const propertyStore = usePropertyStore()
 const { accountEmail } = storeToRefs(settingsStore)
+const { hotel } = storeToRefs(propertyStore)
 
 /**
  * Short form / settings pages: main height fits content (no tall empty column).
@@ -332,6 +358,7 @@ const isFormPage = computed(() => {
   const p = route.path
   return (
     p === '/guests/new' ||
+    p === '/employees/new' ||
     p.startsWith('/manage/forms') ||
     p === '/manage/hotel' ||
     p.startsWith('/manage/pricing') ||
@@ -370,7 +397,17 @@ watch(
 )
 
 const userName = computed(() => {
+  const first = settingsStore.profileFirstName?.trim?.() ?? ''
+  const last = settingsStore.profileLastName?.trim?.() ?? ''
+  const fullName = [first, last].filter(Boolean).join(' ')
+  if (fullName) return fullName
   return accountEmail.value || authStore.user?.email || 'User'
+})
+
+const userContextLabel = computed(() => {
+  if (hotel.value?.name) return hotel.value.name
+  if (authStore.employeeId) return t('layout.employee_id', { id: authStore.employeeId })
+  return t('layout.administrator')
 })
 
 function toggleSidebar() {
@@ -407,4 +444,13 @@ function logout() {
 
 onMounted(() => document.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
+
+watch(
+  () => authStore.hotelId,
+  (hotelId) => {
+    if (!hotelId) return
+    void propertyStore.fetchHotel().catch(() => {})
+  },
+  { immediate: true },
+)
 </script>

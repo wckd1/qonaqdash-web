@@ -49,6 +49,21 @@ const routes = [
         component: () => import('@/features/guests/views/GuestListView.vue'),
       },
       {
+        path: 'employees/new',
+        name: 'employee-new',
+        component: () => import('@/features/employees/views/EmployeeNewView.vue'),
+      },
+      {
+        path: 'employees/:id/details',
+        name: 'employee-detail',
+        component: () => import('@/features/employees/views/EmployeeDetailView.vue'),
+      },
+      {
+        path: 'employees/:id?',
+        name: 'employees',
+        component: () => import('@/features/employees/views/EmployeeListView.vue'),
+      },
+      {
         path: 'bookings/new',
         name: 'booking-new',
         component: () => import('@/features/bookings/views/BookingNewView.vue'),
@@ -92,6 +107,11 @@ const routes = [
         path: 'manage/forms/bookings',
         name: 'manage-bookings-form',
         component: () => import('@/features/bookings/views/BookingFormSettingsView.vue'),
+      },
+      {
+        path: 'manage/forms/employees',
+        name: 'manage-employees-form',
+        component: () => import('@/features/employees/views/EmployeeFormSettingsView.vue'),
       },
       {
         path: 'profile',

@@ -47,7 +47,7 @@ function parseOkBody(d: Record<string, unknown>, fallbackHash: string): LoadedRu
 
 async function getRuntimeFormUnconditional(
   formId: FormDomainId,
-  path: '/api/guests/form' | '/api/bookings/form',
+  path: '/api/guests/form' | '/api/bookings/form' | '/api/employees/form',
   mode: RuntimeFormMode,
 ): Promise<LoadedRuntimeForm> {
   const res = await api.get(path, {
@@ -68,7 +68,7 @@ async function getRuntimeFormUnconditional(
  */
 export async function loadRuntimeFormDefinition(
   formId: FormDomainId,
-  path: '/api/guests/form' | '/api/bookings/form',
+  path: '/api/guests/form' | '/api/bookings/form' | '/api/employees/form',
   mode: RuntimeFormMode,
   definitionHash: string | null | undefined,
   options: LoadRuntimeFormOptions = {},

@@ -87,7 +87,7 @@ async function handleSubmit() {
 
   try {
     await authStore.login(email.value, password.value)
-    void settingsStore.fetchUserSettings().catch(() => {})
+    await settingsStore.fetchUserSettings().catch(() => undefined)
     const r = route.query.redirect
     const redirect = typeof r === 'string' && r.startsWith('/') ? r : '/'
     await router.push(redirect)

@@ -43,7 +43,7 @@
       </div>
       <div class="side-panel-footer">
         <router-link
-          v-if="showFolioLink"
+          v-if="showFolioLink && canAccessBookingFolio"
           :to="{ name: 'booking-detail', params: { id: booking.id }, hash: '#folio' }"
           class="btn-open-full-page"
         >
@@ -71,13 +71,15 @@ import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { getBookingStatusFromResponse } from '@/features/bookings/bookingStatus'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
+const { canAccessBookingFolio } = usePermissions()
 
 const props = withDefaults(
   defineProps<{
     /** List or grid row: must include `id`. Other fields optional until load completes. */
-    booking: BookingSidePanelRef | null
+    booking?: BookingSidePanelRef | null
   }>(),
   { booking: null },
 )

@@ -1,7 +1,15 @@
 import api, { refreshTransport } from '@/shared/api/client'
 import type { AuthTokenPair } from '@/shared/types/auth'
+import type { Permissions } from '@/shared/types/permissions'
 
 export type { AuthTokenPair } from '@/shared/types/auth'
+export interface AccountBundleResponse {
+  account?: { email?: string }
+  profile?: { first_name?: string; last_name?: string }
+  settings?: { locale?: 'en' | 'ru' | null } & Record<string, unknown>
+  permissions?: Permissions
+  effective_permissions?: Permissions
+}
 
 export function login(email: string, password: string): Promise<AuthTokenPair> {
   return api.post('/api/auth/login', { email, password }).then(({ data }) => ({
@@ -37,7 +45,7 @@ export function refreshTokens(currentRefreshToken: string): Promise<AuthTokenPai
  * @returns {Promise<{ account: { email: string }, settings: { locale: 'en' | 'ru' | null } }>}
  */
 export function fetchAccount() {
-  return api.get('/api/account').then(({ data }) => data)
+  return api.get('/api/account').then(({ data }) => data as AccountBundleResponse)
 }
 
 /**
@@ -46,5 +54,5 @@ export function fetchAccount() {
  * @returns {Promise<{ account: { email: string }, settings: { locale: 'en' | 'ru' | null } }>}
  */
 export function updateAccount(body: Record<string, unknown>) {
-  return api.put('/api/account', body).then(({ data }) => data)
+  return api.put('/api/account', body).then(({ data }) => data as AccountBundleResponse)
 }

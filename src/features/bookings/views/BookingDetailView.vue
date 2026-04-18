@@ -2,11 +2,19 @@
   <header class="page-header">
     <h1>{{ page_title }}</h1>
     <div v-if="bookingId && bookingForm && !editing" class="page-header-actions">
-      <button v-if="canEdit" type="button" class="btn-secondary" @click="startEdit">
+      <button
+        v-if="canEdit && canModifyBookings"
+        type="button"
+        class="btn-secondary"
+        @click="startEdit"
+      >
         {{ t('common.edit') }}
       </button>
     </div>
-    <div v-else-if="bookingId && bookingForm && editing" class="page-header-actions">
+    <div
+      v-else-if="bookingId && bookingForm && editing && canModifyBookings"
+      class="page-header-actions"
+    >
       <button type="button" :disabled="submitting" @click="onSave">
         {{ submitting ? t('common.saving') : t('common.save') }}
       </button>
@@ -38,6 +46,7 @@
             {{ t('bookings.tab_details') }}
           </button>
           <button
+            v-if="canAccessBookingFolio"
             type="button"
             class="subnav__link"
             :class="{ 'subnav__link--active': activeTab === 'folio' }"
@@ -65,7 +74,7 @@
         </template>
 
         <FolioSection
-          v-if="activeTab === 'folio'"
+          v-if="activeTab === 'folio' && canAccessBookingFolio"
           ref="folioRef"
           :booking-id="bookingId"
           :booking-status="getBookingStatusFromResponse(currentBooking)"
@@ -132,6 +141,7 @@ import { httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
@@ -142,6 +152,7 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const store = useBookingStore()
 const propertyStore = usePropertyStore()
+const { canModifyBookings, canAccessBookingFolio } = usePermissions()
 const { currentBooking } = storeToRefs(store)
 const loadError = ref('')
 const notFound = ref(false)
@@ -309,6 +320,16 @@ watch(
     if (newId) load()
     editing.value = false
     concurrentError.value = ''
+  },
+  { immediate: true },
+)
+
+watch(
+  canAccessBookingFolio,
+  (allowed) => {
+    if (!allowed && activeTab.value === 'folio') {
+      activeTab.value = 'details'
+    }
   },
   { immediate: true },
 )

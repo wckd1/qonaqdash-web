@@ -22,7 +22,11 @@
             <line x1="3" y1="18" x2="18" y2="18" />
           </svg>
         </button>
-        <router-link to="/" class="brand-link" :aria-label="t('layout.brand_home')">
+        <router-link
+          :to="{ name: homeRouteName }"
+          class="brand-link"
+          :aria-label="t('layout.brand_home')"
+        >
           <span class="brand-mark" aria-hidden="true">Q</span>
           <span class="brand-name">QonaqDash</span>
         </router-link>
@@ -32,7 +36,7 @@
     <div class="app-layout-body">
       <aside class="sidebar">
         <nav class="sidebar-nav">
-          <router-link to="/" class="nav-link">
+          <router-link v-if="canAccessDashboard" :to="{ name: 'dashboard' }" class="nav-link">
             <svg
               class="nav-icon"
               viewBox="0 0 24 24"
@@ -52,6 +56,7 @@
           </router-link>
 
           <router-link
+            v-if="canViewBookings"
             to="/bookings"
             class="nav-link"
             :class="{
@@ -77,6 +82,7 @@
           </router-link>
 
           <router-link
+            v-if="canAccessGuests"
             to="/guests"
             class="nav-link"
             :class="{
@@ -102,6 +108,7 @@
           </router-link>
 
           <router-link
+            v-if="canAccessEmployees"
             to="/employees"
             class="nav-link"
             :class="{ 'nav-link--active': $route.path.startsWith('/employees') }"
@@ -126,6 +133,7 @@
           </router-link>
 
           <details
+            v-if="manageNavVisible"
             class="nav-group"
             :open="sidebarCollapsed || manageNavOpen"
             @toggle="onManageNavToggle"
@@ -175,11 +183,12 @@
             </summary>
             <div id="sidebar-manage-items" class="nav-group__items">
               <router-link
+                v-if="manageHotelNavVisible"
                 to="/manage/hotel"
                 class="nav-link nav-sublink"
                 :class="{
                   'nav-link--active':
-                    $route.path === '/manage/hotel' || $route.path === '/manage/rooms',
+                    $route.path.startsWith('/manage/hotel') || $route.path === '/manage/rooms',
                 }"
               >
                 <svg
@@ -199,6 +208,7 @@
                 <span class="nav-label">{{ t('nav.hotel') }}</span>
               </router-link>
               <router-link
+                v-if="pricingNavVisible"
                 to="/manage/pricing/rules"
                 class="nav-link nav-sublink"
                 :class="{ 'nav-link--active': $route.path.startsWith('/manage/pricing') }"
@@ -220,6 +230,7 @@
                 <span class="nav-label">{{ t('nav.pricing') }}</span>
               </router-link>
               <router-link
+                v-if="canAccessFormsOverview"
                 to="/manage/forms"
                 class="nav-link nav-sublink"
                 :class="{
@@ -244,6 +255,7 @@
                 <span class="nav-label">{{ t('nav.forms') }}</span>
               </router-link>
               <router-link
+                v-if="canAccessReports"
                 to="/manage/reports"
                 class="nav-link nav-sublink"
                 :class="{ 'nav-link--active': $route.path === '/manage/reports' }"
@@ -341,12 +353,27 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { usePermissions } from '@/shared/composables/usePermissions'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
 const propertyStore = usePropertyStore()
+const {
+  homeRouteName,
+  canAccessDashboard,
+  canViewBookings,
+  canAccessGuests,
+  canAccessEmployees,
+  canAccessHotelGeneral,
+  canAccessRooms,
+  canManageOccupations,
+  canAccessPricingBaseRates,
+  canAccessPricingRules,
+  canAccessFormsOverview,
+  canAccessReports,
+} = usePermissions()
 const { accountEmail } = storeToRefs(settingsStore)
 const { hotel } = storeToRefs(propertyStore)
 
@@ -360,7 +387,7 @@ const isFormPage = computed(() => {
     p === '/guests/new' ||
     p === '/employees/new' ||
     p.startsWith('/manage/forms') ||
-    p === '/manage/hotel' ||
+    (p.startsWith('/manage/hotel') && p !== '/manage/hotel/occupations') ||
     p.startsWith('/manage/pricing') ||
     p === '/profile'
   )
@@ -409,6 +436,20 @@ const userContextLabel = computed(() => {
   if (authStore.employeeId) return t('layout.employee_id', { id: authStore.employeeId })
   return t('layout.administrator')
 })
+
+const manageHotelNavVisible = computed(
+  () => canAccessHotelGeneral.value || canAccessRooms.value || canManageOccupations.value,
+)
+const pricingNavVisible = computed(
+  () => canAccessPricingBaseRates.value || canAccessPricingRules.value,
+)
+const manageNavVisible = computed(
+  () =>
+    manageHotelNavVisible.value ||
+    pricingNavVisible.value ||
+    canAccessFormsOverview.value ||
+    canAccessReports.value,
+)
 
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value

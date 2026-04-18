@@ -1,7 +1,7 @@
 <template>
   <header class="page-header">
     <h1>{{ t('nav.bookings') }}</h1>
-    <router-link :to="{ name: 'booking-new' }" class="btn-add-outline">
+    <router-link v-if="canCreateBookings" :to="{ name: 'booking-new' }" class="btn-add-outline">
       <svg
         class="btn-icon"
         viewBox="0 0 24 24"
@@ -49,9 +49,13 @@
           <h3 class="empty-state-widget__title">{{ t('bookings.empty_title') }}</h3>
           <p class="empty-state-widget__description">{{ t('bookings.empty_description') }}</p>
           <div class="empty-state-widget__actions">
-            <router-link :to="{ name: 'booking-new' }" class="primary" role="button">{{
-              t('bookings.new_booking')
-            }}</router-link>
+            <router-link
+              v-if="canCreateBookings"
+              :to="{ name: 'booking-new' }"
+              class="primary"
+              role="button"
+              >{{ t('bookings.new_booking') }}</router-link
+            >
           </div>
         </div>
         <p v-else-if="!bookings.length && searchQuery" class="empty-state">
@@ -104,6 +108,7 @@ import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vu
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import type { BookingItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const DEBOUNCE_MS = 300
 
@@ -111,6 +116,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useBookingStore()
+const { canCreateBookings } = usePermissions()
 const { bookings } = storeToRefs(store)
 
 const initialLoading = ref(true)

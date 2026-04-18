@@ -26,6 +26,7 @@
         :aria-label="t('billing.actions_aria')"
       >
         <button
+          v-if="canCollectPayment"
           type="button"
           class="action-toolbar__btn action-toolbar__btn--check-in"
           @click="activeDialog = 'payment'"
@@ -33,7 +34,7 @@
           {{ t('billing.record_payment') }}
         </button>
         <button
-          v-if="paymentEntries.length"
+          v-if="canRefundBilling && paymentEntries.length"
           type="button"
           class="action-toolbar__btn action-toolbar__btn--check-out"
           @click="activeDialog = 'refund'"
@@ -41,6 +42,7 @@
           {{ t('billing.record_refund') }}
         </button>
         <button
+          v-if="canModifyBilling"
           type="button"
           class="action-toolbar__btn action-toolbar__btn--check-out"
           @click="activeDialog = 'adjustment'"
@@ -125,6 +127,7 @@ import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import PaymentDialog from '@/features/billing/components/PaymentDialog.vue'
 import RefundDialog from '@/features/billing/components/RefundDialog.vue'
 import AdjustmentDialog from '@/features/billing/components/AdjustmentDialog.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const props = defineProps<{
   bookingId: string | null | undefined
@@ -133,6 +136,7 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
+const { canCollectPayment, canModifyBilling, canRefundBilling } = usePermissions()
 
 const propertyStore = usePropertyStore()
 const { roomTypes } = storeToRefs(propertyStore)

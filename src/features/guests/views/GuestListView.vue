@@ -1,7 +1,7 @@
 <template>
   <header class="page-header">
     <h1>{{ t('nav.guests') }}</h1>
-    <router-link :to="{ name: 'guest-new' }" class="btn-add-outline">
+    <router-link v-if="canCreateGuests" :to="{ name: 'guest-new' }" class="btn-add-outline">
       <svg
         class="btn-icon"
         viewBox="0 0 24 24"
@@ -49,12 +49,20 @@
           <h3 class="empty-state-widget__title">{{ t('guests.empty_title') }}</h3>
           <p class="empty-state-widget__description">{{ t('guests.empty_description') }}</p>
           <div class="empty-state-widget__actions">
-            <router-link :to="{ name: 'guest-new' }" class="primary" role="button">{{
-              t('guests.new_guest')
-            }}</router-link>
-            <router-link :to="{ name: 'booking-new' }" class="btn-secondary" role="button">{{
-              t('guests.empty_new_booking')
-            }}</router-link>
+            <router-link
+              v-if="canCreateGuests"
+              :to="{ name: 'guest-new' }"
+              class="primary"
+              role="button"
+              >{{ t('guests.new_guest') }}</router-link
+            >
+            <router-link
+              v-if="canCreateBookings"
+              :to="{ name: 'booking-new' }"
+              class="btn-secondary"
+              role="button"
+              >{{ t('guests.empty_new_booking') }}</router-link
+            >
           </div>
         </div>
         <p v-else-if="!guests.length && searchQuery" class="empty-state">
@@ -100,6 +108,7 @@ import GuestSidePanel from '@/features/guests/components/GuestSidePanel.vue'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import type { Guest } from '@/features/guests/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const DEBOUNCE_MS = 300
 
@@ -107,6 +116,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useGuestStore()
+const { canCreateGuests, canCreateBookings } = usePermissions()
 const { guests } = storeToRefs(store)
 
 const initialLoading = ref(true)

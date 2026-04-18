@@ -3,7 +3,11 @@
     <p class="pricing-chrome__currency">
       <span class="pricing-chrome__currency-label">{{ t('pricing.currency_label') }}:</span>
       {{ currencyDisplay }}
-      <router-link to="/manage/hotel" class="pricing-chrome__currency-link">
+      <router-link
+        v-if="canAccessHotelGeneral"
+        to="/manage/hotel"
+        class="pricing-chrome__currency-link"
+      >
         {{ t('pricing.currency_change_link') }}
       </router-link>
     </p>
@@ -21,19 +25,27 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { getCurrencySymbol } from '@/shared/lib/money'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
 const { hotel } = storeToRefs(usePropertyStore())
+const { canAccessHotelGeneral, canAccessPricingBaseRates, canAccessPricingRules } = usePermissions()
 
 const currencyCode = computed(() => hotel.value?.currency ?? 'USD')
 const currencyDisplay = computed(
   () => `${currencyCode.value} (${getCurrencySymbol(currencyCode.value)})`,
 )
 
-const items = computed(() => [
-  { to: '/manage/pricing/base-rates', label: t('pricing.tab_base_rates') },
-  { to: '/manage/pricing/rules', label: t('pricing.tab_rules') },
-])
+const items = computed(() =>
+  [
+    canAccessPricingBaseRates.value
+      ? { to: '/manage/pricing/base-rates', label: t('pricing.tab_base_rates') }
+      : null,
+    canAccessPricingRules.value
+      ? { to: '/manage/pricing/rules', label: t('pricing.tab_rules') }
+      : null,
+  ].filter((item): item is { to: string; label: string } => item !== null),
+)
 </script>
 
 <style scoped>

@@ -16,7 +16,7 @@
             <p class="pricing-view__hint">{{ t('pricing.base_rates_hint') }}</p>
           </div>
           <button
-            v-if="roomTypes.length"
+            v-if="roomTypes.length && canAdjustPricing"
             type="button"
             :disabled="!dirty || saving"
             @click="saveAll"
@@ -50,7 +50,7 @@
                     min="0"
                     :step="rateInputStep"
                     :value="editedMajorRate(rt.id)"
-                    :disabled="saving"
+                    :disabled="saving || !canAdjustPricing"
                     class="base-rates__amount-input"
                     @beforeinput="onRateBeforeInput"
                     @input="onRateInput(rt.id, $event)"
@@ -81,10 +81,12 @@ import {
 } from '@/shared/lib/money'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
 const propertyStore = usePropertyStore()
 const pricingStore = usePricingStore()
+const { canAdjustPricing } = usePermissions()
 const { roomTypes, hotel } = storeToRefs(propertyStore)
 const { baseRates } = storeToRefs(pricingStore)
 

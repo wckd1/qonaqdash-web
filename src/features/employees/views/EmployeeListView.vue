@@ -1,7 +1,7 @@
 <template>
   <header class="page-header">
     <h1>{{ t('nav.employees') }}</h1>
-    <router-link :to="{ name: 'employee-new' }" class="btn-add-outline">
+    <router-link v-if="canManageEmployees" :to="{ name: 'employee-new' }" class="btn-add-outline">
       <svg
         class="btn-icon"
         viewBox="0 0 24 24"
@@ -49,7 +49,12 @@
           <h3 class="empty-state-widget__title">{{ t('employees.empty_title') }}</h3>
           <p class="empty-state-widget__description">{{ t('employees.empty_description') }}</p>
           <div class="empty-state-widget__actions">
-            <router-link :to="{ name: 'employee-new' }" class="primary" role="button">
+            <router-link
+              v-if="canManageEmployees"
+              :to="{ name: 'employee-new' }"
+              class="primary"
+              role="button"
+            >
               {{ t('employees.new_employee') }}
             </router-link>
           </div>
@@ -95,12 +100,14 @@ import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
 import type { EmployeeListItem } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import SearchBar from '@/shared/components/SearchBar.vue'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const DEBOUNCE_MS = 300
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useEmployeeStore()
+const { canManageEmployees } = usePermissions()
 const { employees } = storeToRefs(store)
 
 const initialLoading = ref(true)

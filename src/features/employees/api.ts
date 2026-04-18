@@ -10,13 +10,22 @@ import type {
   EmployeeDetailData,
   EmployeeFormDefinitionResponse,
   EmployeeListItem,
+  EmployeeOccupationsResponse,
+  EmployeePermissionsResponse,
+  OccupationRoleGroup,
+  OccupationTemplate,
 } from '@/shared/types/employees'
+import { parsePermissions } from '@/shared/lib/permissions'
 
 export type {
   CreateEmployeeResponse,
   EmployeeDetailData,
   EmployeeFormDefinitionResponse,
   EmployeeListItem,
+  EmployeeOccupationsResponse,
+  EmployeePermissionsResponse,
+  OccupationRoleGroup,
+  OccupationTemplate,
 } from '@/shared/types/employees'
 
 export type { FormRef }
@@ -24,6 +33,28 @@ export type { FormRef }
 export interface EmployeeDetailPayload {
   data: EmployeeDetailData
   formRef: FormRef | null
+}
+
+function normalizeOccupation(raw: unknown): OccupationTemplate {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  return {
+    id: typeof o.id === 'string' ? o.id : '',
+    title: typeof o.title === 'string' ? o.title : '',
+    role_key: typeof o.role_key === 'string' ? o.role_key : '',
+    role_title: typeof o.role_title === 'string' ? o.role_title : '',
+    permissions: parsePermissions(o.permissions),
+  }
+}
+
+function normalizeOccupationRoleGroup(raw: unknown): OccupationRoleGroup {
+  const o = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  return {
+    role_key: typeof o.role_key === 'string' ? o.role_key : '',
+    role_title: typeof o.role_title === 'string' ? o.role_title : '',
+    occupations: Array.isArray(o.occupations)
+      ? o.occupations.map(normalizeOccupation).filter((row) => row.id)
+      : [],
+  }
 }
 
 function normalizeEmployeeListItem(raw: unknown): EmployeeListItem {
@@ -128,4 +159,72 @@ export function updateEmployee(
   return api
     .put(`/api/employees/${id}`, data)
     .then(({ data: res }) => parseEmployeeDetailPayload(res))
+}
+
+export function listOccupations(): Promise<OccupationRoleGroup[]> {
+  return api
+    .get('/api/occupations')
+    .then(({ data }) => (Array.isArray(data) ? data : (data?.role_groups ?? data ?? [])))
+    .then((rows) =>
+      rows.map(normalizeOccupationRoleGroup).filter((row) => row.role_key && row.role_title),
+    )
+}
+
+export function createOccupation(body: {
+  title: string
+  role_key: string
+  permissions: OccupationTemplate['permissions']
+}): Promise<OccupationTemplate> {
+  return api.post('/api/occupations', body).then(({ data }) => normalizeOccupation(data))
+}
+
+export function updateOccupation(
+  occupationId: string,
+  body: {
+    title: string
+    role_key: string
+    permissions: OccupationTemplate['permissions']
+  },
+): Promise<OccupationTemplate> {
+  return api
+    .put(`/api/occupations/${occupationId}`, body)
+    .then(({ data }) => normalizeOccupation(data))
+}
+
+export function deleteOccupation(occupationId: string): Promise<void> {
+  return api.delete(`/api/occupations/${occupationId}`).then(() => undefined)
+}
+
+export function replaceEmployeeOccupations(
+  employeeId: string,
+  occupationIds: string[],
+): Promise<EmployeeOccupationsResponse> {
+  return api
+    .put(`/api/employees/${employeeId}/occupations`, { occupation_ids: occupationIds })
+    .then(({ data }) => ({
+      employee_id: typeof data?.employee_id === 'string' ? data.employee_id : employeeId,
+      occupation_ids: Array.isArray(data?.occupation_ids)
+        ? data.occupation_ids.filter((value: unknown): value is string => typeof value === 'string')
+        : [],
+      occupations: Array.isArray(data?.occupations)
+        ? data.occupations.map(normalizeOccupation).filter((row) => row.id)
+        : [],
+    }))
+}
+
+export function replaceEmployeePermissions(
+  employeeId: string,
+  overrides: EmployeePermissionsResponse['permission_overrides'],
+): Promise<EmployeePermissionsResponse> {
+  return api.put(`/api/employees/${employeeId}/permissions`, { overrides }).then(({ data }) => ({
+    employee_id: typeof data?.employee_id === 'string' ? data.employee_id : employeeId,
+    occupation_ids: Array.isArray(data?.occupation_ids)
+      ? data.occupation_ids.filter((value: unknown): value is string => typeof value === 'string')
+      : [],
+    occupation_templates: Array.isArray(data?.occupation_templates)
+      ? data.occupation_templates.map(normalizeOccupation).filter((row) => row.id)
+      : [],
+    permission_overrides: parsePermissions(data?.permission_overrides),
+    effective_permissions: parsePermissions(data?.effective_permissions),
+  }))
 }

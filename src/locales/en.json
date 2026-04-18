@@ -12,7 +12,7 @@
     "reports": "Reports"
   },
   "layout": {
-    "brand_home": "Go to dashboard",
+    "brand_home": "Go to home",
     "toggle_sidebar": "Toggle sidebar",
     "expand_management": "Expand Management section",
     "collapse_management": "Collapse Management section",
@@ -75,14 +75,17 @@
     "guest_form_settings": "Guest form",
     "booking_form_settings": "Booking form",
     "employee_form_settings": "Employee form",
+    "hotel_occupations": "Occupations",
     "profile": "Profile",
     "reports": "Reports",
+    "forbidden": "Access denied",
     "not_found": "Page not found"
   },
   "hotel": {
     "title": "Hotel",
     "tab_general": "General",
     "tab_rooms": "Rooms",
+    "tab_occupations": "Roles and occupations",
     "subnav_aria": "Hotel sections",
     "profile_section": "Hotel profile",
     "display_name": "Display name",
@@ -183,18 +186,115 @@
     "override_summary": "Overrides",
     "override_present": "Custom overrides",
     "override_empty": "Inherited only",
-    "permission_overrides_section": "Permission overrides",
-    "permission_overrides_hint": "Sparse employee override document. Inherited occupations and effective permissions are not exposed by the current API contract.",
-    "permission_overrides_json": "Override JSON",
-    "permission_overrides_saved": "Permission overrides updated.",
-    "permission_overrides_invalid": "Permission overrides must be valid JSON.",
     "invite_ready_title": "Employee created",
     "invite_ready_body": "Share this invite token with the employee so they can complete registration.",
     "invite_token": "Invite token",
     "copy_invite_token": "Copy token",
     "invite_token_copied": "Invite token copied.",
     "open_employee": "Open employee",
-    "form_settings_title": "Employee settings"
+    "form_settings_title": "Employee settings",
+    "access_settings_load_failed": "Failed to load employee access settings.",
+    "access_settings_save_failed": "Failed to save employee access settings.",
+    "access_settings_saved": "Employee access settings updated.",
+    "roles_and_occupations_section": "Roles and occupations",
+    "no_occupations_assigned": "No occupations assigned yet.",
+    "occupations_empty": "No occupations are configured for this hotel yet.",
+    "manage_occupations_action": "Manage occupations",
+    "manage_permissions_action": "Manage permissions",
+    "effective_permissions_section": "Effective permissions",
+    "effective_permissions_hint": "Preview of the final permission set after occupations and overrides are merged.",
+    "role_unknown": "Unknown role family"
+  },
+  "occupations": {
+    "create_title": "Occupations",
+    "create_hint": "Create and maintain reusable role templates for hotel staff on one page.",
+    "create_hint_group": "Add a new occupation inside this role family.",
+    "create_action": "Create occupation",
+    "delete_action": "Delete",
+    "fields": {
+      "title": "Occupation title",
+      "role_key": "Role key"
+    },
+    "role_family": "Role family",
+    "role_key_label": "Role key",
+    "role_unknown": "Unknown role family",
+    "empty": "No occupations yet.",
+    "empty_group": "No occupations in this role family yet.",
+    "untitled": "Untitled occupation",
+    "load_failed": "Failed to load occupations.",
+    "created": "Occupation created.",
+    "saved": "Occupation updated.",
+    "deleted": "Occupation deleted.",
+    "delete_confirm": "Delete occupation \"{title}\"? Employees linked to it will lose its default permissions.",
+    "select_hint": "Select an occupation to view and edit its permissions."
+  },
+  "forbidden": {
+    "message": "You do not have access to this page.",
+    "link": "Go to available section"
+  },
+  "permissions": {
+    "columns": {
+      "action": "Action",
+      "level": "Access level"
+    },
+    "areas": {
+      "bookings": "Bookings",
+      "guests": "Guests",
+      "billing": "Billing",
+      "pricing": "Pricing",
+      "hotel": "Hotel",
+      "rooms": "Rooms",
+      "employees": "Employees"
+    },
+    "level": {
+      "unset": "Inherit",
+      "0": "None",
+      "1": "Owned",
+      "2": "Hotel",
+      "3": "Organization"
+    },
+    "actions": {
+      "bookings": {
+        "view": "View bookings",
+        "create": "Create bookings",
+        "operate": "Booking operations",
+        "modify": "Edit bookings",
+        "cancel": "Cancel bookings"
+      },
+      "guests": {
+        "view": "View guests",
+        "create": "Create guests",
+        "modify": "Edit guests",
+        "block": "Block guests"
+      },
+      "billing": {
+        "view": "View billing",
+        "collect_payment": "Record payments",
+        "modify": "Adjust folio",
+        "refund": "Record refunds"
+      },
+      "pricing": {
+        "view": "View pricing",
+        "manage": "Manage rules",
+        "adjust": "Adjust base rates"
+      },
+      "hotel": {
+        "view": "View hotel settings",
+        "manage": "Manage hotel settings",
+        "manage_occupations": "Manage occupations",
+        "manage_permissions": "Manage employee permissions"
+      },
+      "rooms": {
+        "view": "View rooms",
+        "create": "Create rooms",
+        "manage": "Manage rooms"
+      },
+      "employees": {
+        "view": "View employees",
+        "manage": "Manage employees",
+        "delete": "Delete employees"
+      }
+    }
   },
   "guests": {
     "new_guest": "New guest",
@@ -665,6 +765,7 @@
       "auth_header_invalid": "Invalid authorization header format.",
       "jwt_expired": "Your session has expired. Please sign in again.",
       "jwt_invalid": "Invalid or expired token.",
+      "forbidden": "You do not have permission to perform this action.",
       "validation_failed": "Some fields need your attention. Check the messages below."
     },
     "iam": {
@@ -759,6 +860,29 @@
       "invalid_base_rate": "Base rate must not be negative.",
       "room_type_not_found": "Unknown room type in base-rate update.",
       "not_found": "No stored quote for this booking yet."
+    }
+  },
+  "iam": {
+    "roles": {
+      "executive": "Executive",
+      "administration_back_office": "Administration & Back Office",
+      "revenue_pricing": "Revenue & Pricing",
+      "front_office": "Front Office",
+      "housekeeping_operations": "Housekeeping & Operations"
+    },
+    "occupations": {
+      "chain_director": "Chain Director",
+      "general_manager": "General Manager",
+      "hotel_director": "Hotel Director",
+      "accountant": "Accountant",
+      "office_administrator": "Office Administrator",
+      "revenue_manager": "Revenue Manager",
+      "front_office_manager": "Front Office Manager",
+      "night_auditor": "Night Auditor",
+      "receptionist": "Receptionist",
+      "housekeeper": "Housekeeper",
+      "housekeeping_supervisor": "Housekeeping Supervisor",
+      "operations_manager": "Operations Manager"
     }
   }
 }

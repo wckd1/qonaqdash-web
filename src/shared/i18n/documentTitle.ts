@@ -17,6 +17,7 @@ export function formatDocumentTitle(pagePart) {
 const ROUTE_TITLE_KEYS = {
   dashboard: 'page_title.dashboard',
   'manage-hotel': 'page_title.hotel',
+  'manage-hotel-occupations': 'page_title.hotel_occupations',
   rooms: 'page_title.hotel',
   employees: 'page_title.employees',
   'employee-new': 'page_title.employee_new',
@@ -35,6 +36,7 @@ const ROUTE_TITLE_KEYS = {
   'manage-bookings-form': 'page_title.booking_form_settings',
   'manage-employees-form': 'page_title.employee_form_settings',
   profile: 'page_title.profile',
+  forbidden: 'page_title.forbidden',
   'not-found': 'page_title.not_found',
 }
 

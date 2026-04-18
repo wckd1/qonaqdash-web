@@ -1,4 +1,10 @@
 import type { FormNode, FormRef } from './forms'
+import type {
+  EmployeeOccupationsResponse,
+  EmployeePermissionsResponse,
+  OccupationRoleGroup,
+  OccupationTemplate,
+} from './permissions'
 
 export interface EmployeeListItem {
   id: string
@@ -26,4 +32,11 @@ export interface EmployeeFormDefinitionResponse {
 export interface CreateEmployeeResponse {
   employee: EmployeeListItem
   invite_token: string
+}
+
+export type {
+  OccupationTemplate,
+  OccupationRoleGroup,
+  EmployeeOccupationsResponse,
+  EmployeePermissionsResponse,
 }

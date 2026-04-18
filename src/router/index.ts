@@ -1,6 +1,80 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { applyDocumentTitleFromRoute } from '@/shared/i18n/documentTitle'
+import {
+  canAccessDashboard,
+  canAccessEmployees,
+  canAccessFormsOverview,
+  canAccessGuests,
+  canAccessHotelGeneral,
+  canAccessPricingBaseRates,
+  canAccessPricingRules,
+  canAccessReports,
+  canAccessRooms,
+  canCreateBookings,
+  canCreateGuests,
+  canViewBookings,
+  canManageBookingForms,
+  canManageEmployeeForms,
+  canManageEmployees,
+  canManageGuestForms,
+  canManageOccupations,
+  resolveAccessibleHomeRoute,
+} from '@/shared/lib/permissions'
+
+function canAccessRoute(
+  name: unknown,
+  auth = useAuthStore(),
+  settings = useSettingsStore(),
+): boolean {
+  const ctx = { permissions: settings.permissions, hasHotelContext: !!auth.hotelId }
+  switch (name) {
+    case 'dashboard':
+      return canAccessDashboard(ctx)
+    case 'manage-hotel':
+      return canAccessHotelGeneral(ctx)
+    case 'manage-hotel-occupations':
+      return canManageOccupations(ctx)
+    case 'rooms':
+      return canAccessRooms(ctx)
+    case 'guest-new':
+      return canCreateGuests(ctx)
+    case 'guest-detail':
+    case 'guests':
+      return canAccessGuests(ctx)
+    case 'employee-new':
+      return canManageEmployees(ctx)
+    case 'employee-detail':
+    case 'employees':
+      return canAccessEmployees(ctx)
+    case 'booking-new':
+      return canCreateBookings(ctx)
+    case 'booking-detail':
+    case 'bookings':
+      return canViewBookings(ctx)
+    case 'manage-pricing-base-rates':
+      return canAccessPricingBaseRates(ctx)
+    case 'manage-pricing-rules':
+      return canAccessPricingRules(ctx)
+    case 'manage-reports':
+      return canAccessReports(ctx)
+    case 'manage-forms':
+      return canAccessFormsOverview(ctx)
+    case 'manage-guests-form':
+      return canManageGuestForms(ctx)
+    case 'manage-bookings-form':
+      return canManageBookingForms(ctx)
+    case 'manage-employees-form':
+      return canManageEmployeeForms(ctx)
+    case 'profile':
+    case 'forbidden':
+    case 'not-found':
+      return true
+    default:
+      return true
+  }
+}
 
 const routes = [
   {
@@ -27,6 +101,11 @@ const routes = [
         path: 'manage/hotel',
         name: 'manage-hotel',
         component: () => import('@/features/property/views/HotelSettingsView.vue'),
+      },
+      {
+        path: 'manage/hotel/occupations',
+        name: 'manage-hotel-occupations',
+        component: () => import('@/features/property/views/HotelOccupationsView.vue'),
       },
       {
         path: 'manage/rooms',
@@ -119,6 +198,11 @@ const routes = [
         component: () => import('@/features/auth/views/ProfileView.vue'),
       },
       {
+        path: 'forbidden',
+        name: 'forbidden',
+        component: () => import('@/shared/views/ForbiddenView.vue'),
+      },
+      {
         path: '/:pathMatch(.*)*',
         name: 'not-found',
         component: () => import('@/shared/views/NotFoundView.vue'),
@@ -134,6 +218,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
+  const settings = useSettingsStore()
 
   if (!auth.isAuthenticated && auth.accessToken) {
     auth.logout()
@@ -143,8 +228,47 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
+  if (auth.isAuthenticated && !settings.permissionsLoaded) {
+    return settings
+      .fetchUserSettings()
+      .catch(() => undefined)
+      .then(() => {
+        if (to.path.startsWith('/auth/')) return { path: '/' }
+        if (to.name === 'dashboard' && !canAccessRoute('dashboard', auth, settings)) {
+          return {
+            name: resolveAccessibleHomeRoute({
+              permissions: settings.permissions,
+              hasHotelContext: !!auth.hotelId,
+            }),
+          }
+        }
+        if (to.name !== 'forbidden' && !canAccessRoute(to.name, auth, settings)) {
+          return { name: 'forbidden', query: { from: to.fullPath } }
+        }
+        return true
+      })
+  }
+
   if (to.path.startsWith('/auth/') && auth.isAuthenticated) {
-    return { path: '/' }
+    return {
+      name: resolveAccessibleHomeRoute({
+        permissions: settings.permissions,
+        hasHotelContext: !!auth.hotelId,
+      }),
+    }
+  }
+
+  if (to.name === 'dashboard' && !canAccessRoute('dashboard', auth, settings)) {
+    return {
+      name: resolveAccessibleHomeRoute({
+        permissions: settings.permissions,
+        hasHotelContext: !!auth.hotelId,
+      }),
+    }
+  }
+
+  if (to.name !== 'forbidden' && !canAccessRoute(to.name, auth, settings)) {
+    return { name: 'forbidden', query: { from: to.fullPath } }
   }
 })
 

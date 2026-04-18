@@ -2,10 +2,11 @@
   <header class="page-header">
     <h1>{{ t('hotel.title') }}</h1>
     <button
+      v-if="canCreateRooms"
       type="button"
       class="btn-add-outline"
-      @click="openAddTypeDialog"
       :aria-label="t('rooms.add_type_aria')"
+      @click="openAddTypeDialog"
     >
       <svg
         class="btn-icon"
@@ -56,7 +57,7 @@
           <h3 class="empty-state-widget__title">{{ t('rooms.empty_title') }}</h3>
           <p class="empty-state-widget__description">{{ t('rooms.empty_description') }}</p>
           <div class="empty-state-widget__actions">
-            <button type="button" class="primary" @click="openAddTypeDialog">
+            <button v-if="canCreateRooms" type="button" class="primary" @click="openAddTypeDialog">
               {{ t('rooms.add_type') }}
             </button>
           </div>
@@ -78,6 +79,7 @@
               </span>
               <div class="accordion-header-actions">
                 <button
+                  v-if="canManageRooms"
                   type="button"
                   class="btn-room-type-action"
                   :aria-label="t('common.edit')"
@@ -86,6 +88,7 @@
                   {{ t('common.edit') }}
                 </button>
                 <button
+                  v-if="canManageRooms"
                   type="button"
                   class="btn-room-type-action btn-room-type-action--danger"
                   :aria-label="t('rooms.remove_type_aria', { name: rt.name })"
@@ -94,6 +97,7 @@
                   {{ t('rooms.remove_type_from_catalog') }}
                 </button>
                 <button
+                  v-if="canCreateRooms"
                   type="button"
                   class="btn-add-room"
                   :aria-label="t('rooms.add_room_aria', { name: rt.name })"
@@ -176,7 +180,12 @@
             </svg>
           </button>
         </div>
-        <div class="action-toolbar" role="toolbar" :aria-label="t('rooms.panel_toolbar_aria')">
+        <div
+          v-if="canManageRooms"
+          class="action-toolbar"
+          role="toolbar"
+          :aria-label="t('rooms.panel_toolbar_aria')"
+        >
           <template v-if="!roomPanelEditing">
             <button
               type="button"
@@ -452,6 +461,7 @@ import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import type { Room, RoomType } from '@/shared/types/property'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const DEBOUNCE_MS = 300
 
@@ -461,6 +471,7 @@ type RoomPanelSelection = { room: Room; roomType: RoomType | undefined }
 
 const { t } = useI18n()
 const store = usePropertyStore()
+const { canCreateRooms, canManageRooms } = usePermissions()
 const { roomTypes, rooms } = storeToRefs(store)
 
 const removeTypeTitleId = useId()

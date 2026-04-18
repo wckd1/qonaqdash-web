@@ -1,7 +1,7 @@
 <template>
   <header class="page-header">
     <h1>{{ t('hotel.title') }}</h1>
-    <div class="page-header-actions">
+    <div v-if="canManageHotel" class="page-header-actions">
       <button type="button" :disabled="saving || loading || !dirty" @click="onSave">
         {{ saving ? t('common.saving') : t('common.save') }}
       </button>
@@ -20,7 +20,12 @@
         <p class="hotel-settings-view__hint">{{ t('hotel.name_hint') }}</p>
         <label>
           {{ t('hotel.display_name') }}
-          <input v-model="name" type="text" autocomplete="organization" :disabled="saving" />
+          <input
+            v-model="name"
+            type="text"
+            autocomplete="organization"
+            :disabled="saving || !canManageHotel"
+          />
         </label>
       </section>
 
@@ -30,11 +35,11 @@
         <div class="hotel-settings-view__row">
           <label>
             {{ t('hotel.check_in_hour') }}
-            <input v-model="checkInHour" type="time" :disabled="saving" />
+            <input v-model="checkInHour" type="time" :disabled="saving || !canManageHotel" />
           </label>
           <label>
             {{ t('hotel.check_out_hour') }}
-            <input v-model="checkOutHour" type="time" :disabled="saving" />
+            <input v-model="checkOutHour" type="time" :disabled="saving || !canManageHotel" />
           </label>
         </div>
       </section>
@@ -44,7 +49,11 @@
         <p class="hotel-settings-view__hint">{{ t('hotel.currency_hint') }}</p>
         <label>
           {{ t('hotel.currency') }}
-          <select :value="currency" :disabled="saving" @change="onCurrencyChange">
+          <select
+            :value="currency"
+            :disabled="saving || !canManageHotel"
+            @change="onCurrencyChange"
+          >
             <option v-for="code in CURRENCY_CODES" :key="code" :value="code">
               {{ t(`hotel.currency_name.${code}`) }} ({{ getCurrencySymbol(code) }})
             </option>
@@ -89,8 +98,10 @@ import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import * as propertyApi from '@/features/property/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { CURRENCY_CODES, getCurrencySymbol } from '@/shared/lib/money'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
+const { canManageHotel } = usePermissions()
 
 const loading = ref(true)
 const saving = ref(false)

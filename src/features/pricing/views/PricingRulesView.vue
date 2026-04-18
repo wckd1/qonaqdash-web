@@ -15,7 +15,12 @@
             <h2 class="pricing-view__heading">{{ t('pricing.rules_title') }}</h2>
             <p class="pricing-view__hint">{{ t('pricing.rules_hint') }}</p>
           </div>
-          <button type="button" class="btn-add-outline" @click="openAddDialog">
+          <button
+            v-if="canManagePricing"
+            type="button"
+            class="btn-add-outline"
+            @click="openAddDialog"
+          >
             <svg
               class="btn-icon"
               viewBox="0 0 24 24"
@@ -67,10 +72,16 @@
               </td>
               <td class="list-table__cell--actions">
                 <div class="list-table__actions">
-                  <button type="button" class="list-table__action" @click="openEditDialog(rule)">
+                  <button
+                    v-if="canManagePricing"
+                    type="button"
+                    class="list-table__action"
+                    @click="openEditDialog(rule)"
+                  >
                     {{ t('common.edit') }}
                   </button>
                   <button
+                    v-if="canManagePricing"
                     type="button"
                     class="list-table__action list-table__action--danger"
                     @click="openDeleteConfirm(rule)"
@@ -98,7 +109,7 @@
           {{ editingId ? t('pricing.edit_rule') : t('pricing.add_rule') }}
         </h2>
         <p v-if="dialogError" class="form-error">{{ dialogError }}</p>
-        <form @submit.prevent="submitDialog" class="rule-form">
+        <form class="rule-form" @submit.prevent="submitDialog">
           <div class="rule-form__top">
             <label class="rule-form__field rule-form__field--grow">
               {{ t('pricing.rule_name') }}
@@ -316,10 +327,12 @@ import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
 const pricingStore = usePricingStore()
 const propertyStore = usePropertyStore()
+const { canManagePricing } = usePermissions()
 const { rules, conditionCandidates } = storeToRefs(pricingStore)
 
 const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? 'USD')

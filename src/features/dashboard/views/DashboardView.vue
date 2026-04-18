@@ -2,7 +2,7 @@
   <div class="dashboard-view">
     <header class="page-header">
       <h1 id="dashboard-title">{{ t('dashboard.title') }}</h1>
-      <router-link :to="{ name: 'booking-new' }" class="btn-add-outline">
+      <router-link v-if="canCreateBookings" :to="{ name: 'booking-new' }" class="btn-add-outline">
         <svg
           class="btn-icon"
           viewBox="0 0 24 24"
@@ -166,6 +166,7 @@ import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
 import { parseLocalYmd, formatLocalYmd } from '@/features/bookings/utils/gridDates'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 /** Saved range; period length is derived from from/to. */
 const STORAGE_RANGE = 'qonaqdash.dashboard.gridCustomRange'
@@ -176,6 +177,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const propertyStore = usePropertyStore()
+const { canCreateBookings } = usePermissions()
 const { rooms, roomTypes } = storeToRefs(propertyStore)
 
 const fromStr = ref('')

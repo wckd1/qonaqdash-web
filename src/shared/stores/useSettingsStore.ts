@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { i18n } from '@/i18n'
 import * as authApi from '@/features/auth/api'
+import type { Permissions } from '@/shared/types/permissions'
+import { extractPermissionsBundle, parsePermissions } from '@/shared/lib/permissions'
 import {
   LOCALE_STORAGE_KEY,
   SUPPORTED_LOCALES,
@@ -11,13 +13,28 @@ import {
   hasPinnedLocale,
 } from '@/shared/i18n/resolveLocale'
 
+const PERMISSIONS_STORAGE_KEY = 'qonaqdash.account.permissions'
+
+function readCachedPermissions(): Permissions | null {
+  try {
+    const raw = localStorage.getItem(PERMISSIONS_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = parsePermissions(JSON.parse(raw))
+    return Object.keys(parsed).length ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   const locale = ref(resolveInitialLocale())
   /** From last `GET /api/account` — for sidebar / profile. */
-  const accountEmail = ref(null)
+  const accountEmail = ref<string | null>(null)
   const profileFirstName = ref<string | null>(null)
   const profileLastName = ref<string | null>(null)
-  const userSettings = ref(null)
+  const userSettings = ref<Record<string, unknown> | null>(null)
+  const permissions = ref<Permissions | null>(readCachedPermissions())
+  const permissionsLoaded = ref(permissions.value !== null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -71,6 +88,12 @@ export const useSettingsStore = defineStore('settings', () => {
       const settings =
         data?.settings && typeof data.settings === 'object' ? { ...data.settings } : {}
       userSettings.value = Object.keys(settings).length ? settings : null
+      const nextPermissions = extractPermissionsBundle(data)
+      if (nextPermissions) {
+        permissions.value = nextPermissions
+        localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(nextPermissions))
+      }
+      permissionsLoaded.value = true
       if (!hasPinnedLocale()) {
         const loc = settings.locale
         if (loc === 'en' || loc === 'ru') {
@@ -93,6 +116,9 @@ export const useSettingsStore = defineStore('settings', () => {
     profileFirstName.value = null
     profileLastName.value = null
     userSettings.value = null
+    permissions.value = null
+    permissionsLoaded.value = false
+    localStorage.removeItem(PERMISSIONS_STORAGE_KEY)
     loading.value = false
     error.value = null
     initLocale()
@@ -104,6 +130,8 @@ export const useSettingsStore = defineStore('settings', () => {
     profileFirstName,
     profileLastName,
     userSettings,
+    permissions,
+    permissionsLoaded,
     loading,
     error,
     setLocale,

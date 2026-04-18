@@ -9,11 +9,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
+const { canAccessHotelGeneral, canAccessRooms, canManageOccupations } = usePermissions()
 
-const items = computed(() => [
-  { to: '/manage/hotel', label: t('hotel.tab_general') },
-  { to: '/manage/rooms', label: t('hotel.tab_rooms') },
-])
+const items = computed(() =>
+  [
+    canAccessHotelGeneral.value ? { to: '/manage/hotel', label: t('hotel.tab_general') } : null,
+    canAccessRooms.value ? { to: '/manage/rooms', label: t('hotel.tab_rooms') } : null,
+    canManageOccupations.value
+      ? { to: '/manage/hotel/occupations', label: t('hotel.tab_occupations') }
+      : null,
+  ].filter((item): item is { to: string; label: string } => item !== null),
+)
 </script>

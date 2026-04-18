@@ -134,7 +134,7 @@ async function handleSubmit() {
 
   try {
     await authStore.completeInvite(tok, password.value)
-    void settingsStore.fetchUserSettings().catch(() => {})
+    await settingsStore.fetchUserSettings().catch(() => undefined)
     router.push('/')
   } catch (err: unknown) {
     if (httpErrorResponse(err)) {

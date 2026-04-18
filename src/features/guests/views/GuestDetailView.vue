@@ -3,6 +3,7 @@
     <h1>{{ guestDisplayName }}</h1>
     <div v-if="guestId && guestForm && !editing" class="page-header-actions">
       <button
+        v-if="canBlockGuests"
         type="button"
         class="btn-secondary guest-detail-block-btn"
         :disabled="removing"
@@ -10,11 +11,11 @@
       >
         {{ t('guests.block') }}
       </button>
-      <button type="button" class="btn-secondary" @click="editing = true">
+      <button v-if="canModifyGuests" type="button" class="btn-secondary" @click="editing = true">
         {{ t('common.edit') }}
       </button>
     </div>
-    <div v-else-if="guestId && guestForm && editing" class="page-header-actions">
+    <div v-else-if="guestId && guestForm && editing && canModifyGuests" class="page-header-actions">
       <button type="button" :disabled="submitting" @click="onSave">
         {{ submitting ? t('common.saving') : t('common.save') }}
       </button>
@@ -45,7 +46,11 @@
         </template>
         <p v-else class="section-placeholder">{{ t('guests.details_loading') }}</p>
       </div>
-      <section v-if="guestId" class="related-records" aria-labelledby="related-records-heading">
+      <section
+        v-if="guestId && canViewBookings"
+        class="related-records"
+        aria-labelledby="related-records-heading"
+      >
         <h2 id="related-records-heading">{{ t('guests.bookings_heading') }}</h2>
         <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
         <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
@@ -137,12 +142,14 @@ import { httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useGuestStore()
 const { success } = useNotification()
+const { canModifyGuests, canBlockGuests, canViewBookings } = usePermissions()
 const { currentGuest, guestFormTemplate, guestFormRuntimeView, currentGuestFormRef } =
   storeToRefs(store)
 const loadError = ref('')
@@ -226,7 +233,7 @@ async function load() {
 
 async function loadBookings() {
   const id = guestId.value
-  if (!id) return
+  if (!id || !canViewBookings.value) return
   bookingsLoadError.value = ''
   bookingsLoading.value = true
   try {
@@ -291,13 +298,13 @@ async function onSave() {
 }
 
 watch(guestId, (id) => {
-  if (id && currentGuest.value) loadBookings()
+  if (id && currentGuest.value && canViewBookings.value) loadBookings()
 })
 
 watch(
   currentGuest,
   (guest) => {
-    if (guest && guestId.value) loadBookings()
+    if (guest && guestId.value && canViewBookings.value) loadBookings()
   },
   { immediate: true },
 )

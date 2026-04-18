@@ -115,6 +115,7 @@ import {
   bookingStatusAllowsCancel,
 } from '@/features/bookings/bookingStatus'
 import { useNotification } from '@/shared/composables/useNotification'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const props = defineProps({
   bookingId: { type: String, required: true },
@@ -136,15 +137,22 @@ const emit = defineEmits(['updated'])
 const { t } = useI18n()
 const store = useBookingStore()
 const { success } = useNotification()
+const { canOperateBookings, canCancelBookings } = usePermissions()
 
 const pending = ref(null)
 const running = ref(false)
 const forceUnpaidAck = ref(false)
 const dialogTitleId = useId()
 
-const allowsCheckIn = computed(() => bookingStatusAllowsCheckIn(props.status))
-const allowsCheckOut = computed(() => bookingStatusAllowsCheckOut(props.status))
-const allowsCancel = computed(() => bookingStatusAllowsCancel(props.status))
+const allowsCheckIn = computed(
+  () => canOperateBookings.value && bookingStatusAllowsCheckIn(props.status),
+)
+const allowsCheckOut = computed(
+  () => canOperateBookings.value && bookingStatusAllowsCheckOut(props.status),
+)
+const allowsCancel = computed(
+  () => canCancelBookings.value && bookingStatusAllowsCancel(props.status),
+)
 
 const hasAnyAction = computed(
   () => allowsCheckIn.value || allowsCheckOut.value || allowsCancel.value,

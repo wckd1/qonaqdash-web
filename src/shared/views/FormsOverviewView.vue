@@ -4,7 +4,7 @@
   </header>
 
   <div class="forms-overview">
-    <section class="panel forms-overview__card">
+    <section v-if="canManageGuestForms" class="panel forms-overview__card">
       <div class="forms-overview__body">
         <h2 class="forms-overview__heading">{{ t('forms.guest_title') }}</h2>
         <p class="forms-overview__description">{{ t('forms.guest_description') }}</p>
@@ -14,7 +14,7 @@
       </router-link>
     </section>
 
-    <section class="panel forms-overview__card">
+    <section v-if="canManageBookingForms" class="panel forms-overview__card">
       <div class="forms-overview__body">
         <h2 class="forms-overview__heading">{{ t('forms.booking_title') }}</h2>
         <p class="forms-overview__description">{{ t('forms.booking_description') }}</p>
@@ -24,7 +24,7 @@
       </router-link>
     </section>
 
-    <section class="panel forms-overview__card">
+    <section v-if="canManageEmployeeForms" class="panel forms-overview__card">
       <div class="forms-overview__body">
         <h2 class="forms-overview__heading">{{ t('forms.employee_title') }}</h2>
         <p class="forms-overview__description">{{ t('forms.employee_description') }}</p>
@@ -38,8 +38,10 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
+const { canManageGuestForms, canManageBookingForms, canManageEmployeeForms } = usePermissions()
 </script>
 
 <style scoped>

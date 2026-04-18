@@ -30,6 +30,7 @@ const api: AxiosInstance = axios.create({
 
 /** Single-flight refresh so concurrent 401s share one POST /api/auth/refresh. */
 let refreshPromise: Promise<void> | null = null
+let permissionsRefreshPromise: Promise<void> | null = null
 
 function refreshAccessToken() {
   if (refreshPromise) return refreshPromise
@@ -62,6 +63,18 @@ async function clearSessionAndRedirectLogin() {
   const { useAuthStore } = await import('@/features/auth/stores/useAuthStore')
   useAuthStore().logout()
   window.location.href = '/auth/login'
+}
+
+function refreshPermissionsSnapshot() {
+  if (permissionsRefreshPromise) return permissionsRefreshPromise
+  permissionsRefreshPromise = import('@/shared/stores/useSettingsStore')
+    .then(({ useSettingsStore }) => useSettingsStore().fetchUserSettings())
+    .then(() => undefined)
+    .catch(() => undefined)
+    .finally(() => {
+      permissionsRefreshPromise = null
+    })
+  return permissionsRefreshPromise
 }
 
 api.interceptors.request.use((config) => {
@@ -147,6 +160,15 @@ api.interceptors.response.use(
 
     if (status === 409) {
       showError(formatApiError(data?.error) || 'Conflict: the resource was modified. Please retry.')
+      return Promise.reject(err)
+    }
+
+    if (status === 403) {
+      const message = formatApiError(data?.error) || `Request failed (${status})`
+      showError(message)
+      if (!url.startsWith('/api/account')) {
+        void refreshPermissionsSnapshot()
+      }
       return Promise.reject(err)
     }
 

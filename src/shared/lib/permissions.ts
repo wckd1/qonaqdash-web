@@ -15,6 +15,7 @@ export type PermissionAction =
   | 'manage_occupations'
   | 'manage_permissions'
   | 'delete'
+  | 'assign'
 
 export interface AccessContext {
   permissions: Permissions | null | undefined
@@ -29,6 +30,8 @@ const PERMISSION_ACTIONS = {
   hotel: ['view', 'manage', 'manage_occupations', 'manage_permissions'],
   rooms: ['view', 'create', 'manage'],
   employees: ['view', 'manage', 'delete'],
+  housekeeping_tasks: ['view', 'create', 'operate', 'assign'],
+  maintenance_tasks: ['view', 'create', 'operate', 'assign'],
 } as const satisfies Record<PermissionArea, readonly PermissionAction[]>
 
 export const PERMISSION_AREA_ORDER = Object.keys(PERMISSION_ACTIONS) as PermissionArea[]
@@ -50,6 +53,8 @@ export const PERMISSION_DEPENDENCIES: Record<string, Record<string, string | nul
   hotel: { view: null, manage: 'view', manage_occupations: 'view', manage_permissions: 'view' },
   rooms: { view: null, create: 'view', manage: 'view' },
   employees: { view: null, manage: 'view', delete: 'manage' },
+  housekeeping_tasks: { view: null, create: 'view', operate: 'view', assign: 'view' },
+  maintenance_tasks: { view: null, create: 'view', operate: 'view', assign: 'view' },
 }
 
 /** Whether an action should be visible given current permission values. */
@@ -334,10 +339,60 @@ export function canAccessFormsOverview(ctx: AccessContext): boolean {
   return canManageGuestForms(ctx) || canManageBookingForms(ctx) || canManageEmployeeForms(ctx)
 }
 
+export function canAccessHousekeepingTasks(ctx: AccessContext): boolean {
+  return (
+    ctx.hasHotelContext &&
+    hasAnyPermission(ctx.permissions, [
+      'housekeeping_tasks.view',
+      'housekeeping_tasks.create',
+      'housekeeping_tasks.operate',
+      'housekeeping_tasks.assign',
+    ])
+  )
+}
+
+export function canCreateHousekeepingTasks(ctx: AccessContext): boolean {
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'housekeeping_tasks', 'create')
+}
+
+export function canOperateHousekeepingTasks(ctx: AccessContext): boolean {
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'housekeeping_tasks', 'operate')
+}
+
+export function canAssignHousekeepingTasks(ctx: AccessContext): boolean {
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'housekeeping_tasks', 'assign')
+}
+
+export function canAccessMaintenanceTasks(ctx: AccessContext): boolean {
+  return (
+    ctx.hasHotelContext &&
+    hasAnyPermission(ctx.permissions, [
+      'maintenance_tasks.view',
+      'maintenance_tasks.create',
+      'maintenance_tasks.operate',
+      'maintenance_tasks.assign',
+    ])
+  )
+}
+
+export function canCreateMaintenanceTasks(ctx: AccessContext): boolean {
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'maintenance_tasks', 'create')
+}
+
+export function canOperateMaintenanceTasks(ctx: AccessContext): boolean {
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'maintenance_tasks', 'operate')
+}
+
+export function canAssignMaintenanceTasks(ctx: AccessContext): boolean {
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'maintenance_tasks', 'assign')
+}
+
 export function resolveAccessibleHomeRoute(ctx: AccessContext): string {
   if (canAccessDashboard(ctx)) return 'dashboard'
   if (canViewBookings(ctx)) return 'bookings'
   if (canAccessGuests(ctx)) return 'guests'
+  if (canAccessHousekeepingTasks(ctx)) return 'housekeeping'
+  if (canAccessMaintenanceTasks(ctx)) return 'maintenance'
   if (canAccessEmployees(ctx)) return 'employees'
   if (canAccessHotelGeneral(ctx)) return 'manage-hotel'
   if (canAccessRooms(ctx)) return 'rooms'

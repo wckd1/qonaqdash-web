@@ -47,6 +47,20 @@ export interface EmployeesPermissions {
   delete?: PermissionLevel
 }
 
+export interface HousekeepingTasksPermissions {
+  view?: PermissionLevel
+  create?: PermissionLevel
+  operate?: PermissionLevel
+  assign?: PermissionLevel
+}
+
+export interface MaintenanceTasksPermissions {
+  view?: PermissionLevel
+  create?: PermissionLevel
+  operate?: PermissionLevel
+  assign?: PermissionLevel
+}
+
 export interface Permissions {
   bookings?: BookingsPermissions
   guests?: GuestsPermissions
@@ -55,6 +69,8 @@ export interface Permissions {
   hotel?: HotelPermissions
   rooms?: RoomsPermissions
   employees?: EmployeesPermissions
+  housekeeping_tasks?: HousekeepingTasksPermissions
+  maintenance_tasks?: MaintenanceTasksPermissions
 }
 
 export interface OccupationTemplate {

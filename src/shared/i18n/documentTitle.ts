@@ -19,6 +19,7 @@ const ROUTE_TITLE_KEYS = {
   'manage-hotel': 'page_title.hotel',
   'manage-hotel-occupations': 'page_title.hotel_occupations',
   rooms: 'page_title.hotel',
+  'room-detail': 'page_title.room',
   employees: 'page_title.employees',
   'employee-new': 'page_title.employee_new',
   'employee-detail': 'page_title.employee',

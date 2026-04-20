@@ -46,7 +46,7 @@ import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
-import type { Room } from '@/shared/types/property'
+import type { AvailableRoom } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
 import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
@@ -76,7 +76,7 @@ const formData = ref<Record<string, unknown>>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 const manualAdjustments = ref<ManualAdjustmentInput[]>([])
-const availableRooms = ref<Room[]>([])
+const availableRooms = ref<AvailableRoom[]>([])
 
 provide(availableRoomsKey, availableRooms)
 

@@ -108,6 +108,52 @@
           </router-link>
 
           <router-link
+            v-if="canAccessHousekeepingTasks"
+            to="/housekeeping"
+            class="nav-link"
+            :class="{ 'nav-link--active': $route.path.startsWith('/housekeeping') }"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 11V3h6v8" />
+              <path d="M5 21V11h14v10" />
+              <path d="M9 15h6" />
+            </svg>
+            <span class="nav-label">{{ t('nav.housekeeping') }}</span>
+          </router-link>
+
+          <router-link
+            v-if="canAccessMaintenanceTasks"
+            to="/maintenance"
+            class="nav-link"
+            :class="{ 'nav-link--active': $route.path.startsWith('/maintenance') }"
+          >
+            <svg
+              class="nav-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M14.7 6.3a4 4 0 0 0-5.3 5.3L4 17l3 3 5.4-5.4a4 4 0 0 0 5.3-5.3l-2.5 2.5-2.1-2.1 2.5-2.4Z"
+              />
+            </svg>
+            <span class="nav-label">{{ t('nav.maintenance') }}</span>
+          </router-link>
+
+          <router-link
             v-if="canAccessEmployees"
             to="/employees"
             class="nav-link"
@@ -367,6 +413,8 @@ const {
   canAccessGuests,
   canAccessEmployees,
   canAccessHotelGeneral,
+  canAccessHousekeepingTasks,
+  canAccessMaintenanceTasks,
   canAccessRooms,
   canManageOccupations,
   canAccessPricingBaseRates,

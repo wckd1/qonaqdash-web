@@ -8,6 +8,8 @@ import {
   canAccessFormsOverview,
   canAccessGuests,
   canAccessHotelGeneral,
+  canAccessHousekeepingTasks,
+  canAccessMaintenanceTasks,
   canAccessPricingBaseRates,
   canAccessPricingRules,
   canAccessReports,
@@ -36,6 +38,7 @@ function canAccessRoute(
       return canAccessHotelGeneral(ctx)
     case 'manage-hotel-occupations':
       return canManageOccupations(ctx)
+    case 'room-detail':
     case 'rooms':
       return canAccessRooms(ctx)
     case 'guest-new':
@@ -53,6 +56,10 @@ function canAccessRoute(
     case 'booking-detail':
     case 'bookings':
       return canViewBookings(ctx)
+    case 'housekeeping':
+      return canAccessHousekeepingTasks(ctx)
+    case 'maintenance':
+      return canAccessMaintenanceTasks(ctx)
     case 'manage-pricing-base-rates':
       return canAccessPricingBaseRates(ctx)
     case 'manage-pricing-rules':
@@ -113,6 +120,11 @@ const routes = [
         component: () => import('@/features/property/views/RoomsView.vue'),
       },
       {
+        path: 'manage/rooms/:id/details',
+        name: 'room-detail',
+        component: () => import('@/features/property/views/RoomDetailView.vue'),
+      },
+      {
         path: 'guests/new',
         name: 'guest-new',
         component: () => import('@/features/guests/views/GuestNewView.vue'),
@@ -156,6 +168,16 @@ const routes = [
         path: 'bookings/:id?',
         name: 'bookings',
         component: () => import('@/features/bookings/views/BookingListView.vue'),
+      },
+      {
+        path: 'housekeeping',
+        name: 'housekeeping',
+        component: () => import('@/features/tasks/views/HousekeepingTasksView.vue'),
+      },
+      {
+        path: 'maintenance',
+        name: 'maintenance',
+        component: () => import('@/features/tasks/views/MaintenanceTasksView.vue'),
       },
       {
         path: 'manage/pricing/base-rates',

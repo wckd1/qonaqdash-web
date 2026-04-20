@@ -75,6 +75,7 @@
               <th scope="col">{{ t('fields.last_name') }}</th>
               <th scope="col">{{ t('fields.email') }}</th>
               <th scope="col">{{ t('fields.phone') }}</th>
+              <th scope="col" class="list-table__col--actions"></th>
             </tr>
           </thead>
           <tbody>
@@ -89,6 +90,15 @@
               <td :data-label="t('fields.last_name')">{{ guest.last_name ?? '—' }}</td>
               <td :data-label="t('fields.email')">{{ guest.email ?? '—' }}</td>
               <td :data-label="t('fields.phone')">{{ guest.phone ?? '—' }}</td>
+              <td class="list-table__cell--actions">
+                <router-link
+                  :to="{ name: 'guest-detail', params: { id: guest.id } }"
+                  class="list-table__action"
+                  @click.stop
+                >
+                  {{ t('common.details') }}
+                </router-link>
+              </td>
             </tr>
           </tbody>
         </table>

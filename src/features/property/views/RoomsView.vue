@@ -124,7 +124,8 @@
                 <thead>
                   <tr>
                     <th scope="col">{{ t('fields.number') }}</th>
-                    <th scope="col" class="col-status">{{ t('fields.status') }}</th>
+                    <th scope="col" class="col-status">{{ t('rooms.col_state') }}</th>
+                    <th scope="col" class="list-table__col--actions"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -132,18 +133,38 @@
                     v-for="room in roomsByType(rt.id)"
                     :key="room.id"
                     class="room-row"
-                    :class="{ 'room-row--selected': selectedRoom?.room?.id === room.id }"
-                    @click="openPanel(room, rt)"
+                    :class="{ 'room-row--selected': selectedRoom?.id === room.id }"
+                    @click="openPanel(room)"
                   >
                     <td :data-label="t('fields.number')">{{ room.number }}</td>
-                    <td :data-label="t('fields.status')" class="col-status">
-                      <span
-                        v-if="room.status"
-                        class="room-status-badge"
-                        :class="statusBadgeClass(room.status)"
-                        >{{ roomStatusLabel(room.status) }}</span
+                    <td :data-label="t('rooms.col_state')" class="col-status">
+                      <div class="room-state-chips">
+                        <span
+                          class="room-status-badge"
+                          :class="availabilityBadgeClass(room.availability_status)"
+                          >{{ availabilityLabel(room.availability_status) }}</span
+                        >
+                        <span
+                          class="room-status-badge"
+                          :class="housekeepingBadgeClass(room.housekeeping_status)"
+                          >{{ housekeepingLabel(room.housekeeping_status) }}</span
+                        >
+                        <span
+                          v-if="showMaintenanceBadge(room.maintenance_status)"
+                          class="room-status-badge"
+                          :class="maintenanceBadgeClass(room.maintenance_status)"
+                          >{{ maintenanceLabel(room.maintenance_status) }}</span
+                        >
+                      </div>
+                    </td>
+                    <td class="list-table__cell--actions">
+                      <router-link
+                        :to="{ name: 'room-detail', params: { id: room.id } }"
+                        class="list-table__action"
+                        @click.stop
                       >
-                      <span v-else class="room-status-empty">—</span>
+                        {{ t('common.details') }}
+                      </router-link>
                     </td>
                   </tr>
                 </tbody>
@@ -155,126 +176,30 @@
       </template>
     </div>
 
-    <Transition name="slide-panel">
-      <aside v-if="selectedRoom" class="side-panel" aria-labelledby="side-panel-title">
-        <div class="side-panel-header">
-          <h2 id="side-panel-title">
-            {{ selectedRoom.room?.number }} — {{ selectedRoom.roomType?.name }}
-          </h2>
-          <button
-            type="button"
-            class="side-panel-close"
-            :aria-label="t('common.close_panel')"
-            @click="closePanel"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-        </div>
-        <div
-          v-if="canManageRooms"
-          class="action-toolbar"
-          role="toolbar"
-          :aria-label="t('rooms.panel_toolbar_aria')"
-        >
-          <template v-if="!roomPanelEditing">
-            <button
-              type="button"
-              class="action-toolbar__btn action-toolbar__btn--check-out"
-              @click="startRoomEdit"
-            >
-              {{ t('common.edit') }}
-            </button>
-            <button
-              type="button"
-              class="action-toolbar__btn action-toolbar__btn--cancel"
-              :disabled="removeRoomSaving"
-              :aria-label="t('rooms.remove_room_aria', { number: selectedRoom.room?.number ?? '' })"
-              @click="openRemoveRoomConfirm"
-            >
-              {{ t('rooms.remove_room_from_catalog') }}
-            </button>
-          </template>
-          <template v-else>
-            <button
-              type="button"
-              class="action-toolbar__btn action-toolbar__btn--check-out"
-              :disabled="roomSaveSaving"
-              @click="cancelRoomEdit"
-            >
-              {{ t('common.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="action-toolbar__btn action-toolbar__btn--check-in"
-              :aria-busy="roomSaveSaving"
-              :disabled="roomSaveSaving"
-              @click="submitRoomEdit"
-            >
-              {{ roomSaveSaving ? t('common.saving') : t('common.save') }}
-            </button>
-          </template>
-        </div>
-        <div class="side-panel-body">
-          <p v-if="roomPanelError" class="form-error">{{ roomPanelError }}</p>
-          <template v-if="!roomPanelEditing">
-            <dl class="side-panel-dl">
-              <dt>{{ t('fields.room_type') }}</dt>
-              <dd>{{ selectedRoom.roomType?.name ?? '—' }}</dd>
-              <dt>{{ t('fields.status') }}</dt>
-              <dd>
-                <span
-                  v-if="selectedRoom.room?.status"
-                  class="room-status-badge"
-                  :class="statusBadgeClass(selectedRoom.room.status)"
-                  >{{ roomStatusLabel(selectedRoom.room.status) }}</span
-                >
-                <span v-else>—</span>
-              </dd>
-            </dl>
-          </template>
-          <form v-else class="side-panel-edit-form" @submit.prevent="submitRoomEdit">
-            <label>
-              {{ t('fields.room_number') }}
-              <abbr class="required" :title="t('common.required')">*</abbr>
-              <input
-                v-model="editRoomForm.number"
-                type="text"
-                required
-                :disabled="roomSaveSaving"
-              />
-            </label>
-            <label>
-              {{ t('fields.room_type') }}
-              <abbr class="required" :title="t('common.required')">*</abbr>
-              <select v-model="editRoomForm.room_type_id" required :disabled="roomSaveSaving">
-                <option v-for="opt in roomTypes" :key="opt.id" :value="opt.id">
-                  {{ opt.name }}
-                </option>
-              </select>
-            </label>
-            <label>
-              {{ t('fields.status') }} <abbr class="required" :title="t('common.required')">*</abbr>
-              <select v-model="editRoomForm.status" required :disabled="roomSaveSaving">
-                <option v-for="s in ROOM_STATUSES" :key="s" :value="s">
-                  {{ t(`rooms.room_status.${s}`) }}
-                </option>
-              </select>
-            </label>
-          </form>
-        </div>
-      </aside>
-    </Transition>
+    <RoomSidePanel
+      :room="selectedRoom"
+      :room-type="selectedRoomType"
+      @close="closePanel"
+      @cleaning="onCleaning"
+      @maintenance="onMaintenance"
+    />
   </section>
+
+  <CleaningDialog
+    :open="cleaningOpen"
+    :room="selectedRoom"
+    :allowed-statuses="cleaningStatuses"
+    @close="cleaningOpen = false"
+    @saved="cleaningOpen = false"
+  />
+
+  <MaintenanceDialog
+    :open="maintenanceOpen"
+    :room="selectedRoom"
+    :allowed-statuses="maintenanceStatuses"
+    @close="maintenanceOpen = false"
+    @saved="maintenanceOpen = false"
+  />
 
   <!-- Add room type dialog -->
   <div v-if="addTypeOpen" class="dialog-backdrop" @click.self="closeAddTypeDialog">
@@ -415,77 +340,47 @@
       </div>
     </div>
   </Teleport>
-
-  <Teleport to="body">
-    <div
-      v-if="removeRoomConfirmOpen"
-      class="dialog-backdrop"
-      role="presentation"
-      @click.self="closeRemoveRoomConfirm"
-    >
-      <div class="dialog" role="dialog" aria-modal="true" :aria-labelledby="removeRoomTitleId">
-        <h2 :id="removeRoomTitleId">{{ t('rooms.confirm_remove_room_title') }}</h2>
-        <p v-if="removeRoomError" class="form-error">{{ removeRoomError }}</p>
-        <p class="rooms-confirm-body">
-          {{ t('rooms.confirm_remove_room_body', { number: removeRoomTarget?.number ?? '' }) }}
-        </p>
-        <div class="dialog-actions">
-          <button
-            type="button"
-            class="btn-secondary"
-            :disabled="removeRoomSaving"
-            @click="closeRemoveRoomConfirm"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            type="button"
-            class="btn-room-type-action btn-room-type-action--danger"
-            :disabled="removeRoomSaving"
-            @click="confirmRemoveRoom"
-          >
-            {{ removeRoomSaving ? t('common.loading') : t('rooms.remove_room_from_catalog') }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, watch, useId } from 'vue'
+import { ref, nextTick, onMounted, watch, useId, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
+import RoomSidePanel from '@/features/property/components/RoomSidePanel.vue'
+import CleaningDialog from '@/features/property/components/CleaningDialog.vue'
+import MaintenanceDialog from '@/features/property/components/MaintenanceDialog.vue'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import type { Room, RoomType } from '@/shared/types/property'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 const DEBOUNCE_MS = 300
 
-const ROOM_STATUSES = ['available', 'maintenance', 'out_of_order']
-
-type RoomPanelSelection = { room: Room; roomType: RoomType | undefined }
-
 const { t } = useI18n()
 const store = usePropertyStore()
 const { canCreateRooms, canManageRooms } = usePermissions()
+const { cleaningStatuses, maintenanceStatuses } = useRoomActionAccess()
 const { roomTypes, rooms } = storeToRefs(store)
 
+const selectedRoom = ref<Room | null>(null)
+const selectedRoomType = computed(() => {
+  const r = selectedRoom.value
+  if (!r) return null
+  return roomTypes.value.find((rt) => rt.id === r.room_type_id) ?? null
+})
+
+const cleaningOpen = ref(false)
+const maintenanceOpen = ref(false)
+
 const removeTypeTitleId = useId()
-const removeRoomTitleId = useId()
 
 const initialLoading = ref(true)
 const searching = ref(false)
 const loadError = ref('')
 const searchQuery = ref('')
-const selectedRoom = ref<RoomPanelSelection | null>(null)
-const roomPanelEditing = ref(false)
-const roomPanelError = ref('')
-const editRoomForm = ref({ room_type_id: '', number: '', status: 'available' })
-const roomSaveSaving = ref(false)
 
 const addTypeOpen = ref(false)
 const addTypeForm = ref({ name: '', description: '' })
@@ -511,121 +406,79 @@ const expandedTypes = ref<Set<string>>(new Set())
 const addTypeNameRef = ref<HTMLInputElement | null>(null)
 const addRoomNumberRef = ref<HTMLInputElement | null>(null)
 
-const removeRoomConfirmOpen = ref(false)
-const removeRoomTarget = ref<Room | null>(null)
-const removeRoomSaving = ref(false)
-const removeRoomError = ref('')
-
 let searchDebounceId: ReturnType<typeof setTimeout> | null = null
 
 function roomsByType(roomTypeId: string) {
   return rooms.value.filter((r) => r.room_type_id === roomTypeId)
 }
 
-function openPanel(room: Room, roomType: RoomType | undefined) {
-  selectedRoom.value = { room, roomType }
-  roomPanelEditing.value = false
-  roomPanelError.value = ''
+function openPanel(room: Room) {
+  selectedRoom.value = room
 }
 
 function closePanel() {
   selectedRoom.value = null
 }
 
-/** @param {string | undefined} status */
-function roomStatusLabel(status) {
-  if (!status) return '—'
-  const s = String(status)
-  if (ROOM_STATUSES.includes(s)) return t(`rooms.room_status.${s}`)
-  return s
-}
-
-/** @param {string | undefined} status */
-function statusBadgeClass(status) {
-  const s = (status || '').toLowerCase()
-  if (s === 'available') return 'room-status-badge--available'
-  if (s === 'maintenance') return 'room-status-badge--maintenance'
-  if (s === 'out_of_order') return 'room-status-badge--out-of-order'
-  const norm = s.replace(/-|_/g, '')
-  if (norm === 'confirmed') return 'room-status-badge--confirmed'
-  if (norm === 'checkedin') return 'room-status-badge--checked-in'
-  if (norm === 'checkedout') return 'room-status-badge--checked-out'
-  if (norm === 'canceled' || norm === 'cancelled') return 'room-status-badge--canceled'
-  return ''
-}
-
-function startRoomEdit() {
-  const sel = selectedRoom.value
-  if (!sel?.room) return
-  editRoomForm.value = {
-    room_type_id: sel.room.room_type_id,
-    number: sel.room.number,
-    status:
-      sel.room.status && ROOM_STATUSES.includes(sel.room.status) ? sel.room.status : 'available',
-  }
-  roomPanelError.value = ''
-  roomPanelEditing.value = true
-}
-
-function cancelRoomEdit() {
-  roomPanelEditing.value = false
-  roomPanelError.value = ''
-}
-
-async function submitRoomEdit() {
-  const sel = selectedRoom.value
-  if (!sel?.room?.id) return
-  const { room_type_id, number, status } = editRoomForm.value
-  if (!number?.trim() || !room_type_id || !status) return
-  roomSaveSaving.value = true
-  roomPanelError.value = ''
-  try {
-    const updated = await store.updateRoom(sel.room.id, {
-      room_type_id,
-      number: number.trim(),
-      status,
-    })
-    const rt = roomTypes.value.find((x) => x.id === updated.room_type_id)
-    selectedRoom.value = { room: updated, roomType: rt }
-    roomPanelEditing.value = false
-  } catch (err: unknown) {
-    roomPanelError.value = formatUnknownApiError(err) || t('rooms.load_failed')
-  } finally {
-    roomSaveSaving.value = false
-  }
-}
-
-function openRemoveRoomConfirm() {
-  const sel = selectedRoom.value
-  if (!sel?.room) return
-  removeRoomTarget.value = sel.room
-  removeRoomError.value = ''
-  removeRoomConfirmOpen.value = true
-}
-
-function closeRemoveRoomConfirm() {
-  removeRoomConfirmOpen.value = false
-  removeRoomTarget.value = null
-  removeRoomError.value = ''
-}
-
-async function confirmRemoveRoom() {
-  const room = removeRoomTarget.value
-  if (!room?.id) return
-  removeRoomSaving.value = true
-  removeRoomError.value = ''
-  try {
-    await store.deleteRoom(room.id)
-    if (selectedRoom.value?.room?.id === room.id) {
-      selectedRoom.value = null
-      roomPanelEditing.value = false
+async function onCleaning() {
+  const r = selectedRoom.value
+  if (!r?.id) return
+  const allowed = cleaningStatuses.value
+  if (allowed.length === 1) {
+    try {
+      await store.changeRoomHousekeeping(r.id, allowed[0])
+    } catch (err: unknown) {
+      loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
     }
-    closeRemoveRoomConfirm()
-  } catch (err: unknown) {
-    removeRoomError.value = formatUnknownApiError(err) || t('rooms.load_failed')
-  } finally {
-    removeRoomSaving.value = false
+    return
   }
+  cleaningOpen.value = true
+}
+
+async function onMaintenance() {
+  const r = selectedRoom.value
+  if (!r?.id) return
+  const allowed = maintenanceStatuses.value
+  if (allowed.length === 1 && allowed[0] !== 'under_maintenance') {
+    try {
+      await store.changeRoomMaintenance(r.id, { status: allowed[0] })
+    } catch (err: unknown) {
+      loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
+    }
+    return
+  }
+  maintenanceOpen.value = true
+}
+
+function availabilityLabel(v: string | undefined) {
+  if (!v) return '—'
+  return t(`rooms.availability_status.${v}`, v)
+}
+
+function housekeepingLabel(v: string | undefined) {
+  if (!v) return '—'
+  return t(`rooms.housekeeping_status.${v}`, v)
+}
+
+function maintenanceLabel(v: string | undefined) {
+  if (!v) return '—'
+  return t(`rooms.maintenance_status.${v}`, v)
+}
+
+function showMaintenanceBadge(v: string | undefined) {
+  return !!v && v !== 'none'
+}
+
+function availabilityBadgeClass(v: string | undefined): string {
+  return `room-status-badge--availability-${v ?? 'available'}`
+}
+
+function housekeepingBadgeClass(v: string | undefined): string {
+  return `room-status-badge--housekeeping-${v ?? 'clean'}`
+}
+
+function maintenanceBadgeClass(v: string | undefined): string {
+  return `room-status-badge--maintenance-${v ?? 'none'}`
 }
 
 function openAddTypeDialog() {
@@ -682,7 +535,6 @@ async function submitEditType() {
       editTypeForm.value.description?.trim() || '',
     )
     closeEditTypeDialog()
-    syncSelectedRoomFromStore()
   } catch (err: unknown) {
     editTypeError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
@@ -709,10 +561,6 @@ async function confirmRemoveType() {
   removeTypeError.value = ''
   try {
     await store.deleteRoomType(rt.id)
-    if (selectedRoom.value?.roomType?.id === rt.id) {
-      selectedRoom.value = null
-      roomPanelEditing.value = false
-    }
     closeRemoveTypeConfirm()
   } catch (err: unknown) {
     removeTypeError.value = formatUnknownApiError(err) || t('rooms.load_failed')
@@ -748,32 +596,6 @@ async function submitAddRoom() {
   }
 }
 
-function syncSelectedRoomFromStore() {
-  if (!selectedRoom.value || roomPanelEditing.value) return
-  const id = selectedRoom.value.room?.id
-  if (!id) return
-  const room = rooms.value.find((r) => r.id === id)
-  if (!room) {
-    selectedRoom.value = null
-    return
-  }
-  const roomType = roomTypes.value.find((x) => x.id === room.room_type_id)
-  selectedRoom.value = { room, roomType }
-}
-
-watch([rooms, roomTypes], syncSelectedRoomFromStore, { deep: true })
-
-watch(selectedRoom, (v) => {
-  if (!v) {
-    roomPanelEditing.value = false
-    roomPanelError.value = ''
-  }
-})
-
-/**
- * @param {{ q?: string }} [params]
- * @param {boolean} [isInitial] - If true, show full-page "Loading…"; otherwise show spinner in search bar.
- */
 async function load(params: { q?: string } = {}, isInitial = false) {
   loadError.value = ''
   if (isInitial) {
@@ -792,6 +614,17 @@ async function load(params: { q?: string } = {}, isInitial = false) {
   }
 }
 
+watch(
+  rooms,
+  () => {
+    const sel = selectedRoom.value
+    if (!sel) return
+    const fresh = rooms.value.find((r) => r.id === sel.id)
+    selectedRoom.value = fresh ?? null
+  },
+  { deep: true },
+)
+
 watch(searchQuery, (q) => {
   if (searchDebounceId) clearTimeout(searchDebounceId)
   searchDebounceId = setTimeout(() => {
@@ -804,18 +637,21 @@ onMounted(() => load({}, true))
 </script>
 
 <style scoped>
-.side-panel-edit-form label {
-  display: block;
-  margin-top: var(--space-sm);
-}
-
-.side-panel-edit-form label:first-child {
-  margin-top: 0;
-}
-
 .rooms-confirm-body {
   margin: 0 0 var(--space-md);
   font-size: var(--text-body-size);
   color: var(--ink-secondary);
+}
+
+.room-state-chips {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: var(--space-micro);
+  white-space: nowrap;
+}
+
+.room-table td.col-status {
+  width: 1%;
+  white-space: nowrap;
 }
 </style>

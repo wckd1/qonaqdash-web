@@ -122,7 +122,7 @@ import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms } from '@/features/property/api'
-import type { Room } from '@/shared/types/property'
+import type { AvailableRoom } from '@/shared/types/property'
 import {
   getBookingStatusFromResponse,
   bookingStatusAllowsEdit,
@@ -162,7 +162,7 @@ const editFormData = ref<BookingFormDataDraft>({})
 const editManualAdjustments = ref<ManualAdjustmentInput[]>([])
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
-const availableRooms = ref<Room[]>([])
+const availableRooms = ref<AvailableRoom[]>([])
 const folioRef = ref<InstanceType<typeof FolioSection> | null>(null)
 const activeTab = useHashTab('details', ['details', 'folio'] as const)
 

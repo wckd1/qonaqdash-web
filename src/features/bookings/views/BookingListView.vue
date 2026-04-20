@@ -68,6 +68,7 @@
               <th scope="col">{{ t('fields.check_in') }}</th>
               <th scope="col">{{ t('fields.check_out') }}</th>
               <th scope="col">{{ t('fields.status') }}</th>
+              <th scope="col" class="list-table__col--actions"></th>
             </tr>
           </thead>
           <tbody>
@@ -83,6 +84,15 @@
               <td :data-label="t('fields.check_out')">{{ formatDate(booking.stay?.check_out) }}</td>
               <td :data-label="t('fields.status')">
                 <BookingStatusBadge :status="booking.status" />
+              </td>
+              <td class="list-table__cell--actions">
+                <router-link
+                  :to="{ name: 'booking-detail', params: { id: booking.id } }"
+                  class="list-table__action"
+                  @click.stop
+                >
+                  {{ t('common.details') }}
+                </router-link>
               </td>
             </tr>
           </tbody>

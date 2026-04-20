@@ -1,5 +1,5 @@
 import type { InjectionKey, Ref } from 'vue'
-import type { Room } from '@/shared/types/property'
+import type { AvailableRoom } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
 
 /** Guest typeahead: API rows from `GET /api/guests?q=`. */
@@ -15,7 +15,7 @@ export type GuestSearchFn = (q: string) => Promise<GuestSearchRow[]>
 
 export const guestSearchKey: InjectionKey<GuestSearchFn> = Symbol('guestSearch')
 
-export const availableRoomsKey: InjectionKey<Ref<Room[]>> = Symbol('availableRooms')
+export const availableRoomsKey: InjectionKey<Ref<AvailableRoom[]>> = Symbol('availableRooms')
 
 /** FormDSL builder context (manage → form definition UI). */
 export interface FormBuildContext {

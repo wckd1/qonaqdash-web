@@ -48,10 +48,12 @@
       </div>
       <section
         v-if="guestId && canViewBookings"
-        class="related-records"
+        class="panel related-records"
         aria-labelledby="related-records-heading"
       >
-        <h2 id="related-records-heading">{{ t('guests.bookings_heading') }}</h2>
+        <h2 id="related-records-heading" class="related-records__title">
+          {{ t('guests.bookings_heading') }}
+        </h2>
         <p v-if="bookingsLoadError" class="error-message">{{ bookingsLoadError }}</p>
         <div v-else-if="bookingsLoading" class="loading-state">{{ t('common.loading') }}</div>
         <p v-else-if="!previousBookings.length" class="empty-state">
@@ -406,6 +408,23 @@ async function confirmBlock() {
   min-width: 0;
   min-height: 0;
   width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.related-records__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+}
+
+.related-records :deep(table.list-table) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .empty-state {

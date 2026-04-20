@@ -1,5 +1,14 @@
 import api from '@/shared/api/client'
-import type { Hotel, Room, RoomType } from '@/shared/types/property'
+import type {
+  AvailableRoom,
+  Hotel,
+  Room,
+  RoomActivityEntry,
+  RoomAvailabilityStatus,
+  RoomHousekeepingStatus,
+  RoomMaintenanceStatus,
+  RoomType,
+} from '@/shared/types/property'
 
 /**
  * Current JWT hotel profile (display name).
@@ -90,6 +99,10 @@ export function fetchRooms(params: { q?: string } = {}): Promise<Room[]> {
   return api.get('/api/property/rooms', config).then(({ data }) => data.rooms ?? data ?? [])
 }
 
+export function fetchRoom(id: string): Promise<Room> {
+  return api.get(`/api/property/rooms/${id}`).then(({ data }) => data)
+}
+
 /**
  * @param {string} roomTypeId
  * @param {string} number
@@ -102,21 +115,53 @@ export function createRoom(roomTypeId: string, number: string): Promise<Room> {
 }
 
 /**
- * @param {string} id
- * @param {{ room_type_id: string, number: string, status: string }} body
- * @returns {Promise<Room>}
+ * Catalog-only update: room type + number. Use the per-axis endpoints below to
+ * change operational state (availability / housekeeping / maintenance).
+ * `status` (legacy single-axis) is still required by the backend for
+ * back-compat; we echo the current value without touching operational state.
  */
 export function updateRoom(
   id: string,
-  body: { room_type_id: string; number: string; status: string },
+  body: { room_type_id: string; number: string; status?: string },
 ): Promise<Room> {
   return api
     .put(`/api/property/rooms/${id}`, {
       room_type_id: body.room_type_id,
       number: body.number,
-      status: body.status,
+      status: body.status ?? 'available',
     })
     .then(({ data }) => data)
+}
+
+/** Set the **availability** axis. `ooo` removes the room from availability. */
+export function changeRoomAvailability(id: string, status: RoomAvailabilityStatus): Promise<Room> {
+  return api.put(`/api/property/rooms/${id}/availability`, { status }).then(({ data }) => data)
+}
+
+/** Set the **housekeeping** axis. Backend returns 204; re-fetch the room to read new state. */
+export function changeRoomHousekeeping(id: string, status: RoomHousekeepingStatus): Promise<void> {
+  return api.put(`/api/property/rooms/${id}/housekeeping`, { status }).then(() => undefined)
+}
+
+/**
+ * Set the **maintenance** axis. `under_maintenance` requires `planned_end`
+ * (RFC 3339). `none` clears `planned_end` server-side.
+ * Backend returns 204; re-fetch the room to read new state.
+ */
+export function changeRoomMaintenance(
+  id: string,
+  body: { status: RoomMaintenanceStatus; planned_end?: string | null },
+): Promise<void> {
+  const payload: Record<string, unknown> = { status: body.status }
+  if (body.planned_end != null && body.planned_end !== '') payload.planned_end = body.planned_end
+  return api.put(`/api/property/rooms/${id}/maintenance`, payload).then(() => undefined)
+}
+
+/** Append-only room event history (audit). */
+export function fetchRoomActivity(id: string): Promise<RoomActivityEntry[]> {
+  return api
+    .get(`/api/property/rooms/${id}/activity`)
+    .then(({ data }) => (Array.isArray(data) ? data : (data?.entries ?? [])))
 }
 
 /**
@@ -130,17 +175,19 @@ export function deleteRoom(id: string): Promise<void> {
 
 /**
  * Rooms available for the given date range (e.g. for booking form room picker).
- * Backend returns rooms that can be assigned; frontend uses this to populate roomID options when checkIn/checkOut change.
+ * Backend returns rooms that can be assigned plus operational `state` /
+ * `warnings` so the UI can surface dirty / required-maintenance warnings
+ * without hiding the room.
+ *
  * @param {Date | string | null} from - Start date (inclusive)
  * @param {Date | string | null} to - End date (exclusive)
  * @param {{ excludeBookingId?: string }} [options] - With both dates set, pass booking id to send query `exclude` (rooms occupied only by that booking stay available; ignored without `from`+`to` per API).
- * @returns {Promise<Room[]>}
  */
 export function fetchAvailableRooms(
   from: Date | string | null,
   to: Date | string | null,
   options: { excludeBookingId?: string } = {},
-): Promise<Room[]> {
+): Promise<AvailableRoom[]> {
   const params: Record<string, string> = {}
   if (from != null) {
     const d = typeof from === 'string' ? new Date(from) : from

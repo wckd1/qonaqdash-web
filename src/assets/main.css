@@ -1026,6 +1026,185 @@ main .form-entity-section__profile-cta:hover {
   border-bottom-color: var(--brand-primary-hover);
 }
 
+/*
+ * Content toolbar: elevated panel under page header that hosts filter / range / action controls.
+ * Three-cluster grid (start / center / end); clusters shrink to content.
+ * Children: `.toolbar-field` (label + control), `.toolbar-group--inline` (button + input + button rows),
+ * `.toolbar-picker`, `.toolbar-btn`, `.toolbar-btn--icon`, `.toolbar-input`, `.toolbar-sep`.
+ */
+.content-toolbar {
+  --toolbar-control-height: 2.25rem;
+  --toolbar-cluster-gap: var(--space-md);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--toolbar-cluster-gap);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.toolbar-cluster {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbar-cluster--start {
+  justify-content: flex-start;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.toolbar-cluster--center {
+  justify-content: center;
+}
+
+.toolbar-cluster--end {
+  justify-content: flex-end;
+}
+
+.toolbar-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  max-width: 100%;
+}
+
+.toolbar-field-label {
+  flex-shrink: 0;
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-tertiary);
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.toolbar-group--inline {
+  flex-wrap: nowrap;
+  gap: var(--space-sm);
+}
+
+.toolbar-picker {
+  box-sizing: border-box;
+  margin: 0;
+  min-height: var(--toolbar-control-height);
+  height: var(--toolbar-control-height);
+  padding: 0 var(--space-sm);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background-size: 1rem;
+}
+
+.toolbar-picker:hover {
+  border-color: var(--border-emphasis);
+}
+
+.toolbar-picker:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.toolbar-btn {
+  margin: 0;
+  flex: 0 0 auto;
+  min-height: var(--toolbar-control-height);
+  padding: 0 var(--space-sm);
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-label-weight);
+  color: var(--ink-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  color: var(--ink-primary);
+  border-color: var(--border-emphasis);
+  background: var(--pico-card-background-color);
+}
+
+.toolbar-btn:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.toolbar-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: var(--toolbar-control-height);
+}
+
+.toolbar-icon {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.toolbar-input {
+  box-sizing: border-box;
+  margin: 0;
+  min-height: var(--toolbar-control-height);
+  height: var(--toolbar-control-height);
+  padding: 0 0.5rem;
+  font-size: var(--text-caption-size);
+  color: var(--ink-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  width: 9rem;
+}
+
+.toolbar-input:hover {
+  border-color: var(--border-emphasis);
+}
+
+.toolbar-input:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 0.0625rem var(--border-focus);
+}
+
+.toolbar-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  margin-inline-start: 0.125rem;
+}
+
+.toolbar-sep {
+  flex-shrink: 0;
+  font-size: var(--text-caption-size);
+  color: var(--ink-tertiary);
+  user-select: none;
+  line-height: var(--toolbar-control-height);
+}
+
 /* Context action toolbar: horizontal strip under panel titles or page header (status-style actions). */
 main .action-toolbar {
   display: flex;
@@ -2322,6 +2501,55 @@ main .room-status-badge--out-of-order {
 
 main .room-status-empty {
   color: var(--ink-muted);
+}
+
+/* Three-axis badges: availability / housekeeping / maintenance.
+ * Kept as explicit modifiers so future colour tweaks are centralized here. */
+main .room-status-badge--availability-available {
+  color: var(--semantic-success);
+  background: var(--semantic-success-bg);
+  border: 1px solid rgba(45, 138, 62, 0.3);
+}
+
+main .room-status-badge--availability-ooo {
+  color: var(--semantic-error);
+  background: var(--semantic-error-bg);
+  border: 1px solid rgba(229, 115, 115, 0.4);
+}
+
+main .room-status-badge--housekeeping-clean {
+  color: var(--semantic-success);
+  background: var(--semantic-success-bg);
+  border: 1px solid rgba(45, 138, 62, 0.3);
+}
+
+/* Housekeeping/maintenance room badges mirror the task status palette:
+ * dirty/required → task.open (warning), cleaning/under_maintenance → task.in_progress (info),
+ * inspection → task.inspection, clean → task.done. */
+main .room-status-badge--housekeeping-dirty,
+main .room-status-badge--maintenance-required {
+  color: var(--semantic-warning);
+  background: var(--semantic-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--semantic-warning) 40%, var(--border-default));
+}
+
+main .room-status-badge--housekeeping-cleaning,
+main .room-status-badge--maintenance-under_maintenance {
+  color: var(--semantic-info);
+  background: var(--semantic-info-bg);
+  border: 1px solid color-mix(in srgb, var(--semantic-info) 30%, var(--border-default));
+}
+
+main .room-status-badge--housekeeping-inspection {
+  color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--surface-1));
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 35%, var(--border-default));
+}
+
+main .room-status-badge--maintenance-none {
+  color: var(--ink-tertiary);
+  background: var(--control-bg);
+  border: 1px solid var(--border-subtle);
 }
 
 main .room-list-empty {

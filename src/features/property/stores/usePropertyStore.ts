@@ -1,7 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as propertyApi from '@/features/property/api'
-import type { Hotel, Room, RoomType } from '@/shared/types/property'
+import type {
+  Hotel,
+  Room,
+  RoomActivityEntry,
+  RoomAvailabilityStatus,
+  RoomHousekeepingStatus,
+  RoomMaintenanceStatus,
+  RoomType,
+} from '@/shared/types/property'
 
 function hasSearchQuery(params: { q?: string }) {
   return Boolean(params.q?.trim())
@@ -97,10 +105,57 @@ export const usePropertyStore = defineStore('property', () => {
 
   async function updateRoom(
     id: string,
-    payload: { room_type_id: string; number: string; status: string },
+    payload: { room_type_id: string; number: string; status?: string },
   ) {
-    const updated = await propertyApi.updateRoom(id, payload)
+    const current = rooms.value.find((r) => r.id === id)
+    const updated = await propertyApi.updateRoom(id, {
+      room_type_id: payload.room_type_id,
+      number: payload.number,
+      status: payload.status ?? current?.status ?? 'available',
+    })
     rooms.value = rooms.value.map((r) => (r.id === id ? updated : r))
+    return updated
+  }
+
+  function replaceRoom(updated: Room) {
+    rooms.value = rooms.value.map((r) => (r.id === updated.id ? updated : r))
+  }
+
+  async function changeRoomAvailability(id: string, status: RoomAvailabilityStatus) {
+    const updated = await propertyApi.changeRoomAvailability(id, status)
+    replaceRoom(updated)
+    return updated
+  }
+
+  async function changeRoomHousekeeping(id: string, status: RoomHousekeepingStatus) {
+    await propertyApi.changeRoomHousekeeping(id, status)
+    // PUT returns 204 — fetch the room to refresh axis state locally.
+    const updated = await propertyApi.fetchRoom(id)
+    replaceRoom(updated)
+    return updated
+  }
+
+  async function changeRoomMaintenance(
+    id: string,
+    body: {
+      status: RoomMaintenanceStatus
+      planned_end?: string | null
+    },
+  ) {
+    await propertyApi.changeRoomMaintenance(id, body)
+    // PUT returns 204 — fetch the room to refresh axis state locally.
+    const updated = await propertyApi.fetchRoom(id)
+    replaceRoom(updated)
+    return updated
+  }
+
+  async function fetchRoomActivity(id: string): Promise<RoomActivityEntry[]> {
+    return propertyApi.fetchRoomActivity(id)
+  }
+
+  async function refreshRoom(id: string) {
+    const updated = await propertyApi.fetchRoom(id)
+    replaceRoom(updated)
     return updated
   }
 
@@ -133,6 +188,11 @@ export const usePropertyStore = defineStore('property', () => {
     createRoom,
     updateRoom,
     deleteRoom,
+    changeRoomAvailability,
+    changeRoomHousekeeping,
+    changeRoomMaintenance,
+    fetchRoomActivity,
+    refreshRoom,
     resetState,
   }
 })

@@ -117,18 +117,15 @@ export function createRoom(roomTypeId: string, number: string): Promise<Room> {
 /**
  * Catalog-only update: room type + number. Use the per-axis endpoints below to
  * change operational state (availability / housekeeping / maintenance).
- * `status` (legacy single-axis) is still required by the backend for
- * back-compat; we echo the current value without touching operational state.
  */
 export function updateRoom(
   id: string,
-  body: { room_type_id: string; number: string; status?: string },
+  body: { room_type_id: string; number: string },
 ): Promise<Room> {
   return api
     .put(`/api/property/rooms/${id}`, {
       room_type_id: body.room_type_id,
       number: body.number,
-      status: body.status ?? 'available',
     })
     .then(({ data }) => data)
 }

@@ -7,10 +7,20 @@ const TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
 
 export const useAuthStore = defineStore('auth', () => {
-  const { getClaims, isExpired } = useJwt()
+  const { decode, getClaims, isExpired } = useJwt()
 
-  const accessToken = ref(localStorage.getItem(TOKEN_KEY) || '')
-  const refreshToken = ref(localStorage.getItem(REFRESH_TOKEN_KEY) || '')
+  const storedAccess = localStorage.getItem(TOKEN_KEY) || ''
+  const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY) || ''
+  // Legacy tokens issued before token_use became mandatory no longer pass auth;
+  // clear them here so the next navigation lands on /auth/login.
+  const accessLacksTokenUse = storedAccess && !decode(storedAccess)?.token_use
+  const refreshLacksTokenUse = storedRefresh && !decode(storedRefresh)?.token_use
+  if (accessLacksTokenUse || refreshLacksTokenUse) {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+  }
+  const accessToken = ref(accessLacksTokenUse || refreshLacksTokenUse ? '' : storedAccess)
+  const refreshToken = ref(accessLacksTokenUse || refreshLacksTokenUse ? '' : storedRefresh)
 
   const user = computed(() => {
     if (!accessToken.value) return null

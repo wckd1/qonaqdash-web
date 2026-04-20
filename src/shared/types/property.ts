@@ -36,8 +36,6 @@ export interface Room {
   maintenance_planned_end?: string | null
   /** Event-sourced aggregate version (informational). */
   version?: number
-  /** Legacy single-axis status; kept for backward compatibility only. */
-  status?: string
 }
 
 export type AvailableRoomState =

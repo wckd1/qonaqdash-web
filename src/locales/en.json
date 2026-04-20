@@ -965,8 +965,6 @@
       "room_type_in_use": "This type still has rooms. Remove or reassign those rooms first",
       "hotel_invalid_currency": "Invalid currency code",
       "room_type_invalid_base_rate": "Base rate must not be negative",
-      "invalid_room_status": "Invalid room status",
-      "room_status_required": "Room status is required",
       "invalid_availability_status": "Invalid availability status",
       "invalid_housekeeping_status": "Invalid housekeeping status",
       "invalid_maintenance_status": "Invalid maintenance status",

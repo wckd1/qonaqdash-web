@@ -103,15 +103,10 @@ export const usePropertyStore = defineStore('property', () => {
     return created
   }
 
-  async function updateRoom(
-    id: string,
-    payload: { room_type_id: string; number: string; status?: string },
-  ) {
-    const current = rooms.value.find((r) => r.id === id)
+  async function updateRoom(id: string, payload: { room_type_id: string; number: string }) {
     const updated = await propertyApi.updateRoom(id, {
       room_type_id: payload.room_type_id,
       number: payload.number,
-      status: payload.status ?? current?.status ?? 'available',
     })
     rooms.value = rooms.value.map((r) => (r.id === id ? updated : r))
     return updated

@@ -965,8 +965,6 @@
       "room_type_in_use": "У этого типа ещё есть номера. Сначала уберите или переназначьте их",
       "hotel_invalid_currency": "Неверный код валюты",
       "room_type_invalid_base_rate": "Базовый тариф не может быть отрицательным",
-      "invalid_room_status": "Недопустимый статус номера",
-      "room_status_required": "Укажите статус номера",
       "invalid_availability_status": "Недопустимый статус доступности",
       "invalid_housekeeping_status": "Недопустимый статус уборки",
       "invalid_maintenance_status": "Недопустимый статус обслуживания",

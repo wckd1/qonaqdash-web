@@ -9,6 +9,7 @@ export type GuestSearchRow = {
   last_name?: string
   email?: string
   phone?: string
+  blocked?: boolean
 }
 
 export type GuestSearchFn = (q: string) => Promise<GuestSearchRow[]>

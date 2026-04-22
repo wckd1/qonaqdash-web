@@ -1,9 +1,17 @@
 <template>
   <header class="page-header">
-    <h1>{{ guestDisplayName }}</h1>
+    <h1>
+      {{ guestDisplayName }}
+      <span
+        v-if="isGuestBlocked"
+        class="status-chip status-chip--blocked guest-detail-blocked-chip"
+        :aria-label="t('guests.blocked_badge_aria')"
+        >{{ t('guests.blocked_badge') }}</span
+      >
+    </h1>
     <div v-if="guestId && guestForm && !editing" class="page-header-actions">
       <button
-        v-if="canBlockGuests"
+        v-if="canBlockGuests && !isGuestBlocked"
         type="button"
         class="btn-secondary guest-detail-block-btn"
         :disabled="removing"
@@ -11,7 +19,12 @@
       >
         {{ t('guests.block') }}
       </button>
-      <button v-if="canModifyGuests" type="button" class="btn-secondary" @click="editing = true">
+      <button
+        v-if="canModifyGuests && !isGuestBlocked"
+        type="button"
+        class="btn-secondary"
+        @click="editing = true"
+      >
         {{ t('common.edit') }}
       </button>
     </div>
@@ -129,7 +142,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useGuestStore } from '@/features/guests/stores/useGuestStore'
@@ -148,7 +161,6 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const store = useGuestStore()
 const { success } = useNotification()
 const { canModifyGuests, canBlockGuests, canViewBookings } = usePermissions()
@@ -172,6 +184,11 @@ function routeGuestId(): string | null {
 }
 
 const guestId = computed(() => routeGuestId())
+
+const isGuestBlocked = computed(() => {
+  const cg = currentGuest.value as Record<string, unknown> | null
+  return !!(cg && cg.blocked === true)
+})
 
 /** Runtime GET /guests/form?target=view (+ edit fallback) merged with GET /guests/:id data. */
 const guestForm = computed(() =>
@@ -333,11 +350,9 @@ async function confirmBlock() {
   if (!id) return
   removing.value = true
   try {
-    await store.deleteGuest(id)
-    await store.fetchGuests({})
+    await store.blockGuest(id)
     success(t('guests.block_success'))
     blockConfirmOpen.value = false
-    await router.replace({ name: 'guests' })
   } catch {
     /* Global API interceptor surfaces error toast. */
   } finally {
@@ -431,6 +446,11 @@ async function confirmBlock() {
   color: var(--ink-tertiary);
   font-size: var(--text-body-size);
   margin: 0;
+}
+
+.guest-detail-blocked-chip {
+  margin-left: var(--space-sm);
+  vertical-align: middle;
 }
 
 .guest-detail-block-btn {

@@ -121,7 +121,7 @@ export function updateGuest(
   return api.put(`/api/guests/${id}`, data).then(({ data: res }) => parseGuestDetailPayload(res))
 }
 
-export function deleteGuest(id: string) {
+export function blockGuest(id: string) {
   return api.delete(`/api/guests/${id}`).then(() => undefined)
 }
 

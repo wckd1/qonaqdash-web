@@ -2,7 +2,15 @@
   <Transition name="slide-panel">
     <aside v-if="guest" class="side-panel" aria-labelledby="side-panel-title">
       <div class="side-panel-header">
-        <h2 id="side-panel-title">{{ guestPanelTitle }}</h2>
+        <h2 id="side-panel-title">
+          {{ guestPanelTitle }}
+          <span
+            v-if="isGuestBlocked"
+            class="status-chip status-chip--blocked side-panel-header__blocked-chip"
+            :aria-label="t('guests.blocked_badge_aria')"
+            >{{ t('guests.blocked_badge') }}</span
+          >
+        </h2>
         <button
           type="button"
           class="side-panel-close"
@@ -88,6 +96,13 @@ const guestForm = computed(() =>
   ),
 )
 
+const isGuestBlocked = computed(() => {
+  const entity = detailEntity.value as Record<string, unknown> | null
+  if (entity && entity.blocked === true) return true
+  const row = props.guest as Record<string, unknown> | null
+  return !!(row && row.blocked === true)
+})
+
 const guestPanelTitle = computed(() => {
   void locale.value
   const entity = detailEntity.value
@@ -144,3 +159,10 @@ watch(
   { immediate: true },
 )
 </script>
+
+<style scoped>
+.side-panel-header__blocked-chip {
+  margin-left: var(--space-xs);
+  vertical-align: middle;
+}
+</style>

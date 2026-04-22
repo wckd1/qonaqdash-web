@@ -83,17 +83,14 @@ export const useGuestStore = defineStore('guests', () => {
     return profile
   }
 
-  async function deleteGuest(id: string) {
-    await guestsApi.deleteGuest(id)
-    guests.value = guests.value.filter((g) => g.id !== id)
-    const cg = currentGuest.value
-    if (cg && typeof cg === 'object') {
-      const row = cg as Record<string, unknown>
-      const curId = typeof row.id === 'string' ? row.id : undefined
-      if (curId === id) {
-        currentGuest.value = null
-        currentGuestFormRef.value = null
-      }
+  async function blockGuest(id: string) {
+    await guestsApi.blockGuest(id)
+    guests.value = guests.value.map((g) => (g.id === id ? { ...g, blocked: true } : g))
+    const cg = currentGuest.value as (GuestDetailData & { id?: string }) | null
+    if (cg?.id === id) {
+      const { data, formRef } = await guestsApi.fetchGuest(id)
+      currentGuest.value = data
+      currentGuestFormRef.value = formRef
     }
   }
 
@@ -115,7 +112,7 @@ export const useGuestStore = defineStore('guests', () => {
     replaceGuestFormTemplate,
     createGuest,
     updateGuest,
-    deleteGuest,
+    blockGuest,
     clearCurrentGuest,
   }
 })

@@ -338,8 +338,10 @@
     "save_edit_failed": "Не удалось сохранить",
     "form_settings_title": "Настройки формы гостя",
     "block": "Заблокировать",
+    "blocked_badge": "Заблокирован",
+    "blocked_badge_aria": "Этот гость заблокирован",
     "confirm_block_title": "Заблокировать этого гостя?",
-    "confirm_block_body": "Он пропадёт из списка гостей и его нельзя будет привязать к новым бронированиям. В уже созданных бронированиях имя сохранится",
+    "confirm_block_body": "Он останется в списке гостей с меткой «Заблокирован»",
     "block_success": "Гость заблокирован"
   },
   "bookings": {
@@ -366,6 +368,7 @@
     "guest_picker_searching": "Поиск…",
     "form_guest_info": "Информация о госте",
     "form_booking_details": "Детали бронирования",
+    "form_clear_guest_selection": "Очистить выбор",
     "action_check_in": "Заселить",
     "action_check_out": "Отметить выезд",
     "action_cancel_booking": "Отменить бронирование",

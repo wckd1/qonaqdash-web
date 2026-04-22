@@ -66,7 +66,7 @@
           />
           <FormView :definition="bookingForm.definition" :data="bookingForm.data" />
           <AccommodationSummary
-            v-if="currentBooking?.accommodation"
+            v-if="currentBooking?.accommodation && showAccommodationPanel"
             :accommodation="currentBooking.accommodation"
             :currency="hotelCurrency"
             :room-type-names="roomTypeNames"
@@ -169,6 +169,12 @@ const activeTab = useHashTab('details', ['details', 'folio'] as const)
 const showTabs = computed(() => {
   const status = getBookingStatusFromResponse(currentBooking.value)
   return status === 'checked_in' || status === 'checked_out' || status === 'canceled'
+})
+
+/** Hide pricing summary once the guest has checked in — after that, folio is the source of truth. */
+const showAccommodationPanel = computed(() => {
+  const status = getBookingStatusFromResponse(currentBooking.value)
+  return status !== 'checked_in' && status !== 'checked_out'
 })
 
 provide(availableRoomsKey, availableRooms)

@@ -71,7 +71,15 @@
               :aria-label="guestPickerOptionAriaLabel(g)"
               @mousedown.prevent="onSelectGuest(g)"
             >
-              <span class="guest-section-edit__dropdown-item-name">{{ guestOptionLabel(g) }}</span>
+              <span class="guest-section-edit__dropdown-item-name">
+                {{ guestOptionLabel(g) }}
+                <span
+                  v-if="g.blocked === true"
+                  class="status-chip status-chip--blocked guest-section-edit__dropdown-item-chip"
+                  :aria-label="t('guests.blocked_badge_aria')"
+                  >{{ t('guests.blocked_badge') }}</span
+                >
+              </span>
               <span
                 v-if="guestOptionContactLine(g)"
                 class="guest-section-edit__dropdown-item-contact"
@@ -262,6 +270,7 @@ function guestPickerOptionAriaLabel(g: Record<string, unknown>): string {
   const email = String(g.email ?? '').trim()
   const phone = String(g.phone ?? '').trim()
   const parts = [name]
+  if (g.blocked === true) parts.push(t('guests.blocked_badge_aria'))
   if (email) parts.push(`${t('fields.email')}: ${email}`)
   if (phone) parts.push(`${t('fields.phone')}: ${phone}`)
   return parts.join('. ')
@@ -376,6 +385,10 @@ function onSelectGuest(apiGuest: Record<string, unknown>) {
 }
 
 .guest-section-edit__dropdown-item-name {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
   font-weight: var(--text-body-weight);
   line-height: 1.25;
 }

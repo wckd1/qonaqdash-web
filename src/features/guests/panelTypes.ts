@@ -5,4 +5,5 @@ export interface GuestSidePanelRef {
   last_name?: string
   email?: string
   phone?: string
+  blocked?: boolean
 }

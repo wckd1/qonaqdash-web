@@ -75,6 +75,7 @@
               <th scope="col">{{ t('fields.last_name') }}</th>
               <th scope="col">{{ t('fields.email') }}</th>
               <th scope="col">{{ t('fields.phone') }}</th>
+              <th scope="col" class="col-status"></th>
               <th scope="col" class="list-table__col--actions"></th>
             </tr>
           </thead>
@@ -90,6 +91,14 @@
               <td :data-label="t('fields.last_name')">{{ guest.last_name ?? '—' }}</td>
               <td :data-label="t('fields.email')">{{ guest.email ?? '—' }}</td>
               <td :data-label="t('fields.phone')">{{ guest.phone ?? '—' }}</td>
+              <td class="col-status">
+                <span
+                  v-if="guest.blocked"
+                  class="status-chip status-chip--blocked"
+                  :aria-label="t('guests.blocked_badge_aria')"
+                  >{{ t('guests.blocked_badge') }}</span
+                >
+              </td>
               <td class="list-table__cell--actions">
                 <router-link
                   :to="{ name: 'guest-detail', params: { id: guest.id } }"

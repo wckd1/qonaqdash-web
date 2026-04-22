@@ -338,8 +338,10 @@
     "save_edit_failed": "Failed to save",
     "form_settings_title": "Guest settings",
     "block": "Block",
+    "blocked_badge": "Blocked",
+    "blocked_badge_aria": "This guest is blocked",
     "confirm_block_title": "Block this guest?",
-    "confirm_block_body": "They will be hidden from the guest list and you will not be able to link them to new bookings. Existing bookings will still show their name",
+    "confirm_block_body": "They will stay visible in the guest list with a Blocked mark",
     "block_success": "Guest blocked"
   },
   "bookings": {
@@ -366,6 +368,7 @@
     "guest_picker_searching": "Searching…",
     "form_guest_info": "Guest information",
     "form_booking_details": "Booking details",
+    "form_clear_guest_selection": "Clear selection",
     "action_check_in": "Check in",
     "action_check_out": "Check out",
     "action_cancel_booking": "Cancel booking",

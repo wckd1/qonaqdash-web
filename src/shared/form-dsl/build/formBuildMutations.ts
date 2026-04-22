@@ -78,7 +78,7 @@ export function isAddTypeAllowed(parent: FormNode, root: FormNode, type: string)
     return parent.type === 'group' || (parent.type === 'stack' && insideGroup)
   }
   if (type === 'Group') {
-    return !(parent.type === 'stack' && insideGroup)
+    return !insideGroup
   }
   if (type === 'VerticalStack' || type === 'HorizontalStack') {
     return true

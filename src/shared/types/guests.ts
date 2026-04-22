@@ -7,13 +7,14 @@ export interface Guest {
   last_name: string
   email: string
   phone?: string
+  blocked?: boolean
 }
 
 /**
  * GET/PUT /api/guests/:id — flat data only.
  * Merge with `GET /api/guests/form?target=view|edit` on the client.
  */
-export type GuestDetailData = GuestFormDataPartial & { id?: string }
+export type GuestDetailData = GuestFormDataPartial & { id?: string; blocked?: boolean }
 
 /** Runtime `GET …/form?target=` — FormDSL definition + canonical `hash` (optional empty `data`). */
 export interface GuestFormDefinitionResponse {

@@ -70,10 +70,10 @@ export const useSettingsStore = defineStore('settings', () => {
   /**
    * `GET /api/account` — updates `accountEmail`, `userSettings`, and optionally UI locale.
    *
-   * **Locale merge rule:**
-   * 1. Pinned device language (`hasPinnedLocale()`) → do not change `locale` from the server.
-   * 2. Else if `settings.locale` is `en` or `ru` → `setLocale(code, { persist: false })`.
-   * 3. Else leave `locale` as already set from boot.
+   * **Locale merge rule** (skipped when the user has pinned a language via settings UI):
+   * 1. Server returns a supported locale → apply it.
+   * 2. Server returns `null` or an unsupported value → fall back to `navigator` languages.
+   * 3. Navigator reports no supported language → fall back to English.
    */
   async function fetchUserSettings() {
     loading.value = true
@@ -95,10 +95,11 @@ export const useSettingsStore = defineStore('settings', () => {
       }
       permissionsLoaded.value = true
       if (!hasPinnedLocale()) {
-        const loc = settings.locale
-        if (loc === 'en' || loc === 'ru') {
-          setLocale(loc, { persist: false })
-        }
+        const fromServer = normalizeLocale(
+          typeof settings.locale === 'string' ? settings.locale : null,
+        )
+        const next = fromServer ?? resolveInitialLocale()
+        setLocale(next, { persist: false })
       }
       return data
     } catch (e: unknown) {

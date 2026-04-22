@@ -56,6 +56,8 @@ function canAccessRoute(
     case 'booking-detail':
     case 'bookings':
       return canViewBookings(ctx)
+    case 'tasks':
+      return canAccessHousekeepingTasks(ctx) || canAccessMaintenanceTasks(ctx)
     case 'housekeeping':
       return canAccessHousekeepingTasks(ctx)
     case 'maintenance':
@@ -170,15 +172,39 @@ const routes = [
         component: () => import('@/features/bookings/views/BookingListView.vue'),
       },
       {
-        path: 'housekeeping',
-        name: 'housekeeping',
-        component: () => import('@/features/tasks/views/HousekeepingTasksView.vue'),
+        path: 'tasks',
+        component: () => import('@/features/tasks/views/TasksLayoutView.vue'),
+        children: [
+          {
+            path: '',
+            name: 'tasks',
+            redirect: () => {
+              const auth = useAuthStore()
+              const settings = useSettingsStore()
+              const ctx = {
+                permissions: settings.permissions,
+                hasHotelContext: !!auth.hotelId,
+              }
+              if (canAccessHousekeepingTasks(ctx)) return { name: 'housekeeping' }
+              if (canAccessMaintenanceTasks(ctx)) return { name: 'maintenance' }
+              return { name: 'forbidden' }
+            },
+          },
+          {
+            path: 'housekeeping',
+            name: 'housekeeping',
+            component: () => import('@/features/tasks/views/HousekeepingTasksView.vue'),
+          },
+          {
+            path: 'maintenance',
+            name: 'maintenance',
+            component: () => import('@/features/tasks/views/MaintenanceTasksView.vue'),
+          },
+        ],
       },
-      {
-        path: 'maintenance',
-        name: 'maintenance',
-        component: () => import('@/features/tasks/views/MaintenanceTasksView.vue'),
-      },
+      // Backwards-compat: pre-merge links land on the new tabs.
+      { path: 'housekeeping', redirect: { name: 'housekeeping' } },
+      { path: 'maintenance', redirect: { name: 'maintenance' } },
       {
         path: 'manage/pricing/base-rates',
         name: 'manage-pricing-base-rates',

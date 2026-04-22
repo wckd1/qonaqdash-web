@@ -83,10 +83,22 @@ const userMaxLevel = computed(
   () => permissionLevel(userPermissions.value, 'hotel', 'manage_permissions') as number,
 )
 
+/** Level 1 ("Owned") is only meaningful for task areas where each record has an assignee/owner. */
+const OWNED_LEVEL = 1
+const AREAS_WITH_OWNED_SCOPE: readonly PermissionArea[] = [
+  'housekeeping_tasks',
+  'maintenance_tasks',
+]
+
 function levelOptionsFor(area: PermissionArea, action: PermissionAction): number[] {
   const current = permissionLevel(props.modelValue, area, action) as number
   const max = Math.max(userMaxLevel.value, current)
-  return [0, 1, 2, 3].filter((level) => level <= max)
+  const ownedAllowed = AREAS_WITH_OWNED_SCOPE.includes(area) || current === OWNED_LEVEL
+  return [0, 1, 2, 3].filter((level) => {
+    if (level > max) return false
+    if (level === OWNED_LEVEL && !ownedAllowed) return false
+    return true
+  })
 }
 
 function displayValue(area: PermissionArea, action: PermissionAction): string {

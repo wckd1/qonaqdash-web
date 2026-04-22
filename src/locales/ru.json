@@ -3,6 +3,7 @@
     "dashboard": "Панель",
     "bookings": "Бронирования",
     "guests": "Гости",
+    "tasks": "Задачи",
     "housekeeping": "Уборка",
     "maintenance": "Обслуживание",
     "management": "Управление",
@@ -81,6 +82,7 @@
     "hotel_occupations": "Должности",
     "profile": "Профиль",
     "reports": "Отчёты",
+    "tasks": "Задачи",
     "housekeeping": "Уборка",
     "maintenance": "Обслуживание",
     "forbidden": "Нет доступа",
@@ -492,8 +494,9 @@
     }
   },
   "tasks": {
-    "housekeeping_title": "Уборка",
-    "maintenance_title": "Обслуживание",
+    "subnav_aria": "Разделы задач",
+    "tab_housekeeping": "Уборка",
+    "tab_maintenance": "Обслуживание",
     "create": "Новая задача",
     "create_aria": "Создать задачу",
     "create_title": "Новая задача: {domain}",

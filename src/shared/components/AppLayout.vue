@@ -108,10 +108,15 @@
           </router-link>
 
           <router-link
-            v-if="canAccessHousekeepingTasks"
-            to="/housekeeping"
+            v-if="canAccessHousekeepingTasks || canAccessMaintenanceTasks"
+            to="/tasks"
             class="nav-link"
-            :class="{ 'nav-link--active': $route.path.startsWith('/housekeeping') }"
+            :class="{
+              'nav-link--active':
+                $route.path.startsWith('/tasks') ||
+                $route.path.startsWith('/housekeeping') ||
+                $route.path.startsWith('/maintenance'),
+            }"
           >
             <svg
               class="nav-icon"
@@ -123,34 +128,10 @@
               stroke-linejoin="round"
               aria-hidden="true"
             >
-              <path d="M9 11V3h6v8" />
-              <path d="M5 21V11h14v10" />
-              <path d="M9 15h6" />
+              <path d="M9 11l3 3 8-8" />
+              <path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" />
             </svg>
-            <span class="nav-label">{{ t('nav.housekeeping') }}</span>
-          </router-link>
-
-          <router-link
-            v-if="canAccessMaintenanceTasks"
-            to="/maintenance"
-            class="nav-link"
-            :class="{ 'nav-link--active': $route.path.startsWith('/maintenance') }"
-          >
-            <svg
-              class="nav-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path
-                d="M14.7 6.3a4 4 0 0 0-5.3 5.3L4 17l3 3 5.4-5.4a4 4 0 0 0 5.3-5.3l-2.5 2.5-2.1-2.1 2.5-2.4Z"
-              />
-            </svg>
-            <span class="nav-label">{{ t('nav.maintenance') }}</span>
+            <span class="nav-label">{{ t('nav.tasks') }}</span>
           </router-link>
 
           <router-link

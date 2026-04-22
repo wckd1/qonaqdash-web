@@ -3,6 +3,7 @@
     "dashboard": "Dashboard",
     "bookings": "Bookings",
     "guests": "Guests",
+    "tasks": "Tasks",
     "housekeeping": "Housekeeping",
     "maintenance": "Maintenance",
     "management": "Management",
@@ -81,6 +82,7 @@
     "hotel_occupations": "Occupations",
     "profile": "Profile",
     "reports": "Reports",
+    "tasks": "Tasks",
     "housekeeping": "Housekeeping",
     "maintenance": "Maintenance",
     "forbidden": "Access denied",
@@ -492,8 +494,9 @@
     }
   },
   "tasks": {
-    "housekeeping_title": "Housekeeping",
-    "maintenance_title": "Maintenance",
+    "subnav_aria": "Tasks sections",
+    "tab_housekeeping": "Housekeeping",
+    "tab_maintenance": "Maintenance",
     "create": "New task",
     "create_aria": "Create task",
     "create_title": "New {domain} task",

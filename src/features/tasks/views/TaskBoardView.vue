@@ -1,29 +1,4 @@
 <template>
-  <header class="page-header">
-    <h1>{{ pageTitle }}</h1>
-    <button
-      v-if="canCreate"
-      type="button"
-      class="btn-add-outline"
-      :aria-label="t('tasks.create_aria')"
-      @click="openCreateDialog"
-    >
-      <svg
-        class="btn-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-      {{ t('tasks.create') }}
-    </button>
-  </header>
-
   <div class="content-toolbar" role="toolbar" :aria-label="t('tasks.filter_aria')">
     <div class="toolbar-cluster toolbar-cluster--start">
       <label class="toolbar-field">
@@ -39,6 +14,29 @@
         <input v-model="unassignedOnly" type="checkbox" @change="reload" />
         <span>{{ t('tasks.filter_unassigned') }}</span>
       </label>
+    </div>
+    <div class="toolbar-cluster toolbar-cluster--end">
+      <button
+        v-if="canCreate"
+        type="button"
+        class="btn-add-outline"
+        :aria-label="t('tasks.create_aria')"
+        @click="openCreateDialog"
+      >
+        <svg
+          class="btn-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        {{ t('tasks.create') }}
+      </button>
     </div>
   </div>
 
@@ -257,7 +255,6 @@
               </button>
             </div>
           </form>
-
         </div>
       </aside>
     </Transition>
@@ -370,9 +367,6 @@ const { housekeeping, maintenance } = storeToRefs(tasksStore)
 
 const isMaintenanceDomain = computed(() => props.domain === 'maintenance')
 
-const pageTitle = computed(() =>
-  isMaintenanceDomain.value ? t('tasks.maintenance_title') : t('tasks.housekeeping_title'),
-)
 const domainLabel = computed(() =>
   isMaintenanceDomain.value ? t('tasks.domain.maintenance') : t('tasks.domain.housekeeping'),
 )

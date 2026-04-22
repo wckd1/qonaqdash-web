@@ -8,6 +8,10 @@ import type { RoomHousekeepingStatus, RoomMaintenanceStatus } from '@/shared/typ
  * - housekeeping_tasks.operate → 'cleaning' | 'inspection' | 'clean' (can perform / complete).
  * - maintenance_tasks.create → 'required' (can flag a room as needing maintenance).
  * - maintenance_tasks.operate → 'none' | 'under_maintenance' (can start / finish maintenance).
+ *
+ * Booking operators additionally get the two "flag needs attention" transitions
+ * ('dirty', 'required') so they can triage rooms during a stay / after checkout
+ * without holding the full task-create role.
  */
 export function useRoomActionAccess() {
   const {
@@ -15,18 +19,19 @@ export function useRoomActionAccess() {
     canOperateHousekeepingTasks,
     canCreateMaintenanceTasks,
     canOperateMaintenanceTasks,
+    canOperateBookings,
   } = usePermissions()
 
   const cleaningStatuses = computed<RoomHousekeepingStatus[]>(() => {
     const out: RoomHousekeepingStatus[] = []
-    if (canCreateHousekeepingTasks.value) out.push('dirty')
+    if (canCreateHousekeepingTasks.value || canOperateBookings.value) out.push('dirty')
     if (canOperateHousekeepingTasks.value) out.push('cleaning', 'inspection', 'clean')
     return out
   })
 
   const maintenanceStatuses = computed<RoomMaintenanceStatus[]>(() => {
     const out: RoomMaintenanceStatus[] = []
-    if (canCreateMaintenanceTasks.value) out.push('required')
+    if (canCreateMaintenanceTasks.value || canOperateBookings.value) out.push('required')
     if (canOperateMaintenanceTasks.value) out.push('none', 'under_maintenance')
     return out
   })

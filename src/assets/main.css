@@ -1076,6 +1076,8 @@ main .form-entity-section__profile-cta:hover {
 
 .toolbar-cluster--end {
   justify-content: flex-end;
+  justify-self: end;
+  grid-column: -2 / -1;
 }
 
 .toolbar-field {

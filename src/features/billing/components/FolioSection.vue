@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { metadataText, type LedgerEntry } from '@/features/billing/api'
+import type { LedgerEntry } from '@/features/billing/api'
 import { billQuery } from '@/features/billing/queries'
 import { useQuery } from '@pinia/colada'
 import { roomTypeListQuery } from '@/features/property/queries'
@@ -210,14 +210,13 @@ function fmtShortDate(iso: string): string {
 function entryTitle(entry: LedgerEntry): string {
   const key = ENTRY_TYPE_KEYS[entry.entry_type]
   const label = key ? t(key) : entry.entry_type
-  const metaDate = metadataText(entry, 'date')
-  const date = metaDate ? fmtShortDate(metaDate) : ''
+  const date = entry.metadata.date ? fmtShortDate(entry.metadata.date) : ''
 
   if (
     entry.entry_type === 'accommodation_night' ||
     entry.entry_type === 'accommodation_correction'
   ) {
-    const rtName = roomTypeName(metadataText(entry, 'room_type_id'))
+    const rtName = roomTypeName(entry.metadata.room_type_id)
     const head = date ? `${label} ${date}` : label
     return rtName ? `${head} — ${rtName}` : head
   }

@@ -22,17 +22,8 @@ export type MonthlyBreakdownResponse = Schemas['billinghttp.MonthlyBreakdownResp
 export type OutstandingBillDTO = Schemas['billinghttp.OutstandingBillDTO']
 export type OutstandingBalancesResponse = Schemas['billinghttp.OutstandingBalancesResponse']
 
-/**
- * String field of a ledger entry's `metadata` (`date`, `room_type_id`, …). The
- * contract keeps `metadata` free-form, its keys depend on `entry_type`.
- */
-export function metadataText(
-  entry: { metadata?: Record<string, unknown> | null },
-  key: string,
-): string | undefined {
-  const value = entry.metadata?.[key]
-  return typeof value === 'string' && value ? value : undefined
-}
+/** Known keys of a ledger entry's `metadata`; which ones are set depends on `entry_type`. */
+export type LedgerEntryMetadata = LedgerEntry['metadata']
 
 // ---------------------------------------------------------------------------
 // Folio

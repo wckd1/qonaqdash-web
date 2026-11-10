@@ -452,7 +452,6 @@ import {
   useReportLedgerQuery,
 } from '@/features/billing/queries'
 import {
-  metadataText,
   type OverviewResponse,
   type DailyBreakdownResponse,
   type MonthlyBreakdownResponse,
@@ -778,8 +777,7 @@ function fmtMonth(ym: string): string {
 function entryTitle(entry: ReportLedgerEntry): string {
   const key = ENTRY_TYPE_KEYS[entry.entry_type]
   const label = key ? t(key) : entry.entry_type
-  const metaDate = metadataText(entry, 'date')
-  const date = metaDate ? fmtShortDate(metaDate) : ''
+  const date = entry.metadata.date ? fmtShortDate(entry.metadata.date) : ''
 
   if (
     entry.entry_type === 'accommodation_night' ||

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { MAIN_USER_STATE, en, expect, test } from './fixtures/test'
 
 test.use({ storageState: MAIN_USER_STATE })
@@ -31,7 +32,8 @@ test('opens an existing booking', async ({ page }) => {
   await expect(page.locator('.error-message')).toHaveCount(0)
 })
 
-test('creates a new booking', async ({ page }) => {
+/** Creates a booking far in the future through the form and ends on its detail page. */
+async function createBooking(page: Page): Promise<{ lastName: string; startInDays: number }> {
   const runId = Date.now().toString(36)
   const firstName = 'Smoke'
   const lastName = `E2E ${runId}`
@@ -59,4 +61,43 @@ test('creates a new booking', async ({ page }) => {
   await expect(page).toHaveURL(/\/bookings\/[^/]+\/details$/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText(`${firstName} ${lastName}`)
   await expect(page.locator('.error-message')).toHaveCount(0)
+  return { lastName, startInDays }
+}
+
+test('creates a new booking', async ({ page }) => {
+  await createBooking(page)
+})
+
+test('edits, checks in and checks out a booking', async ({ page }) => {
+  const { startInDays } = await createBooking(page)
+  const editButton = page.getByRole('button', { name: en.common.edit, exact: true })
+
+  await editButton.click()
+  await page.getByLabel(en.fields.check_out).fill(datetimeLocal(startInDays + 3, '12:00'))
+  const saved = page.waitForResponse(
+    (r) =>
+      r.request().method() === 'PUT' && /\/api\/bookings\/[^/]+$/.test(new URL(r.url()).pathname),
+  )
+  await page.getByRole('button', { name: en.common.save, exact: true }).click()
+  expect((await saved).ok()).toBe(true)
+  await expect(editButton).toBeVisible()
+  await expect(page.locator('.error-message')).toHaveCount(0)
+
+  const toolbar = page.getByRole('toolbar', { name: en.bookings.lifecycle_toolbar_aria })
+  const dialog = page.getByRole('dialog')
+
+  await toolbar.getByRole('button', { name: en.bookings.action_check_in }).click()
+  await dialog.getByRole('button', { name: en.bookings.action_check_in }).click()
+  await expect(dialog).toHaveCount(0)
+  // The detail reloads after the action: a checked-in booking has a folio tab.
+  await expect(page.getByRole('button', { name: en.bookings.tab_folio })).toBeVisible()
+
+  await toolbar.getByRole('button', { name: en.bookings.action_check_out }).click()
+  const forceUnpaid = dialog.getByLabel(en.bookings.checkout_force_unpaid_label)
+  if (await forceUnpaid.isVisible()) await forceUnpaid.check()
+  await dialog.getByRole('button', { name: en.bookings.action_check_out }).click()
+  await expect(dialog).toHaveCount(0)
+  // A checked-out booking has no lifecycle actions and cannot be edited.
+  await expect(toolbar).toHaveCount(0)
+  await expect(editButton).toHaveCount(0)
 })

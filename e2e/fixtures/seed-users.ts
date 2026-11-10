@@ -43,3 +43,10 @@ export function requireMainUser(): SeedUser {
   }
   return user
 }
+
+/** Seed user by role as named in the backend README. */
+export function seedUser(role: string): SeedUser {
+  const user = SEED_USERS.find((u) => u.role === role)
+  if (!user) throw new Error(`No seed user with role "${role}" in e2e/fixtures/seed-users.ts`)
+  return user
+}

@@ -24,6 +24,14 @@ export const test = base.extend({
 
 export async function login(page: Page, user: SeedUser): Promise<void> {
   await page.goto('/auth/login')
+  await submitLogin(page, user)
+}
+
+/**
+ * Logs in from the login page that is already open, without reloading it.
+ * After a logout this keeps the same SPA session, as a user would.
+ */
+export async function submitLogin(page: Page, user: SeedUser): Promise<void> {
   await page.getByLabel(en.auth.login.email).fill(user.email)
   await page.getByLabel(en.auth.login.password).fill(user.password)
   await page.getByRole('button', { name: en.auth.login.sign_in }).click()
@@ -37,4 +45,17 @@ export async function logout(page: Page): Promise<void> {
   await page.locator('.sidebar-user .user-trigger').click()
   await page.getByRole('button', { name: en.layout.logout }).click()
   await expect(page).toHaveURL(/\/auth\/login/)
+}
+
+/**
+ * Opens a screen through the sidebar, without a page reload, so data cached in
+ * the SPA stays in place. Management links sit in a collapsible group.
+ */
+export async function openFromSidebar(page: Page, label: string): Promise<void> {
+  const sidebar = page.locator('aside.sidebar')
+  const link = sidebar.getByRole('link', { name: label, exact: true })
+  if (!(await link.isVisible())) {
+    await sidebar.locator('summary', { hasText: en.nav.management }).click()
+  }
+  await link.click()
 }

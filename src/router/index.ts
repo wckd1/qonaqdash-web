@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import { refreshAccount } from '@/features/auth/queries'
 import { applyDocumentTitleFromRoute } from '@/shared/i18n/documentTitle'
 import {
   canAccessDashboard,
@@ -277,8 +278,7 @@ router.beforeEach((to) => {
   }
 
   if (auth.isAuthenticated && !settings.permissionsLoaded) {
-    return settings
-      .fetchUserSettings()
+    return refreshAccount()
       .catch(() => undefined)
       .then(() => {
         if (to.path.startsWith('/auth/')) return { path: '/' }

@@ -1,4 +1,4 @@
-import api, { refreshTransport } from '@/shared/api/client'
+import api, { refreshTransport, type RequestOptions } from '@/shared/api/client'
 import type { AuthTokenPair } from '@/shared/types/auth'
 import type { Permissions } from '@/shared/types/permissions'
 
@@ -25,8 +25,8 @@ export function completeInvite(token: string, password: string): Promise<AuthTok
   }))
 }
 
-export function fetchInvite(token: string) {
-  return api.get(`/api/auth/invite/${token}`).then(({ data }) => data)
+export function fetchInvite(token: string, options: RequestOptions = {}) {
+  return api.get(`/api/auth/invite/${token}`, { signal: options.signal }).then(({ data }) => data)
 }
 
 /**
@@ -44,8 +44,10 @@ export function refreshTokens(currentRefreshToken: string): Promise<AuthTokenPai
 /**
  * @returns {Promise<{ account: { email: string }, settings: { locale: 'en' | 'ru' | null } }>}
  */
-export function fetchAccount() {
-  return api.get('/api/account').then(({ data }) => data as AccountBundleResponse)
+export function fetchAccount(options: RequestOptions = {}) {
+  return api
+    .get('/api/account', { signal: options.signal })
+    .then(({ data }) => data as AccountBundleResponse)
 }
 
 /**

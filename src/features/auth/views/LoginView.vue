@@ -52,7 +52,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
-import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import { refreshAccount } from '@/features/auth/queries'
 import AuthLayout from '@/features/auth/components/AuthLayout.vue'
 import { computeEmailGhost, type EmailGhostHint } from '@/shared/form-dsl/emailGhost'
 
@@ -60,7 +60,6 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const settingsStore = useSettingsStore()
 
 const email = ref('')
 const password = ref('')
@@ -87,7 +86,7 @@ async function handleSubmit() {
 
   try {
     await authStore.login(email.value, password.value)
-    await settingsStore.fetchUserSettings().catch(() => undefined)
+    await refreshAccount().catch(() => undefined)
     const r = route.query.redirect
     const redirect = typeof r === 'string' && r.startsWith('/') ? r : '/'
     await router.push(redirect)

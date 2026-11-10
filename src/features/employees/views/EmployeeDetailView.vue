@@ -117,7 +117,7 @@ import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
-import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import { refreshAccount } from '@/features/auth/queries'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import ManageOccupationsDialog from '@/features/employees/components/ManageOccupationsDialog.vue'
@@ -141,7 +141,6 @@ const { t, te, locale } = useI18n()
 const route = useRoute()
 const store = useEmployeeStore()
 const authStore = useAuthStore()
-const settingsStore = useSettingsStore()
 const { success } = useNotification()
 const { canManageEmployees, canManageEmployeePermissions } = usePermissions()
 const { currentEmployee, currentEmployeeFormRef, employeeFormTemplate, employeeFormRuntimeView } =
@@ -338,7 +337,7 @@ async function onOccupationsSaved(res: EmployeeOccupationsResponse) {
     }
   }
   if (authStore.employeeId === id) {
-    await settingsStore.fetchUserSettings().catch(() => undefined)
+    await refreshAccount().catch(() => undefined)
   }
 }
 
@@ -347,7 +346,7 @@ async function onPermissionsSaved(res: EmployeePermissionsResponse) {
   permissionOverrides.value = clonePermissions(res.permission_overrides)
   permissionsDialogOpen.value = false
   if (authStore.employeeId === employeeId.value) {
-    await settingsStore.fetchUserSettings().catch(() => undefined)
+    await refreshAccount().catch(() => undefined)
   }
 }
 </script>

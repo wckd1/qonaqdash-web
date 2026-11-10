@@ -376,17 +376,15 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
-import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
+import { accountQuery } from '@/features/auth/queries'
 import { usePermissions } from '@/shared/composables/usePermissions'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
-const settingsStore = useSettingsStore()
 const {
   homeRouteName,
   canAccessDashboard,
@@ -403,7 +401,7 @@ const {
   canAccessFormsOverview,
   canAccessReports,
 } = usePermissions()
-const { accountEmail } = storeToRefs(settingsStore)
+const accountQ = useQuery(() => ({ ...accountQuery, enabled: authStore.isAuthenticated }))
 const hotelQ = useQuery(() => ({ ...hotelQuery, enabled: !!authStore.hotelId }))
 const hotel = computed(() => hotelQ.data.value ?? null)
 
@@ -454,11 +452,12 @@ watch(
 )
 
 const userName = computed(() => {
-  const first = settingsStore.profileFirstName?.trim?.() ?? ''
-  const last = settingsStore.profileLastName?.trim?.() ?? ''
+  const profile = accountQ.data.value?.profile
+  const first = typeof profile?.first_name === 'string' ? profile.first_name.trim() : ''
+  const last = typeof profile?.last_name === 'string' ? profile.last_name.trim() : ''
   const fullName = [first, last].filter(Boolean).join(' ')
   if (fullName) return fullName
-  return accountEmail.value || authStore.user?.email || 'User'
+  return accountQ.data.value?.account?.email || authStore.user?.email || 'User'
 })
 
 const userContextLabel = computed(() => {

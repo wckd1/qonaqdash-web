@@ -67,18 +67,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import * as authApi from '@/features/auth/api'
+import { useQuery } from '@pinia/colada'
+import { accountQuery, useUpdateAccountMutation } from '@/features/auth/queries'
+import type { AccountBundleResponse } from '@/features/auth/api'
 import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
-import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 
 const { t } = useI18n()
-const settingsStore = useSettingsStore()
 
-const loading = ref(true)
-const saving = ref(false)
-const loadError = ref('')
+const account = useQuery(accountQuery)
+const updateAccount = useUpdateAccountMutation()
+
+const loading = computed(() => account.isPending.value)
+const saving = computed(() => updateAccount.isLoading.value)
+const loadError = computed(() =>
+  account.error.value ? formatUnknownApiError(account.error.value) || t('profile.load_error') : '',
+)
 const validationError = ref('')
 
 const email = ref('')
@@ -108,25 +113,25 @@ function choiceToPayloadLocale(choice: string) {
   return null
 }
 
-async function load() {
-  loadError.value = ''
-  loading.value = true
-  try {
-    const data = await authApi.fetchAccount()
-    const em = data?.account?.email ?? ''
-    email.value = em
-    originalEmail.value = em
-    const choice = serverLocaleToChoice(data?.settings?.locale ?? null)
-    localeChoice.value = choice
-    originalLocaleChoice.value = choice
-    currentPassword.value = ''
-    newPassword.value = ''
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('profile.load_error')
-  } finally {
-    loading.value = false
-  }
+function applyAccount(data: AccountBundleResponse) {
+  const em = data?.account?.email ?? ''
+  email.value = em
+  originalEmail.value = em
+  const choice = serverLocaleToChoice(data?.settings?.locale ?? null)
+  localeChoice.value = choice
+  originalLocaleChoice.value = choice
+  currentPassword.value = ''
+  newPassword.value = ''
 }
+
+// Fill the form from the account query, but never over unsaved edits.
+watch(
+  () => account.data.value,
+  (data) => {
+    if (data && !dirty.value) applyAccount(data)
+  },
+  { immediate: true },
+)
 
 function buildPayload(): Record<string, unknown> {
   const payload: Record<string, unknown> = {}
@@ -156,22 +161,16 @@ async function onSave() {
   const payload = buildPayload()
   if (!Object.keys(payload).length) return
 
-  saving.value = true
   try {
-    await authApi.updateAccount(payload)
-    await settingsStore.fetchUserSettings()
+    await updateAccount.mutateAsync(payload)
     originalEmail.value = email.value.trim()
     originalLocaleChoice.value = localeChoice.value
     currentPassword.value = ''
     newPassword.value = ''
   } catch {
     // API client toasts 4xx/5xx; 401 wrong password does not log out
-  } finally {
-    saving.value = false
   }
 }
-
-onMounted(load)
 </script>
 
 <style scoped>

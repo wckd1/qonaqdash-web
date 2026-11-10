@@ -1,8 +1,7 @@
-import { formatApiError } from '@/shared/i18n/apiError'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { i18n } from '@/i18n'
-import * as authApi from '@/features/auth/api'
+import type { AccountBundleResponse } from '@/features/auth/api'
 import type { Permissions } from '@/shared/types/permissions'
 import { extractPermissionsBundle, parsePermissions } from '@/shared/lib/permissions'
 import {
@@ -28,15 +27,12 @@ function readCachedPermissions(): Permissions | null {
 
 export const useSettingsStore = defineStore('settings', () => {
   const locale = ref(resolveInitialLocale())
-  /** From last `GET /api/account` — for sidebar / profile. */
-  const accountEmail = ref<string | null>(null)
-  const profileFirstName = ref<string | null>(null)
-  const profileLastName = ref<string | null>(null)
-  const userSettings = ref<Record<string, unknown> | null>(null)
+  /**
+   * Effective permissions of the signed-in user, from the last `GET /api/account`.
+   * Kept in localStorage so route guards can decide before the account loads.
+   */
   const permissions = ref<Permissions | null>(readCachedPermissions())
   const permissionsLoaded = ref(permissions.value !== null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
 
   function syncVueI18n(code) {
     i18n.global.locale.value = code
@@ -68,76 +64,42 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   /**
-   * `GET /api/account` — updates `accountEmail`, `userSettings`, and optionally UI locale.
+   * Applies the session parts of a loaded account (the account query calls it
+   * on every load): the permission snapshot and, optionally, the UI locale.
    *
    * **Locale merge rule** (skipped when the user has pinned a language via settings UI):
    * 1. Server returns a supported locale → apply it.
    * 2. Server returns `null` or an unsupported value → fall back to `navigator` languages.
    * 3. Navigator reports no supported language → fall back to English.
    */
-  async function fetchUserSettings() {
-    loading.value = true
-    error.value = null
-    try {
-      const data = await authApi.fetchAccount()
-      accountEmail.value = data?.account?.email ?? null
-      profileFirstName.value =
-        typeof data?.profile?.first_name === 'string' ? data.profile.first_name : null
-      profileLastName.value =
-        typeof data?.profile?.last_name === 'string' ? data.profile.last_name : null
-      const settings =
-        data?.settings && typeof data.settings === 'object' ? { ...data.settings } : {}
-      userSettings.value = Object.keys(settings).length ? settings : null
-      const nextPermissions = extractPermissionsBundle(data)
-      if (nextPermissions) {
-        permissions.value = nextPermissions
-        localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(nextPermissions))
-      }
-      permissionsLoaded.value = true
-      if (!hasPinnedLocale()) {
-        const fromServer = normalizeLocale(
-          typeof settings.locale === 'string' ? settings.locale : null,
-        )
-        const next = fromServer ?? resolveInitialLocale()
-        setLocale(next, { persist: false })
-      }
-      return data
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { error?: unknown } }; message?: string }
-      error.value =
-        formatApiError(err.response?.data?.error) || err.message || 'Failed to load account'
-      throw e
-    } finally {
-      loading.value = false
+  function applyAccount(data: AccountBundleResponse) {
+    const nextPermissions = extractPermissionsBundle(data)
+    if (nextPermissions) {
+      permissions.value = nextPermissions
+      localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(nextPermissions))
+    }
+    permissionsLoaded.value = true
+    if (!hasPinnedLocale()) {
+      const serverLocale = data?.settings?.locale
+      const fromServer = normalizeLocale(typeof serverLocale === 'string' ? serverLocale : null)
+      setLocale(fromServer ?? resolveInitialLocale(), { persist: false })
     }
   }
 
   function resetState() {
-    accountEmail.value = null
-    profileFirstName.value = null
-    profileLastName.value = null
-    userSettings.value = null
     permissions.value = null
     permissionsLoaded.value = false
     localStorage.removeItem(PERMISSIONS_STORAGE_KEY)
-    loading.value = false
-    error.value = null
     initLocale()
   }
 
   return {
     locale,
-    accountEmail,
-    profileFirstName,
-    profileLastName,
-    userSettings,
     permissions,
     permissionsLoaded,
-    loading,
-    error,
     setLocale,
     initLocale,
-    fetchUserSettings,
+    applyAccount,
     resetState,
   }
 })

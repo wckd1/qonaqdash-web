@@ -73,8 +73,8 @@ async function clearSessionAndRedirectLogin() {
 
 function refreshPermissionsSnapshot() {
   if (permissionsRefreshPromise) return permissionsRefreshPromise
-  permissionsRefreshPromise = import('@/shared/stores/useSettingsStore')
-    .then(({ useSettingsStore }) => useSettingsStore().fetchUserSettings())
+  permissionsRefreshPromise = import('@/features/auth/queries')
+    .then(({ refreshAccount }) => refreshAccount())
     .then(() => undefined)
     .catch(() => undefined)
     .finally(() => {

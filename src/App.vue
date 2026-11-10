@@ -9,6 +9,7 @@ import { storeToRefs } from 'pinia'
 import NotificationToast from '@/shared/components/NotificationToast.vue'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
+import { refreshAccount } from '@/features/auth/queries'
 import router from '@/router'
 import { applyDocumentTitleFromRoute } from '@/shared/i18n/documentTitle'
 
@@ -23,7 +24,7 @@ function applyDocumentLang(code) {
 onMounted(() => {
   applyDocumentLang(locale.value)
   if (authStore.isAuthenticated) {
-    void settingsStore.fetchUserSettings().catch(() => {})
+    void refreshAccount().catch(() => {})
   }
 })
 watch(locale, (code) => {

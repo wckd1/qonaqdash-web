@@ -1,5 +1,6 @@
-import type { APIRequestContext, Page } from '@playwright/test'
-import { seedUser, type SeedUser } from './fixtures/seed-users'
+import type { Page } from '@playwright/test'
+import { SUPERVISOR, apiSession, ensureEmployee } from './fixtures/employees'
+import { seedUser } from './fixtures/seed-users'
 import { en, expect, login, test } from './fixtures/test'
 
 // Each test signs in as its own user.
@@ -15,16 +16,6 @@ function watchApiErrors(page: Page): string[] {
     }
   })
   return errors
-}
-
-/** Bearer headers of a user signed in through the API, without the UI. */
-async function apiSession(request: APIRequestContext, user: SeedUser) {
-  const res = await request.post('/api/auth/login', {
-    data: { email: user.email, password: user.password },
-  })
-  expect(res.ok()).toBe(true)
-  const { access_token: token } = (await res.json()) as { access_token: string }
-  return { Authorization: `Bearer ${token}` }
 }
 
 async function accountName(page: Page): Promise<string> {
@@ -66,53 +57,9 @@ for (const [role, domain] of [
   })
 }
 
-const SUPERVISOR = {
-  role: 'housekeeping supervisor (e2e)',
-  email: 'e2e-supervisor@example.test',
-  password: 'supervisor12345',
-}
-
-/**
- * A housekeeping supervisor of Qonaq City Hotel: may create and assign
- * housekeeping tasks, but has no employee rights. Created through the owner
- * once and reused by later runs.
- */
-async function ensureSupervisor(request: APIRequestContext): Promise<void> {
-  const login = await request.post('/api/auth/login', {
-    data: { email: SUPERVISOR.email, password: SUPERVISOR.password },
-  })
-  if (login.ok()) return
-  const headers = await apiSession(request, seedUser('owner'))
-  const created = await request.post('/api/employees', {
-    headers,
-    data: { first_name: 'Sabina', last_name: 'Supervisor', email: SUPERVISOR.email },
-  })
-  expect(created.status()).toBe(201)
-  const { employee, invite_token: inviteToken } = (await created.json()) as {
-    employee: { id: string }
-    invite_token: string
-  }
-  const groups = (await (await request.get('/api/occupations', { headers })).json()) as {
-    occupations: { id: string; title: string }[]
-  }[]
-  const template = groups
-    .flatMap((g) => g.occupations)
-    .find((o) => o.title === 'iam.occupations.housekeeping_supervisor')
-  if (!template) throw new Error('No housekeeping supervisor occupation template')
-  const assigned = await request.put(`/api/employees/${employee.id}/occupations`, {
-    headers,
-    data: { occupation_ids: [template.id] },
-  })
-  expect(assigned.ok()).toBe(true)
-  const registered = await request.post(`/api/auth/invite/${inviteToken}`, {
-    data: { password: SUPERVISOR.password },
-  })
-  expect(registered.ok()).toBe(true)
-}
-
 // WP2 B23: a supervisor assigns tasks without the right to the staff list.
 test('supervisor assigns a housekeeping task without employee rights', async ({ page }) => {
-  await ensureSupervisor(page.request)
+  await ensureEmployee(page.request, SUPERVISOR)
   const owner = await apiSession(page.request, seedUser('owner'))
   const tasks = (await (
     await page.request.get('/api/tasks/housekeeping', { headers: owner })
@@ -155,7 +102,10 @@ test('supervisor assigns a housekeeping task without employee rights', async ({ 
     taskId = task.id
     expect(task.assignee_employee_id).toBe(housekeeper.id)
 
-    const row = page.locator('table.list-table tbody tr', { hasText: room.number })
+    // The room had no open task before; earlier runs left canceled ones.
+    const row = page
+      .locator('table.list-table tbody tr', { hasText: room.number })
+      .filter({ hasText: en.tasks.status.open })
     await expect(row.locator('td:nth-child(4)')).toHaveText(housekeeper.name)
     expect(errors).toEqual([])
   } finally {

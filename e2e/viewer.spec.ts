@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { BOOKINGS_READER, ensureEmployee } from './fixtures/employees'
 import { seedUser } from './fixtures/seed-users'
 import { en, expect, login, test } from './fixtures/test'
 
@@ -40,8 +41,9 @@ test('viewer opens a booking when the stored quote is forbidden', async ({ page 
 
 // WP2 B8: the stored quote is readable with `bookings.view` alone.
 test('a role with only bookings.view sees the stored quote of a booking', async ({ page }) => {
-  // The housekeeper may view bookings, but has no pricing or billing rights.
-  await login(page, seedUser('housekeeper'))
+  // No pricing, billing or rooms rights.
+  await ensureEmployee(page.request, BOOKINGS_READER)
+  await login(page, BOOKINGS_READER)
   const token = await page.evaluate(() => localStorage.getItem('access_token'))
   const bookings = (await (
     await page.request.get('/api/bookings', { headers: { Authorization: `Bearer ${token}` } })

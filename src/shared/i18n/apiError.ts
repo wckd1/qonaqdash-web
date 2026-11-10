@@ -1,5 +1,5 @@
 import { i18n } from '@/i18n'
-import { httpErrorData } from '@/shared/unknownError'
+import { httpErrorData, httpErrorResponse } from '@/shared/unknownError'
 
 /**
  * @param {unknown} data - `response.data`
@@ -106,13 +106,37 @@ export function formErrorsMapFromResponseData(data: unknown): Record<string, str
 }
 
 /**
- * Parse guest/booking form save errors: `common.validation_failed` + `issues`, or legacy top-level `errors`.
+ * A `400` or `422` error with `error.fields` (e.g. `guest.contact_required` with
+ * `["email", "phone"]`) as a FormEdit `errorsMap`: its message on each field.
+ */
+function formErrorsMapFromErrorFields(
+  status: number | undefined,
+  error: unknown,
+): Record<string, string[]> | null {
+  if (status !== 400 && status !== 422) return null
+  if (!error || typeof error !== 'object' || Array.isArray(error)) return null
+  const raw = (error as { fields?: unknown }).fields
+  const fields = Array.isArray(raw)
+    ? raw.filter((f): f is string => typeof f === 'string' && f.length > 0)
+    : []
+  const message = formatApiError(error)
+  if (!fields.length || !message) return null
+  const map: Record<string, string[]> = {}
+  for (const f of fields) appendFormError(map, f, message)
+  return map
+}
+
+/**
+ * Parse guest/booking/employee form save errors: `common.validation_failed` + `issues`,
+ * a `400`/`422` error with `fields`, or legacy top-level `errors`.
  */
 export function formErrorsMapFromHttpError(err: unknown): Record<string, string[]> | null {
   const data = httpErrorData(err)
   if (!data) return null
   const fromIssues = formErrorsMapFromResponseData(data)
   if (fromIssues) return fromIssues
+  const fromFields = formErrorsMapFromErrorFields(httpErrorResponse(err)?.status, data.error)
+  if (fromFields) return fromFields
   const top = data.errors
   if (top && typeof top === 'object' && !Array.isArray(top)) {
     return top as Record<string, string[]>

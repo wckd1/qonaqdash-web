@@ -17,6 +17,7 @@
 import { computed } from 'vue'
 import type { FormNode } from '@/shared/form-dsl/types'
 import LayoutRenderer from './edit/LayoutRenderer.vue'
+import { formRootErrors } from './formRootErrors'
 
 const props = defineProps({
   definition: { type: Object as () => FormNode | null, default: null },
@@ -27,7 +28,8 @@ const props = defineProps({
 
 const emit = defineEmits(['update:data'])
 
-const rootFormErrors = computed(() => props.errorsMap[''] ?? [])
+/** Form-level errors and errors that no shown field displays, so none is lost. */
+const rootFormErrors = computed(() => formRootErrors(props.definition, props.data, props.errorsMap))
 
 function onDataUpdate(val: Record<string, unknown>) {
   emit('update:data', val)

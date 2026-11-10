@@ -161,7 +161,7 @@
                   >
                     <option value="" disabled>{{ t('pricing.rule_condition_field') }}</option>
                     <option v-for="c in conditionCandidates" :key="c.field_id" :value="c.field_id">
-                      {{ c.label ? t(c.label) : c.field_id }}
+                      {{ c.label ? resolveFormCatalogString(c.label) : c.field_id }}
                     </option>
                   </select>
                   <select v-model="cond.operator" :disabled="saving" class="condition-row__field">
@@ -181,7 +181,7 @@
                       :key="String(opt.value)"
                       :value="opt.value"
                     >
-                      {{ t(opt.label) }}
+                      {{ resolveFormCatalogString(opt.label) }}
                     </option>
                   </select>
                 </template>
@@ -331,6 +331,7 @@ import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 import type { PricingRule, PricingCondition, ConditionCandidate } from '@/features/pricing/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
+import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -426,13 +427,13 @@ function statusClass(status: string): Record<string, boolean> {
 
 function resolveFieldLabel(fieldId: string): string {
   const raw = candidateByFieldId(fieldId)?.label
-  return raw ? t(raw) : fieldId
+  return raw ? resolveFormCatalogString(raw) : fieldId
 }
 
 function resolveOptionLabel(fieldId: string, value: string): string {
   const candidate = candidateByFieldId(fieldId)
   const raw = candidate?.options?.find((o) => o.value === value)?.label
-  return raw ? t(raw) : value
+  return raw ? resolveFormCatalogString(raw) : value
 }
 
 function conditionsSummary(rule: PricingRule): string {

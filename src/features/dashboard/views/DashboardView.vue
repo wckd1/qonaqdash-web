@@ -157,14 +157,14 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { addDays, differenceInCalendarDays, startOfDay, startOfToday, subDays } from 'date-fns'
 import { useQuery } from '@pinia/colada'
 import { hotelRoomsQuery } from '@/features/property/queries'
 import { bookingGridQuery } from '@/features/bookings/queries'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
-import { parseLocalYmd, formatLocalYmd } from '@/features/bookings/utils/gridDates'
+import { addDays, daysBetween, isLocalDate } from '@/shared/lib/localDate'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
@@ -174,6 +174,7 @@ const STORAGE_RANGE = 'qonaqdash.dashboard.gridCustomRange'
 const STORAGE_LAST_PERIOD = 'qonaqdash.dashboard.gridLastPeriod'
 
 const { t } = useI18n()
+const { today } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const { canCreateBookings, canAccessRooms } = usePermissions()
@@ -229,16 +230,14 @@ function onGridBookingUpdated() {
   }
 }
 
-function isValidYmd(s: unknown): s is string {
-  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+/** Both ends are local dates and `from` is not after `to` (`YYYY-MM-DD` compares as text). */
+function isValidRange(from: unknown, to: unknown): boolean {
+  return isLocalDate(from) && isLocalDate(to) && from <= to
 }
 
-function isValidRange(from: unknown, to: unknown): boolean {
-  if (!isValidYmd(from) || !isValidYmd(to)) return false
-  const a = parseLocalYmd(from)
-  const b = parseLocalYmd(to)
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return false
-  return a <= b
+/** Days of the inclusive range `from`–`to`. */
+function inclusiveSpan(from: string, to: string): number {
+  return daysBetween(from, to) + 1
 }
 
 /**
@@ -246,11 +245,9 @@ function isValidRange(from: unknown, to: unknown): boolean {
  * Today is always the 2nd column; `dayCount` is the inclusive span (min 2).
  */
 function rangeForPeriod(dayCount: number) {
-  const today = startOfToday()
+  const todayDate = today()
   const n = Math.max(2, dayCount)
-  const from = startOfDay(subDays(today, 1))
-  const to = startOfDay(addDays(today, n - 2))
-  return { from: formatLocalYmd(from), to: formatLocalYmd(to) }
+  return { from: addDays(todayDate, -1), to: addDays(todayDate, n - 2) }
 }
 
 /** Quick picks in the period dropdown only; any other length still appears as an extra option. */
@@ -285,9 +282,7 @@ function readInitialRange() {
 
 const effectiveSpanDays = computed(() => {
   if (!isValidRange(fromStr.value, toStr.value)) return null
-  const fromD = startOfDay(parseLocalYmd(fromStr.value))
-  const toD = startOfDay(parseLocalYmd(toStr.value))
-  return differenceInCalendarDays(toD, fromD) + 1
+  return inclusiveSpan(fromStr.value, toStr.value)
 })
 
 const needsExtraPeriodOption = computed(() => {
@@ -317,15 +312,13 @@ const sortedRooms = computed(() => {
   })
 })
 
-const rangeFromDate = computed(() => {
-  if (!isValidRange(fromStr.value, toStr.value)) return startOfToday()
-  return startOfDay(parseLocalYmd(fromStr.value))
-})
+const rangeFromDate = computed(() =>
+  isValidRange(fromStr.value, toStr.value) ? fromStr.value : today(),
+)
 
-const rangeToDate = computed(() => {
-  if (!isValidRange(fromStr.value, toStr.value)) return startOfToday()
-  return startOfDay(parseLocalYmd(toStr.value))
-})
+const rangeToDate = computed(() =>
+  isValidRange(fromStr.value, toStr.value) ? toStr.value : today(),
+)
 
 /** Shows the grid for the range in the toolbar. */
 function loadGridData() {
@@ -352,9 +345,7 @@ function persistRangeToStorage() {
   try {
     localStorage.setItem(STORAGE_RANGE, JSON.stringify({ from: fromStr.value, to: toStr.value }))
     if (isValidRange(fromStr.value, toStr.value)) {
-      const fromD = startOfDay(parseLocalYmd(fromStr.value))
-      const toD = startOfDay(parseLocalYmd(toStr.value))
-      const span = differenceInCalendarDays(toD, fromD) + 1
+      const span = inclusiveSpan(fromStr.value, toStr.value)
       if (span >= 2) {
         localStorage.setItem(STORAGE_LAST_PERIOD, String(span))
       }
@@ -386,17 +377,11 @@ function applyPeriodLength(n: number) {
 
 function onDateFieldChange() {
   gridError.value = ''
-  if (!isValidYmd(fromStr.value) || !isValidYmd(toStr.value)) {
+  if (!isLocalDate(fromStr.value) || !isLocalDate(toStr.value)) {
     gridError.value = t('dashboard.valid_dates_hint')
     return
   }
-  const fromD = parseLocalYmd(fromStr.value)
-  const toD = parseLocalYmd(toStr.value)
-  if (Number.isNaN(fromD.getTime()) || Number.isNaN(toD.getTime())) {
-    gridError.value = t('dashboard.valid_dates_hint')
-    return
-  }
-  if (toD < fromD) {
+  if (toStr.value < fromStr.value) {
     toStr.value = fromStr.value
   }
   persistRangeToStorage()
@@ -407,9 +392,7 @@ function onDateFieldChange() {
 function jumpToday() {
   let n = readLastPeriodDays()
   if (isValidRange(fromStr.value, toStr.value)) {
-    const fromD = startOfDay(parseLocalYmd(fromStr.value))
-    const toD = startOfDay(parseLocalYmd(toStr.value))
-    n = Math.max(2, differenceInCalendarDays(toD, fromD) + 1)
+    n = Math.max(2, inclusiveSpan(fromStr.value, toStr.value))
   }
   const { from, to } = rangeForPeriod(n)
   fromStr.value = from
@@ -423,13 +406,11 @@ function jumpToday() {
 function shiftRange(direction: number) {
   gridError.value = ''
   if (!isValidRange(fromStr.value, toStr.value)) return
-  const fromD = startOfDay(parseLocalYmd(fromStr.value))
-  const toD = startOfDay(parseLocalYmd(toStr.value))
-  const span = differenceInCalendarDays(toD, fromD) + 1
+  const span = inclusiveSpan(fromStr.value, toStr.value)
   if (span < 1) return
   const delta = direction * span
-  fromStr.value = formatLocalYmd(addDays(fromD, delta))
-  toStr.value = formatLocalYmd(addDays(toD, delta))
+  fromStr.value = addDays(fromStr.value, delta)
+  toStr.value = addDays(toStr.value, delta)
   persistRangeToStorage()
   syncRouteQuery()
   loadGridData()

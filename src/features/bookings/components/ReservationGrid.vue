@@ -52,15 +52,13 @@
         >
           <div class="reservation-grid-corner" aria-hidden="true" />
           <div
-            v-for="day in days"
-            :key="day.getTime()"
+            v-for="head in dayHeads"
+            :key="head.day"
             class="reservation-grid-head"
-            :class="{ 'reservation-grid-head--today': isSameDay(day, today) }"
+            :class="{ 'reservation-grid-head--today': head.day === today }"
           >
-            <span class="reservation-grid-head-day">{{ format(day, 'd') }}</span>
-            <span class="reservation-grid-head-mon">{{
-              format(day, 'MMM', { locale: dateFnsLocale })
-            }}</span>
+            <span class="reservation-grid-head-day">{{ head.dayOfMonth }}</span>
+            <span class="reservation-grid-head-mon">{{ head.month }}</span>
           </div>
 
           <template v-for="row in gridRows" :key="row.key">
@@ -75,17 +73,17 @@
               </div>
               <button
                 v-for="day in days"
-                :key="`${row.room.id}-${day.getTime()}`"
+                :key="`${row.room.id}-${day}`"
                 type="button"
                 class="reservation-grid-cell"
                 :class="{
-                  'reservation-grid-cell--today': isSameDay(day, today),
-                  'reservation-grid-cell--past': startOfDay(day) < todayStart,
+                  'reservation-grid-cell--today': day === today,
+                  'reservation-grid-cell--past': day < today,
                   'reservation-grid-cell--drag-select': rangeHighlightKeys.has(
-                    `${row.room.id}-${startOfDay(day).getTime()}`,
+                    `${row.room.id}-${day}`,
                   ),
                 }"
-                :disabled="startOfDay(day) < todayStart"
+                :disabled="day < today"
                 :aria-label="cellAriaLabel(row.room.number, day)"
                 @mousedown.left.prevent="onCellMouseDown($event, row.room.id, day)"
                 @mouseenter="onCellMouseEnter(row.room.id, day)"
@@ -123,14 +121,17 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { format, startOfDay, isSameDay } from 'date-fns'
 import type { BookingItem } from '@/features/bookings/api'
 import type { AvailableRoom } from '@/features/property/api'
-import { listDaysInclusive, formatLocalYmd } from '@/features/bookings/utils/gridDates'
-import { useSettingsStore } from '@/shared/stores/useSettingsStore'
-import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
+import {
+  addDays,
+  daysBetween,
+  eachLocalDate,
+  formatLocalDateToParts,
+  type LocalDate,
+} from '@/shared/lib/localDate'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import { useQuery } from '@pinia/colada'
@@ -139,7 +140,13 @@ import { hotelQuery } from '@/features/property/queries'
 /** A grid row: a room of the hotel with its type name (`rooms/available` without a stay). */
 type RoomRow = Pick<AvailableRoom, 'id' | 'number' | 'room_type_id' | 'room_type_name'>
 
-type CellMenuState = { roomId: string; rangeFirst: Date; rangeLast: Date; x: number; y: number }
+type CellMenuState = {
+  roomId: string
+  rangeFirst: LocalDate
+  rangeLast: LocalDate
+  x: number
+  y: number
+}
 
 type BarMenuState = {
   x: number
@@ -149,7 +156,7 @@ type BarMenuState = {
   outstandingBalanceMinor?: number
 }
 
-type DragSelectState = { roomId: string; startDay: Date; endDay: Date }
+type DragSelectState = { roomId: string; startDay: LocalDate; endDay: LocalDate }
 
 type GridRow =
   { kind: 'type-header'; key: string; title: string } | { kind: 'room'; key: string; room: RoomRow }
@@ -171,8 +178,10 @@ const props = withDefaults(
   defineProps<{
     rooms: RoomRow[]
     entries: BookingItem[]
-    rangeFrom: Date
-    rangeTo: Date
+    /** First column, a local date of the hotel. */
+    rangeFrom: LocalDate
+    /** Last column (inclusive), a local date of the hotel. */
+    rangeTo: LocalDate
   }>(),
   {
     rooms: () => [],
@@ -183,10 +192,7 @@ const props = withDefaults(
 const router = useRouter()
 
 const { t, locale } = useI18n()
-
-const settingsStore = useSettingsStore()
-const { locale: appLocale } = storeToRefs(settingsStore)
-const dateFnsLocale = computed(() => dateFnsLocaleForApp(appLocale.value))
+const hotelTime = useHotelTime()
 
 const { data: hotel } = useQuery(hotelQuery)
 
@@ -199,7 +205,7 @@ const headerHeight = 52
 const cellHeight = 64
 const typeHeaderHeight = 44
 const yLabelWidth = 118
-const dayMs = 86400000
+const minutesPerDay = 24 * 60
 
 const gridRef = ref<HTMLElement | null>(null)
 const gridInnerWidth = ref(0)
@@ -212,14 +218,19 @@ const barMenuEl = ref<HTMLElement | null>(null)
 const selectPointerDown = ref(false)
 const dragSelectState = ref<DragSelectState | null>(null)
 
+/** Days from `a` to `b` inclusive, in either order. */
+function daysInclusive(a: LocalDate, b: LocalDate): LocalDate[] {
+  const first = a <= b ? a : b
+  const last = a <= b ? b : a
+  return eachLocalDate(first, addDays(last, 1))
+}
+
 /** Cells to highlight: active drag and/or open context menu range (menu stays visible after drag ends). */
 const rangeHighlightKeys = computed(() => {
   const set = new Set()
-  const addSpan = (roomId: string, a: Date, b: Date) => {
-    const first = a.getTime() <= b.getTime() ? a : b
-    const last = a.getTime() <= b.getTime() ? b : a
-    for (const day of listDaysInclusive(first, last)) {
-      set.add(`${roomId}-${startOfDay(day).getTime()}`)
+  const addSpan = (roomId: string, a: LocalDate, b: LocalDate) => {
+    for (const day of daysInclusive(a, b)) {
+      set.add(`${roomId}-${day}`)
     }
   }
   const drag = dragSelectState.value
@@ -231,49 +242,53 @@ const rangeHighlightKeys = computed(() => {
   return set
 })
 
-const today = new Date()
-const todayStart = startOfDay(today)
+const today = hotelTime.today()
 
+/** Nights of each booked room: from the check-in date up to the check-out date, not including it. */
 const occupiedCellKeys = computed(() => {
   const set = new Set<string>()
   for (const entry of props.entries) {
-    const ciDate = new Date(entry.stay.check_in)
-    const coDate = new Date(entry.stay.check_out)
-    if (Number.isNaN(ciDate.getTime()) || Number.isNaN(coDate.getTime())) continue
-    const ciMs = startOfDay(ciDate).getTime()
-    const coMs = startOfDay(coDate).getTime()
+    const checkInDay = hotelTime.localDateOf(entry.stay.check_in)
+    const checkOutDay = hotelTime.localDateOf(entry.stay.check_out)
+    if (!checkInDay || !checkOutDay) continue
+    const nights = eachLocalDate(checkInDay, checkOutDay)
     for (const room of entry.stay.rooms ?? []) {
       if (!room.room_id) continue
-      for (let cursor = ciMs; cursor < coMs; cursor += dayMs) {
-        set.add(`${room.room_id}-${cursor}`)
-      }
+      for (const night of nights) set.add(`${room.room_id}-${night}`)
     }
   }
   return set
 })
 
-function isCellOccupied(roomId: string, day: Date): boolean {
-  return occupiedCellKeys.value.has(`${roomId}-${startOfDay(day).getTime()}`)
+function isCellOccupied(roomId: string, day: LocalDate): boolean {
+  return occupiedCellKeys.value.has(`${roomId}-${day}`)
 }
 
-function hasOccupiedInRange(roomId: string, a: Date, b: Date): boolean {
-  const first = a.getTime() <= b.getTime() ? a.getTime() : b.getTime()
-  const last = a.getTime() <= b.getTime() ? b.getTime() : a.getTime()
-  for (let cursor = first; cursor <= last; cursor += dayMs) {
-    if (occupiedCellKeys.value.has(`${roomId}-${cursor}`)) return true
-  }
-  return false
+function hasOccupiedInRange(roomId: string, a: LocalDate, b: LocalDate): boolean {
+  return daysInclusive(a, b).some((day) => occupiedCellKeys.value.has(`${roomId}-${day}`))
 }
 
-const days = computed(() => listDaysInclusive(props.rangeFrom, props.rangeTo))
+const days = computed(() => eachLocalDate(props.rangeFrom, addDays(props.rangeTo, 1)))
+
+/** Column heads: the day of the month over the month name as it reads after a day ("5 мая"). */
+const dayHeads = computed(() =>
+  days.value.map((day) => {
+    const parts = formatLocalDateToParts(day, locale.value, { day: 'numeric', month: 'short' })
+    return {
+      day,
+      dayOfMonth: parts.find((p) => p.type === 'day')?.value ?? String(Number(day.slice(8))),
+      month: parts.find((p) => p.type === 'month')?.value ?? '',
+    }
+  }),
+)
 
 /**
  * Body rows: type section headers + room rows (rooms must already be sorted by type).
  * @returns {Array<{ kind: 'type-header', key: string, title: string } | { kind: 'room', key: string, room: object }>}
  */
-function cellAriaLabel(roomNumber: string, day: Date) {
+function cellAriaLabel(roomNumber: string, day: LocalDate) {
   void locale.value
-  return t('grid.cell_aria', { number: roomNumber, date: formatLocalYmd(day) })
+  return t('grid.cell_aria', { number: roomNumber, date: day })
 }
 
 const gridRows = computed((): GridRow[] => {
@@ -333,11 +348,23 @@ const colWidth = computed(() => {
   return inner / n
 })
 
-const rangeOriginMs = computed(() => startOfDay(props.rangeFrom).getTime())
+/**
+ * Position of a moment in columns from the start of the first column: the
+ * column of its local date plus the share of the day on the hotel clock.
+ */
+function columnPosition(moment: string): number | null {
+  const wall = hotelTime.toWallTime(moment)
+  if (!wall) return null
+  const column = daysBetween(props.rangeFrom, wall.date)
+  if (Number.isNaN(column)) return null
+  const [hours, minutes] = wall.time.split(':').map(Number)
+  return column + (hours * 60 + minutes) / minutesPerDay
+}
 
-function barGeometry(checkIn: Date, checkOut: Date) {
-  const rawStart = (checkIn.getTime() - rangeOriginMs.value) / dayMs
-  const rawEnd = (checkOut.getTime() - rangeOriginMs.value) / dayMs
+function barGeometry(checkIn: string, checkOut: string) {
+  const rawStart = columnPosition(checkIn)
+  const rawEnd = columnPosition(checkOut)
+  if (rawStart === null || rawEnd === null) return null
   const maxDay = days.value.length
   const visStart = Math.max(0, Math.min(maxDay, rawStart))
   const visEnd = Math.max(0, Math.min(maxDay, rawEnd))
@@ -365,11 +392,7 @@ const barLayouts = computed((): BarLayout[] => {
   const layouts: BarLayout[] = []
   const tops = roomTopOffsetById.value
   for (const e of props.entries) {
-    const checkIn = new Date(e.stay.check_in)
-    const checkOut = new Date(e.stay.check_out)
-    if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) continue
-
-    const geom = barGeometry(checkIn, checkOut)
+    const geom = barGeometry(e.stay.check_in, e.stay.check_out)
     if (!geom) continue
     const { left, width } = geom
 
@@ -482,7 +505,13 @@ function cancelDragSelect() {
   window.removeEventListener('mouseup', onWindowMouseUp, true)
 }
 
-function openCellMenuAt(x: number, y: number, roomId: string, rangeFirst: Date, rangeLast: Date) {
+function openCellMenuAt(
+  x: number,
+  y: number,
+  roomId: string,
+  rangeFirst: LocalDate,
+  rangeLast: LocalDate,
+) {
   closeBarMenu()
   cellMenu.value = {
     roomId,
@@ -509,33 +538,30 @@ function openCellMenuAt(x: number, y: number, roomId: string, rangeFirst: Date, 
   })
 }
 
-function openCellMenuFromContext(event: MouseEvent, roomId: string, day: Date) {
+function openCellMenuFromContext(event: MouseEvent, roomId: string, day: LocalDate) {
   cancelDragSelect()
   closeCellMenu()
   closeBarMenu()
   if (isCellOccupied(roomId, day)) return
-  const d = startOfDay(day)
-  openCellMenuAt(event.clientX, event.clientY, roomId, d, d)
+  openCellMenuAt(event.clientX, event.clientY, roomId, day, day)
 }
 
-function onCellMouseDown(event: MouseEvent, roomId: string, day: Date) {
+function onCellMouseDown(event: MouseEvent, roomId: string, day: LocalDate) {
   if (event.button !== 0) return
   closeCellMenu()
   closeBarMenu()
   if (isCellOccupied(roomId, day)) return
   selectPointerDown.value = true
-  const d = startOfDay(day)
-  dragSelectState.value = { roomId, startDay: d, endDay: d }
+  dragSelectState.value = { roomId, startDay: day, endDay: day }
   window.addEventListener('mouseup', onWindowMouseUp, true)
 }
 
-function onCellMouseEnter(roomId: string, day: Date) {
+function onCellMouseEnter(roomId: string, day: LocalDate) {
   if (!selectPointerDown.value || !dragSelectState.value) return
   if (roomId !== dragSelectState.value.roomId) return
-  const d = startOfDay(day)
-  if (d < todayStart) return
-  if (hasOccupiedInRange(roomId, dragSelectState.value.startDay, d)) return
-  dragSelectState.value.endDay = d
+  if (day < today) return
+  if (hasOccupiedInRange(roomId, dragSelectState.value.startDay, day)) return
+  dragSelectState.value.endDay = day
 }
 
 function onWindowMouseUp(event: MouseEvent) {
@@ -545,10 +571,8 @@ function onWindowMouseUp(event: MouseEvent) {
   selectPointerDown.value = false
   dragSelectState.value = null
   if (!state) return
-  const a = state.startDay.getTime()
-  const b = state.endDay.getTime()
-  const first = a <= b ? state.startDay : state.endDay
-  const last = a <= b ? state.endDay : state.startDay
+  const first = state.startDay <= state.endDay ? state.startDay : state.endDay
+  const last = state.startDay <= state.endDay ? state.endDay : state.startDay
   openCellMenuAt(event.clientX, event.clientY, state.roomId, first, last)
 }
 
@@ -560,39 +584,21 @@ function onPickCreateBooking() {
   goToNewBooking(roomId, rangeFirst, rangeLast)
 }
 
-function parseHourMinute(hhmm: string): [number, number] {
-  const parts = hhmm.split(':')
-  return [parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0]
-}
-
 /**
- * @param {Date} firstDay - First selected column (check-in day).
- * @param {Date} lastDay - Last selected column: departure day for multi-day span;
+ * @param firstDay - First selected column (check-in day).
+ * @param lastDay - Last selected column: departure day for multi-day span;
  *   if same as firstDay, one night → checkout next day.
  */
-function goToNewBooking(roomId: string, firstDay: Date, lastDay: Date) {
-  const [ciH, ciM] = parseHourMinute(hotel.value?.check_in_hour || '14:00')
-  const [coH, coM] = parseHourMinute(hotel.value?.check_out_hour || '12:00')
-
-  const first = startOfDay(firstDay)
-  const last = startOfDay(lastDay)
-  const checkIn = new Date(first)
-  checkIn.setHours(ciH, ciM, 0, 0)
-  let checkOut
-  if (first.getTime() === last.getTime()) {
-    checkOut = new Date(last)
-    checkOut.setDate(checkOut.getDate() + 1)
-    checkOut.setHours(coH, coM, 0, 0)
-  } else {
-    checkOut = new Date(last)
-    checkOut.setHours(coH, coM, 0, 0)
-  }
+function goToNewBooking(roomId: string, firstDay: LocalDate, lastDay: LocalDate) {
+  const checkInHour = hotel.value?.check_in_hour || '14:00'
+  const checkOutHour = hotel.value?.check_out_hour || '12:00'
+  const checkOutDay = firstDay === lastDay ? addDays(lastDay, 1) : lastDay
 
   router.push({
     name: 'booking-new',
     query: {
-      checkIn: checkIn.toISOString(),
-      checkOut: checkOut.toISOString(),
+      checkIn: hotelTime.fromWallTime(firstDay, checkInHour),
+      checkOut: hotelTime.fromWallTime(checkOutDay, checkOutHour),
       roomId,
     },
   })

@@ -143,15 +143,19 @@
 import { ref, computed, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
-import { useGuestStore } from '@/features/guests/stores/useGuestStore'
+import {
+  guestBookingsQuery,
+  guestDetailQuery,
+  guestRuntimeFormQuery,
+  useBlockGuestMutation,
+  useUpdateGuestMutation,
+} from '@/features/guests/queries'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormResponse'
-import { fetchGuestBookings } from '@/features/guests/api'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
-import type { GuestBookingListItem } from '@/features/bookings/api'
 import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
@@ -161,13 +165,10 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
 const route = useRoute()
-const store = useGuestStore()
 const { success } = useNotification()
 const { canModifyGuests, canBlockGuests, canViewBookings } = usePermissions()
-const { currentGuest, guestFormTemplate, guestFormRuntimeView, currentGuestFormRef } =
-  storeToRefs(store)
-const loadError = ref('')
-const notFound = ref(false)
+const updateGuest = useUpdateGuestMutation()
+const blockGuest = useBlockGuestMutation()
 const editing = ref(false)
 const editFormData = ref({})
 const errorsMap = ref({})
@@ -185,6 +186,34 @@ function routeGuestId(): string | null {
 
 const guestId = computed(() => routeGuestId())
 
+const detailQ = useQuery(() => ({
+  ...guestDetailQuery(guestId.value ?? ''),
+  enabled: !!guestId.value,
+}))
+const formHash = computed(() => detailQ.data.value?.formRef?.hash ?? '')
+const formQ = useQuery(() => ({
+  ...guestRuntimeFormQuery({ target: 'view', hash: formHash.value }),
+  enabled: !!detailQ.data.value,
+}))
+const currentGuest = computed(() => detailQ.data.value?.data ?? null)
+const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
+const loadError = computed(() => {
+  const err = (notFound.value ? null : detailQ.error.value) ?? formQ.error.value
+  return err ? formatUnknownApiError(err) || t('guests.guest_load_failed') : ''
+})
+
+const bookingsQ = useQuery(() => ({
+  ...guestBookingsQuery(guestId.value ?? ''),
+  enabled: !!guestId.value && !!currentGuest.value && canViewBookings.value,
+}))
+const previousBookings = computed(() => bookingsQ.data.value ?? [])
+const bookingsLoading = computed(() => bookingsQ.isLoading.value && !bookingsQ.data.value)
+const bookingsLoadError = computed(() =>
+  bookingsQ.error.value
+    ? formatUnknownApiError(bookingsQ.error.value) || t('guests.bookings_load_failed')
+    : '',
+)
+
 const isGuestBlocked = computed(() => {
   const cg = currentGuest.value as Record<string, unknown> | null
   return !!(cg && cg.blocked === true)
@@ -192,15 +221,8 @@ const isGuestBlocked = computed(() => {
 
 /** Runtime GET /guests/form?target=view (+ edit fallback) merged with GET /guests/:id data. */
 const guestForm = computed(() =>
-  composeGuestFormFromEntity(
-    currentGuest.value ?? null,
-    guestFormRuntimeView.value ?? guestFormTemplate.value,
-  ),
+  composeGuestFormFromEntity(currentGuest.value ?? null, formQ.data.value ?? null),
 )
-
-const previousBookings = ref<GuestBookingListItem[]>([])
-const bookingsLoading = ref(false)
-const bookingsLoadError = ref('')
 
 function formatDate(iso) {
   if (!iso) return '—'
@@ -228,43 +250,6 @@ const guestDisplayName = computed(() => {
     : (typeof email === 'string' ? email : '') || t('page_title.guest')
 })
 
-async function load() {
-  const id = routeGuestId()
-  if (!id) return
-  store.clearCurrentGuest()
-  loadError.value = ''
-  notFound.value = false
-  try {
-    await store.fetchGuest(id)
-    await store.fetchGuestForm({
-      target: 'view',
-      definitionHash: currentGuestFormRef.value?.hash ?? null,
-    })
-  } catch (err: unknown) {
-    if (httpErrorResponse(err)?.status === 404) {
-      store.clearCurrentGuest()
-      notFound.value = true
-    } else {
-      loadError.value = formatUnknownApiError(err) || t('guests.guest_load_failed')
-    }
-  }
-}
-
-async function loadBookings() {
-  const id = guestId.value
-  if (!id || !canViewBookings.value) return
-  bookingsLoadError.value = ''
-  bookingsLoading.value = true
-  try {
-    previousBookings.value = await fetchGuestBookings(id)
-  } catch (err: unknown) {
-    bookingsLoadError.value = formatUnknownApiError(err) || t('guests.bookings_load_failed')
-    previousBookings.value = []
-  } finally {
-    bookingsLoading.value = false
-  }
-}
-
 watch(editing, (isEdit) => {
   if (isEdit && guestForm.value) {
     editFormData.value = { ...guestForm.value.data }
@@ -274,11 +259,9 @@ watch(editing, (isEdit) => {
 
 watch(
   () => route.params.id,
-  (newId) => {
-    if (newId) load()
+  () => {
     editing.value = false
   },
-  { immediate: true },
 )
 
 function cancelEdit() {
@@ -300,7 +283,7 @@ async function onSave() {
   }
   submitting.value = true
   try {
-    await store.updateGuest(guestId.value, editFormData.value)
+    await updateGuest.mutateAsync({ id: guestId.value, data: editFormData.value })
     editing.value = false
   } catch (err: unknown) {
     const mapped = formErrorsMapFromHttpError(err)
@@ -315,18 +298,6 @@ async function onSave() {
     submitting.value = false
   }
 }
-
-watch(guestId, (id) => {
-  if (id && currentGuest.value && canViewBookings.value) loadBookings()
-})
-
-watch(
-  currentGuest,
-  (guest) => {
-    if (guest && guestId.value && canViewBookings.value) loadBookings()
-  },
-  { immediate: true },
-)
 
 watch(
   [guestDisplayName, locale],
@@ -350,7 +321,7 @@ async function confirmBlock() {
   if (!id) return
   removing.value = true
   try {
-    await store.blockGuest(id)
+    await blockGuest.mutateAsync(id)
     success(t('guests.block_success'))
     blockConfirmOpen.value = false
   } catch {

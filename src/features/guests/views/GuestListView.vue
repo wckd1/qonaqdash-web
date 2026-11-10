@@ -118,13 +118,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import GuestSidePanel from '@/features/guests/components/GuestSidePanel.vue'
-import { useGuestStore } from '@/features/guests/stores/useGuestStore'
+import { guestListQuery } from '@/features/guests/queries'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import type { Guest } from '@/features/guests/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -134,15 +135,23 @@ const DEBOUNCE_MS = 300
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const store = useGuestStore()
 const { canCreateGuests, canCreateBookings } = usePermissions()
-const { guests } = storeToRefs(store)
 
-const initialLoading = ref(true)
-const searching = ref(false)
-const loadError = ref('')
 const searchQuery = ref('')
-let searchDebounceId: ReturnType<typeof setTimeout> | null = null
+const debouncedQuery = useDebouncedRef(searchQuery, DEBOUNCE_MS)
+// Keep the current rows on screen while a new search loads.
+const guestsQuery = useQuery(() => ({
+  ...guestListQuery(debouncedQuery.value),
+  placeholderData: (previous) => previous,
+}))
+const guests = computed(() => guestsQuery.data.value ?? [])
+const initialLoading = computed(() => guestsQuery.isPending.value)
+const searching = computed(() => !initialLoading.value && guestsQuery.isLoading.value)
+const loadError = computed(() =>
+  guestsQuery.error.value
+    ? formatUnknownApiError(guestsQuery.error.value) || t('guests.load_failed')
+    : '',
+)
 
 const selectedGuestId = computed(() => {
   const id = route.params.id
@@ -168,35 +177,4 @@ function openPanel(guest: Guest) {
 function closePanel() {
   router.push('/guests')
 }
-
-/**
- * @param {{ q?: string }} [params]
- * @param {boolean} [isInitial] - If true, show full-page "Loading…"; otherwise keep search bar and table visible (no focus loss).
- */
-async function load(params: { q?: string } = {}, isInitial = false) {
-  loadError.value = ''
-  if (isInitial) {
-    initialLoading.value = true
-  } else {
-    searching.value = true
-  }
-  try {
-    await store.fetchGuests(params)
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('guests.load_failed')
-  } finally {
-    initialLoading.value = false
-    searching.value = false
-  }
-}
-
-watch(searchQuery, (q) => {
-  if (searchDebounceId) clearTimeout(searchDebounceId)
-  searchDebounceId = setTimeout(() => {
-    searchDebounceId = null
-    load(q ? { q } : {})
-  }, DEBOUNCE_MS)
-})
-
-onMounted(() => load({}, true))
 </script>

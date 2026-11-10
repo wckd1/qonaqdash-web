@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import { clearFormDefinitionsFor, normalizeFormRef } from '@/shared/forms/formDefinitionCache'
 import {
   loadRuntimeFormDefinition,
@@ -35,13 +35,21 @@ export function parseGuestDetailPayload(raw: unknown): GuestDetailPayload {
   }
 }
 
-export function fetchGuests(params: { q?: string } = {}) {
-  const config = params.q?.trim() ? { params: { q: params.q.trim() } } : {}
+export function fetchGuests(
+  params: { q?: string } = {},
+  options: RequestOptions = {},
+): Promise<import('@/shared/types/guests').Guest[]> {
+  const config = {
+    signal: options.signal,
+    ...(params.q?.trim() ? { params: { q: params.q.trim() } } : {}),
+  }
   return api.get('/api/guests', config).then(({ data }) => data.guests ?? data ?? [])
 }
 
-export function fetchGuest(id: string): Promise<GuestDetailPayload> {
-  return api.get(`/api/guests/${id}`).then(({ data }) => parseGuestDetailPayload(data))
+export function fetchGuest(id: string, options: RequestOptions = {}): Promise<GuestDetailPayload> {
+  return api
+    .get(`/api/guests/${id}`, { signal: options.signal })
+    .then(({ data }) => parseGuestDetailPayload(data))
 }
 
 /**
@@ -88,11 +96,11 @@ export function invalidateGuestRuntimeFormCache(): void {
 /**
  * Persisted editor definition for form builder (manage). GET /api/guests/form/definition
  */
-export function fetchGuestFormDefinition(): Promise<{
+export function fetchGuestFormDefinition(options: RequestOptions = {}): Promise<{
   definition: FormNode
   hash: string
 }> {
-  return api.get('/api/guests/form/definition').then(({ data }) => ({
+  return api.get('/api/guests/form/definition', { signal: options.signal }).then(({ data }) => ({
     definition: (data.definition ?? {}) as FormNode,
     hash: String(data.hash ?? ''),
   }))
@@ -125,6 +133,11 @@ export function blockGuest(id: string) {
   return api.delete(`/api/guests/${id}`).then(() => undefined)
 }
 
-export function fetchGuestBookings(guestId: string) {
-  return api.get(`/api/guests/${guestId}/bookings`).then(({ data }) => data ?? [])
+export function fetchGuestBookings(
+  guestId: string,
+  options: RequestOptions = {},
+): Promise<import('@/shared/types/bookings').GuestBookingListItem[]> {
+  return api
+    .get(`/api/guests/${guestId}/bookings`, { signal: options.signal })
+    .then(({ data }) => data ?? [])
 }

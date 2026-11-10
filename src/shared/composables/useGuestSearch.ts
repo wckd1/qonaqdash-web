@@ -1,5 +1,6 @@
-import { ref, watch, reactive } from 'vue'
-import type { GuestSearchRow } from '@/shared/injectKeys'
+import { computed, ref, watch, reactive } from 'vue'
+import { useQuery } from '@pinia/colada'
+import type { GuestSearchQuery, GuestSearchRow } from '@/shared/injectKeys'
 
 const GUEST_SEARCH_MIN_LENGTH = 2
 const DEBOUNCE_MS = 300
@@ -39,17 +40,19 @@ export function apiGuestToFormGuest(apiGuest) {
 }
 
 /**
- * Guest typeahead for booking form guest section. Watches guest fields, runs debounced search, exposes results and select.
+ * Guest typeahead for booking form guest section. Watches guest fields, runs a
+ * debounced search query, exposes results and select.
  * @param {() => Record<string, unknown>} getFormData - Returns current form data (has .guest)
- * @param {(q: string) => Promise<Array<{ id: string, first_name?: string, last_name?: string, email?: string, phone?: string }>>} searchGuests - e.g. (q) => fetchGuests({ q })
+ * @param searchQuery - Query options of the guest search for a text, e.g. `guestListQuery`
  * @returns Reactive search state + `select` (refs unwrap in templates when accessed on this object).
  */
-export function useGuestSearch(getFormData, searchGuests) {
+export function useGuestSearch(getFormData, searchQuery: GuestSearchQuery) {
+  /** Search text the results are for; set when the debounce fires. */
   const query = ref('')
-  const results = ref<GuestSearchRow[]>([])
-  const loading = ref(false)
-  /** True between typing a valid query and debounce firing / request finishing */
+  /** True between typing a valid query and debounce firing */
   const debouncing = ref(false)
+  /** Results closed by `select` or `dismiss` until the next search. */
+  const dismissed = ref(false)
 
   let debounceTimer: ReturnType<typeof setTimeout> | undefined
   watch(
@@ -59,27 +62,29 @@ export function useGuestSearch(getFormData, searchGuests) {
       if (!newQuery || newQuery.length < GUEST_SEARCH_MIN_LENGTH) {
         debouncing.value = false
         query.value = ''
-        results.value = []
         return
       }
       debouncing.value = true
-      debounceTimer = window.setTimeout(async () => {
+      debounceTimer = window.setTimeout(() => {
         debouncing.value = false
+        dismissed.value = false
         query.value = newQuery
-        loading.value = true
-        results.value = []
-        try {
-          const list = await searchGuests(newQuery)
-          results.value = list ?? []
-        } catch {
-          results.value = []
-        } finally {
-          loading.value = false
-        }
       }, DEBOUNCE_MS)
     },
     { immediate: true },
   )
+
+  // Results are cached per search text, so a late response for an earlier
+  // text never replaces the results of the current one.
+  const search = useQuery(() => ({
+    ...searchQuery(query.value),
+    enabled: query.value.length >= GUEST_SEARCH_MIN_LENGTH,
+  }))
+  const active = computed(() => !!query.value && !dismissed.value)
+  const results = computed<GuestSearchRow[]>(() =>
+    active.value && !search.error.value ? (search.data.value ?? []) : [],
+  )
+  const loading = computed(() => active.value && search.isLoading.value)
 
   /**
    * Returns new form data with guest section filled from API guest. Caller should emit('update:modelValue', data).
@@ -92,7 +97,7 @@ export function useGuestSearch(getFormData, searchGuests) {
     if (!next.guest) next.guest = {}
     Object.assign(next.guest, guest)
     query.value = ''
-    results.value = []
+    dismissed.value = true
     return next
   }
 
@@ -101,8 +106,7 @@ export function useGuestSearch(getFormData, searchGuests) {
     if (debounceTimer !== undefined) clearTimeout(debounceTimer)
     debounceTimer = undefined
     debouncing.value = false
-    loading.value = false
-    results.value = []
+    dismissed.value = true
   }
 
   /**

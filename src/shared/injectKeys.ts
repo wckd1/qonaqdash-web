@@ -1,4 +1,5 @@
 import type { InjectionKey, Ref } from 'vue'
+import type { EntryKey, UseQueryOptions } from '@pinia/colada'
 import type { AvailableRoom } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
 
@@ -12,9 +13,16 @@ export type GuestSearchRow = {
   blocked?: boolean
 }
 
-export type GuestSearchFn = (q: string) => Promise<GuestSearchRow[]>
+/**
+ * Guest typeahead: query options of the guest search for a search text. The
+ * host view provides them, so FormDSL does not depend on the guests feature.
+ */
+export type GuestSearchQuery = (q: string) => {
+  key: EntryKey
+  query: UseQueryOptions<GuestSearchRow[]>['query']
+}
 
-export const guestSearchKey: InjectionKey<GuestSearchFn> = Symbol('guestSearch')
+export const guestSearchKey: InjectionKey<GuestSearchQuery> = Symbol('guestSearch')
 
 export const availableRoomsKey: InjectionKey<Ref<AvailableRoom[]>> = Symbol('availableRooms')
 

@@ -19,10 +19,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useGuestStore } from '@/features/guests/stores/useGuestStore'
+import { useQuery } from '@pinia/colada'
+import { guestCreateFormQuery, useCreateGuestMutation } from '@/features/guests/queries'
 import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import type { FormNode } from '@/shared/types/forms'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
@@ -31,31 +32,27 @@ import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 
 const { t } = useI18n()
 const router = useRouter()
-const store = useGuestStore()
+const createGuest = useCreateGuestMutation()
 
-const loading = ref(true)
-const loadError = ref('')
 type GuestFormRuntime = { definition: FormNode; data: Record<string, unknown> }
 
+const formQ = useQuery(guestCreateFormQuery)
 const guestForm = ref<GuestFormRuntime | null>(null)
 const formData = ref<Record<string, unknown>>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
+const loadError = computed(() =>
+  formQ.error.value ? formatUnknownApiError(formQ.error.value) || t('guests.form_load_failed') : '',
+)
+const loading = computed(() => !guestForm.value && !loadError.value)
 
+// Every open revalidates the form (`If-None-Match`). Take it once, after that
+// request, so a later update never replaces what the user typed.
 onMounted(async () => {
-  loading.value = true
-  loadError.value = ''
-  try {
-    const template = await store.fetchGuestForm()
-    guestForm.value = template as GuestFormRuntime
-    formData.value = { ...(guestForm.value.data ?? {}) }
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('guests.form_load_failed')
-    guestForm.value = null
-    formData.value = {}
-  } finally {
-    loading.value = false
-  }
+  const { data, error } = await formQ.refresh()
+  if (error || !data || guestForm.value) return
+  guestForm.value = JSON.parse(JSON.stringify(data)) as GuestFormRuntime
+  formData.value = { ...(guestForm.value.data ?? {}) }
 })
 
 async function onSubmit() {
@@ -70,7 +67,7 @@ async function onSubmit() {
   }
   submitting.value = true
   try {
-    await store.createGuest(formData.value)
+    await createGuest.mutateAsync(formData.value)
     router.push('/guests')
   } catch (err: unknown) {
     const mapped = formErrorsMapFromHttpError(err)

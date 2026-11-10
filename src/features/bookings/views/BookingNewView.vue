@@ -45,7 +45,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
-import { fetchGuests } from '@/features/guests/api'
+import { guestListQuery } from '@/features/guests/queries'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import type { AvailableRoom } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
@@ -60,7 +60,7 @@ import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote
 
 import { guestSearchKey, availableRoomsKey, fieldConstraintsKey } from '@/shared/injectKeys'
 
-provide(guestSearchKey, (q) => fetchGuests({ q }))
+provide(guestSearchKey, (q) => guestListQuery(q))
 
 const { t } = useI18n()
 const route = useRoute()

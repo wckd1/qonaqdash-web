@@ -55,21 +55,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormResponse'
-import { fetchGuest } from '@/features/guests/api'
-import type { GuestDetailData } from '@/features/guests/api'
+import { guestDetailQuery, guestRuntimeFormQuery } from '@/features/guests/queries'
 import type { GuestSidePanelRef } from '@/features/guests/panelTypes'
-import { useGuestStore } from '@/features/guests/stores/useGuestStore'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 
 const { t, locale } = useI18n()
-const guestStore = useGuestStore()
-const { guestFormTemplate, guestFormRuntimeView } = storeToRefs(guestStore)
 
 const props = withDefaults(
   defineProps<{
@@ -82,18 +78,27 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const detailEntity = ref<GuestDetailData | null>(null)
-const loading = ref(false)
-const loadError = ref('')
-const notFound = ref(false)
+const guestId = computed(() => props.guest?.id ?? '')
+const detailQ = useQuery(() => ({ ...guestDetailQuery(guestId.value), enabled: !!guestId.value }))
+const formHash = computed(() => detailQ.data.value?.formRef?.hash ?? '')
+const formQ = useQuery(() => ({
+  ...guestRuntimeFormQuery({ target: 'view', hash: formHash.value }),
+  enabled: !!detailQ.data.value,
+}))
 
-let loadSeq = 0
+const detailEntity = computed(() => (guestId.value ? (detailQ.data.value?.data ?? null) : null))
+const loading = computed(
+  () =>
+    !!guestId.value && (detailQ.isPending.value || (!!detailEntity.value && formQ.isPending.value)),
+)
+const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
+const loadError = computed(() => {
+  const err = (notFound.value ? null : detailQ.error.value) ?? formQ.error.value
+  return err ? formatUnknownApiError(err) || t('guests.guest_load_failed') : ''
+})
 
 const guestForm = computed(() =>
-  composeGuestFormFromEntity(
-    detailEntity.value ?? null,
-    guestFormRuntimeView.value ?? guestFormTemplate.value,
-  ),
+  composeGuestFormFromEntity(detailEntity.value, formQ.data.value ?? null),
 )
 
 const isGuestBlocked = computed(() => {
@@ -120,44 +125,6 @@ const guestPanelTitle = computed(() => {
   const last = g.last_name ?? ''
   return [first, last].filter(Boolean).join(' ') || t('page_title.guest')
 })
-
-watch(
-  () => props.guest?.id,
-  async (id) => {
-    if (!id) {
-      detailEntity.value = null
-      loadError.value = ''
-      notFound.value = false
-      loading.value = false
-      return
-    }
-    const seq = ++loadSeq
-    loading.value = true
-    loadError.value = ''
-    notFound.value = false
-    detailEntity.value = null
-    try {
-      const payload = await fetchGuest(id)
-      if (seq !== loadSeq) return
-      detailEntity.value = payload.data
-      await guestStore.fetchGuestForm({
-        target: 'view',
-        definitionHash: payload.formRef?.hash ?? null,
-      })
-      if (seq !== loadSeq) return
-    } catch (err: unknown) {
-      if (seq !== loadSeq) return
-      if (httpErrorResponse(err)?.status === 404) {
-        notFound.value = true
-      } else {
-        loadError.value = formatUnknownApiError(err) || t('guests.guest_load_failed')
-      }
-    } finally {
-      if (seq === loadSeq) loading.value = false
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <style scoped>

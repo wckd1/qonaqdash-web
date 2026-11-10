@@ -121,7 +121,7 @@ import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
-import { fetchGuests } from '@/features/guests/api'
+import { guestListQuery } from '@/features/guests/queries'
 import { fetchAvailableRooms } from '@/features/property/api'
 import type { AvailableRoom } from '@/shared/types/property'
 import {
@@ -147,7 +147,7 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
 
-provide(guestSearchKey, (q) => fetchGuests({ q }))
+provide(guestSearchKey, (q) => guestListQuery(q))
 
 const { t, locale } = useI18n()
 const route = useRoute()

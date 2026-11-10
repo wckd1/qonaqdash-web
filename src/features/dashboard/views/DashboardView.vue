@@ -160,7 +160,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { addDays, differenceInCalendarDays, startOfDay, startOfToday, subDays } from 'date-fns'
 import { useQuery } from '@pinia/colada'
 import { roomListQuery, roomTypeListQuery } from '@/features/property/queries'
-import { fetchBookingGrid, type BookingItem } from '@/features/bookings/api'
+import { bookingGridQuery } from '@/features/bookings/queries'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
@@ -184,23 +184,38 @@ const rooms = computed(() => roomsQuery.data.value ?? [])
 
 const fromStr = ref('')
 const toStr = ref('')
-const gridLoading = ref(true)
+/** Range the grid shows; set when the toolbar holds a valid one. */
+const gridRange = ref<{ from: string; to: string } | null>(null)
+/** Toolbar validation message (invalid or half-typed dates). */
 const gridError = ref('')
+// Each range is its own cache entry, so a late response for a previous range
+// never replaces the grid of the current one.
+const gridQuery = useQuery(() => ({
+  ...bookingGridQuery(gridRange.value ?? { from: '', to: '' }),
+  enabled: !!gridRange.value,
+}))
+const gridLoading = computed(() =>
+  gridRange.value ? gridQuery.isPending.value && !gridQuery.error.value : !gridError.value,
+)
 const loading = computed(
   () => gridLoading.value || roomTypesQuery.isPending.value || roomsQuery.isPending.value,
 )
-const roomsError = computed(() => roomTypesQuery.error.value ?? roomsQuery.error.value)
-const loadError = computed(() =>
-  roomsError.value
-    ? formatUnknownApiError(roomsError.value) || t('dashboard.load_failed')
-    : gridError.value,
+const loadError = computed(() => {
+  const err =
+    roomTypesQuery.error.value ??
+    roomsQuery.error.value ??
+    (gridRange.value ? gridQuery.error.value : null)
+  if (err) return formatUnknownApiError(err) || t('dashboard.load_failed')
+  return gridError.value
+})
+const gridEntries = computed(() =>
+  gridRange.value && !gridQuery.error.value ? (gridQuery.data.value ?? []) : [],
 )
-const gridEntries = ref<BookingItem[]>([])
 /** Grid selection: panel stays on dashboard (no navigation to bookings list). */
 const selectedBooking = ref<GridPanelBooking | null>(null)
 
-async function onGridBookingUpdated() {
-  await loadGridData()
+/** A status action reloaded the grid already; carry the new state into the open panel. */
+function onGridBookingUpdated() {
   const sel = selectedBooking.value
   if (!sel?.id) return
   const entry = gridEntries.value.find((e) => e.id === sel.id)
@@ -319,22 +334,21 @@ const rangeToDate = computed(() => {
   return startOfDay(parseLocalYmd(toStr.value))
 })
 
-async function loadGridData() {
+/** Shows the grid for the range in the toolbar. */
+function loadGridData() {
   gridError.value = ''
   if (!isValidRange(fromStr.value, toStr.value)) {
     gridError.value = t('dashboard.invalid_range')
-    gridEntries.value = []
+    gridRange.value = null
     return
   }
-  gridLoading.value = true
-  try {
-    gridEntries.value = await fetchBookingGrid({ from: fromStr.value, to: toStr.value })
-  } catch (err: unknown) {
-    gridEntries.value = []
-    gridError.value = formatUnknownApiError(err) || t('dashboard.load_failed')
-  } finally {
-    gridLoading.value = false
+  const current = gridRange.value
+  if (current && current.from === fromStr.value && current.to === toStr.value) {
+    // Same range again (e.g. "Today" on today's window): reload it, as before.
+    void gridQuery.refetch()
+    return
   }
+  gridRange.value = { from: fromStr.value, to: toStr.value }
 }
 
 function syncRouteQuery() {

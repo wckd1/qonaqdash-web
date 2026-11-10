@@ -40,6 +40,8 @@ let wrapper: VueWrapper | undefined
 
 afterEach(() => {
   wrapper?.unmount()
+  vi.useRealTimers()
+  vi.unstubAllEnvs()
   localStorage.clear()
   http.routes.clear()
   http.requests.length = 0
@@ -89,5 +91,50 @@ describe('DashboardView', () => {
     expect(
       http.requests.filter((r) => r.endsWith('/api/property/rooms') || r.includes('room-types')),
     ).toEqual([])
+  })
+
+  // F5, F6: the window starts from the hotel today and the grid asks for [from, to).
+  test('opens the window around the hotel today and asks the grid for the day after the last column', async () => {
+    vi.stubEnv('TZ', 'Europe/Berlin')
+    vi.useFakeTimers({ toFake: ['Date'] })
+    // 21:00 on 4 March in Berlin is already 5 March in Tashkent.
+    vi.setSystemTime(new Date('2026-03-04T20:00:00Z'))
+    localStorage.setItem('access_token', makeToken('access', 3600))
+    localStorage.setItem('qonaqdash.account.permissions', JSON.stringify({ bookings: { view: 2 } }))
+    const gridParams: unknown[] = []
+    http.routes.set('GET /api/property/rooms/available', () => ({ status: 200, data: [] }))
+    http.routes.set('GET /api/bookings/grid', (config) => {
+      gridParams.push(config.params)
+      return { status: 200, data: [] }
+    })
+    http.routes.set('GET /api/property/hotel', () => ({
+      status: 200,
+      data: {
+        id: 'h',
+        name: 'City',
+        currency: 'KZT',
+        check_in_hour: '14:00',
+        check_out_hour: '12:00',
+        timezone: 'Asia/Tashkent',
+      },
+    }))
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', name: 'dashboard', component: DashboardView }],
+    })
+    await router.push('/')
+    await router.isReady()
+
+    wrapper = mountWithApp(DashboardView, {
+      global: {
+        plugins: [router],
+        stubs: { ReservationGrid: GridStub, BookingSidePanel: true },
+      },
+    })
+    await flushPromises()
+
+    // 14 columns: yesterday of the hotel, today, then 12 more days.
+    expect(router.currentRoute.value.query).toEqual({ from: '2026-03-04', to: '2026-03-17' })
+    expect(gridParams).toEqual([{ from: '2026-03-04', to: '2026-03-18' }])
   })
 })

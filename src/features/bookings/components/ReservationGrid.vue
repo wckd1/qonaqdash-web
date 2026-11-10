@@ -205,7 +205,8 @@ const headerHeight = 52
 const cellHeight = 64
 const typeHeaderHeight = 44
 const yLabelWidth = 118
-const minutesPerDay = 24 * 60
+/** Gap between the bars of back-to-back bookings, on each side of a bar. */
+const barInset = 2
 
 const gridRef = ref<HTMLElement | null>(null)
 const gridInnerWidth = ref(0)
@@ -242,7 +243,8 @@ const rangeHighlightKeys = computed(() => {
   return set
 })
 
-const today = hotelTime.today()
+// The hotel today: it follows the hotel time zone once the hotel has loaded.
+const today = computed(() => hotelTime.today())
 
 /** Nights of each booked room: from the check-in date up to the check-out date, not including it. */
 const occupiedCellKeys = computed(() => {
@@ -348,30 +350,28 @@ const colWidth = computed(() => {
   return inner / n
 })
 
-/**
- * Position of a moment in columns from the start of the first column: the
- * column of its local date plus the share of the day on the hotel clock.
- */
-function columnPosition(moment: string): number | null {
-  const wall = hotelTime.toWallTime(moment)
-  if (!wall) return null
-  const column = daysBetween(props.rangeFrom, wall.date)
-  if (Number.isNaN(column)) return null
-  const [hours, minutes] = wall.time.split(':').map(Number)
-  return column + (hours * 60 + minutes) / minutesPerDay
+/** Column of the local date of a moment, counted from the first column. */
+function dateColumn(moment: string): number | null {
+  const day = hotelTime.localDateOf(moment)
+  const column = day ? daysBetween(props.rangeFrom, day) : Number.NaN
+  return Number.isNaN(column) ? null : column
 }
 
+/**
+ * A bar covers the cells of the nights of the stay: from the check-in date up
+ * to the check-out date, not including it, so back-to-back stays sit side by side.
+ */
 function barGeometry(checkIn: string, checkOut: string) {
-  const rawStart = columnPosition(checkIn)
-  const rawEnd = columnPosition(checkOut)
+  const rawStart = dateColumn(checkIn)
+  const rawEnd = dateColumn(checkOut)
   if (rawStart === null || rawEnd === null) return null
   const maxDay = days.value.length
   const visStart = Math.max(0, Math.min(maxDay, rawStart))
   const visEnd = Math.max(0, Math.min(maxDay, rawEnd))
   const span = visEnd - visStart
   if (span <= 0) return null
-  const left = yLabelWidth + visStart * colWidth.value
-  const width = Math.max(6, span * colWidth.value)
+  const left = yLabelWidth + visStart * colWidth.value + barInset
+  const width = Math.max(6, span * colWidth.value - 2 * barInset)
   return { left, width }
 }
 
@@ -559,7 +559,7 @@ function onCellMouseDown(event: MouseEvent, roomId: string, day: LocalDate) {
 function onCellMouseEnter(roomId: string, day: LocalDate) {
   if (!selectPointerDown.value || !dragSelectState.value) return
   if (roomId !== dragSelectState.value.roomId) return
-  if (day < today) return
+  if (day < today.value) return
   if (hasOccupiedInRange(roomId, dragSelectState.value.startDay, day)) return
   dragSelectState.value.endDay = day
 }
@@ -585,20 +585,19 @@ function onPickCreateBooking() {
 }
 
 /**
- * @param firstDay - First selected column (check-in day).
- * @param lastDay - Last selected column: departure day for multi-day span;
- *   if same as firstDay, one night → checkout next day.
+ * The selected cells are the nights of the new stay: check-in on the first
+ * one at the hotel check-in hour, check-out the day after the last one at the
+ * hotel check-out hour, on the hotel clock.
  */
-function goToNewBooking(roomId: string, firstDay: LocalDate, lastDay: LocalDate) {
+function goToNewBooking(roomId: string, firstNight: LocalDate, lastNight: LocalDate) {
   const checkInHour = hotel.value?.check_in_hour || '14:00'
   const checkOutHour = hotel.value?.check_out_hour || '12:00'
-  const checkOutDay = firstDay === lastDay ? addDays(lastDay, 1) : lastDay
 
   router.push({
     name: 'booking-new',
     query: {
-      checkIn: hotelTime.fromWallTime(firstDay, checkInHour),
-      checkOut: hotelTime.fromWallTime(checkOutDay, checkOutHour),
+      checkIn: hotelTime.fromWallTime(firstNight, checkInHour),
+      checkOut: hotelTime.fromWallTime(addDays(lastNight, 1), checkOutHour),
       roomId,
     },
   })

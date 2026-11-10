@@ -128,6 +128,10 @@ function formDefinition(data: Schemas['bookinghttp.FormResponse']): {
 // Requests
 // ---------------------------------------------------------------------------
 
+/**
+ * Bookings with a night in the period of hotel-local dates `[from, to)`
+ * (`YYYY-MM-DD`, `to` not included); canceled bookings are not returned.
+ */
 export function fetchBookingGrid(
   params: { from: string; to: string },
   options: RequestOptions = {},
@@ -145,6 +149,10 @@ export function createBooking(body: CreateBookingPayload): Promise<BookingItem> 
   return typedApi.post('/api/bookings', { body }).then(({ data }) => data)
 }
 
+/**
+ * Bookings, searched by `q`; `from` and `to` (hotel-local dates, either may be
+ * omitted) keep the bookings with a night in `[from, to)`.
+ */
 export function fetchBookings(
   params: { q?: string; from?: string; to?: string } = {},
   options: RequestOptions = {},

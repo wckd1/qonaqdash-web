@@ -17,20 +17,21 @@ vi.mock('@/shared/api/client', async () => {
 const { default: ReservationGrid } =
   await import('@/features/bookings/components/ReservationGrid.vue')
 
-const HOTEL_ZONE = 'Asia/Tashkent'
 const LABEL_WIDTH = 118
 const COLUMN_WIDTH = 100
+/** Gap the grid leaves on each side of a bar. */
+const BAR_INSET = 2
 
 const rooms = [{ id: 'r1', number: '101', room_type_id: 't1', room_type_name: 'Standard' }]
 
-/** Two nights, 5 and 6 March, 14:00 to 12:00 on the clock of the hotel (+05:00). */
+/** Two nights, 5 and 6 March, 14:00 to 12:00 on the clock of the hotel in Tashkent (+05:00). */
 const booking: BookingItem = {
   id: 'b1',
   status: 'confirmed',
   guest: { first_name: 'Ada', last_name: 'Lovelace' },
   stay: {
-    check_in: '2026-03-05T09:00:00Z',
-    check_out: '2026-03-07T07:00:00Z',
+    check_in: '2026-03-05T14:00:00+05:00',
+    check_out: '2026-03-07T12:00:00+05:00',
     rooms: [{ room_type: 't1', room_id: 'r1' }],
   },
 }
@@ -38,9 +39,24 @@ const booking: BookingItem = {
 let wrapper: VueWrapper | undefined
 let router: Router
 
+function hotelIn(timezone: string) {
+  http.routes.set('GET /api/property/hotel', () => ({
+    status: 200,
+    data: {
+      id: 'h',
+      name: 'City',
+      currency: 'KZT',
+      check_in_hour: '14:00',
+      check_out_hour: '12:00',
+      timezone,
+    },
+  }))
+}
+
 beforeEach(async () => {
-  // Until the hotel has a time zone, the hotel clock is the clock of the browser.
-  vi.stubEnv('TZ', HOTEL_ZONE)
+  // The employee is in Berlin, the hotel in Tashkent: the grid follows the hotel.
+  vi.stubEnv('TZ', 'Europe/Berlin')
+  hotelIn('Asia/Tashkent')
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-03-04T06:00:00Z'))
   vi.stubGlobal(
@@ -54,16 +70,6 @@ beforeEach(async () => {
     LABEL_WIDTH + 7 * COLUMN_WIDTH,
   )
   localStorage.setItem('access_token', makeToken('access', 3600))
-  http.routes.set('GET /api/property/hotel', () => ({
-    status: 200,
-    data: {
-      id: 'h',
-      name: 'City',
-      currency: 'KZT',
-      check_in_hour: '14:00',
-      check_out_hour: '12:00',
-    },
-  }))
   router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -112,6 +118,21 @@ async function selectCells(first: string, last: string) {
   await flushPromises()
 }
 
+async function createFromMenu() {
+  document.querySelector<HTMLButtonElement>('.reservation-cell-menu-item')!.click()
+  await flushPromises()
+  return router.currentRoute.value.query
+}
+
+/** Left offset and width of the first bar, in pixels. */
+function barBox() {
+  const style = wrapper!.find('.reservation-bar').attributes('style') ?? ''
+  return {
+    left: Number(/left: ([\d.]+)px/.exec(style)?.[1]),
+    width: Number(/width: ([\d.]+)px/.exec(style)?.[1]),
+  }
+}
+
 describe('ReservationGrid', () => {
   test('has a column per local date of the range with today marked', async () => {
     await mountGrid()
@@ -125,17 +146,53 @@ describe('ReservationGrid', () => {
     expect(cell('2026-03-04').attributes('disabled')).toBeUndefined()
   })
 
-  test('places the bar from the check-in hour to the check-out hour of the hotel', async () => {
+  test('takes today from the hotel clock', async () => {
+    // 21:00 in Berlin on 4 March is already 5 March in Tashkent.
+    vi.setSystemTime(new Date('2026-03-04T20:00:00Z'))
     await mountGrid()
 
-    const bar = wrapper!.find('.reservation-bar')
-    expect(bar.text()).toBe('Ada Lovelace')
-    const style = bar.attributes('style') ?? ''
-    // From 5 March 14:00 (column 2 + 14/24) to 7 March 12:00 (column 4 + 12/24).
-    const left = LABEL_WIDTH + (2 + 14 / 24) * COLUMN_WIDTH
-    const width = (4 + 12 / 24 - (2 + 14 / 24)) * COLUMN_WIDTH
-    expect(Number(/left: ([\d.]+)px/.exec(style)?.[1])).toBeCloseTo(left, 3)
-    expect(Number(/width: ([\d.]+)px/.exec(style)?.[1])).toBeCloseTo(width, 3)
+    expect(wrapper!.find('.reservation-grid-head--today').text()).toBe('5Mar')
+    expect(cell('2026-03-04').attributes('disabled')).toBeDefined()
+  })
+
+  test('covers the cells of the nights of the stay', async () => {
+    await mountGrid()
+
+    expect(wrapper!.find('.reservation-bar').text()).toBe('Ada Lovelace')
+    // Nights of 5 and 6 March: columns 2 and 3.
+    expect(barBox()).toEqual({
+      left: LABEL_WIDTH + 2 * COLUMN_WIDTH + BAR_INSET,
+      width: 2 * COLUMN_WIDTH - 2 * BAR_INSET,
+    })
+  })
+
+  test('puts the nights on the dates of the hotel, not of the browser', async () => {
+    // 01:00 on 6 March in Tashkent is still 5 March in Berlin.
+    const lateArrival: BookingItem = {
+      ...booking,
+      stay: { ...booking.stay, check_in: '2026-03-05T20:00:00Z' },
+    }
+    await mountGrid({ entries: [lateArrival], rangeFrom: '2026-03-03', rangeTo: '2026-03-09' })
+
+    expect(barBox().left).toBe(LABEL_WIDTH + 3 * COLUMN_WIDTH + BAR_INSET)
+  })
+
+  // F5: an arrival on the last visible day was not shown.
+  test('shows an arrival on the last visible day', async () => {
+    const lastDay: BookingItem = {
+      ...booking,
+      stay: {
+        ...booking.stay,
+        check_in: '2026-03-09T14:00:00+05:00',
+        check_out: '2026-03-11T12:00:00+05:00',
+      },
+    }
+    await mountGrid({ entries: [lastDay], rangeFrom: '2026-03-03', rangeTo: '2026-03-09' })
+
+    expect(barBox()).toEqual({
+      left: LABEL_WIDTH + 6 * COLUMN_WIDTH + BAR_INSET,
+      width: COLUMN_WIDTH - 2 * BAR_INSET,
+    })
   })
 
   test('does not start a selection on a booked night', async () => {
@@ -146,31 +203,27 @@ describe('ReservationGrid', () => {
     expect(document.querySelector('.reservation-cell-menu')).toBeNull()
   })
 
-  test('creates a booking for several selected days on the hotel clock', async () => {
+  // F5: a back-to-back stay could not be selected.
+  test('books a back-to-back stay from the check-out day of the previous one', async () => {
     await mountGrid()
 
-    // The check-out day of the booking is free: its nights are 5 and 6 March.
-    await selectCells('2026-03-07', '2026-03-08')
-    document.querySelector<HTMLButtonElement>('.reservation-cell-menu-item')!.click()
-    await flushPromises()
+    await selectCells('2026-03-07', '2026-03-07')
 
-    expect(router.currentRoute.value.name).toBe('booking-new')
-    expect(router.currentRoute.value.query).toEqual({
+    expect(await createFromMenu()).toEqual({
       checkIn: '2026-03-07T09:00:00.000Z',
       checkOut: '2026-03-08T07:00:00.000Z',
       roomId: 'r1',
     })
   })
 
-  test('creates a one-night booking for a single selected day', async () => {
+  test('books the selected cells as nights on the hotel clock', async () => {
     await mountGrid()
 
-    await selectCells('2026-03-08', '2026-03-08')
-    document.querySelector<HTMLButtonElement>('.reservation-cell-menu-item')!.click()
-    await flushPromises()
+    await selectCells('2026-03-07', '2026-03-08')
 
-    expect(router.currentRoute.value.query).toEqual({
-      checkIn: '2026-03-08T09:00:00.000Z',
+    // Nights of 7 and 8 March: check-out on 9 March at the hotel check-out hour.
+    expect(await createFromMenu()).toEqual({
+      checkIn: '2026-03-07T09:00:00.000Z',
       checkOut: '2026-03-09T07:00:00.000Z',
       roomId: 'r1',
     })
@@ -180,11 +233,9 @@ describe('ReservationGrid', () => {
     await mountGrid()
 
     await selectCells('2026-03-04', '2026-03-06')
-    document.querySelector<HTMLButtonElement>('.reservation-cell-menu-item')!.click()
-    await flushPromises()
 
     // The selection stops at 4 March, before the first booked night.
-    expect(router.currentRoute.value.query).toMatchObject({
+    expect(await createFromMenu()).toMatchObject({
       checkIn: '2026-03-04T09:00:00.000Z',
       checkOut: '2026-03-05T07:00:00.000Z',
     })
@@ -193,15 +244,16 @@ describe('ReservationGrid', () => {
   // Nights were counted in steps of 24 hours from midnight, so after the clock
   // change every night of the booking looked free.
   test('keeps every night booked over a daylight saving change', async () => {
-    vi.stubEnv('TZ', 'Europe/Berlin')
+    vi.stubEnv('TZ', 'America/New_York')
+    hotelIn('Europe/Berlin')
     vi.setSystemTime(new Date('2026-03-26T10:00:00Z'))
     // 28 to 31 March in Berlin: the clock moves forward on 29 March.
     const overChange: BookingItem = {
       ...booking,
       stay: {
         ...booking.stay,
-        check_in: '2026-03-28T13:00:00Z',
-        check_out: '2026-03-31T10:00:00Z',
+        check_in: '2026-03-28T14:00:00+01:00',
+        check_out: '2026-03-31T12:00:00+02:00',
       },
     }
     await mountGrid({ entries: [overChange], rangeFrom: '2026-03-26', rangeTo: '2026-04-01' })
@@ -211,6 +263,9 @@ describe('ReservationGrid', () => {
       expect(document.querySelector('.reservation-cell-menu'), night).toBeNull()
     }
     await selectCells('2026-03-31', '2026-03-31')
-    expect(document.querySelector('.reservation-cell-menu')).not.toBeNull()
+    expect(await createFromMenu()).toMatchObject({
+      checkIn: '2026-03-31T12:00:00.000Z',
+      checkOut: '2026-04-01T10:00:00.000Z',
+    })
   })
 })

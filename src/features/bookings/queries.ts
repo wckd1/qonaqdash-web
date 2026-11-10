@@ -35,7 +35,7 @@ export const bookingListQuery = defineQueryOptions((params: BookingListParams = 
   query: ({ signal }) => bookingsApi.fetchBookings(listParams(params), { signal }),
 }))
 
-/** Reservation grid of a date range. */
+/** Reservation grid of a period of hotel-local dates `[from, to)`. */
 export const bookingGridQuery = defineQueryOptions((range: { from: string; to: string }) => ({
   key: bookingKeys.grid(range),
   query: ({ signal }) => bookingsApi.fetchBookingGrid(range, { signal }),

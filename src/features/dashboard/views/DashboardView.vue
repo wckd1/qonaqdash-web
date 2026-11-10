@@ -174,7 +174,7 @@ const STORAGE_RANGE = 'qonaqdash.dashboard.gridCustomRange'
 const STORAGE_LAST_PERIOD = 'qonaqdash.dashboard.gridLastPeriod'
 
 const { t } = useI18n()
-const { today } = useHotelTime()
+const { today, whenReady } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const { canCreateBookings, canAccessRooms } = usePermissions()
@@ -185,7 +185,10 @@ const rooms = computed(() => roomsQuery.data.value ?? [])
 
 const fromStr = ref('')
 const toStr = ref('')
-/** Range the grid shows; set when the toolbar holds a valid one. */
+/**
+ * Period of the grid request, `[from, to)`: the toolbar shows the last column,
+ * so `to` is the day after it. Set when the toolbar holds a valid range.
+ */
 const gridRange = ref<{ from: string; to: string } | null>(null)
 /** Toolbar validation message (invalid or half-typed dates). */
 const gridError = ref('')
@@ -328,13 +331,14 @@ function loadGridData() {
     gridRange.value = null
     return
   }
+  const next = { from: fromStr.value, to: addDays(toStr.value, 1) }
   const current = gridRange.value
-  if (current && current.from === fromStr.value && current.to === toStr.value) {
+  if (current && current.from === next.from && current.to === next.to) {
     // Same range again (e.g. "Today" on today's window): reload it, as before.
     void gridQuery.refetch()
     return
   }
-  gridRange.value = { from: fromStr.value, to: toStr.value }
+  gridRange.value = next
 }
 
 function syncRouteQuery() {
@@ -416,7 +420,9 @@ function shiftRange(direction: number) {
   loadGridData()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // The default window starts from the hotel today.
+  await whenReady()
   const init = readInitialRange()
   fromStr.value = init.from
   toStr.value = init.to

@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "contract:sync": "node scripts/contract.mjs sync",
-    "contract:check": "node scripts/contract.mjs check"
+    "contract:check": "node scripts/contract.mjs check",
+    "api:types": "node scripts/contract.mjs types"
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",
@@ -45,11 +46,17 @@
     "eslint-plugin-vue": "^10.12.1",
     "globals": "^17.14.0",
     "jsdom": "^31.0.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.10",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.2",
     "vite": "^8.3.7",
     "vitest": "^5.0.5",
     "vue-tsc": "^3.3.14"
+  },
+  "overrides": {
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }

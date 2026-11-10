@@ -3,7 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
-import type { LocalDate } from '@/shared/lib/localDate'
+import { daysBetween, type LocalDate } from '@/shared/lib/localDate'
 import {
   browserTimeZone,
   formatMoment as formatMomentIn,
@@ -59,6 +59,16 @@ function createHotelTime() {
   /** The local date of the hotel the moment falls on; `''` for an invalid moment. */
   function localDateOf(moment: MomentInput): LocalDate {
     return localDateIn(moment, timeZone.value)
+  }
+
+  /**
+   * Nights of a stay: hotel-local dates from the check-in date up to the
+   * check-out date, not included; `NaN` for an invalid moment.
+   */
+  function nightsOf(checkIn: MomentInput, checkOut: MomentInput): number {
+    const from = localDateOf(checkIn)
+    const to = localDateOf(checkOut)
+    return from && to ? daysBetween(from, to) : Number.NaN
   }
 
   /** The moment as the hotel clock shows it, in the UI locale. An empty value gives `''`. */
@@ -121,6 +131,7 @@ function createHotelTime() {
     whenReady,
     today,
     localDateOf,
+    nightsOf,
     formatMoment,
     zoneLabel,
     employeeTime,

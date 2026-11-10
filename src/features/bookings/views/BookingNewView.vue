@@ -61,7 +61,7 @@ import { guestSearchKey, availableRoomsKey, fieldConstraintsKey } from '@/shared
 provide(guestSearchKey, (q) => guestListQuery(q))
 
 const { t } = useI18n()
-const { today, toWallTime, fromWallTime, toDateTimeInput } = useHotelTime()
+const { today, nightsOf, toWallTime, fromWallTime, toDateTimeInput } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const createBooking = useCreateBookingMutation()
@@ -136,7 +136,7 @@ const { quote, quoteLoading, quoteError } = useBookingQuote(
   manualAdjustments,
 )
 
-/** Range of the stay for the room picker; `null` until both dates are valid. */
+/** Stay for the room picker; `null` until both moments are valid and there is a night. */
 const availableRoomsRange = computed(() => {
   const raw = formData.value.stay
   if (!raw || typeof raw !== 'object') return null
@@ -144,13 +144,12 @@ const availableRoomsRange = computed(() => {
   if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
     return null
   }
-  if (Number.isNaN(new Date(checkIn).getTime()) || Number.isNaN(new Date(checkOut).getTime())) {
-    return null
-  }
-  return { from: checkIn, to: checkOut }
+  // A stay without a night is refused by the server; the picker waits for one.
+  if (!(nightsOf(checkIn, checkOut) >= 1)) return null
+  return { checkIn, checkOut }
 })
 const availableRoomsQ = useQuery(() => ({
-  ...availableRoomsQuery(availableRoomsRange.value ?? { from: '', to: '' }),
+  ...availableRoomsQuery(availableRoomsRange.value ?? { checkIn: '', checkOut: '' }),
   enabled: !!availableRoomsRange.value,
 }))
 const availableRooms = computed(() =>

@@ -13,10 +13,10 @@ function searchParam(q: string | undefined): { q: string } {
   return { q: q?.trim() ?? '' }
 }
 
-/** Range of `fetchAvailableRooms`, as plain JSON for the key. */
+/** Stay of `fetchAvailableRooms` (RFC 3339 moments), as plain JSON for the key. */
 export interface AvailableRoomsParams {
-  from: string
-  to: string
+  checkIn: string
+  checkOut: string
   excludeBookingId?: string
 }
 
@@ -37,7 +37,11 @@ export const propertyKeys = {
       'property',
       'rooms',
       'available',
-      { from: params.from, to: params.to, exclude: params.excludeBookingId ?? '' },
+      {
+        check_in: params.checkIn,
+        check_out: params.checkOut,
+        exclude: params.excludeBookingId ?? '',
+      },
     ] as const,
 }
 
@@ -48,7 +52,7 @@ export const propertyKeys = {
  */
 export const hotelRoomsQuery = defineQueryOptions({
   key: propertyKeys.hotelRooms,
-  query: ({ signal }) => propertyApi.fetchAvailableRooms(null, null, { signal }),
+  query: ({ signal }) => propertyApi.fetchAvailableRooms(null, { signal }),
 })
 
 export const hotelQuery = defineQueryOptions({
@@ -81,10 +85,10 @@ export const roomActivityQuery = defineQueryOptions((id: string) => ({
 export const availableRoomsQuery = defineQueryOptions((params: AvailableRoomsParams) => ({
   key: propertyKeys.availableRooms(params),
   query: ({ signal }) =>
-    propertyApi.fetchAvailableRooms(params.from, params.to, {
-      excludeBookingId: params.excludeBookingId,
-      signal,
-    }),
+    propertyApi.fetchAvailableRooms(
+      { checkIn: params.checkIn, checkOut: params.checkOut },
+      { excludeBookingId: params.excludeBookingId, signal },
+    ),
 }))
 
 /**

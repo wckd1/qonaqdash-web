@@ -153,38 +153,33 @@ export function deleteRoom(id: string): Promise<void> {
   return typedApi.delete('/api/property/rooms/{id}', { path: { id } }).then(() => undefined)
 }
 
-/** `dd.MM.yyyy` in local time, as `GET /api/property/rooms/available` expects. */
-function availabilityDate(value: Date | string | null): string | undefined {
-  if (value == null) return undefined
-  const d = typeof value === 'string' ? new Date(value) : value
-  if (Number.isNaN(d.getTime())) return undefined
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  return `${day}.${month}.${d.getFullYear()}`
+/** Moments of a stay (RFC 3339), as the booking write takes them. */
+export interface StayMoments {
+  checkIn: string
+  checkOut: string
 }
 
 /**
- * Rooms available for the given date range (e.g. for booking form room picker).
- * Backend returns rooms that can be assigned plus operational `state` /
- * `warnings` so the UI can surface dirty / required-maintenance warnings
- * without hiding the room. Without dates: every room of the hotel, blocked
- * ones included with their `state` (the rows of the reservation grid).
+ * Rooms available for the stay (the room picker of the booking form): the
+ * server turns its moments into hotel nights and applies the same rule as the
+ * booking write. It returns rooms that can be assigned plus operational
+ * `state` / `warnings` so the UI can surface dirty / required-maintenance
+ * warnings without hiding the room. Without a stay: every room of the hotel,
+ * blocked ones included with their `state` (the rows of the reservation grid).
  *
- * @param from - Start date (inclusive)
- * @param to - End date (exclusive)
- * @param options.excludeBookingId - With both dates set, rooms occupied only by that booking stay available.
+ * @param options.excludeBookingId - With a stay, rooms occupied only by that booking stay available.
  */
 export function fetchAvailableRooms(
-  from: Date | string | null,
-  to: Date | string | null,
+  stay: StayMoments | null,
   options: { excludeBookingId?: string } & RequestOptions = {},
 ): Promise<AvailableRoom[]> {
-  const query: { from?: string; to?: string; exclude?: string } = {
-    from: availabilityDate(from),
-    to: availabilityDate(to),
+  const query: { check_in?: string; check_out?: string; exclude?: string } = {}
+  if (stay) {
+    query.check_in = stay.checkIn
+    query.check_out = stay.checkOut
+    const ex = options.excludeBookingId?.trim()
+    if (ex) query.exclude = ex
   }
-  const ex = options.excludeBookingId?.trim()
-  if (query.from && query.to && ex) query.exclude = ex
   return typedApi
     .get('/api/property/rooms/available', { query, signal: options.signal })
     .then(({ data }) => data)

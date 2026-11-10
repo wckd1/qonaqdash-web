@@ -139,6 +139,7 @@ import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 
 import { guestSearchKey, availableRoomsKey } from '@/shared/injectKeys'
 import type { BookingFormDataDraft, CreateBookingPayload } from '@/features/bookings/api'
@@ -299,7 +300,8 @@ watch(editing, (isEdit) => {
   }
 })
 
-/** Range of the edited stay for the room picker; `null` until both dates are valid. */
+const { nightsOf } = useHotelTime()
+/** Edited stay for the room picker; `null` until both moments are valid and there is a night. */
 const availableRoomsRange = computed(() => {
   if (!editing.value) return null
   const checkIn = editFormData.value?.stay?.check_in
@@ -307,13 +309,12 @@ const availableRoomsRange = computed(() => {
   if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
     return null
   }
-  if (Number.isNaN(new Date(checkIn).getTime()) || Number.isNaN(new Date(checkOut).getTime())) {
-    return null
-  }
-  return { from: checkIn, to: checkOut, excludeBookingId: bookingId.value ?? undefined }
+  // A stay without a night is refused by the server; the picker waits for one.
+  if (!(nightsOf(checkIn, checkOut) >= 1)) return null
+  return { checkIn, checkOut, excludeBookingId: bookingId.value ?? undefined }
 })
 const availableRoomsQ = useQuery(() => ({
-  ...availableRoomsQuery(availableRoomsRange.value ?? { from: '', to: '' }),
+  ...availableRoomsQuery(availableRoomsRange.value ?? { checkIn: '', checkOut: '' }),
   enabled: !!availableRoomsRange.value,
 }))
 const availableRooms = computed(() =>

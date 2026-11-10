@@ -335,6 +335,7 @@ import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { halfOpenPeriod, lastDayOf } from '@/shared/lib/localDate'
 
 const { t, locale } = useI18n()
 const hotelQ = useQuery(hotelQuery)
@@ -450,7 +451,8 @@ function conditionsSummary(rule: PricingRule): string {
         case 'specific_date':
           return c.date ?? ''
         case 'date_range':
-          return `${c.from ?? ''} — ${c.to ?? ''}`
+          // The rule keeps nights [from, to); the summary shows the last night.
+          return `${c.from ?? ''} — ${lastDayOf(c.to ?? '') || (c.to ?? '')}`
         default:
           return '?'
       }
@@ -497,8 +499,9 @@ function conditionToFormState(c: PricingCondition): ConditionFormState {
       base.date = c.date ?? ''
       break
     case 'date_range':
+      // The form shows the first and the last night; the rule ends the day after the last.
       base.from = c.from ?? ''
-      base.to = c.to ?? ''
+      base.to = lastDayOf(c.to ?? '')
       break
   }
   return base
@@ -511,7 +514,7 @@ function formStateToCondition(c: ConditionFormState): PricingCondition {
     case 'specific_date':
       return { type: 'specific_date', date: c.date }
     case 'date_range':
-      return { type: 'date_range', from: c.from, to: c.to }
+      return { type: 'date_range', ...halfOpenPeriod(c.from, c.to) }
   }
 }
 

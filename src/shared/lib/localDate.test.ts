@@ -6,7 +6,9 @@ import {
   eachLocalDate,
   formatLocalDate,
   formatLocalDateToParts,
+  halfOpenPeriod,
   isLocalDate,
+  lastDayOf,
   NUMERIC_DATE,
   startOfMonth,
   WEEKDAY_DATE,
@@ -84,6 +86,26 @@ describe('day arithmetic', () => {
     expect(eachLocalDate('2026-03-05', '2026-03-05')).toEqual([])
     expect(eachLocalDate('2026-03-07', '2026-03-05')).toEqual([])
     expect(eachLocalDate('2026-03-05', 'x')).toEqual([])
+  })
+})
+
+describe('periods', () => {
+  test('halfOpenPeriod ends the API period on the day after the last day', () => {
+    expect(halfOpenPeriod('2026-03-01', '2026-03-31')).toEqual({
+      from: '2026-03-01',
+      to: '2026-04-01',
+    })
+    expect(halfOpenPeriod('2026-12-25', '2026-12-25')).toEqual({
+      from: '2026-12-25',
+      to: '2026-12-26',
+    })
+    expect(halfOpenPeriod('2026-03-01', '')).toEqual({ from: '2026-03-01', to: '' })
+  })
+
+  test('lastDayOf gives the day before the end of the API period', () => {
+    expect(lastDayOf('2026-04-01')).toBe('2026-03-31')
+    expect(lastDayOf('2027-01-08')).toBe('2027-01-07')
+    expect(lastDayOf('')).toBe('')
   })
 })
 

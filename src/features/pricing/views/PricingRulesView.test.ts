@@ -11,9 +11,14 @@ const server = vi.hoisted(() => ({
   candidates: { conditions: [], hash: '' } as ConditionCandidatesResult,
 }))
 
+const updatePricingRule = vi.hoisted(() =>
+  vi.fn(async (id: string, body: object) => ({ id, ...body })),
+)
+
 vi.mock('@/features/pricing/api', () => ({
   fetchPricingRules: vi.fn(async () => server.rules),
   fetchConditionCandidates: vi.fn(async () => server.candidates),
+  updatePricingRule,
 }))
 
 vi.mock('@/features/property/api', () => ({
@@ -92,5 +97,51 @@ describe('PricingRulesView', () => {
       .map((args) => String(args[0]))
       .filter((message) => message.includes('Not found'))
     expect(missingKeys).toEqual([])
+  })
+
+  // The rule keeps the nights [from, to); the form shows the first and the last night.
+  test('shows the last night of a date range and saves the day after it', async () => {
+    server.rules = [
+      {
+        id: 'rule-ny',
+        name: 'New Year',
+        priority: 1,
+        status: 'active',
+        invalid_reason: null,
+        conditions: [{ type: 'date_range', from: '2026-12-25', to: '2027-01-08' }],
+        effect: { type: 'percent', value: 2000, apply_to: 'per_night' },
+        created_at: '2026-11-10T10:00:00Z',
+        updated_at: '2026-11-10T10:00:00Z',
+      },
+    ]
+    server.candidates = { conditions: [], hash: 'hash-1' }
+    localStorage.setItem('access_token', makeToken('access', 3600))
+    localStorage.setItem(
+      'qonaqdash.account.permissions',
+      JSON.stringify({ pricing: { manage: 2 } }),
+    )
+
+    wrapper = mountWithApp(PricingRulesView, {
+      global: { stubs: { PricingSubNav: true, teleport: true } },
+    })
+    await flushPromises()
+
+    expect(wrapper.find('.pricing-rule__summary').text()).toContain('2026-12-25 — 2027-01-07')
+
+    await wrapper.find('.list-table__action').trigger('click')
+    const [from, last] = wrapper.findAll<HTMLInputElement>('input[type="date"]')
+    expect(from!.element.value).toBe('2026-12-25')
+    expect(last!.element.value).toBe('2027-01-07')
+
+    await last!.setValue('2027-01-10')
+    await wrapper.find('form.rule-form').trigger('submit')
+    await flushPromises()
+
+    expect(updatePricingRule).toHaveBeenCalledWith(
+      'rule-ny',
+      expect.objectContaining({
+        conditions: [{ type: 'date_range', from: '2026-12-25', to: '2027-01-11' }],
+      }),
+    )
   })
 })

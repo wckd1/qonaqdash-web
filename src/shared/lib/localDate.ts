@@ -74,6 +74,23 @@ export function eachLocalDate(from: LocalDate, to: LocalDate): LocalDate[] {
   return dates
 }
 
+/**
+ * The API period `[from, to)` of a period the UI shows with both ends
+ * included (`first`–`last`): `to` is the day after `last`. Calendar periods of
+ * the API are half-open: "1–31 March" is `from=2026-03-01&to=2026-04-01`.
+ */
+export function halfOpenPeriod(
+  first: LocalDate,
+  last: LocalDate,
+): { from: LocalDate; to: LocalDate } {
+  return { from: first, to: addDays(last, 1) }
+}
+
+/** The last day of an API period `[from, to)`, as the UI shows it: the day before `to`. */
+export function lastDayOf(to: LocalDate): LocalDate {
+  return addDays(to, -1)
+}
+
 /** The first day of the month of `date`; `''` for an invalid date. */
 export function startOfMonth(date: LocalDate): LocalDate {
   return isLocalDate(date) ? `${date.slice(0, 8)}01` : ''

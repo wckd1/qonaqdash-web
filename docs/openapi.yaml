@@ -523,6 +523,7 @@ components:
                     example: 550e8400-e29b-41d4-a716-446655440050
                     type: string
                 outstanding_balance:
+                    description: only for callers who may read the booking balance
                     example: 15000
                     type: integer
                 status:
@@ -934,6 +935,12 @@ components:
             properties:
                 account:
                     $ref: '#/components/schemas/iamhttp.AccountInfoBody'
+                is_owner:
+                    description: |-
+                        IsOwner is true for the owner of the session organization, who holds every
+                        permission (`permissions` is then the full set at organization level).
+                    example: false
+                    type: boolean
                 permissions:
                     $ref: '#/components/schemas/iamhttp.PermissionsResponse'
                 profile:
@@ -942,6 +949,7 @@ components:
                     $ref: '#/components/schemas/iamhttp.AccountSettingsBody'
             required:
                 - account
+                - is_owner
                 - permissions
                 - profile
                 - settings
@@ -1224,10 +1232,9 @@ components:
                     example: Nur
                     type: string
                 occupation_ids:
-                    description: null when the employee has no occupations
+                    description: empty when the employee has no occupations
                     items:
                         type: string
-                    nullable: true
                     type: array
                 occupations:
                     items:
@@ -1276,10 +1283,9 @@ components:
                     example: 550e8400-e29b-41d4-a716-446655440020
                     type: string
                 occupation_ids:
-                    description: null when the employee has no occupations
+                    description: empty when the employee has no occupations
                     items:
                         type: string
-                    nullable: true
                     type: array
                 occupations:
                     items:
@@ -1298,10 +1304,9 @@ components:
                     example: 550e8400-e29b-41d4-a716-446655440020
                     type: string
                 occupation_ids:
-                    description: null when the employee has no occupations
+                    description: empty when the employee has no occupations
                     items:
                         type: string
-                    nullable: true
                     type: array
                 occupation_templates:
                     items:
@@ -3103,7 +3108,9 @@ info:
         **`message`** is an English fallback. **`fields`** lists JSON property names for form validation. **`500`** responses use `common.internal_server_error`; details are logged server-side only.
         ## Common error codes (many endpoints)
         **Bearer JWT / context (often 401):** `common.auth_header_missing`, `common.auth_header_invalid`, `common.jwt_expired`, `common.jwt_invalid`, `common.unauthorized`, `common.missing_organization_context`, `common.missing_hotel_context` (when the route requires a hotel in the JWT).
-        **JSON body:** `common.request_body_required`, `common.invalid_request_payload`.
+        **JSON body:** `common.request_body_required`, `common.invalid_request_payload`; **413** `common.payload_too_large` when the body exceeds the server limit (`server.max_body_bytes`, 1 MiB by default).
+        **Permissions (403):** every route that needs a permission answers `common.forbidden` before the handler when the caller lacks it; handlers refine the check (owned tasks, per-field rights) with the same code.
+        **Other organization or hotel (404):** a resource of another organization or hotel answers as if it did not exist, with the resource's not-found code.
         **Path/query UUIDs:** `common.invalid_booking_id`, `common.invalid_guest_id`, `common.invalid_room_id`, `common.invalid_room_type_id`, `common.invalid_form_target` (guest/booking `GET …/form?target=`).
         **Forms:** `common.definition_required` when the FormDSL `definition` body is missing on `PUT …/form/definition`.
         Each operation below repeats the **additional** domain codes for that route; combine with the common sets above.
@@ -3115,7 +3122,7 @@ paths:
     /api/account:
         get:
             description: |-
-                Current user account (Bearer + org context). Response includes `permissions`, sourced from the resolved authenticated actor for this request. In `settings`, JSON null means not set.
+                Current user account (Bearer + org context). Response includes `permissions`, sourced from the resolved authenticated actor for this request, and `is_owner` (the caller owns the session organization and holds every permission). The profile is the caller's employee record in the session organization. In `settings`, JSON null means not set.
                 **Error codes:** iam.user_not_found. Corrupt stored settings may yield 500.
             operationId: getAccount
             responses:
@@ -3150,7 +3157,7 @@ paths:
                 - IAM - Account
         put:
             description: |-
-                Partial merge of `account` and `settings`; omitted top-level keys unchanged (Bearer + org). Response includes the current request actor's `permissions`. Password change: send `currentPassword` and `newPassword`. Per-key JSON null in `settings` clears that key; unknown keys → 400.
+                Partial merge of `account` and `settings`; omitted top-level keys unchanged (Bearer + org). Response includes the current request actor's `permissions` and `is_owner`, like GET. Password change: send `currentPassword` and `newPassword`. Per-key JSON null in `settings` clears that key; unknown keys → 400.
                 **Error codes:** 400 — iam.invalid_email, iam.unknown_setting_key, iam.invalid_setting_value. 401 — iam.current_password_incorrect, iam.current_password_required. 404 — iam.user_not_found. 409 — iam.email_already_in_use.
             operationId: updateAccount
             requestBody:
@@ -3192,6 +3199,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -3289,6 +3302,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -3302,6 +3321,7 @@ paths:
         post:
             description: |-
                 Email + password (no Bearer); returns JWT pair.
+                A user employed in several organizations gets the organization of their last login, otherwise the earliest one they were linked to (temporary rule until organization choice at login).
                 **Error codes:** 400 — iam.email_password_required. 401 — iam.invalid_credentials, iam.registration_not_completed.
             operationId: loginUser
             requestBody:
@@ -3331,6 +3351,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -3343,7 +3369,7 @@ paths:
     /api/auth/refresh:
         post:
             description: |-
-                Body: `refresh_token` (JWT with `token_use=refresh`). No Bearer access token on this route. Org/hotel on the new tokens come from the employee record.
+                Body: `refresh_token` (JWT with `token_use=refresh`). No Bearer access token on this route. The new tokens keep the organization of the refresh token; the hotel comes from the employee record in that organization.
                 **Error codes:** 400 — iam.refresh_token_required. 401 — iam.refresh_token_expired, iam.refresh_token_invalid.
             operationId: refreshSession
             requestBody:
@@ -3373,6 +3399,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -3386,7 +3418,8 @@ paths:
         post:
             description: |-
                 Appends a manual charge (positive amount) or credit (negative amount) to the open guest bill. The bill must exist and be open.
-                **Error codes:** common.invalid_booking_id; billing.bill_not_found; billing.bill_closed; billing.amount_required; billing.description_required.
+                A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+                **Error codes:** 400 — common.invalid_booking_id, billing.amount_required, billing.description_required. 403 — common.forbidden. 404 — billing.booking_not_found, billing.bill_not_found. 422 — billing.bill_closed.
             operationId: addManualAdjustment
             parameters:
                 - description: Booking UUID
@@ -3434,6 +3467,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -3455,7 +3494,8 @@ paths:
         get:
             description: |-
                 Returns the aggregate balance for a booking. This works both pre-check-in (deposits only) and post-check-in (full bill). `has_bill` indicates whether a guest bill exists.
-                **Error codes:** common.invalid_booking_id.
+                A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+                **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — billing.booking_not_found.
             operationId: getBookingBalance
             parameters:
                 - description: Booking UUID
@@ -3489,6 +3529,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Not Found
                 "500":
                     content:
                         application/json:
@@ -3504,7 +3550,8 @@ paths:
         get:
             description: |-
                 Returns the guest bill header, all ledger entries, and the outstanding balance for the specified booking. Returns 404 if no bill exists (bill opens at check-in).
-                **Error codes:** common.invalid_booking_id; billing.bill_not_found.
+                A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+                **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — billing.booking_not_found, billing.bill_not_found.
             operationId: getBill
             parameters:
                 - description: Booking UUID
@@ -3559,7 +3606,8 @@ paths:
         put:
             description: |-
                 Closes the open guest bill for the specified booking. A closed bill is read-only. May be closed with a non-zero balance (outstanding debt).
-                **Error codes:** common.invalid_booking_id; billing.bill_not_found; billing.bill_closed.
+                A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+                **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — billing.booking_not_found, billing.bill_not_found. 422 — billing.bill_closed.
             operationId: closeBill
             parameters:
                 - description: Booking UUID
@@ -3620,7 +3668,8 @@ paths:
         post:
             description: |-
                 Records a payment against the booking. If a guest bill exists, the entry is attached to it. If no bill exists yet (pre-check-in), the entry is stored as a deposit with no bill reference and will be backfilled at check-in.
-                **Error codes:** common.invalid_booking_id; billing.invalid_amount; billing.bill_closed.
+                A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+                **Error codes:** 400 — common.invalid_booking_id, billing.invalid_amount. 403 — common.forbidden. 404 — billing.booking_not_found. 422 — billing.bill_closed.
             operationId: recordPayment
             parameters:
                 - description: Booking UUID
@@ -3662,6 +3711,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -3683,7 +3744,8 @@ paths:
         post:
             description: |-
                 Records a refund that reverses a prior payment. The referenced payment must exist, belong to the same booking, and be of type `payment`. Refund amount is stored as positive balance_delta (increases what guest owes).
-                **Error codes:** common.invalid_booking_id; billing.invalid_amount; billing.payment_not_found; billing.not_a_payment; billing.bill_closed.
+                A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+                **Error codes:** 400 — common.invalid_booking_id, billing.invalid_amount, billing.invalid_reverses_entry_id. 403 — common.forbidden. 404 — billing.booking_not_found, billing.payment_not_found. 409 — billing.refund_exceeds_payment. 422 — billing.not_a_payment, billing.bill_closed.
             operationId: recordRefund
             parameters:
                 - description: Booking UUID
@@ -3731,6 +3793,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -4031,6 +4105,7 @@ paths:
         get:
             description: |-
                 Distinct bookings (read model). Optional `q` on guest name. With `from`+`to` (`YYYY-MM-DD`, UTC midnight): `check_out >= from` **and** `check_in <= to`.
+                `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
                 **Error codes:** booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
             operationId: listBookings
             parameters:
@@ -4090,6 +4165,7 @@ paths:
         post:
             description: |-
                 Flat `{ guest, stay, adjustments? }` JSON (see `CreateBookingRequest`). Optional top-level `adjustments` are manual pricing inputs forwarded to Pricing (not persisted on the booking stream). Room availability is checked twice before commit and the DB rejects overlapping active assignments for the same physical room, so concurrent creates (e.g. OTA + front desk) cannot double-book. `guest.id` links an existing profile; omit to create inline.
+                A new inline guest (`guest` without `id`) also needs `guests.create`; without it the request is 403 `common.forbidden` and nothing is written.
                 **Error codes:** booking.invalid_data_format, booking.dates_required, booking.rooms_required, booking.room_type_required_each_room, booking.form_missing_stay_group, booking.guest_information_required; booking.overbooking; **409** `guest.duplicate` when inline guest creation hits an existing profile; **422** `common.validation_failed` with `error.issues[]` when payload fails org booking form `rules` (stay subtree and array rows) or inline guest constraints (e.g. `guest.email` / `guest.phone` `validation.contact_required`).
             operationId: createBooking
             requestBody:
@@ -4131,6 +4207,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -4152,6 +4234,7 @@ paths:
         get:
             description: |-
                 Unified booking data from the aggregate. `stay.rooms[]` may include `room_type_label` and `room_id_label`. **`_form`** carries canonical form id (`booking`) and **hash**. Merge with GET `/api/bookings/form?target=view` definition on the client. Pricing data (accommodation snapshot, manual adjustments) is served by the pricing module via `GET /api/pricing/bookings/{id}/quote`. Once the booking is `checked_in` or `checked_out` the response also carries `outstanding_balance` (zero when fully paid, omitted before check-in).
+                `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
                 **Error codes:** common.invalid_booking_id; booking.not_found.
             operationId: getBooking
             parameters:
@@ -4260,6 +4343,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -4281,7 +4370,7 @@ paths:
         put:
             description: |-
                 Status: `confirmed` → `canceled`.
-                **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition.
+                **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — booking.not_found. 409 — booking.concurrent_modification. 422 — booking.invalid_status_transition.
             operationId: cancelBooking
             parameters:
                 - description: Booking UUID
@@ -4321,6 +4410,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
                 "422":
                     content:
                         application/json:
@@ -4342,7 +4437,8 @@ paths:
         put:
             description: |-
                 Status: `confirmed` → `checked_in`. Response includes `outstanding_balance` reflecting the bill pricing opens on check-in.
-                **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition.
+                `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+                **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — booking.not_found. 409 — booking.concurrent_modification. 422 — booking.invalid_status_transition.
             operationId: checkInBooking
             parameters:
                 - description: Booking UUID
@@ -4382,6 +4478,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
                 "422":
                     content:
                         application/json:
@@ -4408,6 +4510,7 @@ paths:
                 Send `{"force_unpaid": true}` to allow check-out without full payment;
                 in that case the bill stays open so the debt remains visible.
                 When balance ≤ 0 (fully paid), the bill is auto-closed on check-out.
+                `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
                 **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition; booking.check_in_required_before_check_out; booking.outstanding_balance.
             operationId: checkOutBooking
             parameters:
@@ -4461,6 +4564,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/bookinghttp.OutstandingBalanceErrorResponse'
                     description: Outstanding Balance
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -4635,6 +4744,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Forbidden
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -4650,6 +4765,7 @@ paths:
         get:
             description: |-
                 Bookings in the date range with rooms nested under `stay.rooms[]`. Overlap: `check_in <= to` and `check_out >= from` (dates `YYYY-MM-DD`, UTC midnight). `from` and `to` required.
+                `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
                 **Error codes:** booking.grid_from_to_required, booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
             operationId: getReservationGrid
             parameters:
@@ -4705,7 +4821,10 @@ paths:
                 - Booking - Grid
     /api/employees:
         get:
-            description: Relational list only; full form data comes from GET `/api/employees/{employee_id}`.
+            description: |-
+                Relational list only; full form data comes from GET `/api/employees/{employee_id}`.
+                Requires `employees.view`.
+                **Error codes:** 403 — common.forbidden.
             operationId: listEmployees
             parameters:
                 - description: Search by first name, last name, or email
@@ -4728,6 +4847,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "500":
                     content:
                         application/json:
@@ -4742,7 +4867,8 @@ paths:
         post:
             description: |-
                 Raw form `data` per org employee schema; linked to the current JWT hotel by default. The response carries the created employee under `employee`, including its `id`.
-                **Error codes:** iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; **422** `common.validation_failed` when payload fails org employee form `rules`.
+                Requires `employees.manage`.
+                **Error codes:** 400 — iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format. 403 — common.forbidden. 409 — iam.employee_already_exists, iam.email_already_in_use. **422** `common.validation_failed` when payload fails org employee form `rules`.
             operationId: createEmployee
             requestBody:
                 content:
@@ -4771,12 +4897,24 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "409":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -4798,7 +4936,8 @@ paths:
         get:
             description: |-
                 Flat profile JSON matching the org employee schema, with linked occupations, sparse permission overrides, effective permissions, and `_form` metadata.
-                **Error codes:** common.invalid_employee_id; iam.employee_not_found.
+                Requires `employees.view`.
+                **Error codes:** 400 — common.invalid_employee_id. 403 — common.forbidden. 404 — iam.employee_not_found.
             operationId: getEmployee
             parameters:
                 - description: Employee ID
@@ -4826,6 +4965,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
@@ -4846,7 +4991,8 @@ paths:
         put:
             description: |-
                 Flat `data` same as POST.
-                **Error codes:** common.invalid_employee_id; iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; iam.employee_not_found; **422** `common.validation_failed` when payload fails org employee form `rules`.
+                Requires `employees.manage`.
+                **Error codes:** 400 — common.invalid_employee_id, iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format. 403 — common.forbidden. 404 — iam.employee_not_found. **422** `common.validation_failed` when payload fails org employee form `rules`.
             operationId: updateEmployee
             parameters:
                 - description: Employee ID
@@ -4882,12 +5028,24 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -4907,7 +5065,11 @@ paths:
                 - Employee - Profiles
     /api/employees/{employee_id}/occupations:
         put:
-            description: Replaces all occupation links for the employee with the provided `occupation_ids`.
+            description: |-
+                Replaces all occupation links for the employee with the provided `occupation_ids`.
+                Requires `hotel.manage_permissions`.
+                The new occupations may not raise any effective level of the employee above the caller's own (403 `iam.permission_escalation`, `fields` lists the keys). The owner is not limited.
+                **Error codes:** 400 — common.invalid_employee_id. 403 — common.forbidden, iam.permission_escalation. 404 — iam.employee_not_found, iam.occupation_not_found. 409 — iam.owner_permissions_immutable (the organization owner).
             operationId: replaceEmployeeOccupations
             parameters:
                 - description: Employee ID
@@ -4943,12 +5105,30 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -4962,7 +5142,12 @@ paths:
                 - IAM - RBAC
     /api/employees/{employee_id}/permissions:
         put:
-            description: Replaces the `permission_overrides` document on the employee's primary hotel link. Effective permissions are computed as `override if present else merged occupation base`. The primary hotel link is `employee.hotel_id` when set, otherwise the first linked hotel.
+            description: |-
+                Replaces the `permission_overrides` document on the employee's primary hotel link. Effective permissions are computed as `override if present else merged occupation base`. The primary hotel link is `employee.hotel_id` when set, otherwise the first linked hotel.
+                Requires `hotel.manage_permissions`.
+                Levels: 0 none, 2 hotel, 3 organization for every key; 1 (owned) only for `housekeeping_tasks` and `maintenance_tasks`. Any other level is rejected with 400 `iam.invalid_permission_level`.
+                Permissions cannot be granted above your own: the change may not raise any effective level of the employee above the caller's own level for that key (403 `iam.permission_escalation`, `fields` lists the keys). The owner is not limited.
+                **Error codes:** 400 — common.invalid_employee_id, iam.invalid_permission_level (`fields` lists the keys, e.g. `bookings.view`), iam.invalid_data_format. 403 — common.forbidden, iam.permission_escalation. 404 — iam.employee_not_found. 409 — iam.owner_permissions_immutable (the organization owner).
             operationId: replaceEmployeePermissions
             parameters:
                 - description: Employee ID
@@ -4998,12 +5183,30 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -5017,7 +5220,10 @@ paths:
                 - IAM - RBAC
     /api/employees/form:
         get:
-            description: Compiled org employee FormDSL. Omit `target` → `edit`.
+            description: |-
+                Compiled org employee FormDSL. Omit `target` → `edit`.
+                Requires `employees.view or employees.manage`.
+                **Error codes:** 400 — common.invalid_form_target. 403 — common.forbidden.
             operationId: getEmployeeForm
             parameters:
                 - description: edit | view
@@ -5065,6 +5271,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "500":
                     content:
                         application/json:
@@ -5078,7 +5290,10 @@ paths:
                 - Employee - Form
     /api/employees/form/definition:
         get:
-            description: Persisted editor FormDSL for employees; round-trips with PUT `/api/employees/form/definition`.
+            description: |-
+                Persisted editor FormDSL for employees; round-trips with PUT `/api/employees/form/definition`.
+                Requires `employees.manage`.
+                **Error codes:** 403 — common.forbidden.
             operationId: getEmployeeFormDefinition
             parameters:
                 - description: Optional. Send the ETag response header value from a prior GET (hash wrapped in ASCII double quotes).
@@ -5111,6 +5326,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "500":
                     content:
                         application/json:
@@ -5125,7 +5346,8 @@ paths:
         put:
             description: |-
                 Saves org employee FormDSL definition. Validates core fields and `main` group (first_name, last_name, email).
-                **Error codes:** iam.form_missing_core; common.definition_required.
+                Requires `employees.manage`.
+                **Error codes:** 400 — iam.form_missing_core, common.definition_required. 403 — common.forbidden.
             operationId: updateEmployeeFormDefinition
             requestBody:
                 content:
@@ -5154,6 +5376,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -5210,7 +5444,8 @@ paths:
         post:
             description: |-
                 Flat form `data` per org schema; relational columns extracted server-side. An `id` key in the body is ignored; the response carries the new guest `id`.
-                **Error codes:** guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
+                Requires `guests.create` and `guests.view` (the response returns the guest); both are checked before the guest is written.
+                **Error codes:** 400 — guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required. 403 — common.forbidden. 409 — guest.duplicate. **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
             operationId: createGuest
             requestBody:
                 content:
@@ -5245,6 +5480,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Forbidden
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -5370,6 +5617,7 @@ paths:
         put:
             description: |-
                 Flat `data` same as POST; relational columns re-extracted. The guest is identified by the path: an `id` key in the body is ignored and not stored.
+                Requires `guests.modify` and `guests.view` (the response returns the guest); both are checked before the guest is written.
                 **Error codes:** common.invalid_guest_id; guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; guest.not_found; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules`.
             operationId: updateGuest
             parameters:
@@ -5418,6 +5666,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "422":
                     content:
                         application/json:
@@ -5643,6 +5897,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Forbidden
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -5700,6 +5960,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -5711,7 +5977,10 @@ paths:
                 - IAM - Internal
     /api/occupations:
         get:
-            description: Returns every allowed occupation role family as a stable machine key plus frontend i18n key, with current occupation templates grouped under each role. Empty role groups are included so clients do not need to guess valid `role_key` values for create/update flows.
+            description: |-
+                Returns every allowed occupation role family as a stable machine key plus frontend i18n key, with current occupation templates grouped under each role. Empty role groups are included so clients do not need to guess valid `role_key` values for create/update flows.
+                Requires `hotel.manage_occupations or hotel.manage_permissions`.
+                **Error codes:** 403 — common.forbidden.
             operationId: listOccupations
             responses:
                 "200":
@@ -5728,6 +5997,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "500":
                     content:
                         application/json:
@@ -5740,7 +6015,11 @@ paths:
             tags:
                 - IAM - RBAC
         post:
-            description: Creates a new occupation template with default permissions.
+            description: |-
+                Creates a new occupation template with default permissions.
+                Requires `hotel.manage_occupations`.
+                Levels: 0 none, 2 hotel, 3 organization for every key; 1 (owned) only for `housekeeping_tasks` and `maintenance_tasks`. Any other level is rejected with 400 `iam.invalid_permission_level`.
+                **Error codes:** 400 — iam.occupation_title_required, iam.invalid_role, iam.invalid_permission_level. 403 — common.forbidden.
             operationId: createOccupation
             requestBody:
                 content:
@@ -5769,6 +6048,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -5782,7 +6073,10 @@ paths:
                 - IAM - RBAC
     /api/occupations/{occupation_id}:
         delete:
-            description: Deletes an occupation template by id.
+            description: |-
+                Deletes an occupation template by id.
+                Requires `hotel.manage_occupations`.
+                **Error codes:** 400 — common.invalid_occupation_id. 403 — common.forbidden. 404 — iam.occupation_not_found. 409 — iam.occupation_in_use.
             operationId: deleteOccupation
             parameters:
                 - description: Occupation ID
@@ -5806,6 +6100,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
@@ -5830,7 +6130,10 @@ paths:
             tags:
                 - IAM - RBAC
         get:
-            description: Returns one occupation template by id.
+            description: |-
+                Returns one occupation template by id.
+                Requires `hotel.manage_occupations or hotel.manage_permissions`.
+                **Error codes:** 400 — common.invalid_occupation_id. 403 — common.forbidden. 404 — iam.occupation_not_found.
             operationId: getOccupation
             parameters:
                 - description: Occupation ID
@@ -5858,6 +6161,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
@@ -5876,7 +6185,12 @@ paths:
             tags:
                 - IAM - RBAC
         put:
-            description: Updates title, role, and default permissions for an occupation template.
+            description: |-
+                Updates title, role, and default permissions for an occupation template.
+                Requires `hotel.manage_occupations`.
+                Levels: 0 none, 2 hotel, 3 organization for every key; 1 (owned) only for `housekeeping_tasks` and `maintenance_tasks`. Any other level is rejected with 400 `iam.invalid_permission_level`.
+                An occupation held by employees may not be raised above the caller's own permissions (403 `iam.permission_escalation`, `fields` lists the keys); the owner is not limited.
+                **Error codes:** 400 — common.invalid_occupation_id, iam.occupation_title_required, iam.invalid_role, iam.invalid_permission_level. 403 — common.forbidden, iam.permission_escalation. 404 — iam.occupation_not_found.
             operationId: updateOccupation
             parameters:
                 - description: Occupation ID
@@ -5912,12 +6226,24 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Unauthorized
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Forbidden
                 "404":
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -5966,7 +6292,7 @@ paths:
         put:
             description: |-
                 Bulk update nightly base rates for room types. Each item must reference a valid room type in this hotel. `base_rate_minor` must be ≥ 0.
-                **Error codes:** pricing.invalid_base_rate (negative value); pricing.room_type_not_found (unknown room type id in array).
+                **Error codes:** pricing.invalid_base_rate (negative value); pricing.room_type_not_found (a room type id that is not a room type of the caller's hotel; nothing is written).
             operationId: updateBaseRates
             requestBody:
                 content:
@@ -6007,6 +6333,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6022,6 +6354,7 @@ paths:
         get:
             description: |-
                 Returns the stored accommodation snapshot (pricing breakdown + manual adjustments) for a booking. Use `manual_adjustments` for round-tripping on updates. Returns 404 if no quote has been calculated yet.
+                Readable with `bookings.view` (anyone who may open the booking), `bookings.create`, `bookings.modify` or `pricing.view`, `pricing.adjust`, `pricing.manage`. A booking of another hotel or organization is `404 pricing.not_found`.
                 **Error codes:** common.invalid_booking_id; pricing.not_found.
             operationId: getBookingQuote
             parameters:
@@ -6172,6 +6505,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Forbidden
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6263,6 +6602,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6436,6 +6781,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6533,6 +6884,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6630,6 +6987,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6755,6 +7118,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -6858,6 +7227,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7031,6 +7406,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7157,6 +7538,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7172,7 +7559,8 @@ paths:
         put:
             description: |-
                 Alias for housekeeping task management. Each status maps to the corresponding task transition on the room's open housekeeping task (or creates one when needed). Typical flow: `dirty → cleaning → inspection → clean`.
-                **Error codes:** common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.duplicate_open_task, tasks.task_not_found, tasks.concurrency_conflict.
+                Rights: `dirty` needs `housekeeping_tasks.create` or `bookings.operate`; `cleaning`, `inspection` and `clean` need `housekeeping_tasks.operate` on the open task (at any level when the room has none; `cleaning` then also needs `create`). `assignee_employee_id` needs `housekeeping_tasks.assign`, a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
+                **Error codes:** 400 — common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.duplicate_open_task, tasks.concurrency_conflict.
             operationId: changeRoomHousekeeping
             parameters:
                 - description: Room UUID
@@ -7222,6 +7610,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7237,7 +7631,8 @@ paths:
         put:
             description: |-
                 Alias for maintenance task management. `required` and `under_maintenance` require `planned_end` on first use (create/start).
-                **Error codes:** common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.planned_end_required, tasks.duplicate_open_task, tasks.task_not_found.
+                Rights: `required` needs `maintenance_tasks.create` or `bookings.operate`; `under_maintenance` and `none` need `maintenance_tasks.operate` on the open task (at any level when the room has none; `under_maintenance` then also needs `create`). `assignee_employee_id` needs `maintenance_tasks.assign`; `planned_end` or a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
+                **Error codes:** 400 — common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.planned_end_required. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.duplicate_open_task, tasks.concurrency_conflict.
             operationId: changeRoomMaintenance
             parameters:
                 - description: Room UUID
@@ -7287,6 +7682,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7432,7 +7833,8 @@ paths:
         post:
             description: |-
                 Creates an open housekeeping task. Fails with `tasks.duplicate_open_task` if a non-terminal task already exists for the room.
-                **Error codes:** tasks.room_id_required, tasks.duplicate_open_task.
+                `assignee_employee_id` assigns the new task: it needs `housekeeping_tasks.assign` (an owned level counts, the caller creates the task).
+                **Error codes:** 400 — tasks.room_id_required. 403 — common.forbidden (also an assignee without `housekeeping_tasks.assign`). 409 — tasks.duplicate_open_task.
             operationId: createHousekeepingTask
             requestBody:
                 content:
@@ -7473,6 +7875,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7486,6 +7894,7 @@ paths:
                 - Tasks
     /api/tasks/housekeeping/{id}:
         get:
+            description: '**Error codes:** 400 — common.invalid_task_id. 403 — common.forbidden (also an owned-level caller on a task they neither created nor are assigned to). 404 — tasks.task_not_found.'
             operationId: getHousekeepingTask
             parameters:
                 - description: Task UUID
@@ -7501,6 +7910,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/taskshttp.HousekeepingTaskResponse'
                     description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Bad Request
                 "401":
                     content:
                         application/json:
@@ -7531,7 +7946,10 @@ paths:
             tags:
                 - Tasks
         put:
-            description: 'Partial update. Omitted fields stay unchanged. `assignee_employee_id: null` clears the assignee.'
+            description: |-
+                Partial update. Omitted fields stay unchanged. `assignee_employee_id: null` clears the assignee.
+                A body without editable fields changes nothing and returns the task; it still needs `operate` or `assign` on the task.
+                **Error codes:** 400 — common.invalid_task_id, common.invalid_request_payload. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
             operationId: updateHousekeepingTask
             parameters:
                 - description: Task UUID
@@ -7579,6 +7997,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7592,7 +8022,9 @@ paths:
                 - Tasks
     /api/tasks/housekeeping/{id}/status:
         put:
-            description: 'Valid transitions: open → in_progress, in_progress → inspection, inspection → done; any non-terminal → canceled.'
+            description: |-
+                Valid transitions: open → in_progress, in_progress → inspection, inspection → done; any non-terminal → canceled.
+                **Error codes:** 400 — common.invalid_task_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
             operationId: changeHousekeepingTaskStatus
             parameters:
                 - description: Task UUID
@@ -7640,6 +8072,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7724,7 +8168,8 @@ paths:
         post:
             description: |-
                 Requires `planned_end`. Fails with `tasks.duplicate_open_task` if a non-terminal task already exists for the room.
-                **Error codes:** tasks.room_id_required, tasks.planned_end_required, tasks.duplicate_open_task.
+                `assignee_employee_id` assigns the new task: it needs `maintenance_tasks.assign` (an owned level counts, the caller creates the task).
+                **Error codes:** 400 — tasks.room_id_required, tasks.planned_end_required. 403 — common.forbidden (also an assignee without `maintenance_tasks.assign`). 409 — tasks.duplicate_open_task.
             operationId: createMaintenanceTask
             requestBody:
                 content:
@@ -7765,6 +8210,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7778,6 +8229,7 @@ paths:
                 - Tasks
     /api/tasks/maintenance/{id}:
         get:
+            description: '**Error codes:** 400 — common.invalid_task_id. 403 — common.forbidden (also an owned-level caller on a task they neither created nor are assigned to). 404 — tasks.task_not_found.'
             operationId: getMaintenanceTask
             parameters:
                 - description: Task UUID
@@ -7793,6 +8245,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/taskshttp.MaintenanceTaskResponse'
                     description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Bad Request
                 "401":
                     content:
                         application/json:
@@ -7826,6 +8284,8 @@ paths:
             description: |-
                 Partial update. Omitted fields stay unchanged. `assignee_employee_id: null` clears the assignee; `planned_end: null` clears the date.
                 While the task is in_progress, `planned_end`/`description` edits propagate to the room's maintenance state.
+                A body without editable fields changes nothing and returns the task; it still needs `operate` or `assign` on the task.
+                **Error codes:** 400 — common.invalid_task_id, common.invalid_request_payload. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
             operationId: updateMaintenanceTask
             parameters:
                 - description: Task UUID
@@ -7873,6 +8333,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:
@@ -7886,7 +8358,9 @@ paths:
                 - Tasks
     /api/tasks/maintenance/{id}/status:
         put:
-            description: 'Valid transitions: open → in_progress, in_progress → done; any non-terminal → canceled.'
+            description: |-
+                Valid transitions: open → in_progress, in_progress → done; any non-terminal → canceled.
+                **Error codes:** 400 — common.invalid_task_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
             operationId: changeMaintenanceTaskStatus
             parameters:
                 - description: Task UUID
@@ -7934,6 +8408,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/sharedhttp.ErrorResponse'
                     description: Not Found
+                "409":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Conflict
+                "413":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/sharedhttp.ErrorResponse'
+                    description: Request Entity Too Large
                 "500":
                     content:
                         application/json:

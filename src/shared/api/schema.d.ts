@@ -13,13 +13,13 @@ export interface paths {
     }
     /**
      * Get account
-     * @description Current user account (Bearer + org context). Response includes `permissions`, sourced from the resolved authenticated actor for this request. In `settings`, JSON null means not set.
+     * @description Current user account (Bearer + org context). Response includes `permissions`, sourced from the resolved authenticated actor for this request, and `is_owner` (the caller owns the session organization and holds every permission). The profile is the caller's employee record in the session organization. In `settings`, JSON null means not set.
      *     **Error codes:** iam.user_not_found. Corrupt stored settings may yield 500.
      */
     get: operations['getAccount']
     /**
      * Update account
-     * @description Partial merge of `account` and `settings`; omitted top-level keys unchanged (Bearer + org). Response includes the current request actor's `permissions`. Password change: send `currentPassword` and `newPassword`. Per-key JSON null in `settings` clears that key; unknown keys → 400.
+     * @description Partial merge of `account` and `settings`; omitted top-level keys unchanged (Bearer + org). Response includes the current request actor's `permissions` and `is_owner`, like GET. Password change: send `currentPassword` and `newPassword`. Per-key JSON null in `settings` clears that key; unknown keys → 400.
      *     **Error codes:** 400 — iam.invalid_email, iam.unknown_setting_key, iam.invalid_setting_value. 401 — iam.current_password_incorrect, iam.current_password_required. 404 — iam.user_not_found. 409 — iam.email_already_in_use.
      */
     put: operations['updateAccount']
@@ -68,6 +68,7 @@ export interface paths {
     /**
      * User login
      * @description Email + password (no Bearer); returns JWT pair.
+     *     A user employed in several organizations gets the organization of their last login, otherwise the earliest one they were linked to (temporary rule until organization choice at login).
      *     **Error codes:** 400 — iam.email_password_required. 401 — iam.invalid_credentials, iam.registration_not_completed.
      */
     post: operations['loginUser']
@@ -88,7 +89,7 @@ export interface paths {
     put?: never
     /**
      * Refresh session
-     * @description Body: `refresh_token` (JWT with `token_use=refresh`). No Bearer access token on this route. Org/hotel on the new tokens come from the employee record.
+     * @description Body: `refresh_token` (JWT with `token_use=refresh`). No Bearer access token on this route. The new tokens keep the organization of the refresh token; the hotel comes from the employee record in that organization.
      *     **Error codes:** 400 — iam.refresh_token_required. 401 — iam.refresh_token_expired, iam.refresh_token_invalid.
      */
     post: operations['refreshSession']
@@ -110,7 +111,8 @@ export interface paths {
     /**
      * Add manual adjustment
      * @description Appends a manual charge (positive amount) or credit (negative amount) to the open guest bill. The bill must exist and be open.
-     *     **Error codes:** common.invalid_booking_id; billing.bill_not_found; billing.bill_closed; billing.amount_required; billing.description_required.
+     *     A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+     *     **Error codes:** 400 — common.invalid_booking_id, billing.amount_required, billing.description_required. 403 — common.forbidden. 404 — billing.booking_not_found, billing.bill_not_found. 422 — billing.bill_closed.
      */
     post: operations['addManualAdjustment']
     delete?: never
@@ -129,7 +131,8 @@ export interface paths {
     /**
      * Get booking balance
      * @description Returns the aggregate balance for a booking. This works both pre-check-in (deposits only) and post-check-in (full bill). `has_bill` indicates whether a guest bill exists.
-     *     **Error codes:** common.invalid_booking_id.
+     *     A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+     *     **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — billing.booking_not_found.
      */
     get: operations['getBookingBalance']
     put?: never
@@ -150,7 +153,8 @@ export interface paths {
     /**
      * Get guest bill
      * @description Returns the guest bill header, all ledger entries, and the outstanding balance for the specified booking. Returns 404 if no bill exists (bill opens at check-in).
-     *     **Error codes:** common.invalid_booking_id; billing.bill_not_found.
+     *     A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+     *     **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — billing.booking_not_found, billing.bill_not_found.
      */
     get: operations['getBill']
     put?: never
@@ -172,7 +176,8 @@ export interface paths {
     /**
      * Close guest bill
      * @description Closes the open guest bill for the specified booking. A closed bill is read-only. May be closed with a non-zero balance (outstanding debt).
-     *     **Error codes:** common.invalid_booking_id; billing.bill_not_found; billing.bill_closed.
+     *     A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+     *     **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — billing.booking_not_found, billing.bill_not_found. 422 — billing.bill_closed.
      */
     put: operations['closeBill']
     post?: never
@@ -194,7 +199,8 @@ export interface paths {
     /**
      * Record payment
      * @description Records a payment against the booking. If a guest bill exists, the entry is attached to it. If no bill exists yet (pre-check-in), the entry is stored as a deposit with no bill reference and will be backfilled at check-in.
-     *     **Error codes:** common.invalid_booking_id; billing.invalid_amount; billing.bill_closed.
+     *     A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+     *     **Error codes:** 400 — common.invalid_booking_id, billing.invalid_amount. 403 — common.forbidden. 404 — billing.booking_not_found. 422 — billing.bill_closed.
      */
     post: operations['recordPayment']
     delete?: never
@@ -215,7 +221,8 @@ export interface paths {
     /**
      * Record refund
      * @description Records a refund that reverses a prior payment. The referenced payment must exist, belong to the same booking, and be of type `payment`. Refund amount is stored as positive balance_delta (increases what guest owes).
-     *     **Error codes:** common.invalid_booking_id; billing.invalid_amount; billing.payment_not_found; billing.not_a_payment; billing.bill_closed.
+     *     A booking of another hotel or organization, or an unknown booking, is `404 billing.booking_not_found`.
+     *     **Error codes:** 400 — common.invalid_booking_id, billing.invalid_amount, billing.invalid_reverses_entry_id. 403 — common.forbidden. 404 — billing.booking_not_found, billing.payment_not_found. 409 — billing.refund_exceeds_payment. 422 — billing.not_a_payment, billing.bill_closed.
      */
     post: operations['recordRefund']
     delete?: never
@@ -338,6 +345,7 @@ export interface paths {
     /**
      * List bookings
      * @description Distinct bookings (read model). Optional `q` on guest name. With `from`+`to` (`YYYY-MM-DD`, UTC midnight): `check_out >= from` **and** `check_in <= to`.
+     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
      *     **Error codes:** booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
      */
     get: operations['listBookings']
@@ -345,6 +353,7 @@ export interface paths {
     /**
      * Create booking
      * @description Flat `{ guest, stay, adjustments? }` JSON (see `CreateBookingRequest`). Optional top-level `adjustments` are manual pricing inputs forwarded to Pricing (not persisted on the booking stream). Room availability is checked twice before commit and the DB rejects overlapping active assignments for the same physical room, so concurrent creates (e.g. OTA + front desk) cannot double-book. `guest.id` links an existing profile; omit to create inline.
+     *     A new inline guest (`guest` without `id`) also needs `guests.create`; without it the request is 403 `common.forbidden` and nothing is written.
      *     **Error codes:** booking.invalid_data_format, booking.dates_required, booking.rooms_required, booking.room_type_required_each_room, booking.form_missing_stay_group, booking.guest_information_required; booking.overbooking; **409** `guest.duplicate` when inline guest creation hits an existing profile; **422** `common.validation_failed` with `error.issues[]` when payload fails org booking form `rules` (stay subtree and array rows) or inline guest constraints (e.g. `guest.email` / `guest.phone` `validation.contact_required`).
      */
     post: operations['createBooking']
@@ -364,6 +373,7 @@ export interface paths {
     /**
      * Get booking by id
      * @description Unified booking data from the aggregate. `stay.rooms[]` may include `room_type_label` and `room_id_label`. **`_form`** carries canonical form id (`booking`) and **hash**. Merge with GET `/api/bookings/form?target=view` definition on the client. Pricing data (accommodation snapshot, manual adjustments) is served by the pricing module via `GET /api/pricing/bookings/{id}/quote`. Once the booking is `checked_in` or `checked_out` the response also carries `outstanding_balance` (zero when fully paid, omitted before check-in).
+     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
      *     **Error codes:** common.invalid_booking_id; booking.not_found.
      */
     get: operations['getBooking']
@@ -391,7 +401,7 @@ export interface paths {
     /**
      * Cancel booking
      * @description Status: `confirmed` → `canceled`.
-     *     **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition.
+     *     **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — booking.not_found. 409 — booking.concurrent_modification. 422 — booking.invalid_status_transition.
      */
     put: operations['cancelBooking']
     post?: never
@@ -412,7 +422,8 @@ export interface paths {
     /**
      * Check in
      * @description Status: `confirmed` → `checked_in`. Response includes `outstanding_balance` reflecting the bill pricing opens on check-in.
-     *     **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition.
+     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+     *     **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — booking.not_found. 409 — booking.concurrent_modification. 422 — booking.invalid_status_transition.
      */
     put: operations['checkInBooking']
     post?: never
@@ -438,6 +449,7 @@ export interface paths {
      *     Send `{"force_unpaid": true}` to allow check-out without full payment;
      *     in that case the bill stays open so the debt remains visible.
      *     When balance ≤ 0 (fully paid), the bill is auto-closed on check-out.
+     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
      *     **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition; booking.check_in_required_before_check_out; booking.outstanding_balance.
      */
     put: operations['checkOutBooking']
@@ -503,6 +515,7 @@ export interface paths {
     /**
      * Get reservation grid
      * @description Bookings in the date range with rooms nested under `stay.rooms[]`. Overlap: `check_in <= to` and `check_out >= from` (dates `YYYY-MM-DD`, UTC midnight). `from` and `to` required.
+     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
      *     **Error codes:** booking.grid_from_to_required, booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
      */
     get: operations['getReservationGrid']
@@ -524,13 +537,16 @@ export interface paths {
     /**
      * List employees
      * @description Relational list only; full form data comes from GET `/api/employees/{employee_id}`.
+     *     Requires `employees.view`.
+     *     **Error codes:** 403 — common.forbidden.
      */
     get: operations['listEmployees']
     put?: never
     /**
      * Create employee
      * @description Raw form `data` per org employee schema; linked to the current JWT hotel by default. The response carries the created employee under `employee`, including its `id`.
-     *     **Error codes:** iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; **422** `common.validation_failed` when payload fails org employee form `rules`.
+     *     Requires `employees.manage`.
+     *     **Error codes:** 400 — iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format. 403 — common.forbidden. 409 — iam.employee_already_exists, iam.email_already_in_use. **422** `common.validation_failed` when payload fails org employee form `rules`.
      */
     post: operations['createEmployee']
     delete?: never
@@ -549,13 +565,15 @@ export interface paths {
     /**
      * Get employee
      * @description Flat profile JSON matching the org employee schema, with linked occupations, sparse permission overrides, effective permissions, and `_form` metadata.
-     *     **Error codes:** common.invalid_employee_id; iam.employee_not_found.
+     *     Requires `employees.view`.
+     *     **Error codes:** 400 — common.invalid_employee_id. 403 — common.forbidden. 404 — iam.employee_not_found.
      */
     get: operations['getEmployee']
     /**
      * Update employee
      * @description Flat `data` same as POST.
-     *     **Error codes:** common.invalid_employee_id; iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; iam.employee_not_found; **422** `common.validation_failed` when payload fails org employee form `rules`.
+     *     Requires `employees.manage`.
+     *     **Error codes:** 400 — common.invalid_employee_id, iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format. 403 — common.forbidden. 404 — iam.employee_not_found. **422** `common.validation_failed` when payload fails org employee form `rules`.
      */
     put: operations['updateEmployee']
     post?: never
@@ -576,6 +594,9 @@ export interface paths {
     /**
      * Replace employee occupations
      * @description Replaces all occupation links for the employee with the provided `occupation_ids`.
+     *     Requires `hotel.manage_permissions`.
+     *     The new occupations may not raise any effective level of the employee above the caller's own (403 `iam.permission_escalation`, `fields` lists the keys). The owner is not limited.
+     *     **Error codes:** 400 — common.invalid_employee_id. 403 — common.forbidden, iam.permission_escalation. 404 — iam.employee_not_found, iam.occupation_not_found. 409 — iam.owner_permissions_immutable (the organization owner).
      */
     put: operations['replaceEmployeeOccupations']
     post?: never
@@ -596,6 +617,10 @@ export interface paths {
     /**
      * Replace employee permission overrides
      * @description Replaces the `permission_overrides` document on the employee's primary hotel link. Effective permissions are computed as `override if present else merged occupation base`. The primary hotel link is `employee.hotel_id` when set, otherwise the first linked hotel.
+     *     Requires `hotel.manage_permissions`.
+     *     Levels: 0 none, 2 hotel, 3 organization for every key; 1 (owned) only for `housekeeping_tasks` and `maintenance_tasks`. Any other level is rejected with 400 `iam.invalid_permission_level`.
+     *     Permissions cannot be granted above your own: the change may not raise any effective level of the employee above the caller's own level for that key (403 `iam.permission_escalation`, `fields` lists the keys). The owner is not limited.
+     *     **Error codes:** 400 — common.invalid_employee_id, iam.invalid_permission_level (`fields` lists the keys, e.g. `bookings.view`), iam.invalid_data_format. 403 — common.forbidden, iam.permission_escalation. 404 — iam.employee_not_found. 409 — iam.owner_permissions_immutable (the organization owner).
      */
     put: operations['replaceEmployeePermissions']
     post?: never
@@ -615,6 +640,8 @@ export interface paths {
     /**
      * Get employee form (runtime)
      * @description Compiled org employee FormDSL. Omit `target` → `edit`.
+     *     Requires `employees.view or employees.manage`.
+     *     **Error codes:** 400 — common.invalid_form_target. 403 — common.forbidden.
      */
     get: operations['getEmployeeForm']
     put?: never
@@ -635,12 +662,15 @@ export interface paths {
     /**
      * Get employee form definition (editor)
      * @description Persisted editor FormDSL for employees; round-trips with PUT `/api/employees/form/definition`.
+     *     Requires `employees.manage`.
+     *     **Error codes:** 403 — common.forbidden.
      */
     get: operations['getEmployeeFormDefinition']
     /**
      * Update employee form definition (editor)
      * @description Saves org employee FormDSL definition. Validates core fields and `main` group (first_name, last_name, email).
-     *     **Error codes:** iam.form_missing_core; common.definition_required.
+     *     Requires `employees.manage`.
+     *     **Error codes:** 400 — iam.form_missing_core, common.definition_required. 403 — common.forbidden.
      */
     put: operations['updateEmployeeFormDefinition']
     post?: never
@@ -666,7 +696,8 @@ export interface paths {
     /**
      * Create guest
      * @description Flat form `data` per org schema; relational columns extracted server-side. An `id` key in the body is ignored; the response carries the new guest `id`.
-     *     **Error codes:** guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
+     *     Requires `guests.create` and `guests.view` (the response returns the guest); both are checked before the guest is written.
+     *     **Error codes:** 400 — guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required. 403 — common.forbidden. 409 — guest.duplicate. **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
      */
     post: operations['createGuest']
     delete?: never
@@ -691,6 +722,7 @@ export interface paths {
     /**
      * Update guest
      * @description Flat `data` same as POST; relational columns re-extracted. The guest is identified by the path: an `id` key in the body is ignored and not stored.
+     *     Requires `guests.modify` and `guests.view` (the response returns the guest); both are checked before the guest is written.
      *     **Error codes:** common.invalid_guest_id; guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; guest.not_found; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules`.
      */
     put: operations['updateGuest']
@@ -803,12 +835,17 @@ export interface paths {
     /**
      * List occupation templates
      * @description Returns every allowed occupation role family as a stable machine key plus frontend i18n key, with current occupation templates grouped under each role. Empty role groups are included so clients do not need to guess valid `role_key` values for create/update flows.
+     *     Requires `hotel.manage_occupations or hotel.manage_permissions`.
+     *     **Error codes:** 403 — common.forbidden.
      */
     get: operations['listOccupations']
     put?: never
     /**
      * Create occupation template
      * @description Creates a new occupation template with default permissions.
+     *     Requires `hotel.manage_occupations`.
+     *     Levels: 0 none, 2 hotel, 3 organization for every key; 1 (owned) only for `housekeeping_tasks` and `maintenance_tasks`. Any other level is rejected with 400 `iam.invalid_permission_level`.
+     *     **Error codes:** 400 — iam.occupation_title_required, iam.invalid_role, iam.invalid_permission_level. 403 — common.forbidden.
      */
     post: operations['createOccupation']
     delete?: never
@@ -827,17 +864,25 @@ export interface paths {
     /**
      * Get occupation template
      * @description Returns one occupation template by id.
+     *     Requires `hotel.manage_occupations or hotel.manage_permissions`.
+     *     **Error codes:** 400 — common.invalid_occupation_id. 403 — common.forbidden. 404 — iam.occupation_not_found.
      */
     get: operations['getOccupation']
     /**
      * Update occupation template
      * @description Updates title, role, and default permissions for an occupation template.
+     *     Requires `hotel.manage_occupations`.
+     *     Levels: 0 none, 2 hotel, 3 organization for every key; 1 (owned) only for `housekeeping_tasks` and `maintenance_tasks`. Any other level is rejected with 400 `iam.invalid_permission_level`.
+     *     An occupation held by employees may not be raised above the caller's own permissions (403 `iam.permission_escalation`, `fields` lists the keys); the owner is not limited.
+     *     **Error codes:** 400 — common.invalid_occupation_id, iam.occupation_title_required, iam.invalid_role, iam.invalid_permission_level. 403 — common.forbidden, iam.permission_escalation. 404 — iam.occupation_not_found.
      */
     put: operations['updateOccupation']
     post?: never
     /**
      * Delete occupation template
      * @description Deletes an occupation template by id.
+     *     Requires `hotel.manage_occupations`.
+     *     **Error codes:** 400 — common.invalid_occupation_id. 403 — common.forbidden. 404 — iam.occupation_not_found. 409 — iam.occupation_in_use.
      */
     delete: operations['deleteOccupation']
     options?: never
@@ -860,7 +905,7 @@ export interface paths {
     /**
      * Update base rates
      * @description Bulk update nightly base rates for room types. Each item must reference a valid room type in this hotel. `base_rate_minor` must be ≥ 0.
-     *     **Error codes:** pricing.invalid_base_rate (negative value); pricing.room_type_not_found (unknown room type id in array).
+     *     **Error codes:** pricing.invalid_base_rate (negative value); pricing.room_type_not_found (a room type id that is not a room type of the caller's hotel; nothing is written).
      */
     put: operations['updateBaseRates']
     post?: never
@@ -880,6 +925,7 @@ export interface paths {
     /**
      * Get booking quote
      * @description Returns the stored accommodation snapshot (pricing breakdown + manual adjustments) for a booking. Use `manual_adjustments` for round-tripping on updates. Returns 404 if no quote has been calculated yet.
+     *     Readable with `bookings.view` (anyone who may open the booking), `bookings.create`, `bookings.modify` or `pricing.view`, `pricing.adjust`, `pricing.manage`. A booking of another hotel or organization is `404 pricing.not_found`.
      *     **Error codes:** common.invalid_booking_id; pricing.not_found.
      */
     get: operations['getBookingQuote']
@@ -1174,7 +1220,8 @@ export interface paths {
     /**
      * Change room housekeeping status
      * @description Alias for housekeeping task management. Each status maps to the corresponding task transition on the room's open housekeeping task (or creates one when needed). Typical flow: `dirty → cleaning → inspection → clean`.
-     *     **Error codes:** common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.duplicate_open_task, tasks.task_not_found, tasks.concurrency_conflict.
+     *     Rights: `dirty` needs `housekeeping_tasks.create` or `bookings.operate`; `cleaning`, `inspection` and `clean` need `housekeeping_tasks.operate` on the open task (at any level when the room has none; `cleaning` then also needs `create`). `assignee_employee_id` needs `housekeeping_tasks.assign`, a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
+     *     **Error codes:** 400 — common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.duplicate_open_task, tasks.concurrency_conflict.
      */
     put: operations['changeRoomHousekeeping']
     post?: never
@@ -1195,7 +1242,8 @@ export interface paths {
     /**
      * Change room maintenance status
      * @description Alias for maintenance task management. `required` and `under_maintenance` require `planned_end` on first use (create/start).
-     *     **Error codes:** common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.planned_end_required, tasks.duplicate_open_task, tasks.task_not_found.
+     *     Rights: `required` needs `maintenance_tasks.create` or `bookings.operate`; `under_maintenance` and `none` need `maintenance_tasks.operate` on the open task (at any level when the room has none; `under_maintenance` then also needs `create`). `assignee_employee_id` needs `maintenance_tasks.assign`; `planned_end` or a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
+     *     **Error codes:** 400 — common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.planned_end_required. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.duplicate_open_task, tasks.concurrency_conflict.
      */
     put: operations['changeRoomMaintenance']
     post?: never
@@ -1242,7 +1290,8 @@ export interface paths {
     /**
      * Create housekeeping task
      * @description Creates an open housekeeping task. Fails with `tasks.duplicate_open_task` if a non-terminal task already exists for the room.
-     *     **Error codes:** tasks.room_id_required, tasks.duplicate_open_task.
+     *     `assignee_employee_id` assigns the new task: it needs `housekeeping_tasks.assign` (an owned level counts, the caller creates the task).
+     *     **Error codes:** 400 — tasks.room_id_required. 403 — common.forbidden (also an assignee without `housekeeping_tasks.assign`). 409 — tasks.duplicate_open_task.
      */
     post: operations['createHousekeepingTask']
     delete?: never
@@ -1258,11 +1307,16 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Get housekeeping task */
+    /**
+     * Get housekeeping task
+     * @description **Error codes:** 400 — common.invalid_task_id. 403 — common.forbidden (also an owned-level caller on a task they neither created nor are assigned to). 404 — tasks.task_not_found.
+     */
     get: operations['getHousekeepingTask']
     /**
      * Update housekeeping task
      * @description Partial update. Omitted fields stay unchanged. `assignee_employee_id: null` clears the assignee.
+     *     A body without editable fields changes nothing and returns the task; it still needs `operate` or `assign` on the task.
+     *     **Error codes:** 400 — common.invalid_task_id, common.invalid_request_payload. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
      */
     put: operations['updateHousekeepingTask']
     post?: never
@@ -1283,6 +1337,7 @@ export interface paths {
     /**
      * Change housekeeping task status
      * @description Valid transitions: open → in_progress, in_progress → inspection, inspection → done; any non-terminal → canceled.
+     *     **Error codes:** 400 — common.invalid_task_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
      */
     put: operations['changeHousekeepingTaskStatus']
     post?: never
@@ -1308,7 +1363,8 @@ export interface paths {
     /**
      * Create maintenance task
      * @description Requires `planned_end`. Fails with `tasks.duplicate_open_task` if a non-terminal task already exists for the room.
-     *     **Error codes:** tasks.room_id_required, tasks.planned_end_required, tasks.duplicate_open_task.
+     *     `assignee_employee_id` assigns the new task: it needs `maintenance_tasks.assign` (an owned level counts, the caller creates the task).
+     *     **Error codes:** 400 — tasks.room_id_required, tasks.planned_end_required. 403 — common.forbidden (also an assignee without `maintenance_tasks.assign`). 409 — tasks.duplicate_open_task.
      */
     post: operations['createMaintenanceTask']
     delete?: never
@@ -1324,12 +1380,17 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** Get maintenance task */
+    /**
+     * Get maintenance task
+     * @description **Error codes:** 400 — common.invalid_task_id. 403 — common.forbidden (also an owned-level caller on a task they neither created nor are assigned to). 404 — tasks.task_not_found.
+     */
     get: operations['getMaintenanceTask']
     /**
      * Update maintenance task
      * @description Partial update. Omitted fields stay unchanged. `assignee_employee_id: null` clears the assignee; `planned_end: null` clears the date.
      *     While the task is in_progress, `planned_end`/`description` edits propagate to the room's maintenance state.
+     *     A body without editable fields changes nothing and returns the task; it still needs `operate` or `assign` on the task.
+     *     **Error codes:** 400 — common.invalid_task_id, common.invalid_request_payload. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
      */
     put: operations['updateMaintenanceTask']
     post?: never
@@ -1350,6 +1411,7 @@ export interface paths {
     /**
      * Change maintenance task status
      * @description Valid transitions: open → in_progress, in_progress → done; any non-terminal → canceled.
+     *     **Error codes:** 400 — common.invalid_task_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.concurrency_conflict.
      */
     put: operations['changeMaintenanceTaskStatus']
     post?: never
@@ -1683,7 +1745,10 @@ export interface components {
       guest?: components['schemas']['bookinghttp.BookingGuestInfo']
       /** @example 550e8400-e29b-41d4-a716-446655440050 */
       id: string
-      /** @example 15000 */
+      /**
+       * @description only for callers who may read the booking balance
+       * @example 15000
+       */
       outstanding_balance?: number
       /**
        * @example confirmed
@@ -1912,6 +1977,12 @@ export interface components {
     }
     'iamhttp.AccountBundleResponse': {
       account: components['schemas']['iamhttp.AccountInfoBody']
+      /**
+       * @description IsOwner is true for the owner of the session organization, who holds every
+       *     permission (`permissions` is then the full set at organization level).
+       * @example false
+       */
+      is_owner: boolean
       permissions: components['schemas']['iamhttp.PermissionsResponse']
       profile: components['schemas']['iamhttp.AccountProfileBody']
       settings: components['schemas']['iamhttp.AccountSettingsBody']
@@ -2082,8 +2153,8 @@ export interface components {
       id: string
       /** @example Nur */
       last_name: string
-      /** @description null when the employee has no occupations */
-      occupation_ids: string[] | null
+      /** @description empty when the employee has no occupations */
+      occupation_ids: string[]
       occupations: components['schemas']['iamhttp.OccupationSummaryResponse'][]
       permission_overrides: components['schemas']['iamhttp.PermissionOverridesResponse']
       /** @example +77001234567 */
@@ -2102,16 +2173,16 @@ export interface components {
     'iamhttp.EmployeeOccupationsResponse': {
       /** @example 550e8400-e29b-41d4-a716-446655440020 */
       employee_id: string
-      /** @description null when the employee has no occupations */
-      occupation_ids: string[] | null
+      /** @description empty when the employee has no occupations */
+      occupation_ids: string[]
       occupations: components['schemas']['iamhttp.OccupationResponse'][]
     }
     'iamhttp.EmployeePermissionsResponse': {
       effective_permissions: components['schemas']['iamhttp.PermissionsResponse']
       /** @example 550e8400-e29b-41d4-a716-446655440020 */
       employee_id: string
-      /** @description null when the employee has no occupations */
-      occupation_ids: string[] | null
+      /** @description empty when the employee has no occupations */
+      occupation_ids: string[]
       occupation_templates: components['schemas']['iamhttp.OccupationResponse'][]
       permission_overrides: components['schemas']['iamhttp.PermissionOverridesResponse']
     }
@@ -3273,6 +3344,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -3387,6 +3467,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -3439,6 +3528,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -3484,6 +3582,15 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -3564,6 +3671,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Unprocessable Entity */
       422: {
         headers: {
@@ -3625,6 +3741,15 @@ export interface operations {
       }
       /** @description Forbidden */
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Not Found */
+      404: {
         headers: {
           [name: string]: unknown
         }
@@ -3841,6 +3966,24 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Unprocessable Entity */
       422: {
         headers: {
@@ -3916,6 +4059,24 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -4366,6 +4527,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Form rules validation failed */
       422: {
         headers: {
@@ -4525,6 +4695,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Form rules validation or unprocessable entity */
       422: {
         headers: {
@@ -4602,6 +4781,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Unprocessable Entity */
       422: {
         headers: {
@@ -4672,6 +4860,15 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
         headers: {
           [name: string]: unknown
         }
@@ -4768,6 +4965,15 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['bookinghttp.OutstandingBalanceErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
       /** @description Unprocessable Entity */
@@ -4974,6 +5180,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -5076,6 +5291,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -5128,8 +5352,26 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -5189,6 +5431,15 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Forbidden */
+      403: {
         headers: {
           [name: string]: unknown
         }
@@ -5260,8 +5511,26 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -5333,8 +5602,35 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -5397,8 +5693,35 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -5470,6 +5793,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -5522,6 +5854,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -5567,6 +5908,24 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -5678,6 +6037,24 @@ export interface operations {
       }
       /** @description Forbidden */
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -5828,6 +6205,15 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -6164,6 +6550,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -6228,6 +6623,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -6259,6 +6663,15 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Forbidden */
+      403: {
         headers: {
           [name: string]: unknown
         }
@@ -6318,6 +6731,24 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -6361,6 +6792,15 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Forbidden */
+      403: {
         headers: {
           [name: string]: unknown
         }
@@ -6432,8 +6872,26 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -6482,6 +6940,15 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Forbidden */
+      403: {
         headers: {
           [name: string]: unknown
         }
@@ -6617,6 +7084,15 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -6818,6 +7294,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -6928,6 +7413,15 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -7078,6 +7572,15 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -7277,6 +7780,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -7397,6 +7909,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -7472,6 +7993,15 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -7683,6 +8213,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -7826,6 +8365,15 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -8049,6 +8597,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -8129,6 +8686,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -8202,6 +8768,15 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -8407,6 +8982,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -8437,6 +9021,15 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['taskshttp.HousekeepingTaskResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
       /** @description Unauthorized */
@@ -8539,6 +9132,24 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -8605,6 +9216,24 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -8747,6 +9376,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -8777,6 +9415,15 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['taskshttp.MaintenanceTaskResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
       /** @description Unauthorized */
@@ -8879,6 +9526,24 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -8945,6 +9610,24 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Request Entity Too Large */
+      413: {
         headers: {
           [name: string]: unknown
         }

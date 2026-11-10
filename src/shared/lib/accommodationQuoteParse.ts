@@ -18,7 +18,9 @@ export function parseQuoteNight(raw: unknown): StayQuoteNight {
 }
 
 /** Parses accommodation snapshot object (root or nested under `accommodation`). */
-export function parseAccommodationSnapshotFromUnknown(raw: unknown): AccommodationSnapshot | undefined {
+export function parseAccommodationSnapshotFromUnknown(
+  raw: unknown,
+): AccommodationSnapshot | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const o = raw as Record<string, unknown>
   if (!Array.isArray(o.nights) || typeof o.grand_total !== 'number') return undefined
@@ -38,8 +40,7 @@ function parseOneManualAdjustment(item: unknown): ManualAdjustmentInput | null {
   if (!item || typeof item !== 'object') return null
   const a = item as Record<string, unknown>
   const name = typeof a.name === 'string' ? a.name : ''
-  const eff =
-    a.effect && typeof a.effect === 'object' ? (a.effect as Record<string, unknown>) : {}
+  const eff = a.effect && typeof a.effect === 'object' ? (a.effect as Record<string, unknown>) : {}
   const effect: PricingEffect = {
     type: eff.type === 'percent' ? 'percent' : 'fixed',
     value: typeof eff.value === 'number' ? eff.value : 0,

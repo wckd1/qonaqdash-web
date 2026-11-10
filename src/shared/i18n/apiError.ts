@@ -73,8 +73,7 @@ function formatValidationIssueMessage(issue: { code?: unknown; message?: unknown
 export function formErrorsMapFromResponseData(data: unknown): Record<string, string[]> | null {
   if (getApiErrorCode(data) !== 'common.validation_failed') return null
 
-  const errRaw =
-    data && typeof data === 'object' ? (data as { error?: unknown }).error : undefined
+  const errRaw = data && typeof data === 'object' ? (data as { error?: unknown }).error : undefined
   const map: Record<string, string[]> = {}
 
   if (errRaw && typeof errRaw === 'object' && !Array.isArray(errRaw)) {
@@ -101,9 +100,7 @@ export function formErrorsMapFromResponseData(data: unknown): Record<string, str
   if (Object.keys(map).length > 0) return map
 
   const summary =
-    errRaw && typeof errRaw === 'object' && !Array.isArray(errRaw)
-      ? formatApiError(errRaw)
-      : ''
+    errRaw && typeof errRaw === 'object' && !Array.isArray(errRaw) ? formatApiError(errRaw) : ''
   if (summary) return { '': [summary] }
   return { '': [String(i18n.global.t('errors.common.validation_failed'))] }
 }

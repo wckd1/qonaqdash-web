@@ -1,10 +1,6 @@
 <template>
   <div v-if="definition" class="form-content__viewport">
-    <p
-      v-if="rootFormErrors.length"
-      class="form-field-error form-edit__root-errors"
-      role="alert"
-    >
+    <p v-if="rootFormErrors.length" class="form-field-error form-edit__root-errors" role="alert">
       {{ rootFormErrors.join(' ') }}
     </p>
     <LayoutRenderer

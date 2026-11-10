@@ -13,10 +13,7 @@ import type {
   CreateBookingPayload,
 } from '@/shared/types/bookings'
 import type { AccommodationSnapshot, ManualAdjustmentInput } from '@/shared/types/commercial'
-import {
-  fetchStoredBookingQuote,
-  type StoredBookingQuote,
-} from '@/features/pricing/api'
+import { fetchStoredBookingQuote, type StoredBookingQuote } from '@/features/pricing/api'
 
 export type {
   BookingDetailData,
@@ -146,8 +143,9 @@ export function mergeBookingDetailWithRuntimeForm(
       id: detail.id,
     },
     accommodation: storedQuote?.accommodation,
-    adjustments:
-      storedQuote?.manual_adjustments?.length ? storedQuote.manual_adjustments : undefined,
+    adjustments: storedQuote?.manual_adjustments?.length
+      ? storedQuote.manual_adjustments
+      : undefined,
     outstanding_balance: detail.outstanding_balance,
   }
 }

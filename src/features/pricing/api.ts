@@ -39,9 +39,7 @@ export function fetchBaseRates(): Promise<BaseRateItem[]> {
 }
 
 export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRateItem[]> {
-  return api
-    .put('/api/pricing/base-rates', { rates })
-    .then(({ data }) => data?.rates ?? [])
+  return api.put('/api/pricing/base-rates', { rates }).then(({ data }) => data?.rates ?? [])
 }
 
 // ---------------------------------------------------------------------------

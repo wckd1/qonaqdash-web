@@ -60,7 +60,7 @@
         <p v-else class="section-placeholder">{{ t('guests.details_loading') }}</p>
       </div>
       <section
-        v-if="guestId && canViewBookings"
+        v-if="guestId"
         class="panel related-records"
         aria-labelledby="related-records-heading"
       >
@@ -78,7 +78,7 @@
               <th scope="col">{{ t('fields.check_in') }}</th>
               <th scope="col">{{ t('fields.check_out') }}</th>
               <th scope="col">{{ t('fields.status') }}</th>
-              <th scope="col" class="list-table__col--actions"></th>
+              <th v-if="canViewBookings" scope="col" class="list-table__col--actions"></th>
             </tr>
           </thead>
           <tbody>
@@ -88,7 +88,7 @@
               <td :data-label="t('fields.status')">
                 <BookingStatusBadge :status="b.status" />
               </td>
-              <td class="list-table__cell--actions">
+              <td v-if="canViewBookings" class="list-table__cell--actions">
                 <router-link
                   :to="{ name: 'booking-detail', params: { id: b.id } }"
                   class="list-table__action"
@@ -203,9 +203,11 @@ const loadError = computed(() => {
   return err ? formatUnknownApiError(err) || t('guests.guest_load_failed') : ''
 })
 
+// The stays are part of the guest card: whoever reads the guest reads them
+// (principle 5). Opening one of them is the booking itself and needs bookings.view.
 const bookingsQ = useQuery(() => ({
   ...guestBookingsQuery(guestId.value ?? ''),
-  enabled: !!guestId.value && !!currentGuest.value && canViewBookings.value,
+  enabled: !!guestId.value && !!currentGuest.value,
 }))
 const previousBookings = computed(() => bookingsQ.data.value ?? [])
 const bookingsLoading = computed(() => bookingsQ.isLoading.value && !bookingsQ.data.value)

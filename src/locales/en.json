@@ -895,7 +895,8 @@
       "jwt_expired": "Your session has expired. Please sign in again",
       "jwt_invalid": "Invalid or expired token",
       "forbidden": "You do not have permission to perform this action",
-      "validation_failed": "Some fields need your attention. Check the messages below"
+      "validation_failed": "Some fields need your attention. Check the messages below",
+      "payload_too_large": "The request is too large"
     },
     "iam": {
       "invite_token_expired": "This invitation link has expired",
@@ -916,7 +917,10 @@
       "password_required": "Password is required",
       "email_password_required": "Email and password are required",
       "secret_key_missing": "Secret key is required",
-      "secret_key_invalid": "Invalid secret key"
+      "secret_key_invalid": "Invalid secret key",
+      "invalid_permission_level": "Some permission levels are not allowed for these permissions",
+      "owner_permissions_immutable": "The organization owner has every permission: the owner's permissions and occupations cannot be changed",
+      "permission_escalation": "You cannot grant permissions above your own"
     },
     "validation": {
       "required": "This field is required"
@@ -952,7 +956,8 @@
       "bill_closed": "This bill is closed and cannot be modified",
       "amount_required": "Amount is required",
       "description_required": "Description is required",
-      "refund_exceeds_payment": "Refund amount exceeds the remaining balance of this payment"
+      "refund_exceeds_payment": "Refund amount exceeds the remaining balance of this payment",
+      "booking_not_found": "Booking not found"
     },
     "property": {
       "hotel_not_found": "Hotel not found for your account. Contact support if this persists",

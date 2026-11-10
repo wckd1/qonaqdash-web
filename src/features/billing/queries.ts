@@ -10,7 +10,6 @@ import { httpErrorResponse } from '@/shared/unknownError'
 import * as billingApi from '@/features/billing/api'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
-import type { LedgerListResponse } from '@/shared/types/billing'
 
 /** Report filter as it goes into a key: plain JSON, no `undefined` values. */
 function reportParams(params: billingApi.ReportDateRangeParams) {
@@ -27,8 +26,9 @@ export const billingKeys = {
   bill: (bookingId: string) => ['billing', 'bill', bookingId] as const,
   /** Every report; a ledger change touches all of them. */
   reports: ['billing', 'reports'] as const,
-  overview: (params: billingApi.ReportDateRangeParams) =>
-    ['billing', 'reports', 'overview', reportParams(params)] as const,
+  /** The overview has no entry type filter, so only the period is in its key. */
+  overview: (params: { from: string; to: string }) =>
+    ['billing', 'reports', 'overview', { from: params.from, to: params.to }] as const,
   ledger: (params: billingApi.ReportDateRangeParams) =>
     ['billing', 'reports', 'ledger', reportParams(params)] as const,
   daily: (params: billingApi.ReportDateRangeParams) =>
@@ -51,9 +51,9 @@ export const billQuery = defineQueryOptions((bookingId: string) => ({
   },
 }))
 
-export const overviewQuery = defineQueryOptions((params: billingApi.ReportDateRangeParams) => ({
+export const overviewQuery = defineQueryOptions((params: { from: string; to: string }) => ({
   key: billingKeys.overview(params),
-  query: ({ signal }) => billingApi.fetchOverview(requestParams(params), { signal }),
+  query: ({ signal }) => billingApi.fetchOverview(params, { signal }),
 }))
 
 export const dailyBreakdownQuery = defineQueryOptions(
@@ -82,7 +82,7 @@ export function useReportLedgerQuery(
   params: MaybeRefOrGetter<billingApi.ReportDateRangeParams>,
   enabled: MaybeRefOrGetter<boolean>,
 ) {
-  return useInfiniteQuery<LedgerListResponse, unknown, number>(() => {
+  return useInfiniteQuery<billingApi.LedgerListResponse, unknown, number>(() => {
     const current = toValue(params)
     return {
       key: billingKeys.ledger(current),

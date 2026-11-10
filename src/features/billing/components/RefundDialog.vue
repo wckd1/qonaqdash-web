@@ -62,7 +62,7 @@
 import { ref, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRecordRefundMutation } from '@/features/billing/queries'
-import type { LedgerEntry } from '@/shared/types/billing'
+import type { LedgerEntry } from '@/features/billing/api'
 import {
   majorToMinor,
   getCurrencyExponent,

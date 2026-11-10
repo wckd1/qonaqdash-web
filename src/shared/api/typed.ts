@@ -49,6 +49,17 @@ type BodyOption<Op> = Op extends { requestBody: { content: { 'application/json':
     ? { body?: Body }
     : { body?: never }
 
+/** Query parameters of an operation, e.g. `QueryOf<'/api/bookings', 'get'>`. */
+export type QueryOf<P extends keyof paths, M extends HttpMethod> = NonNullable<
+  ParametersOf<Operation<P, M>> extends { query?: infer Query } ? Query : never
+>
+
+/** JSON request body of an operation, e.g. `BodyOf<'/api/bookings', 'post'>`. */
+export type BodyOf<P extends keyof paths, M extends HttpMethod> =
+  Operation<P, M> extends { requestBody?: { content: { 'application/json': infer Body } } }
+    ? Body
+    : never
+
 /** Axios options a request may still need: conditional headers, accepted statuses. */
 type AxiosOptions = Pick<AxiosRequestConfig, 'headers' | 'validateStatus'>
 

@@ -343,7 +343,7 @@ import type {
   MaintenanceTaskStatus,
   TaskDomain,
   TaskStatus,
-} from '@/shared/types/tasks'
+} from '@/features/tasks/api'
 import type { Room } from '@/features/property/api'
 import type { EmployeeListItem } from '@/shared/types/employees'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'

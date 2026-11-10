@@ -2,7 +2,26 @@ import { defineQueryOptions, useMutation, useQueryCache, type QueryCache } from 
 import { invalidateKeys } from '@/shared/api/queryCache'
 import { propertyKeys } from '@/features/property/queries'
 import * as tasksApi from '@/features/tasks/api'
-import type { ListTasksQuery, TaskDomain } from '@/shared/types/tasks'
+import type {
+  HousekeepingTaskQuery,
+  MaintenanceTaskStatus,
+  TaskDomain,
+  TaskStatus,
+} from '@/features/tasks/api'
+
+/** Task board filter; the status options depend on the domain. */
+export type ListTasksQuery = Omit<HousekeepingTaskQuery, 'status'> & { status?: TaskStatus }
+
+const MAINTENANCE_STATUSES: readonly TaskStatus[] = [
+  'open',
+  'in_progress',
+  'done',
+  'canceled',
+] satisfies MaintenanceTaskStatus[]
+
+function isMaintenanceStatus(status: TaskStatus | undefined): status is MaintenanceTaskStatus {
+  return !!status && MAINTENANCE_STATUSES.includes(status)
+}
 
 /** Task list filter as it goes into a key: plain JSON, no `undefined` values. */
 function listParams(query: ListTasksQuery) {
@@ -26,7 +45,11 @@ export const taskListQuery = defineQueryOptions(
     key: taskKeys.list(domain, query),
     query: ({ signal }): Promise<Array<tasksApi.HousekeepingTask | tasksApi.MaintenanceTask>> =>
       domain === 'maintenance'
-        ? tasksApi.fetchMaintenanceTasks(query, { signal })
+        ? tasksApi.fetchMaintenanceTasks(
+            // The board offers maintenance tasks only their own statuses.
+            { ...query, status: isMaintenanceStatus(query.status) ? query.status : undefined },
+            { signal },
+          )
         : tasksApi.fetchHousekeepingTasks(query, { signal }),
   }),
 )

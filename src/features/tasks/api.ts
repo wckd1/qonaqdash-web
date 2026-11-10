@@ -1,114 +1,109 @@
-import api, { type RequestOptions } from '@/shared/api/client'
-import type {
-  ChangeHousekeepingStatusRequest,
-  ChangeMaintenanceStatusRequest,
-  CreateHousekeepingTaskRequest,
-  CreateMaintenanceTaskRequest,
-  HousekeepingTask,
-  ListTasksQuery,
-  MaintenanceTask,
-  UpdateHousekeepingTaskRequest,
-  UpdateMaintenanceTaskRequest,
-} from '@/shared/types/tasks'
+import type { RequestOptions } from '@/shared/api/client'
+import { typedApi, type QueryOf, type Schemas } from '@/shared/api/typed'
 
-export type {
-  HousekeepingTask,
-  MaintenanceTask,
-  CreateHousekeepingTaskRequest,
-  CreateMaintenanceTaskRequest,
-  UpdateHousekeepingTaskRequest,
-  UpdateMaintenanceTaskRequest,
-  ChangeHousekeepingStatusRequest,
-  ChangeMaintenanceStatusRequest,
-} from '@/shared/types/tasks'
+export type HousekeepingTask = Schemas['taskshttp.HousekeepingTaskResponse']
+export type MaintenanceTask = Schemas['taskshttp.MaintenanceTaskResponse']
+export type HousekeepingTaskStatus = HousekeepingTask['status']
+export type MaintenanceTaskStatus = MaintenanceTask['status']
+export type TaskStatus = HousekeepingTaskStatus | MaintenanceTaskStatus
+export type TaskSource = HousekeepingTask['source']
+export type CreateHousekeepingTaskRequest = Schemas['taskshttp.CreateHousekeepingTaskRequest']
+export type CreateMaintenanceTaskRequest = Schemas['taskshttp.CreateMaintenanceTaskRequest']
+export type UpdateHousekeepingTaskRequest = Schemas['taskshttp.UpdateHousekeepingTaskRequest']
+export type UpdateMaintenanceTaskRequest = Schemas['taskshttp.UpdateMaintenanceTaskRequest']
+export type ChangeHousekeepingStatusRequest =
+  Schemas['taskshttp.ChangeHousekeepingTaskStatusRequest']
+export type ChangeMaintenanceStatusRequest = Schemas['taskshttp.ChangeMaintenanceTaskStatusRequest']
+export type HousekeepingTaskQuery = QueryOf<'/api/tasks/housekeeping', 'get'>
+export type MaintenanceTaskQuery = QueryOf<'/api/tasks/maintenance', 'get'>
 
-function buildListParams(query: ListTasksQuery): Record<string, string | boolean> {
-  const params: Record<string, string | boolean> = {}
+/** Task board tab: each domain has its own endpoints. */
+export type TaskDomain = 'housekeeping' | 'maintenance'
+
+/** Only the filters that are set, so the request carries no empty parameters. */
+function listQuery<Q extends HousekeepingTaskQuery | MaintenanceTaskQuery>(query: Q): Q {
+  const params: Record<string, unknown> = {}
   if (query.status) params.status = query.status
   if (query.room_id) params.room_id = query.room_id
   if (query.assignee) params.assignee = query.assignee
   if (query.unassigned) params.unassigned = true
-  return params
-}
-
-function parseList<T>(data: unknown): T[] {
-  return Array.isArray(data) ? (data as T[]) : []
+  return params as Q
 }
 
 // Housekeeping ---------------------------------------------------------------
 
 export function fetchHousekeepingTasks(
-  query: ListTasksQuery = {},
+  query: HousekeepingTaskQuery = {},
   options: RequestOptions = {},
 ): Promise<HousekeepingTask[]> {
-  const params = buildListParams(query)
-  return api
-    .get('/api/tasks/housekeeping', {
-      signal: options.signal,
-      ...(Object.keys(params).length ? { params } : {}),
-    })
-    .then(({ data }) => parseList<HousekeepingTask>(data))
+  return typedApi
+    .get('/api/tasks/housekeeping', { query: listQuery(query), signal: options.signal })
+    .then(({ data }) => data)
 }
 
 export function fetchHousekeepingTask(id: string): Promise<HousekeepingTask> {
-  return api.get(`/api/tasks/housekeeping/${id}`).then(({ data }) => data)
+  return typedApi.get('/api/tasks/housekeeping/{id}', { path: { id } }).then(({ data }) => data)
 }
 
 export function createHousekeepingTask(
   body: CreateHousekeepingTaskRequest,
 ): Promise<HousekeepingTask> {
-  return api.post('/api/tasks/housekeeping', body).then(({ data }) => data)
+  return typedApi.post('/api/tasks/housekeeping', { body }).then(({ data }) => data)
 }
 
 export function updateHousekeepingTask(
   id: string,
   body: UpdateHousekeepingTaskRequest,
 ): Promise<HousekeepingTask> {
-  return api.put(`/api/tasks/housekeeping/${id}`, body).then(({ data }) => data)
+  return typedApi
+    .put('/api/tasks/housekeeping/{id}', { path: { id }, body })
+    .then(({ data }) => data)
 }
 
 export function changeHousekeepingStatus(
   id: string,
   body: ChangeHousekeepingStatusRequest,
 ): Promise<HousekeepingTask> {
-  return api.put(`/api/tasks/housekeeping/${id}/status`, body).then(({ data }) => data)
+  return typedApi
+    .put('/api/tasks/housekeeping/{id}/status', { path: { id }, body })
+    .then(({ data }) => data)
 }
 
 // Maintenance ----------------------------------------------------------------
 
 export function fetchMaintenanceTasks(
-  query: ListTasksQuery = {},
+  query: MaintenanceTaskQuery = {},
   options: RequestOptions = {},
 ): Promise<MaintenanceTask[]> {
-  const params = buildListParams(query)
-  return api
-    .get('/api/tasks/maintenance', {
-      signal: options.signal,
-      ...(Object.keys(params).length ? { params } : {}),
-    })
-    .then(({ data }) => parseList<MaintenanceTask>(data))
+  return typedApi
+    .get('/api/tasks/maintenance', { query: listQuery(query), signal: options.signal })
+    .then(({ data }) => data)
 }
 
 export function fetchMaintenanceTask(id: string): Promise<MaintenanceTask> {
-  return api.get(`/api/tasks/maintenance/${id}`).then(({ data }) => data)
+  return typedApi.get('/api/tasks/maintenance/{id}', { path: { id } }).then(({ data }) => data)
 }
 
 export function createMaintenanceTask(
   body: CreateMaintenanceTaskRequest,
 ): Promise<MaintenanceTask> {
-  return api.post('/api/tasks/maintenance', body).then(({ data }) => data)
+  return typedApi.post('/api/tasks/maintenance', { body }).then(({ data }) => data)
 }
 
 export function updateMaintenanceTask(
   id: string,
   body: UpdateMaintenanceTaskRequest,
 ): Promise<MaintenanceTask> {
-  return api.put(`/api/tasks/maintenance/${id}`, body).then(({ data }) => data)
+  return typedApi
+    .put('/api/tasks/maintenance/{id}', { path: { id }, body })
+    .then(({ data }) => data)
 }
 
 export function changeMaintenanceStatus(
   id: string,
   body: ChangeMaintenanceStatusRequest,
 ): Promise<MaintenanceTask> {
-  return api.put(`/api/tasks/maintenance/${id}/status`, body).then(({ data }) => data)
+  return typedApi
+    .put('/api/tasks/maintenance/{id}/status', { path: { id }, body })
+    .then(({ data }) => data)
 }

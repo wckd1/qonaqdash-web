@@ -72,7 +72,7 @@
                 }}</span>
               </td>
               <td :data-label="t('tasks.col_assignee')">
-                {{ employeeLabel(task.assignee_employee_id) }}
+                {{ assigneeLabel(task) }}
               </td>
               <td :data-label="t('tasks.col_updated')">{{ formatDateTime(task.updated_at) }}</td>
             </tr>
@@ -152,7 +152,7 @@
                 <dd>{{ formatDateTime(selectedTask.planned_end) }}</dd>
               </template>
               <dt>{{ t('tasks.col_assignee') }}</dt>
-              <dd>{{ employeeLabel(selectedTask.assignee_employee_id) }}</dd>
+              <dd>{{ assigneeLabel(selectedTask) }}</dd>
               <dt>{{ t('tasks.col_updated') }}</dt>
               <dd>{{ formatDateTime(selectedTask.updated_at) }}</dd>
               <template v-if="selectedTask.completed_at">
@@ -191,8 +191,8 @@
                   class="task-action-section__select"
                 >
                   <option value="">{{ t('tasks.unassigned') }}</option>
-                  <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-                    {{ employeeDisplay(emp) }}
+                  <option v-for="emp in assignees" :key="emp.id" :value="emp.id">
+                    {{ emp.name }}
                   </option>
                 </select>
                 <button
@@ -236,8 +236,8 @@
               <span class="optional">{{ t('common.optional') }}</span>
               <select v-model="editForm.assignee_employee_id" :disabled="actionSaving">
                 <option value="">{{ t('tasks.unassigned') }}</option>
-                <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-                  {{ employeeDisplay(emp) }}
+                <option v-for="emp in assignees" :key="emp.id" :value="emp.id">
+                  {{ emp.name }}
                 </option>
               </select>
             </label>
@@ -303,8 +303,8 @@
           <span class="optional">{{ t('common.optional') }}</span>
           <select v-model="createForm.assignee_employee_id" :disabled="createSaving">
             <option value="">{{ t('tasks.unassigned') }}</option>
-            <option v-for="emp in employees" :key="emp.id" :value="emp.id">
-              {{ employeeDisplay(emp) }}
+            <option v-for="emp in assignees" :key="emp.id" :value="emp.id">
+              {{ emp.name }}
             </option>
           </select>
         </label>
@@ -327,6 +327,7 @@ import { useI18n } from 'vue-i18n'
 import { useQuery } from '@pinia/colada'
 import { hotelRoomsQuery } from '@/features/property/queries'
 import {
+  taskAssigneesQuery,
   taskListQuery,
   useChangeHousekeepingStatusMutation,
   useChangeMaintenanceStatusMutation,
@@ -335,7 +336,6 @@ import {
   useUpdateHousekeepingTaskMutation,
   useUpdateMaintenanceTaskMutation,
 } from '@/features/tasks/queries'
-import { employeeListQuery } from '@/features/employees/queries'
 import type {
   HousekeepingTask,
   HousekeepingTaskStatus,
@@ -344,7 +344,6 @@ import type {
   TaskDomain,
   TaskStatus,
 } from '@/features/tasks/api'
-import type { EmployeeListItem } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
@@ -396,9 +395,13 @@ const canAssign = computed(() =>
 // Rooms to create a task for; the tasks themselves carry their room number.
 const roomsQuery = useQuery(() => ({ ...hotelRoomsQuery, enabled: canCreate.value }))
 const rooms = computed(() => roomsQuery.data.value ?? [])
-// Assignees to pick from; only users who may assign need them.
-const employeesQuery = useQuery(() => ({ ...employeeListQuery(), enabled: canAssign.value }))
-const employees = computed(() => employeesQuery.data.value ?? [])
+// Assignees to pick from; only users who may assign need them. The tasks carry
+// the names of their assignees.
+const assigneesQuery = useQuery(() => ({
+  ...taskAssigneesQuery(props.domain),
+  enabled: canAssign.value,
+}))
+const assignees = computed(() => assigneesQuery.data.value ?? [])
 
 const statusOptions = computed<TaskStatus[]>(() =>
   isMaintenanceDomain.value ? MAINTENANCE_STATUSES : HOUSEKEEPING_STATUSES,
@@ -460,17 +463,9 @@ function roomLabel(task: AnyTask): string {
   return task.room_number || task.room_id || '—'
 }
 
-function employeeLabel(id: string | null | undefined): string {
-  if (!id) return t('tasks.unassigned')
-  const emp = employees.value.find((e) => e.id === id)
-  if (!emp) return id
-  return employeeDisplay(emp)
-}
-
-function employeeDisplay(emp: EmployeeListItem): string {
-  const name = [emp.first_name, emp.last_name].filter(Boolean).join(' ').trim()
-  if (name) return name
-  return emp.email || emp.id
+function assigneeLabel(task: AnyTask): string {
+  if (!task.assignee_employee_id) return t('tasks.unassigned')
+  return task.assignee_name || task.assignee_employee_id
 }
 
 function statusBadgeClass(status: TaskStatus): string {

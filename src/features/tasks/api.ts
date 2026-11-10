@@ -14,6 +14,8 @@ export type UpdateMaintenanceTaskRequest = Schemas['taskshttp.UpdateMaintenanceT
 export type ChangeHousekeepingStatusRequest =
   Schemas['taskshttp.ChangeHousekeepingTaskStatusRequest']
 export type ChangeMaintenanceStatusRequest = Schemas['taskshttp.ChangeMaintenanceTaskStatusRequest']
+/** Assignee candidate: an employee of the hotel with a display name. */
+export type TaskAssignee = Schemas['taskshttp.AssigneeResponse']
 export type HousekeepingTaskQuery = QueryOf<'/api/tasks/housekeeping', 'get'>
 export type MaintenanceTaskQuery = QueryOf<'/api/tasks/maintenance', 'get'>
 
@@ -28,6 +30,19 @@ function listQuery<Q extends HousekeepingTaskQuery | MaintenanceTaskQuery>(query
   if (query.assignee) params.assignee = query.assignee
   if (query.unassigned) params.unassigned = true
   return params as Q
+}
+
+/**
+ * Employees who may be assigned tasks of `type`. Needs only the assign right of
+ * the type, not the staff list (`GET /api/employees`).
+ */
+export function fetchTaskAssignees(
+  type: TaskDomain,
+  options: RequestOptions = {},
+): Promise<TaskAssignee[]> {
+  return typedApi
+    .get('/api/tasks/assignees', { query: { type }, signal: options.signal })
+    .then(({ data }) => data)
 }
 
 // Housekeeping ---------------------------------------------------------------

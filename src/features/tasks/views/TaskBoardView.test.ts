@@ -104,4 +104,33 @@ describe('TaskBoardView', () => {
     expect(options).toContain('101')
     expect(requested('/api/property/rooms')).toBe(false)
   })
+
+  // Principle 5: the assignee name comes with the task.
+  test('names the assignee of the task without loading the employees', async () => {
+    signIn({ view: 1, operate: 1 })
+    const w = await openBoard()
+
+    expect(w.find('tbody tr').text()).toContain('Anna Housekeeper')
+    expect(requested('/api/employees')).toBe(false)
+  })
+
+  // WP2: a supervisor assigns tasks without the right to the staff list.
+  test('offers the assignee candidates of the task type', async () => {
+    signIn({ view: 2, create: 2, assign: 2 })
+    let assigneeType: unknown
+    http.routes.set('GET /api/property/rooms/available', () => ({ status: 200, data: [] }))
+    http.routes.set('GET /api/tasks/assignees', (config) => {
+      assigneeType = (config.params as { type?: string } | undefined)?.type
+      return { status: 200, data: [{ id: 'employee-anna', name: 'Anna Housekeeper' }] }
+    })
+    const w = await openBoard()
+
+    await w.find('button.btn-add-outline').trigger('click')
+
+    const selects = w.findAll('[role="dialog"] select')
+    const assignee = selects[selects.length - 1]!
+    expect(assignee.findAll('option').map((o) => o.text())).toContain('Anna Housekeeper')
+    expect(assigneeType).toBe('housekeeping')
+    expect(requested('/api/employees')).toBe(false)
+  })
 })

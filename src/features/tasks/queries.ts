@@ -35,6 +35,8 @@ function listParams(query: ListTasksQuery) {
 
 export const taskKeys = {
   all: ['tasks'] as const,
+  /** Not under the domain key: a task change does not change who may be assigned. */
+  assignees: (domain: TaskDomain) => ['tasks', 'assignees', domain] as const,
   domain: (domain: TaskDomain) => ['tasks', domain] as const,
   list: (domain: TaskDomain, query: ListTasksQuery) =>
     ['tasks', domain, 'list', listParams(query)] as const,
@@ -53,6 +55,12 @@ export const taskListQuery = defineQueryOptions(
         : tasksApi.fetchHousekeepingTasks(query, { signal }),
   }),
 )
+
+/** Assignee candidates of a task type, for those who may assign it. */
+export const taskAssigneesQuery = defineQueryOptions((domain: TaskDomain) => ({
+  key: taskKeys.assignees(domain),
+  query: ({ signal }) => tasksApi.fetchTaskAssignees(domain, { signal }),
+}))
 
 /**
  * Keys a task change touches: the tasks of its domain, and the rooms and the

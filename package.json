@@ -8,14 +8,16 @@
     "build": "vue-tsc -b && vite build",
     "typecheck": "vue-tsc -b",
     "preview": "vite preview",
-    "lint": "eslint src/ e2e/",
-    "lint:fix": "eslint src/ e2e/ --fix",
-    "format": "prettier --write \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"*.config.{ts,js}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"*.config.{ts,js}\"",
+    "lint": "eslint src/ e2e/ scripts/",
+    "lint:fix": "eslint src/ e2e/ scripts/ --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"scripts/**/*.mjs\" \"*.config.{ts,js}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"scripts/**/*.mjs\" \"*.config.{ts,js}\"",
     "ci": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "contract:sync": "node scripts/contract.mjs sync",
+    "contract:check": "node scripts/contract.mjs check"
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",

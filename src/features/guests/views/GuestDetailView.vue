@@ -163,8 +163,11 @@ import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
+import { MEDIUM_DATE } from '@/shared/lib/moment'
 
 const { t, locale } = useI18n()
+const { formatMoment } = useHotelTime()
 const route = useRoute()
 const { success } = useNotification()
 const { canModifyGuests, canBlockGuests, canViewBookings } = usePermissions()
@@ -228,12 +231,7 @@ const guestForm = computed(() =>
 )
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—'
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
-  } catch {
-    return iso
-  }
+  return formatMoment(iso, MEDIUM_DATE) || '—'
 }
 
 /**

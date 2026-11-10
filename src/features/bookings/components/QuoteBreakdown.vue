@@ -194,6 +194,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { StayQuoteResponse, StayQuoteNight } from '@/features/pricing/api'
 import { formatMoney } from '@/shared/lib/money'
+import { formatLocalDate, WEEKDAY_DATE } from '@/shared/lib/localDate'
 
 const props = defineProps<{
   quote: StayQuoteResponse | null
@@ -337,17 +338,7 @@ function fmtMoney(amount: number): string {
 }
 
 function fmtDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return dateStr
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    }).format(d)
-  } catch {
-    return dateStr
-  }
+  return formatLocalDate(dateStr, locale.value, WEEKDAY_DATE)
 }
 
 /** Name of a room type, as the nights of the quote carry it. */

@@ -116,10 +116,13 @@ import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import type { BookingItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
+import { MEDIUM_DATE } from '@/shared/lib/moment'
 
 const DEBOUNCE_MS = 300
 
 const { t } = useI18n()
+const { formatMoment } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const { canCreateBookings } = usePermissions()
@@ -163,13 +166,8 @@ function bookingGuestName(booking: BookingPanelRow | null | undefined) {
   return parts.length ? parts.join(' ') : (g.email ?? '—')
 }
 
-function formatDate(iso: string | undefined) {
-  if (!iso) return '—'
-  try {
-    return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
-  } catch {
-    return iso
-  }
+function formatDate(iso: string | null | undefined) {
+  return formatMoment(iso, MEDIUM_DATE) || '—'
 }
 
 function openPanel(booking: BookingItem) {

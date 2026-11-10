@@ -71,6 +71,8 @@ import {
   formatMoney,
 } from '@/shared/lib/money'
 import { useNotification } from '@/shared/composables/useNotification'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
+import { SHORT_DATE_TIME } from '@/shared/lib/moment'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
 const props = defineProps<{
@@ -85,6 +87,7 @@ const emit = defineEmits<{
 }>()
 
 const { t, locale } = useI18n()
+const { formatMoment } = useHotelTime()
 const { success: showSuccess } = useNotification()
 const titleId = useId()
 
@@ -111,21 +114,8 @@ function onAmountBeforeInput(e: Event) {
 function paymentOptionLabel(entry: LedgerEntry): string {
   const abs = Math.abs(entry.balance_delta)
   const formatted = formatMoney(abs, props.currency, locale.value)
-  const date = fmtShort(entry.created_at)
+  const date = formatMoment(entry.created_at, SHORT_DATE_TIME)
   return `${date} — ${formatted}`
-}
-
-function fmtShort(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(d)
-  } catch {
-    return iso
-  }
 }
 
 function close() {

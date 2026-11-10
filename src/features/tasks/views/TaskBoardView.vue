@@ -346,6 +346,8 @@ import type {
 } from '@/features/tasks/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
+import { NUMERIC_DATE_TIME_SECONDS } from '@/shared/lib/moment'
 
 type AnyTask = HousekeepingTask | MaintenanceTask
 
@@ -363,6 +365,7 @@ const HOUSEKEEPING_STATUSES: HousekeepingTaskStatus[] = [
 const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'canceled']
 
 const { t } = useI18n()
+const { formatMoment } = useHotelTime()
 const createHousekeeping = useCreateHousekeepingTaskMutation()
 const updateHousekeeping = useUpdateHousekeepingTaskMutation()
 const changeHousekeepingStatus = useChangeHousekeepingStatusMutation()
@@ -480,10 +483,7 @@ function transitionBtnClass(next: TaskStatus): string {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleString()
+  return formatMoment(value, NUMERIC_DATE_TIME_SECONDS) || '—'
 }
 
 function allowedTransitions(status: TaskStatus): TaskStatus[] {

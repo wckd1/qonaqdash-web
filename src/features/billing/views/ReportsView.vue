@@ -459,6 +459,9 @@ import {
   type OutstandingBalancesResponse,
 } from '@/features/billing/api'
 import { formatMoney } from '@/shared/lib/money'
+import { formatLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
+import { SHORT_DATE_TIME } from '@/shared/lib/moment'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { APP_NAME } from '@/shared/i18n/documentTitle'
 
@@ -467,6 +470,7 @@ type LedgerGrouping = 'entries' | 'daily' | 'monthly'
 type PresetId = 'this_month' | 'last_month' | 'last_7' | 'last_30' | 'last_90' | 'custom'
 
 const { t, locale } = useI18n()
+const { formatMoment } = useHotelTime()
 const hotelQ = useQuery(hotelQuery)
 const hotel = computed(() => hotelQ.data.value ?? null)
 
@@ -735,43 +739,17 @@ function fmtDelta(amount: number): string {
   return amount < 0 ? `−${formatted}` : `+${formatted}`
 }
 
-function fmtShortDate(iso: string): string {
-  const d = new Date(iso + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return iso
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(d)
-  } catch {
-    return iso
-  }
+function fmtShortDate(date: string): string {
+  return formatLocalDate(date, locale.value, NUMERIC_DATE)
 }
 
 function fmtDateTime(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(d)
-  } catch {
-    return iso
-  }
+  return formatMoment(iso, SHORT_DATE_TIME)
 }
 
 function fmtMonth(ym: string): string {
-  const [y, m] = ym.split('-').map(Number)
-  if (!y || !m) return ym
-  try {
-    const d = new Date(y, m - 1, 1)
-    return new Intl.DateTimeFormat(locale.value, { month: 'long', year: 'numeric' }).format(d)
-  } catch {
-    return ym
-  }
+  const formatted = formatLocalDate(`${ym}-01`, locale.value, { month: 'long', year: 'numeric' })
+  return formatted === `${ym}-01` ? ym : formatted
 }
 
 function entryTitle(entry: ReportLedgerEntry): string {

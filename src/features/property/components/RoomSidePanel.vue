@@ -95,8 +95,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import type { Room, RoomType } from '@/features/property/api'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
+import { NUMERIC_DATE_TIME_SECONDS } from '@/shared/lib/moment'
 
 const { t } = useI18n()
+const { formatMoment } = useHotelTime()
 const { canCleaning, canMaintenance } = useRoomActionAccess()
 
 const props = defineProps<{
@@ -151,10 +154,7 @@ function maintenanceBadgeClass(v: string | undefined): string {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleString()
+  return formatMoment(value, NUMERIC_DATE_TIME_SECONDS) || '—'
 }
 </script>
 

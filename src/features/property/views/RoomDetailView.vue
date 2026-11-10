@@ -220,12 +220,15 @@ import {
 } from '@/features/property/queries'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
+import { NUMERIC_DATE_TIME_SECONDS } from '@/shared/lib/moment'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import type { RoomActivityEntry, RoomAvailabilityStatus } from '@/features/property/api'
 
 const { t, locale } = useI18n()
+const { formatMoment } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const { canManageRooms } = usePermissions()
@@ -341,10 +344,7 @@ function maintenanceBadgeClass(v: string | undefined): string {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-  if (!value) return '—'
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleString()
+  return formatMoment(value, NUMERIC_DATE_TIME_SECONDS) || '—'
 }
 
 function activityTitle(entry: RoomActivityEntry): string {

@@ -143,6 +143,9 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AccommodationSnapshot, StayQuoteNight } from '@/features/pricing/api'
 import { formatMoney } from '@/shared/lib/money'
+import { formatLocalDate, WEEKDAY_DATE } from '@/shared/lib/localDate'
+import { MEDIUM_DATE_TIME } from '@/shared/lib/moment'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 
 const props = defineProps<{
   accommodation: AccommodationSnapshot | null | undefined
@@ -150,6 +153,7 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
+const { formatMoment } = useHotelTime()
 const detailsOpen = ref(false)
 
 interface RoomTypeGroup {
@@ -253,19 +257,9 @@ const nightsByDate = computed<DateGroup[]>(() => {
   return Array.from(map, ([date, entries]) => ({ date, entries }))
 })
 
-const formattedQuotedAt = computed(() => {
-  if (!props.accommodation?.calculated_at) return ''
-  const d = new Date(props.accommodation.calculated_at)
-  if (Number.isNaN(d.getTime())) return ''
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(d)
-  } catch {
-    return props.accommodation.calculated_at
-  }
-})
+const formattedQuotedAt = computed(() =>
+  formatMoment(props.accommodation?.calculated_at, MEDIUM_DATE_TIME),
+)
 
 function fmtMoney(amount: number): string {
   if (!props.currency) return ''
@@ -273,17 +267,7 @@ function fmtMoney(amount: number): string {
 }
 
 function fmtDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return dateStr
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    }).format(d)
-  } catch {
-    return dateStr
-  }
+  return formatLocalDate(dateStr, locale.value, WEEKDAY_DATE)
 }
 
 /** Name of a room type, as the nights of the quote carry it. */

@@ -122,6 +122,9 @@ import type { LedgerEntry } from '@/features/billing/api'
 import { billQuery } from '@/features/billing/queries'
 import { useQuery } from '@pinia/colada'
 import { formatMoney } from '@/shared/lib/money'
+import { formatLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
+import { SHORT_DATE_TIME } from '@/shared/lib/moment'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import PaymentDialog from '@/features/billing/components/PaymentDialog.vue'
 import RefundDialog from '@/features/billing/components/RefundDialog.vue'
@@ -135,6 +138,7 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
+const { formatMoment } = useHotelTime()
 const { canCollectPayment, canModifyBilling, canRefundBilling } = usePermissions()
 
 type DialogKind = 'payment' | 'refund' | 'adjustment' | null
@@ -184,18 +188,8 @@ const ENTRY_TYPE_KEYS: Record<string, string> = {
   correction: 'billing.entry_correction',
 }
 
-function fmtShortDate(iso: string): string {
-  const d = new Date(iso + 'T00:00:00')
-  if (Number.isNaN(d.getTime())) return iso
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(d)
-  } catch {
-    return iso
-  }
+function fmtShortDate(date: string): string {
+  return formatLocalDate(date, locale.value, NUMERIC_DATE)
 }
 
 function entryTitle(entry: LedgerEntry): string {
@@ -232,17 +226,7 @@ function fmtDelta(amount: number): string {
 }
 
 function fmtDateTime(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  try {
-    return new Intl.DateTimeFormat(locale.value, {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(d)
-  } catch {
-    return iso
-  }
+  return formatMoment(iso, SHORT_DATE_TIME)
 }
 
 defineExpose({ reload: () => billQ.refetch() })

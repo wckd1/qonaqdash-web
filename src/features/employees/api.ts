@@ -48,6 +48,7 @@ const EMPLOYEE_SERVER_KEYS = [
   'permission_overrides',
   'occupation_ids',
   'occupations',
+  'is_owner',
 ] as const
 
 /**

@@ -35,7 +35,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   const orgId = computed(() => user.value?.orgId ?? null)
   const hotelId = computed(() => user.value?.hotelId ?? null)
-  const employeeId = computed(() => user.value?.employeeId ?? null)
   const userId = computed(() => user.value?.sub ?? null)
 
   function setTokens(access: string, refresh?: string | null) {
@@ -79,7 +78,6 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     orgId,
     hotelId,
-    employeeId,
     userId,
     setTokens,
     login,

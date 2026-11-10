@@ -1,10 +1,13 @@
-/** Claims the app reads from the access token (decoded on the client, never verified). */
+/**
+ * Claims the app reads from the access token (decoded on the client, never verified).
+ * The token carries `sub`, `org_id`, `hotel_id` and `token_use`; the caller's
+ * employee id comes from `GET /api/account` (`employee_id`).
+ */
 export interface JwtClaims {
   sub: string | null
   email: string | null
   orgId: string | null
   hotelId: string | null
-  employeeId: string | null
   tokenUse: 'access' | 'refresh' | null
 }
 
@@ -32,7 +35,6 @@ export function useJwt() {
       email: typeof payload.email === 'string' ? payload.email : null,
       orgId: typeof payload.org_id === 'string' ? payload.org_id : null,
       hotelId: typeof payload.hotel_id === 'string' ? payload.hotel_id : null,
-      employeeId: typeof payload.employee_id === 'string' ? payload.employee_id : null,
       tokenUse:
         payload.token_use === 'access' || payload.token_use === 'refresh'
           ? payload.token_use

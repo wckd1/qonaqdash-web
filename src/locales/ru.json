@@ -209,6 +209,8 @@
     "occupations_empty": "Для этого отеля ещё не настроены должности",
     "manage_occupations_action": "Управление должностями",
     "manage_permissions_action": "Управление правами",
+    "view_permissions_action": "Посмотреть права",
+    "owner_note": "Владелец организации: у него есть все права. Права и должности владельца изменить нельзя.",
     "permission_escalation_keys": "Нельзя выдать права выше собственных: {permissions}",
     "effective_permissions_section": "Итоговые права",
     "effective_permissions_hint": "Предпросмотр итогового набора прав после объединения должностей и переопределений",

@@ -3,12 +3,11 @@
  * checks the signature, so a fake one is enough.
  */
 
+/** The claims the backend puts into an access token, besides `token_use` and `exp`. */
 export const TEST_CLAIMS = {
   sub: 'user-1',
-  email: 'user@example.test',
   org_id: 'org-1',
   hotel_id: 'hotel-1',
-  employee_id: 'employee-1',
 } as const
 
 function base64Url(value: string): string {

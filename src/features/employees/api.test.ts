@@ -21,6 +21,7 @@ const employeeFromResponse = {
   occupations: [{ id: 'o-1', title: 'Receptionist', role_key: 'front_office', role_title: 'x' }],
   effective_permissions: permissions,
   permission_overrides: {},
+  is_owner: false,
 }
 
 beforeEach(() => {

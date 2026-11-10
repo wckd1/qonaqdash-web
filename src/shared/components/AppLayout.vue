@@ -462,7 +462,8 @@ const userName = computed(() => {
 
 const userContextLabel = computed(() => {
   if (hotel.value?.name) return hotel.value.name
-  if (authStore.employeeId) return t('layout.employee_id', { id: authStore.employeeId })
+  const employeeId = accountQ.data.value?.employee_id
+  if (employeeId) return t('layout.employee_id', { id: employeeId })
   return t('layout.administrator')
 })
 

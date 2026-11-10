@@ -35,7 +35,6 @@ describe('useAuthStore: token expiry', () => {
     expect(auth.isAuthenticated).toBe(true)
     expect(auth.orgId).toBe('org-1')
     expect(auth.hotelId).toBe('hotel-1')
-    expect(auth.employeeId).toBe('employee-1')
     expect(auth.userId).toBe('user-1')
   })
 

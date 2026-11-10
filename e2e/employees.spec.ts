@@ -11,6 +11,7 @@ const SERVER_KEYS = [
   'permission_overrides',
   'occupation_ids',
   'occupations',
+  'is_owner',
 ]
 
 test('creates an employee, opens it and saves only profile fields', async ({ page }) => {

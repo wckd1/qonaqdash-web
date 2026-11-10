@@ -8,11 +8,18 @@
         aria-modal="true"
       >
         <h2 :id="titleId" class="manage-permissions-dialog__title">
-          {{ t('employees.manage_permissions_action') }}
+          {{
+            readonly
+              ? t('employees.view_permissions_action')
+              : t('employees.manage_permissions_action')
+          }}
         </h2>
+        <p v-if="readonly" class="manage-permissions-dialog__note">
+          {{ t('employees.owner_note') }}
+        </p>
 
         <div class="manage-permissions-dialog__body">
-          <PermissionMatrix v-model="merged" :disabled="saving" />
+          <PermissionMatrix v-model="merged" :disabled="saving || readonly" />
         </div>
 
         <p v-if="saveError" class="manage-permissions-dialog__error" role="alert">
@@ -21,9 +28,9 @@
 
         <div class="dialog-actions">
           <button type="button" class="btn-secondary" :disabled="saving" @click="onCancel">
-            {{ t('common.cancel') }}
+            {{ readonly ? t('common.close') : t('common.cancel') }}
           </button>
-          <button type="button" :disabled="saving" @click="onSave">
+          <button v-if="!readonly" type="button" :disabled="saving" @click="onSave">
             {{ saving ? t('common.saving') : t('common.save') }}
           </button>
         </div>
@@ -52,6 +59,8 @@ const props = defineProps<{
   employeeId: string
   initialPermissions: Permissions
   initialOverrides: Permissions
+  /** Only shows the permissions, e.g. of the organization owner, which cannot be changed. */
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -106,7 +115,7 @@ function onCancel() {
 }
 
 async function onSave() {
-  if (saving.value) return
+  if (saving.value || props.readonly) return
   saving.value = true
   saveError.value = ''
   try {
@@ -136,6 +145,12 @@ async function onSave() {
   font-weight: var(--text-heading-weight);
   color: var(--ink-primary);
   margin: 0 0 var(--space-md);
+}
+
+.manage-permissions-dialog__note {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
 }
 
 .manage-permissions-dialog__error {

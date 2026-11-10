@@ -34,21 +34,24 @@ async function savePermission(page: Page, actionLabel: string, levelLabel: strin
   return (await saved).status()
 }
 
-// WP2: the organization owner holds every permission; changing them is refused.
-test('owner permissions cannot be changed', async ({ page }) => {
-  const owner = seedUser('owner')
-  await login(page, owner)
-  await page.goto(`/employees/${await employeeIdOf(page, owner.email)}/details`)
+// WP2: the organization owner holds every permission, which nobody may change.
+test("director sees the owner's permissions read-only", async ({ page }) => {
+  await login(page, seedUser('director'))
+  await page.goto(`/employees/${await employeeIdOf(page, seedUser('owner').email)}/details`)
 
-  await page.getByRole('button', { name: en.employees.manage_permissions_action }).click()
-  const status = await savePermission(
-    page,
-    en.permissions.actions.bookings.cancel,
-    en.permissions.level['0'],
-  )
+  const access = page.locator('.employee-detail-access')
+  await expect(access).toContainText(en.employees.owner_note)
+  await expect(
+    access.getByRole('button', { name: en.employees.manage_occupations_action }),
+  ).toHaveCount(0)
 
-  expect(status).toBe(409)
-  await expect(page.locator('.toast')).toContainText(en.errors.iam.owner_permissions_immutable)
+  await access.getByRole('button', { name: en.employees.view_permissions_action }).click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toContainText(en.employees.owner_note)
+  await expect(dialog.getByRole('button', { name: en.common.save })).toHaveCount(0)
+  await expect(dialog.locator('select:enabled')).toHaveCount(0)
+  await dialog.getByRole('button', { name: en.common.close }).click()
+  await expect(dialog).toHaveCount(0)
 })
 
 // WP2 B17: a permission manager cannot grant a permission they do not hold.

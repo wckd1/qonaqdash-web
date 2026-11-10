@@ -60,6 +60,9 @@
 
         <div v-if="accessLoading" class="loading-state">{{ t('common.loading') }}</div>
         <template v-else>
+          <p v-if="isOwner" class="employee-detail-access__owner-note">
+            {{ t('employees.owner_note') }}
+          </p>
           <p v-if="!assignedOccupations.length" class="empty-state">
             {{ t('employees.no_occupations_assigned') }}
           </p>
@@ -77,18 +80,27 @@
           </ul>
 
           <div class="employee-detail-access__footer">
-            <button type="button" class="btn-secondary" @click="occupationsDialogOpen = true">
+            <button
+              v-if="!isOwner"
+              type="button"
+              class="btn-secondary"
+              @click="occupationsDialogOpen = true"
+            >
               {{ t('employees.manage_occupations_action') }}
             </button>
             <button type="button" class="btn-secondary" @click="permissionsDialogOpen = true">
-              {{ t('employees.manage_permissions_action') }}
+              {{
+                isOwner
+                  ? t('employees.view_permissions_action')
+                  : t('employees.manage_permissions_action')
+              }}
             </button>
           </div>
         </template>
       </section>
 
       <ManageOccupationsDialog
-        v-if="occupationsDialogOpen && employeeId"
+        v-if="occupationsDialogOpen && employeeId && !isOwner"
         :employee-id="employeeId"
         :initial-occupation-ids="selectedOccupationIds"
         @close="occupationsDialogOpen = false"
@@ -100,6 +112,7 @@
         :employee-id="employeeId"
         :initial-permissions="effectivePermissions"
         :initial-overrides="permissionOverrides"
+        :readonly="isOwner"
         @close="permissionsDialogOpen = false"
         @saved="onPermissionsSaved"
       />
@@ -120,8 +133,7 @@ import {
   useUpdateEmployeeMutation,
 } from '@/features/employees/queries'
 import { employeeProfileFields } from '@/features/employees/api'
-import { useAuthStore } from '@/features/auth/stores/useAuthStore'
-import { refreshAccount } from '@/features/auth/queries'
+import { accountQuery, refreshAccount } from '@/features/auth/queries'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import ManageOccupationsDialog from '@/features/employees/components/ManageOccupationsDialog.vue'
@@ -139,7 +151,6 @@ import { clonePermissions, parsePermissions } from '@/shared/lib/permissions'
 
 const { t, te, locale } = useI18n()
 const route = useRoute()
-const authStore = useAuthStore()
 const { success } = useNotification()
 const { canManageEmployees, canManageEmployeePermissions } = usePermissions()
 const updateEmployee = useUpdateEmployeeMutation()
@@ -170,6 +181,16 @@ const formQ = useQuery(() => ({
   enabled: !!detailQ.data.value,
 }))
 const currentEmployee = computed(() => detailQ.data.value?.data ?? null)
+/**
+ * The organization owner holds every permission, and the server rejects changing
+ * the owner's permissions or occupations, so they are only shown.
+ */
+const isOwner = computed(() => currentEmployee.value?.is_owner === true)
+/** The caller's own card: the account names the caller's employee (the token does not). */
+const accountQ = useQuery(accountQuery)
+const isOwnCard = computed(
+  () => !!employeeId.value && accountQ.data.value?.employee_id === employeeId.value,
+)
 const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
 const loadError = computed(() => {
   const err = (notFound.value ? null : detailQ.error.value) ?? formQ.error.value
@@ -294,14 +315,14 @@ async function onSave() {
 // permissions follow from that.
 async function onOccupationsSaved() {
   occupationsDialogOpen.value = false
-  if (authStore.employeeId === employeeId.value) {
+  if (isOwnCard.value) {
     await refreshAccount().catch(() => undefined)
   }
 }
 
 async function onPermissionsSaved() {
   permissionsDialogOpen.value = false
-  if (authStore.employeeId === employeeId.value) {
+  if (isOwnCard.value) {
     await refreshAccount().catch(() => undefined)
   }
 }
@@ -366,6 +387,12 @@ async function onPermissionsSaved() {
 .employee-detail-access__chip-role {
   font-size: var(--text-caption-size);
   color: var(--ink-muted);
+}
+
+.employee-detail-access__owner-note {
+  margin: 0;
+  font-size: var(--text-body-size);
+  color: var(--ink-secondary);
 }
 
 .employee-detail-access__footer {

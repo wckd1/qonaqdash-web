@@ -28,7 +28,7 @@ describe('createTypedApi', () => {
       path: { id: 'b1' },
       body: { force_unpaid: true },
       signal,
-      axios: { headers: { 'X-Test': '1' } },
+      axios: { validateStatus: () => true },
     })
     await client.get('/api/bookings', { query: { q: 'smith' } })
 
@@ -38,7 +38,7 @@ describe('createTypedApi', () => {
       params: undefined,
       data: { force_unpaid: true },
       signal,
-      headers: { 'X-Test': '1' },
+      validateStatus: expect.any(Function),
     })
     expect(request).toHaveBeenNthCalledWith(2, {
       method: 'get',
@@ -47,6 +47,19 @@ describe('createTypedApi', () => {
       data: undefined,
       signal: undefined,
     })
+  })
+
+  test('sends the header parameters the operation documents', async () => {
+    const { request, client } = fakeInstance()
+
+    await client.get('/api/pricing/conditions', { header: { 'If-None-Match': '"h1"' } })
+
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/pricing/conditions',
+        headers: { 'If-None-Match': '"h1"' },
+      }),
+    )
   })
 
   test('types the response by the contract', () => {

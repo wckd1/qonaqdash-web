@@ -53,50 +53,15 @@ export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRateItem[]> 
 // Condition candidates
 // ---------------------------------------------------------------------------
 
-export interface ConditionCandidateOption {
-  /** `null` is the "any" option. */
-  value: string | null
-  label: string
-}
-
-/** Field a rule condition can test, as the rule editor reads it. */
-export interface ConditionCandidate {
-  field_id: string
-  type: string
-  label: string
-  bind: string
-  options: ConditionCandidateOption[]
-}
-
-export interface ConditionCandidatesResult {
-  conditions: ConditionCandidate[]
-  hash: string
-}
-
-function text(value: unknown): string {
-  return typeof value === 'string' ? value : ''
-}
-
-/** The contract describes candidates as free-form objects; read the fields the editor uses. */
-function parseConditionCandidate(raw: Record<string, unknown>): ConditionCandidate {
-  const options = Array.isArray(raw.options) ? (raw.options as unknown[]) : []
-  return {
-    field_id: text(raw.field_id),
-    type: text(raw.type),
-    label: text(raw.label),
-    bind: text(raw.bind),
-    options: options
-      .filter((o): o is Record<string, unknown> => !!o && typeof o === 'object')
-      .map((o) => ({
-        value: typeof o.value === 'string' ? o.value : null,
-        label: text(o.label),
-      })),
-  }
-}
+/** Field a rule condition can test (`pricinghttp.ConditionCandidateDTO`). */
+export type ConditionCandidate = Schemas['pricinghttp.ConditionCandidateDTO']
+/** Option of a select candidate; `value` is `null` for the "any" option. */
+export type ConditionCandidateOption = Schemas['pricinghttp.ConditionCandidateOption']
+export type ConditionCandidatesResult = Schemas['pricinghttp.ConditionsResponse']
 
 /**
- * Condition candidates; with `ifNoneMatch` the server may answer `304`, then
- * the result is `null` and the cached list stays.
+ * Condition candidates. With `ifNoneMatch` (the hash of the cached list) the
+ * server answers `304` when nothing changed; then the result is `null`.
  */
 export function fetchConditionCandidates(
   ifNoneMatch?: string,
@@ -104,17 +69,11 @@ export function fetchConditionCandidates(
 ): Promise<ConditionCandidatesResult | null> {
   return typedApi
     .get('/api/pricing/conditions', {
+      header: ifNoneMatch ? { 'If-None-Match': `"${ifNoneMatch}"` } : {},
       signal: options.signal,
-      axios: {
-        headers: ifNoneMatch ? { 'If-None-Match': `"${ifNoneMatch}"` } : {},
-        validateStatus: (s) => s === 200 || s === 304,
-      },
+      axios: { validateStatus: (s) => s === 200 || s === 304 },
     })
-    .then((res) => {
-      // Not in the contract yet: the endpoint answers `304` to a matching `If-None-Match`.
-      if ((res.status as number) === 304) return null
-      return { conditions: res.data.conditions.map(parseConditionCandidate), hash: res.data.hash }
-    })
+    .then((res) => ((res.status as number) === 304 ? null : res.data))
 }
 
 // ---------------------------------------------------------------------------

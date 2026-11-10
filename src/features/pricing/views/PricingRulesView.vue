@@ -161,7 +161,7 @@
                   >
                     <option value="" disabled>{{ t('pricing.rule_condition_field') }}</option>
                     <option v-for="c in conditionCandidates" :key="c.field_id" :value="c.field_id">
-                      {{ t(c.label) }}
+                      {{ c.label ? t(c.label) : c.field_id }}
                     </option>
                   </select>
                   <select v-model="cond.operator" :disabled="saving" class="condition-row__field">
@@ -178,7 +178,7 @@
                     <option value="" disabled>{{ t('pricing.rule_condition_value') }}</option>
                     <option
                       v-for="opt in candidateByFieldId(cond.field_id)?.options ?? []"
-                      :key="opt.value ?? ''"
+                      :key="String(opt.value)"
                       :value="opt.value"
                     >
                       {{ t(opt.label) }}
@@ -431,7 +431,7 @@ function resolveFieldLabel(fieldId: string): string {
 
 function resolveOptionLabel(fieldId: string, value: string): string {
   const candidate = candidateByFieldId(fieldId)
-  const raw = candidate?.options.find((o) => o.value === value)?.label
+  const raw = candidate?.options?.find((o) => o.value === value)?.label
   return raw ? t(raw) : value
 }
 

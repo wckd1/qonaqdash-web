@@ -43,6 +43,13 @@ type QueryOption<Op> =
       : { query?: Query }
     : { query?: never }
 
+type HeaderOption<Op> =
+  ParametersOf<Op> extends { header?: infer Header }
+    ? [NonNullable<Header>] extends [never]
+      ? { header?: never }
+      : { header?: Header }
+    : { header?: never }
+
 type BodyOption<Op> = Op extends { requestBody: { content: { 'application/json': infer Body } } }
   ? { body: Body }
   : Op extends { requestBody?: { content: { 'application/json': infer Body } } }
@@ -54,18 +61,23 @@ export type QueryOf<P extends keyof paths, M extends HttpMethod> = NonNullable<
   ParametersOf<Operation<P, M>> extends { query?: infer Query } ? Query : never
 >
 
-/** Axios options a request may still need: conditional headers, accepted statuses. */
-type AxiosOptions = Pick<AxiosRequestConfig, 'headers' | 'validateStatus'>
+/** Axios options a request may still need, e.g. statuses to accept besides `2xx`. */
+type AxiosOptions = Pick<AxiosRequestConfig, 'validateStatus'>
 
 /** Options of a request; `path` and `body` are required when the operation requires them. */
 export type TypedRequestInit<Op> = PathOption<Op> &
   QueryOption<Op> &
+  HeaderOption<Op> &
   BodyOption<Op> & {
     /** Aborts the request, e.g. when Pinia Colada supersedes a query. */
     signal?: AbortSignal
     axios?: AxiosOptions
   }
 
+/**
+ * Statuses a call resolves with. Others reject, unless the call accepts them
+ * through `axios.validateStatus` and checks `status` itself (e.g. `304`).
+ */
 type SuccessStatus = 200 | 201 | 202 | 204
 
 /** JSON body of the success responses of an operation; `undefined` for `204`. */
@@ -106,6 +118,7 @@ export function createTypedApi(instance: AxiosInstance) {
       const options = init as {
         path?: Record<string, unknown>
         query?: Record<string, unknown>
+        header?: Record<string, string>
         body?: unknown
         signal?: AbortSignal
         axios?: AxiosOptions
@@ -116,6 +129,7 @@ export function createTypedApi(instance: AxiosInstance) {
         params: options.query,
         data: options.body,
         signal: options.signal,
+        ...(options.header ? { headers: options.header } : {}),
         ...options.axios,
       })
     }) as Method<M>

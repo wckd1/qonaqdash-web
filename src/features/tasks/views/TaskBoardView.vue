@@ -452,7 +452,7 @@ const createForm = ref({
   assignee_employee_id: '',
 })
 
-function isMaintenance(task: AnyTask): task is MaintenanceTask {
+function isMaintenance(_task: AnyTask): _task is MaintenanceTask {
   return props.domain === 'maintenance'
 }
 

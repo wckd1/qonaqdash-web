@@ -144,7 +144,9 @@ import {
   setValueByPath,
   getFilteredRoomSelectOptions,
   buildRoomSelectItemsFromRooms,
+  dateFieldValue,
 } from '../utils'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 import { availableRoomsKey, guestPickerAnchorKey, fieldConstraintsKey } from '@/shared/injectKeys'
 import { evaluateNodeState } from '../formNodeConditions'
 import { guardBeforeInput } from '../inputGuard'
@@ -163,6 +165,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:data'])
 const { t } = useI18n()
+const { timeZone, toDateTimeInput, fromDateTimeInput } = useHotelTime()
 
 const ruleModel = computed(() => props.fullData ?? props.data)
 const nodeState = computed(() => evaluateNodeState(props.node, ruleModel.value))
@@ -229,10 +232,10 @@ const inputDisplayValue = computed(() => {
   const val = localValue.value
   const n = props.node
   if (n.type === 'datetime' && val != null && typeof val === 'string') {
-    return isoToDatetimeLocal(val) ?? ''
+    return toDateTimeInput(val)
   }
   if (n.type === 'date' && val != null && typeof val === 'string') {
-    return isoToDateOnly(val) ?? ''
+    return dateFieldValue(val, timeZone.value)
   }
   return val === null || val === undefined ? '' : String(val)
 })
@@ -244,33 +247,6 @@ const phoneDisplayValue = computed(() => {
 })
 
 const emailGhostState = ref<EmailGhostHint | null>(null)
-
-function isoToDatetimeLocal(isoString: string): string {
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) return ''
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const min = String(date.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${d}T${h}:${min}`
-}
-
-function isoToDateOnly(isoString: string): string {
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) return ''
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function datetimeLocalToISO(localString: string): string {
-  if (!localString || typeof localString !== 'string') return ''
-  const date = new Date(localString)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toISOString()
-}
 
 function setLocalValue(v: unknown) {
   localValue.value = v
@@ -357,7 +333,7 @@ function onInput(e: Event) {
     const num = raw === '' ? undefined : Number(raw)
     setLocalValue(Number.isNaN(num) ? raw : num)
   } else if (n.type === 'datetime') {
-    setLocalValue(raw ? datetimeLocalToISO(raw) : '')
+    setLocalValue(raw ? fromDateTimeInput(raw) : '')
   } else if (n.type === 'date') {
     setLocalValue(raw || '')
   } else {

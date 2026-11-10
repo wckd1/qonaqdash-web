@@ -5,6 +5,8 @@
 import { i18n } from '@/i18n'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { intlLocaleFromAppLocale } from '@/shared/i18n/resolveLocale'
+import { formatLocalDate, isLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
+import { formatMoment, localDateOf } from '@/shared/lib/moment'
 import type { FormSelectItem } from '@/shared/form-dsl/types'
 
 // ---------------------------------------------------------------------------
@@ -274,34 +276,35 @@ export function getFilteredRoomSelectOptions(
 // Date / time formatting
 // ---------------------------------------------------------------------------
 
+/** 24-hour time of a `datetime` field: `14:30`. */
+const FIELD_TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: false }
+
 /**
- * Format ISO date-time string for display (locale-aware).
+ * The value of a `date` field as a calendar day `YYYY-MM-DD`. The field keeps
+ * a calendar day, which no time zone shifts; a moment (RFC 3339) in it reads as
+ * its local date in `timeZone`. Anything else gives `''`.
+ */
+export function dateFieldValue(value: string, timeZone: string): string {
+  return isLocalDate(value) ? value : localDateOf(value, timeZone)
+}
+
+/**
+ * Format the value of a `datetime` or `date` field for display (locale-aware):
+ * a `datetime` is a moment shown on the clock of `timeZone`, a `date` is a calendar day.
  */
 export function formatDateTime(
-  isoString: string | null | undefined,
-  localeOverride?: string,
-  options: { type: 'date' | 'date-time' } = { type: 'date-time' },
+  value: string | null | undefined,
+  timeZone: string,
+  options: { type?: 'date' | 'date-time'; locale?: string } = {},
 ): string {
-  if (isoString == null || typeof isoString !== 'string') return String(isoString ?? '')
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) return isoString
-  const locale = localeOverride ?? intlLocaleFromAppLocale(i18n.global.locale.value as 'en' | 'ru')
+  if (value == null || typeof value !== 'string') return String(value ?? '')
+  const locale = options.locale ?? intlLocaleFromAppLocale(i18n.global.locale.value as 'en' | 'ru')
   if (options.type === 'date') {
-    return new Intl.DateTimeFormat(locale, {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(date)
+    const date = dateFieldValue(value, timeZone)
+    return date ? formatLocalDate(date, locale, NUMERIC_DATE) : value
   }
-  const datePart = new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(date)
-  const timePart = new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date)
+  if (Number.isNaN(new Date(value).getTime())) return value
+  const datePart = formatMoment(value, locale, timeZone, NUMERIC_DATE)
+  const timePart = formatMoment(value, locale, timeZone, FIELD_TIME)
   return `${datePart} ${timePart}`
 }

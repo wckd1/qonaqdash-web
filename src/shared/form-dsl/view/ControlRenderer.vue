@@ -21,6 +21,7 @@ import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { bindToPath, getValueByPath, formatDateTime, companionLabelFullBind } from '../utils'
 import { evaluateNodeState } from '../formNodeConditions'
 import { formatPhoneDisplay } from '../phoneMask'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 
 const props = defineProps({
   node: { type: Object as () => FormNode, required: true },
@@ -30,6 +31,8 @@ const props = defineProps({
   /** Bind prefix when inside array item (e.g. 'booking.rooms.0'). */
   bindPrefix: { type: String, default: '' },
 })
+
+const { timeZone } = useHotelTime()
 
 const ruleData = computed(() => props.fullData ?? props.data)
 const nodeState = computed(() => evaluateNodeState(props.node, ruleData.value))
@@ -74,7 +77,7 @@ const displayValue = computed(() => {
     val.match(/^\d{4}-\d{2}-\d{2}/)
   ) {
     const format = n.type === 'datetime' ? 'date-time' : 'date'
-    return formatDateTime(val, undefined, { type: format })
+    return formatDateTime(val, timeZone.value, { type: format })
   }
 
   if (n.type === 'phone' && val != null && typeof val === 'string' && val.length > 0) {

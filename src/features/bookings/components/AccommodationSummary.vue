@@ -5,6 +5,7 @@
       <i18n-t
         v-if="accommodation.calculated_at"
         keypath="bookings.accommodation_quoted_at"
+        scope="global"
         tag="span"
         class="pricing-card__meta"
       >

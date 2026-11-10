@@ -31,7 +31,7 @@
   </p>
   <p v-else-if="concurrentError" class="error-message">
     {{ concurrentError }}
-    <button type="button" @click="load">{{ t('common.retry') }}</button>
+    <button type="button" @click="retryAfterConflict">{{ t('common.retry') }}</button>
   </p>
   <template v-else-if="currentBooking">
     <template v-if="bookingForm">
@@ -271,6 +271,14 @@ const page_title = computed(() => {
 async function load() {
   formTarget.value = 'view'
   await detailQ.refetch()
+}
+
+/** Leaves the edit that hit a concurrent change and shows the booking as it is now. */
+async function retryAfterConflict() {
+  concurrentError.value = ''
+  editing.value = false
+  editManualAdjustments.value = []
+  await load()
 }
 
 watch(editing, (isEdit) => {

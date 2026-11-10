@@ -12,6 +12,7 @@
     "lint:fix": "eslint src/ e2e/ --fix",
     "format": "prettier --write \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"*.config.{ts,js}\"",
     "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"*.config.{ts,js}\"",
+    "ci": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test"

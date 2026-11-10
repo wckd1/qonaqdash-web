@@ -14,6 +14,12 @@ function isInlineValidatedEntityWrite(method: string, path: string): boolean {
   }
   return false
 }
+
+/** `error.fields` is set: a field error that the form shows next to its fields. */
+function hasErrorFields(data: unknown): boolean {
+  const fields = (data as { error?: { fields?: unknown } } | null | undefined)?.error?.fields
+  return Array.isArray(fields) && fields.some((f) => typeof f === 'string' && f.length > 0)
+}
 import { useNotification } from '@/shared/composables/useNotification'
 
 /** Per-request options the feature API functions accept, e.g. the query `signal`. */
@@ -178,11 +184,11 @@ api.interceptors.response.use(
       return Promise.reject(err)
     }
 
-    if (
-      status === 422 &&
-      getApiErrorCode(data) === 'common.validation_failed' &&
-      isInlineValidatedEntityWrite(method, url)
-    ) {
+    /** Guest, booking and employee forms show these at the fields or above the form, no toast. */
+    const isFormFieldError =
+      (status === 422 && getApiErrorCode(data) === 'common.validation_failed') ||
+      (status === 400 && hasErrorFields(data))
+    if (isFormFieldError && isInlineValidatedEntityWrite(method, url)) {
       return Promise.reject(err)
     }
 

@@ -61,7 +61,7 @@ test('saves only profile fields when editing a guest', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText(`Edited ${lastName}`)
 })
 
-// F4 (review): a 400 with `fields` shows its message next to those fields.
+// F4 (review): a 400 with `fields` shows its message next to those fields, without a toast.
 test('shows a server field error next to the fields', async ({ page }) => {
   await page.goto('/guests/new')
   // No email and no phone: the server requires one of them (`guest.contact_required`).
@@ -77,6 +77,7 @@ test('shows a server field error next to the fields', async ({ page }) => {
     const control = page.locator('.form-edit-control', { has: page.getByLabel(label) })
     await expect(control.locator('.form-field-error')).toHaveText(en.errors.guest.contact_required)
   }
+  await expect(page.locator('.toast')).toHaveCount(0)
   await expect(page).toHaveURL(/\/guests\/new$/)
 })
 

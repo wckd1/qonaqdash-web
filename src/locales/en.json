@@ -108,6 +108,9 @@
     "hours_hint": "Default check-in and check-out times used for new bookings",
     "check_in_hour": "Check-in time",
     "check_out_hour": "Check-out time",
+    "timezone_section": "Time zone",
+    "timezone": "Hotel time zone",
+    "timezone_hint": "Times of stays, tasks and reports are shown and entered in this zone. It can be changed only while the hotel has no current or future bookings",
     "currency_name": {
       "KZT": "Kazakhstani Tenge",
       "USD": "US Dollar",

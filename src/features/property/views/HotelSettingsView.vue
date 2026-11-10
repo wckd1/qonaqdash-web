@@ -45,6 +45,19 @@
       </section>
 
       <section class="panel hotel-settings-view__section">
+        <h2 class="hotel-settings-view__heading">{{ t('hotel.timezone_section') }}</h2>
+        <p class="hotel-settings-view__hint">{{ t('hotel.timezone_hint') }}</p>
+        <label>
+          {{ t('hotel.timezone') }}
+          <select v-model="timezone" :disabled="saving || !canManageHotel">
+            <option v-for="zone in timeZoneOptions" :key="zone.value" :value="zone.value">
+              {{ zone.label }}
+            </option>
+          </select>
+        </label>
+      </section>
+
+      <section class="panel hotel-settings-view__section">
         <h2 class="hotel-settings-view__heading">{{ t('hotel.currency_section') }}</h2>
         <p class="hotel-settings-view__hint">{{ t('hotel.currency_hint') }}</p>
         <label>
@@ -101,8 +114,9 @@ import type { Hotel } from '@/features/property/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { CURRENCY_CODES, getCurrencySymbol } from '@/shared/lib/money'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { timeZoneLabel } from '@/shared/lib/moment'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { canManageHotel } = usePermissions()
 
 const hotel = useQuery(hotelQuery)
@@ -123,13 +137,27 @@ const checkInHour = ref('14:00')
 const originalCheckInHour = ref('14:00')
 const checkOutHour = ref('12:00')
 const originalCheckOutHour = ref('12:00')
+const timezone = ref('')
+const originalTimezone = ref('')
+
+/** IANA zones the browser knows, with the current offset; the saved zone is always offered. */
+const timeZoneOptions = computed(() => {
+  const zones = new Set(Intl.supportedValuesOf('timeZone'))
+  if (originalTimezone.value) zones.add(originalTimezone.value)
+  const now = Date.now()
+  return [...zones].sort().map((zone) => {
+    const offset = timeZoneLabel(now, zone, locale.value)
+    return { value: zone, label: offset ? `${zone} (${offset})` : zone }
+  })
+})
 
 const dirty = computed(
   () =>
     name.value.trim() !== originalName.value.trim() ||
     currency.value !== originalCurrency.value ||
     checkInHour.value !== originalCheckInHour.value ||
-    checkOutHour.value !== originalCheckOutHour.value,
+    checkOutHour.value !== originalCheckOutHour.value ||
+    timezone.value !== originalTimezone.value,
 )
 
 /** Copies server values into the form; `fallback` fills fields the response lacks. */
@@ -152,6 +180,9 @@ function applyHotel(data: Partial<Hotel> | undefined, fallback: Omit<Hotel, 'id'
       : fallback.check_out_hour
   checkOutHour.value = co
   originalCheckOutHour.value = co
+  const zone = typeof data?.timezone === 'string' && data.timezone ? data.timezone : timezone.value
+  timezone.value = zone
+  originalTimezone.value = zone
 }
 
 // Fill the form from the hotel query, but never over unsaved edits.
@@ -210,6 +241,8 @@ async function onSave() {
     currency: currency.value,
     check_in_hour: checkInHour.value,
     check_out_hour: checkOutHour.value,
+    // Only a change: the server refuses one while the hotel has current or future bookings.
+    timezone: timezone.value !== originalTimezone.value ? timezone.value : undefined,
   }
   try {
     applyHotel(await updateHotel.mutateAsync(body), body)

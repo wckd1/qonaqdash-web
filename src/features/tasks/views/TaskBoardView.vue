@@ -3,7 +3,7 @@
     <div class="toolbar-cluster toolbar-cluster--start">
       <label class="toolbar-field">
         <span class="toolbar-field-label">{{ t('fields.status') }}</span>
-        <select v-model="statusFilter" class="toolbar-picker" @change="reload">
+        <select v-model="statusFilter" class="toolbar-picker">
           <option value="">{{ t('tasks.filter_any_status') }}</option>
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ t(`tasks.status.${s}`) }}
@@ -11,7 +11,7 @@
         </select>
       </label>
       <label class="toolbar-check">
-        <input v-model="unassignedOnly" type="checkbox" @change="reload" />
+        <input v-model="unassignedOnly" type="checkbox" />
         <span>{{ t('tasks.filter_unassigned') }}</span>
       </label>
     </div>
@@ -325,10 +325,17 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { useTasksStore } from '@/features/tasks/stores/useTasksStore'
-import { useQuery, useQueryCache } from '@pinia/colada'
-import { propertyKeys, roomListQuery } from '@/features/property/queries'
-import { invalidateKeys } from '@/shared/api/queryCache'
+import { useQuery } from '@pinia/colada'
+import { roomListQuery } from '@/features/property/queries'
+import {
+  taskListQuery,
+  useChangeHousekeepingStatusMutation,
+  useChangeMaintenanceStatusMutation,
+  useCreateHousekeepingTaskMutation,
+  useCreateMaintenanceTaskMutation,
+  useUpdateHousekeepingTaskMutation,
+  useUpdateMaintenanceTaskMutation,
+} from '@/features/tasks/queries'
 import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
 import type {
   HousekeepingTask,
@@ -359,14 +366,17 @@ const HOUSEKEEPING_STATUSES: HousekeepingTaskStatus[] = [
 const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'cancelled']
 
 const { t } = useI18n()
-const tasksStore = useTasksStore()
-const queryCache = useQueryCache()
 const roomsQuery = useQuery(roomListQuery())
+const createHousekeeping = useCreateHousekeepingTaskMutation()
+const updateHousekeeping = useUpdateHousekeepingTaskMutation()
+const changeHousekeepingStatus = useChangeHousekeepingStatusMutation()
+const createMaintenance = useCreateMaintenanceTaskMutation()
+const updateMaintenance = useUpdateMaintenanceTaskMutation()
+const changeMaintenanceStatus = useChangeMaintenanceStatusMutation()
 const employeeStore = useEmployeeStore()
 const permissions = usePermissions()
 const rooms = computed(() => roomsQuery.data.value ?? [])
 const { employees } = storeToRefs(employeeStore)
-const { housekeeping, maintenance } = storeToRefs(tasksStore)
 
 const isMaintenanceDomain = computed(() => props.domain === 'maintenance')
 
@@ -390,9 +400,6 @@ const canAssign = computed(() =>
     : permissions.canAssignHousekeepingTasks.value,
 )
 
-const tasks = computed<AnyTask[]>(() =>
-  isMaintenanceDomain.value ? maintenance.value : housekeeping.value,
-)
 const statusOptions = computed<TaskStatus[]>(() =>
   isMaintenanceDomain.value ? MAINTENANCE_STATUSES : HOUSEKEEPING_STATUSES,
 )
@@ -400,8 +407,26 @@ const statusOptions = computed<TaskStatus[]>(() =>
 const statusFilter = ref<TaskStatus | ''>('')
 const unassignedOnly = ref(false)
 
-const initialLoading = ref(true)
-const loadError = ref('')
+const tasksQuery = useQuery(() => ({
+  ...taskListQuery({
+    domain: props.domain,
+    query: {
+      status: statusFilter.value || undefined,
+      unassigned: unassignedOnly.value || undefined,
+    },
+  }),
+  // Keep the rows of the previous filter on screen while the new one loads,
+  // but never show the tasks of the other domain.
+  placeholderData: (previous, previousEntry) =>
+    previousEntry?.key[1] === props.domain ? previous : undefined,
+}))
+const tasks = computed<AnyTask[]>(() => tasksQuery.data.value ?? [])
+const initialLoading = computed(() => tasksQuery.isPending.value)
+const loadError = computed(() =>
+  tasksQuery.error.value
+    ? formatUnknownApiError(tasksQuery.error.value) || t('tasks.load_failed')
+    : '',
+)
 
 const selectedTask = ref<AnyTask | null>(null)
 const panelError = ref('')
@@ -495,25 +520,6 @@ function allowedTransitions(status: TaskStatus): TaskStatus[] {
   }
 }
 
-async function reload() {
-  loadError.value = ''
-  const query = {
-    status: statusFilter.value || undefined,
-    unassigned: unassignedOnly.value || undefined,
-  }
-  try {
-    if (isMaintenanceDomain.value) {
-      await tasksStore.fetchMaintenance(query)
-    } else {
-      await tasksStore.fetchHousekeeping(query)
-    }
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('tasks.load_failed')
-  } finally {
-    initialLoading.value = false
-  }
-}
-
 async function loadSupporting() {
   const ops: Promise<unknown>[] = []
   if (!employees.value.length && canAssign.value) {
@@ -589,7 +595,7 @@ async function submitEdit() {
       if (canAssign.value) {
         body.assignee_employee_id = editForm.value.assignee_employee_id || null
       }
-      updated = await tasksStore.updateMaintenance(task.id, body)
+      updated = await updateMaintenance.mutateAsync({ id: task.id, body })
     } else {
       const body: { description?: string; assignee_employee_id?: string | null } = {}
       if (canOperate.value) {
@@ -598,13 +604,11 @@ async function submitEdit() {
       if (canAssign.value) {
         body.assignee_employee_id = editForm.value.assignee_employee_id || null
       }
-      updated = await tasksStore.updateHousekeeping(task.id, body)
+      updated = await updateHousekeeping.mutateAsync({ id: task.id, body })
     }
     selectedTask.value = updated
     quickAssignSelection.value = updated.assignee_employee_id ?? ''
     editing.value = false
-    // Room housekeeping and maintenance states follow its tasks.
-    void invalidateKeys(queryCache, [propertyKeys.rooms])
   } catch (err: unknown) {
     panelError.value = formatUnknownApiError(err) || t('tasks.save_failed')
   } finally {
@@ -620,8 +624,8 @@ async function submitQuickAssign() {
   panelError.value = ''
   try {
     const updated = isMaintenanceDomain.value
-      ? await tasksStore.updateMaintenance(task.id, { assignee_employee_id: next })
-      : await tasksStore.updateHousekeeping(task.id, { assignee_employee_id: next })
+      ? await updateMaintenance.mutateAsync({ id: task.id, body: { assignee_employee_id: next } })
+      : await updateHousekeeping.mutateAsync({ id: task.id, body: { assignee_employee_id: next } })
     selectedTask.value = updated
   } catch (err: unknown) {
     panelError.value = formatUnknownApiError(err) || t('tasks.save_failed')
@@ -637,15 +641,15 @@ async function applyStatus(next: TaskStatus) {
   panelError.value = ''
   try {
     const updated = isMaintenanceDomain.value
-      ? await tasksStore.changeMaintenanceStatus(task.id, {
-          status: next as Exclude<MaintenanceTaskStatus, 'open'>,
+      ? await changeMaintenanceStatus.mutateAsync({
+          id: task.id,
+          body: { status: next as Exclude<MaintenanceTaskStatus, 'open'> },
         })
-      : await tasksStore.changeHousekeepingStatus(task.id, {
-          status: next as Exclude<HousekeepingTaskStatus, 'open'>,
+      : await changeHousekeepingStatus.mutateAsync({
+          id: task.id,
+          body: { status: next as Exclude<HousekeepingTaskStatus, 'open'> },
         })
     selectedTask.value = updated
-    // Room housekeeping and maintenance states follow its tasks.
-    void invalidateKeys(queryCache, [propertyKeys.rooms])
   } catch (err: unknown) {
     panelError.value = formatUnknownApiError(err) || t('tasks.save_failed')
   } finally {
@@ -677,14 +681,14 @@ async function submitCreate() {
     const assignee = createForm.value.assignee_employee_id || undefined
     if (isMaintenanceDomain.value) {
       if (!createForm.value.planned_end) return
-      await tasksStore.createMaintenance({
+      await createMaintenance.mutateAsync({
         room_id: createForm.value.room_id,
         description,
         planned_end: new Date(createForm.value.planned_end).toISOString(),
         assignee_employee_id: assignee,
       })
     } else {
-      await tasksStore.createHousekeeping({
+      await createHousekeeping.mutateAsync({
         room_id: createForm.value.room_id,
         description,
         assignee_employee_id: assignee,
@@ -702,18 +706,13 @@ watch(
   () => props.domain,
   () => {
     selectedTask.value = null
-    initialLoading.value = true
     statusFilter.value = ''
     unassignedOnly.value = false
     void loadSupporting()
-    void reload()
   },
 )
 
-onMounted(async () => {
-  await loadSupporting()
-  await reload()
-})
+onMounted(() => loadSupporting())
 </script>
 
 <style scoped>

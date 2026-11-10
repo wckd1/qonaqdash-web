@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import type {
   ChangeHousekeepingStatusRequest,
   ChangeMaintenanceStatusRequest,
@@ -37,10 +37,16 @@ function parseList<T>(data: unknown): T[] {
 
 // Housekeeping ---------------------------------------------------------------
 
-export function fetchHousekeepingTasks(query: ListTasksQuery = {}): Promise<HousekeepingTask[]> {
+export function fetchHousekeepingTasks(
+  query: ListTasksQuery = {},
+  options: RequestOptions = {},
+): Promise<HousekeepingTask[]> {
   const params = buildListParams(query)
   return api
-    .get('/api/tasks/housekeeping', Object.keys(params).length ? { params } : {})
+    .get('/api/tasks/housekeeping', {
+      signal: options.signal,
+      ...(Object.keys(params).length ? { params } : {}),
+    })
     .then(({ data }) => parseList<HousekeepingTask>(data))
 }
 
@@ -70,10 +76,16 @@ export function changeHousekeepingStatus(
 
 // Maintenance ----------------------------------------------------------------
 
-export function fetchMaintenanceTasks(query: ListTasksQuery = {}): Promise<MaintenanceTask[]> {
+export function fetchMaintenanceTasks(
+  query: ListTasksQuery = {},
+  options: RequestOptions = {},
+): Promise<MaintenanceTask[]> {
   const params = buildListParams(query)
   return api
-    .get('/api/tasks/maintenance', Object.keys(params).length ? { params } : {})
+    .get('/api/tasks/maintenance', {
+      signal: options.signal,
+      ...(Object.keys(params).length ? { params } : {}),
+    })
     .then(({ data }) => parseList<MaintenanceTask>(data))
 }
 

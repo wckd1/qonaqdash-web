@@ -459,7 +459,14 @@ import {
   type OutstandingBalancesResponse,
 } from '@/features/billing/api'
 import { formatMoney } from '@/shared/lib/money'
-import { formatLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
+import {
+  addDays,
+  addMonths,
+  daysBetween,
+  formatLocalDate,
+  NUMERIC_DATE,
+  startOfMonth,
+} from '@/shared/lib/localDate'
 import { SHORT_DATE_TIME } from '@/shared/lib/moment'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
@@ -470,7 +477,7 @@ type LedgerGrouping = 'entries' | 'daily' | 'monthly'
 type PresetId = 'this_month' | 'last_month' | 'last_7' | 'last_30' | 'last_90' | 'custom'
 
 const { t, locale } = useI18n()
-const { formatMoment } = useHotelTime()
+const { formatMoment, today } = useHotelTime()
 const hotelQ = useQuery(hotelQuery)
 const hotel = computed(() => hotelQ.data.value ?? null)
 
@@ -501,53 +508,23 @@ function printReport() {
   window.print()
 }
 
-function toYmd(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function parseYmd(s: string): Date {
-  const [y, m, d] = s.split('-').map(Number)
-  return new Date(y, m - 1, d)
-}
-
-function addDaysYmd(ymd: string, days: number): string {
-  const d = parseYmd(ymd)
-  d.setDate(d.getDate() + days)
-  return toYmd(d)
-}
-
-function diffDays(from: string, to: string): number {
-  const a = parseYmd(from)
-  const b = parseYmd(to)
-  return Math.round((b.getTime() - a.getTime()) / 86_400_000)
-}
-
 function computePresetRange(preset: PresetId): { from: string; to: string } {
-  const now = new Date()
-  const todayStr = toYmd(now)
+  const todayStr = today()
+  const monthStart = startOfMonth(todayStr)
 
   switch (preset) {
-    case 'this_month': {
-      const first = new Date(now.getFullYear(), now.getMonth(), 1)
-      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-      return { from: toYmd(first), to: toYmd(nextMonth) }
-    }
-    case 'last_month': {
-      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      const end = new Date(now.getFullYear(), now.getMonth(), 1)
-      return { from: toYmd(first), to: toYmd(end) }
-    }
+    case 'this_month':
+      return { from: monthStart, to: addMonths(monthStart, 1) }
+    case 'last_month':
+      return { from: addMonths(monthStart, -1), to: monthStart }
     case 'last_7':
-      return { from: addDaysYmd(todayStr, -6), to: addDaysYmd(todayStr, 1) }
+      return { from: addDays(todayStr, -6), to: addDays(todayStr, 1) }
     case 'last_30':
-      return { from: addDaysYmd(todayStr, -29), to: addDaysYmd(todayStr, 1) }
+      return { from: addDays(todayStr, -29), to: addDays(todayStr, 1) }
     case 'last_90':
-      return { from: addDaysYmd(todayStr, -89), to: addDaysYmd(todayStr, 1) }
+      return { from: addDays(todayStr, -89), to: addDays(todayStr, 1) }
     default:
-      return { from: todayStr, to: addDaysYmd(todayStr, 1) }
+      return { from: todayStr, to: addDays(todayStr, 1) }
   }
 }
 
@@ -609,13 +586,13 @@ function shiftRange(direction: 1 | -1) {
       step = 90
       break
     default:
-      step = diffDays(fromStr.value, toStr.value)
+      step = daysBetween(fromStr.value, toStr.value)
   }
-  if (step <= 0) return
+  if (!(step > 0)) return
 
-  const newFrom = addDaysYmd(fromStr.value, step * direction)
+  const newFrom = addDays(fromStr.value, step * direction)
   fromStr.value = newFrom
-  toStr.value = addDaysYmd(newFrom, step)
+  toStr.value = addDays(newFrom, step)
   onRangeChanged()
 }
 

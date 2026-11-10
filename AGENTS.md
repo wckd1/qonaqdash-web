@@ -92,10 +92,12 @@ Work is planned in `qonaqdash-docs/work/`: a PM session writes briefs, and the b
 | `npm run e2e` | Playwright smoke tests against the local backend |
 | `npm run ci` | typecheck, lint, format check, unit tests and build, as in CI |
 
+- **Adding or upgrading packages:** npm 10.9 fails on this project with `Cannot read properties of null (reading 'edgesOut')` (an `@npmcli/arborist` bug with optional peers of Vitest). Run the install with npm 11 (`npx npm@11 install -D <pkg>`); `npm ci` with npm 10 works with the resulting lockfile.
+
 - **Unit tests** live next to the code as `src/**/*.test.ts`, shared test helpers in `src/test-utils/`. `tsconfig.vitest.json` type-checks them; the app build excludes them. Prefer pure modules (formatters, permission helpers, stores); mount components with `@vue/test-utils` when needed.
 - **Every bug fix comes with a test that failed before the fix.**
 - **Known bugs** that are not fixed yet are pinned with `test.fails` (the test asserts the correct behaviour and fails for now) or `test.skip`, with a comment `<bug ID>, fixed in WP<N>`. Bug IDs come from `qonaqdash-docs/review-2026-11.md`. The package that fixes the bug removes `.fails` or `.skip`. Example: F1 in `src/router/index.test.ts`.
-- **e2e** (`e2e/`, Playwright, Chromium only) runs against the backend from `../qonaqdash` with seed data. Start the backend first with `make up && make reset-db && make server` in `../qonaqdash`; Playwright starts the frontend dev server itself on port 3100. One-time setup: `npx playwright install chromium`.
+- **e2e** (`e2e/`, Playwright, Chromium only) runs against the backend from `../qonaqdash` with seed data. Start the backend first with `make up && make reset-db && make server` in `../qonaqdash`; Playwright starts the frontend dev server itself on port 3100. Setup once and after every Playwright upgrade: `npx playwright install chromium`.
   - Seed users come from the backend README and live in `e2e/fixtures/seed-users.ts`; the first one is the main smoke user. `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` override the main user for one run.
   - UI strings in scenarios come from `src/locales/en.json`; the fixture in `e2e/fixtures/test.ts` pins the UI to English.
   - A scenario blocked by a known bug is skipped with the bug ID.

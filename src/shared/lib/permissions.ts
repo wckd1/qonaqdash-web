@@ -200,12 +200,9 @@ export function hasAnyPermission(
   })
 }
 
+/** The reservation grid: its room rows come with reading bookings (principle 5). */
 export function canAccessDashboard(ctx: AccessContext): boolean {
-  return (
-    ctx.hasHotelContext &&
-    hasPermission(ctx.permissions, 'bookings', 'view') &&
-    hasPermission(ctx.permissions, 'rooms', 'view')
-  )
+  return ctx.hasHotelContext && hasPermission(ctx.permissions, 'bookings', 'view')
 }
 
 export function canViewBookings(ctx: AccessContext): boolean {

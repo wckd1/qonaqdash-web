@@ -127,7 +127,7 @@
           </div>
           <h3 class="empty-state-widget__title">{{ t('dashboard.empty_title') }}</h3>
           <p class="empty-state-widget__description">{{ t('dashboard.empty_description') }}</p>
-          <div class="empty-state-widget__actions">
+          <div v-if="canAccessRooms" class="empty-state-widget__actions">
             <router-link :to="{ name: 'rooms' }" class="primary" role="button">{{
               t('dashboard.empty_action')
             }}</router-link>
@@ -159,7 +159,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { addDays, differenceInCalendarDays, startOfDay, startOfToday, subDays } from 'date-fns'
 import { useQuery } from '@pinia/colada'
-import { roomListQuery, roomTypeListQuery } from '@/features/property/queries'
+import { hotelRoomsQuery } from '@/features/property/queries'
 import { bookingGridQuery } from '@/features/bookings/queries'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
@@ -176,10 +176,10 @@ const STORAGE_LAST_PERIOD = 'qonaqdash.dashboard.gridLastPeriod'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const { canCreateBookings } = usePermissions()
-const roomTypesQuery = useQuery(roomTypeListQuery())
-const roomsQuery = useQuery(roomListQuery())
-const roomTypes = computed(() => roomTypesQuery.data.value ?? [])
+const { canCreateBookings, canAccessRooms } = usePermissions()
+// Every room of the hotel with its type name and state: the rows of the grid.
+// Booking readers may read it without rooms.view (principle 5).
+const roomsQuery = useQuery(hotelRoomsQuery)
 const rooms = computed(() => roomsQuery.data.value ?? [])
 
 const fromStr = ref('')
@@ -197,14 +197,9 @@ const gridQuery = useQuery(() => ({
 const gridLoading = computed(() =>
   gridRange.value ? gridQuery.isPending.value && !gridQuery.error.value : !gridError.value,
 )
-const loading = computed(
-  () => gridLoading.value || roomTypesQuery.isPending.value || roomsQuery.isPending.value,
-)
+const loading = computed(() => gridLoading.value || roomsQuery.isPending.value)
 const loadError = computed(() => {
-  const err =
-    roomTypesQuery.error.value ??
-    roomsQuery.error.value ??
-    (gridRange.value ? gridQuery.error.value : null)
+  const err = roomsQuery.error.value ?? (gridRange.value ? gridQuery.error.value : null)
   if (err) return formatUnknownApiError(err) || t('dashboard.load_failed')
   return gridError.value
 })
@@ -308,20 +303,18 @@ const periodPickerSelectValue = computed(() => {
   return String(span)
 })
 
+/** Rooms grouped by room type in the order the hotel lists the types, by number within a type. */
 const sortedRooms = computed(() => {
-  const order = new Map(roomTypes.value.map((t, i) => [t.id, i]))
-  const typeNameById = new Map(roomTypes.value.map((t) => [t.id, t.name]))
-  return [...rooms.value]
-    .map((r) => ({
-      ...r,
-      room_type_name: typeNameById.get(r.room_type_id) || '',
-    }))
-    .sort((a, b) => {
-      const ai = order.get(a.room_type_id) ?? 999
-      const bi = order.get(b.room_type_id) ?? 999
-      if (ai !== bi) return ai - bi
-      return String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
-    })
+  const order = new Map<string, number>()
+  for (const r of rooms.value) {
+    if (!order.has(r.room_type_id)) order.set(r.room_type_id, order.size)
+  }
+  return [...rooms.value].sort((a, b) => {
+    const ai = order.get(a.room_type_id) ?? 0
+    const bi = order.get(b.room_type_id) ?? 0
+    if (ai !== bi) return ai - bi
+    return String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
+  })
 })
 
 const rangeFromDate = computed(() => {

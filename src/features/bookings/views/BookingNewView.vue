@@ -41,8 +41,8 @@
 import { ref, computed, onMounted, provide, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useQuery } from '@pinia/colada'
-import { availableRoomsQuery, hotelQuery, roomListQuery } from '@/features/property/queries'
+import { useQuery, useQueryCache } from '@pinia/colada'
+import { availableRoomsQuery, hotelQuery, hotelRoomsQuery } from '@/features/property/queries'
 import { bookingCreateFormQuery, useCreateBookingMutation } from '@/features/bookings/queries'
 import { guestListQuery } from '@/features/guests/queries'
 import type { FormNode } from '@/shared/form-dsl/types'
@@ -64,7 +64,7 @@ const route = useRoute()
 const router = useRouter()
 const createBooking = useCreateBookingMutation()
 const formQ = useQuery(bookingCreateFormQuery)
-const roomsQ = useQuery(roomListQuery())
+const queryCache = useQueryCache()
 const hotelQ = useQuery(hotelQuery)
 const hotel = computed(() => hotelQ.data.value ?? null)
 
@@ -217,8 +217,10 @@ async function mergeRouteQueryIntoForm() {
   if (checkIn) stay.check_in = checkIn
   if (checkOut) stay.check_out = checkOut
   if (roomId) {
-    const { data: list } = await roomsQ.refresh()
-    const room = list?.find((r) => r.id === roomId)
+    // A cell of the grid: its room comes from the same hotel rooms as the grid rows.
+    // Without the rooms the room is just not preselected; the API client shows the error.
+    const state = await queryCache.fetch(queryCache.ensure(hotelRoomsQuery)).catch(() => null)
+    const room = state?.data?.find((r) => r.id === roomId)
     if (room?.room_type_id) {
       stay.rooms = [{ room_type: room.room_type_id, room_id: room.id }]
     }

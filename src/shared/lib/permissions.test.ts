@@ -137,8 +137,9 @@ describe('route access', () => {
     expect(canViewBookings(ctx(permissions, false))).toBe(false)
   })
 
-  test('dashboard needs both bookings and rooms', () => {
-    expect(canAccessDashboard(ctx({ bookings: { view: 1 } }))).toBe(false)
+  // Principle 5: the grid rows come with reading bookings, without rooms.view.
+  test('dashboard needs only the bookings view', () => {
+    expect(canAccessDashboard(ctx({ bookings: { view: 1 } }))).toBe(true)
     expect(canAccessDashboard(ctx({ rooms: { view: 1 } }))).toBe(false)
   })
 
@@ -149,7 +150,7 @@ describe('route access', () => {
 
   test.each<[string, Permissions | null, boolean, string]>([
     ['full access', { bookings: { view: 1 }, rooms: { view: 1 } }, true, 'dashboard'],
-    ['bookings without rooms', { bookings: { view: 1 } }, true, 'bookings'],
+    ['bookings without rooms', { bookings: { view: 1 } }, true, 'dashboard'],
     ['guests only', { guests: { view: 1 } }, true, 'guests'],
     ['housekeeping only', { housekeeping_tasks: { operate: 1 } }, true, 'housekeeping'],
     ['maintenance only', { maintenance_tasks: { view: 1 } }, true, 'maintenance'],

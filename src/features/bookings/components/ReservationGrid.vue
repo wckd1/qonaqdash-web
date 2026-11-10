@@ -127,7 +127,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { format, startOfDay, isSameDay } from 'date-fns'
 import type { BookingItem } from '@/features/bookings/api'
-import type { Room } from '@/features/property/api'
+import type { AvailableRoom } from '@/features/property/api'
 import { listDaysInclusive, formatLocalYmd } from '@/features/bookings/utils/gridDates'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
@@ -136,7 +136,8 @@ import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 
-type RoomRow = Room & { room_type_name?: string }
+/** A grid row: a room of the hotel with its type name (`rooms/available` without a stay). */
+type RoomRow = Pick<AvailableRoom, 'id' | 'number' | 'room_type_id' | 'room_type_name'>
 
 type CellMenuState = { roomId: string; rangeFirst: Date; rangeLast: Date; x: number; y: number }
 

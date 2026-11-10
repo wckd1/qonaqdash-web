@@ -899,7 +899,9 @@
       "jwt_invalid": "Invalid or expired token",
       "forbidden": "You do not have permission to perform this action",
       "validation_failed": "Some fields need your attention. Check the messages below",
-      "payload_too_large": "The request is too large"
+      "payload_too_large": "The request is too large",
+      "invalid_date": "Enter a valid date",
+      "invalid_range": "The end date must be after the start date"
     },
     "iam": {
       "invite_token_expired": "This invitation link has expired",
@@ -943,15 +945,11 @@
       "invalid_status_transition": "Invalid status transition",
       "check_in_required_before_check_out": "Booking must be checked in before check out",
       "invalid_data_format": "Invalid data format",
-      "dates_required": "Check-in and check-out dates are required",
+      "dates_required": "Enter check-in and check-out: the stay needs at least one night",
       "rooms_required": "At least one room is required",
       "room_type_required_each_room": "Room type is required for each room",
       "form_missing_booking_group": "Form must contain required booking group and controls",
       "guest_information_required": "Guest information is required",
-      "grid_invalid_from_date": "Invalid from date (use YYYY-MM-DD)",
-      "grid_invalid_to_date": "Invalid to date (use YYYY-MM-DD)",
-      "grid_from_before_to": "From date must be before to date",
-      "grid_from_to_required": "From and to query parameters are required",
       "outstanding_balance": "This booking has an outstanding balance. Record a payment or force check-out"
     },
     "billing": {
@@ -971,10 +969,6 @@
       "room_type_name_required": "Name is required",
       "room_type_id_required": "Room type id is required",
       "room_number_required": "Room number is required",
-      "list_from_to_both_or_neither": "Provide both from and to dates for filtering, or omit both",
-      "list_invalid_from_date": "Invalid from date (use dd.MM.yyyy)",
-      "list_invalid_to_date": "Invalid to date (use dd.MM.yyyy)",
-      "list_to_before_from": "To date must not be before from date",
       "room_type_not_found": "Room type not found",
       "room_type_in_use": "This type still has rooms. Remove or reassign those rooms first",
       "hotel_invalid_currency": "Invalid currency code",
@@ -984,7 +978,13 @@
       "invalid_maintenance_status": "Invalid maintenance status",
       "maintenance_planned_end_required": "A planned end date is required to put a room under maintenance",
       "concurrency_conflict": "Room was updated elsewhere. Refresh and try again",
-      "list_invalid_exclude_booking_id": "Invalid booking id for exclude filter"
+      "list_invalid_exclude_booking_id": "Invalid booking id for exclude filter",
+      "list_check_in_check_out_both_or_neither": "Enter both check-in and check-out, or neither",
+      "list_invalid_check_in": "Invalid check-in time",
+      "list_invalid_check_out": "Invalid check-out time",
+      "list_check_out_before_check_in": "Check-out must be on a later day than check-in",
+      "hotel_invalid_timezone": "Unknown time zone",
+      "timezone_locked_by_bookings": "The time zone cannot be changed while the hotel has current or future bookings: their nights would shift"
     },
     "tasks": {
       "room_id_required": "Select a room for this task",

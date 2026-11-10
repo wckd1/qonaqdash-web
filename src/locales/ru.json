@@ -899,7 +899,9 @@
       "jwt_invalid": "Недействительный или просроченный токен",
       "forbidden": "У вас нет прав для этого действия",
       "validation_failed": "Проверьте поля формы — ниже указаны сообщения об ошибках",
-      "payload_too_large": "Слишком большой запрос"
+      "payload_too_large": "Слишком большой запрос",
+      "invalid_date": "Укажите правильную дату",
+      "invalid_range": "Дата окончания должна быть позже даты начала"
     },
     "iam": {
       "invite_token_expired": "Срок действия приглашения истёк",
@@ -943,15 +945,11 @@
       "invalid_status_transition": "Недопустимое изменение статуса",
       "check_in_required_before_check_out": "Перед выездом нужно заселить гостя",
       "invalid_data_format": "Неверный формат данных",
-      "dates_required": "Укажите даты заезда и выезда",
+      "dates_required": "Укажите заезд и выезд: проживание должно включать хотя бы одну ночь",
       "rooms_required": "Нужна хотя бы одна комната",
       "room_type_required_each_room": "Для каждой комнаты укажите тип",
       "form_missing_booking_group": "В форме должна быть группа бронирования и элементы управления",
       "guest_information_required": "Требуются данные гостя",
-      "grid_invalid_from_date": "Неверная дата «с» (формат ГГГГ-ММ-ДД)",
-      "grid_invalid_to_date": "Неверная дата «по» (формат ГГГГ-ММ-ДД)",
-      "grid_from_before_to": "Дата «с» должна быть раньше «по»",
-      "grid_from_to_required": "Укажите параметры from и to",
       "outstanding_balance": "По бронированию есть непогашенный баланс. Запишите оплату или выполните принудительный выезд"
     },
     "billing": {
@@ -971,10 +969,6 @@
       "room_type_name_required": "Укажите название",
       "room_type_id_required": "Укажите тип номера",
       "room_number_required": "Укажите номер комнаты",
-      "list_from_to_both_or_neither": "Укажите обе даты для фильтрации или не указывайте ни одной",
-      "list_invalid_from_date": "Неверная дата «с» (формат дд.ММ.гггг)",
-      "list_invalid_to_date": "Неверная дата «по» (формат дд.ММ.гггг)",
-      "list_to_before_from": "Дата «по» не может быть раньше «с»",
       "room_type_not_found": "Тип номера не найден",
       "room_type_in_use": "У этого типа ещё есть номера. Сначала уберите или переназначьте их",
       "hotel_invalid_currency": "Неверный код валюты",
@@ -984,7 +978,13 @@
       "invalid_maintenance_status": "Недопустимый статус обслуживания",
       "maintenance_planned_end_required": "Укажите плановое окончание, чтобы поставить номер на обслуживание",
       "concurrency_conflict": "Номер изменён в другом месте. Обновите и попробуйте снова",
-      "list_invalid_exclude_booking_id": "Неверный id бронирования для фильтра exclude"
+      "list_invalid_exclude_booking_id": "Неверный id бронирования для фильтра exclude",
+      "list_check_in_check_out_both_or_neither": "Укажите и заезд, и выезд или не указывайте ни того, ни другого",
+      "list_invalid_check_in": "Неверное время заезда",
+      "list_invalid_check_out": "Неверное время выезда",
+      "list_check_out_before_check_in": "Выезд должен быть в более поздний день, чем заезд",
+      "hotel_invalid_timezone": "Неизвестный часовой пояс",
+      "timezone_locked_by_bookings": "Часовой пояс нельзя сменить, пока у отеля есть текущие или будущие брони: их ночи сдвинулись бы"
     },
     "tasks": {
       "room_id_required": "Выберите номер для задачи",

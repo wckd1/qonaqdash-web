@@ -73,12 +73,7 @@ import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 import { baseRatesQuery, useUpdateBaseRatesMutation } from '@/features/pricing/queries'
-import {
-  minorToMajor,
-  majorToMinor,
-  getCurrencyExponent,
-  getCurrencySymbol,
-} from '@/shared/lib/money'
+import { minorToMajor, majorToMinor, amountInputStep, getCurrencySymbol } from '@/shared/lib/money'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -104,10 +99,7 @@ const edits = ref<Map<string, number>>(new Map())
 const currencyCode = computed(() => hotel.value?.currency ?? 'USD')
 const currencySymbol = computed(() => getCurrencySymbol(currencyCode.value))
 
-const rateInputStep = computed(() => {
-  const exp = getCurrencyExponent(currencyCode.value)
-  return (1 / 10 ** exp).toString()
-})
+const rateInputStep = computed(() => amountInputStep(currencyCode.value))
 
 function rateForRoomType(roomTypeId: string): number {
   return baseRates.value.find((r) => r.room_type_id === roomTypeId)?.base_rate_minor ?? 0

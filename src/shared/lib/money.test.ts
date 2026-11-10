@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
+  amountInputPlaceholder,
+  amountInputStep,
   formatMoney,
   formatMoneyPlain,
   getCurrencyExponent,
@@ -80,6 +82,17 @@ describe('minor and major units', () => {
     for (const amount of [0, 1, 99, 123456, 1999999]) {
       expect(majorToMinor(minorToMajor(amount, 'KZT'), 'KZT')).toBe(amount)
     }
+  })
+})
+
+describe('amount inputs', () => {
+  test('step is one minor unit and the placeholder has the currency precision', () => {
+    expect(amountInputStep('KZT')).toBe(0.01)
+    expect(amountInputStep('JPY')).toBe(1)
+    expect(amountInputStep('KWD')).toBe(0.001)
+    expect(amountInputPlaceholder('KZT')).toBe('0.00')
+    expect(amountInputPlaceholder('JPY')).toBe('0')
+    expect(amountInputPlaceholder('KWD')).toBe('0.000')
   })
 })
 

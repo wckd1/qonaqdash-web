@@ -61,7 +61,12 @@
 import { ref, computed, useId, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAddAdjustmentMutation } from '@/features/billing/queries'
-import { majorToMinor, getCurrencyExponent, getCurrencySymbol } from '@/shared/lib/money'
+import {
+  majorToMinor,
+  amountInputPlaceholder,
+  amountInputStep,
+  getCurrencySymbol,
+} from '@/shared/lib/money'
 import { useNotification } from '@/shared/composables/useNotification'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 
@@ -86,12 +91,9 @@ const submitting = ref(false)
 const addAdjustment = useAddAdjustmentMutation()
 const amountRef = ref<HTMLInputElement | null>(null)
 
-const step = computed(() => 1 / 10 ** getCurrencyExponent(props.currency))
+const step = computed(() => amountInputStep(props.currency))
 
-const amountPlaceholder = computed(() => {
-  const exp = getCurrencyExponent(props.currency)
-  return (0).toFixed(exp)
-})
+const amountPlaceholder = computed(() => amountInputPlaceholder(props.currency))
 
 const currencyHint = computed(() => getCurrencySymbol(props.currency))
 

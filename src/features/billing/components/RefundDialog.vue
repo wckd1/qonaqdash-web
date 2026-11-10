@@ -65,7 +65,8 @@ import { useRecordRefundMutation } from '@/features/billing/queries'
 import type { LedgerEntry } from '@/features/billing/api'
 import {
   majorToMinor,
-  getCurrencyExponent,
+  amountInputPlaceholder,
+  amountInputStep,
   getCurrencySymbol,
   formatMoney,
 } from '@/shared/lib/money'
@@ -93,12 +94,9 @@ const description = ref('')
 const submitting = ref(false)
 const recordRefund = useRecordRefundMutation()
 
-const step = computed(() => 1 / 10 ** getCurrencyExponent(props.currency))
+const step = computed(() => amountInputStep(props.currency))
 
-const amountPlaceholder = computed(() => {
-  const exp = getCurrencyExponent(props.currency)
-  return (0).toFixed(exp)
-})
+const amountPlaceholder = computed(() => amountInputPlaceholder(props.currency))
 
 const currencyHint = computed(() => getCurrencySymbol(props.currency))
 

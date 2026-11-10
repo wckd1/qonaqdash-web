@@ -79,6 +79,16 @@ function shiftDecimalHalfUp(value: number, places: number): number {
   return value < 0 && rounded !== 0 ? -rounded : rounded
 }
 
+/** `step` of an amount input in major units: one minor unit (0.01 for KZT, 1 for JPY). */
+export function amountInputStep(currencyCode: string): number {
+  return minorToMajor(1, currencyCode)
+}
+
+/** Placeholder of an amount input in major units: zero with the currency precision ("0.00"). */
+export function amountInputPlaceholder(currencyCode: string): string {
+  return (0).toFixed(getCurrencyExponent(currencyCode))
+}
+
 /**
  * Format a minor-unit amount as a locale-aware currency string.
  *

@@ -151,6 +151,10 @@
     "required": "Required",
     "actions": "Actions"
   },
+  "time": {
+    "employee_time": "Your time: {time}",
+    "hotel_time": "Hotel time, {zone}"
+  },
   "fields": {
     "first_name": "First name",
     "last_name": "Last name",

@@ -2,9 +2,14 @@
   <section v-if="accommodation" class="pricing-card">
     <div class="pricing-card__header">
       <h3 class="pricing-card__title">{{ t('bookings.accommodation_title') }}</h3>
-      <span v-if="formattedQuotedAt" class="pricing-card__meta">
-        {{ t('bookings.accommodation_quoted_at', { date: formattedQuotedAt }) }}
-      </span>
+      <i18n-t
+        v-if="accommodation.calculated_at"
+        keypath="bookings.accommodation_quoted_at"
+        tag="span"
+        class="pricing-card__meta"
+      >
+        <template #date><MomentTime :value="accommodation.calculated_at" /></template>
+      </i18n-t>
     </div>
 
     <div class="pricing-card__body">
@@ -144,8 +149,7 @@ import { useI18n } from 'vue-i18n'
 import type { AccommodationSnapshot, StayQuoteNight } from '@/features/pricing/api'
 import { formatMoney } from '@/shared/lib/money'
 import { formatLocalDate, WEEKDAY_DATE } from '@/shared/lib/localDate'
-import { MEDIUM_DATE_TIME } from '@/shared/lib/moment'
-import { useHotelTime } from '@/shared/composables/useHotelTime'
+import MomentTime from '@/shared/components/MomentTime.vue'
 
 const props = defineProps<{
   accommodation: AccommodationSnapshot | null | undefined
@@ -153,7 +157,6 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
-const { formatMoment } = useHotelTime()
 const detailsOpen = ref(false)
 
 interface RoomTypeGroup {
@@ -256,10 +259,6 @@ const nightsByDate = computed<DateGroup[]>(() => {
   }
   return Array.from(map, ([date, entries]) => ({ date, entries }))
 })
-
-const formattedQuotedAt = computed(() =>
-  formatMoment(props.accommodation?.calculated_at, MEDIUM_DATE_TIME),
-)
 
 function fmtMoney(amount: number): string {
   if (!props.currency) return ''

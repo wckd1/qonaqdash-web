@@ -17,6 +17,7 @@
             {{ t('rooms.fields.planned_end') }}
             <abbr class="required" :title="t('common.required')">*</abbr>
             <input v-model="form.planned_end" type="datetime-local" required :disabled="saving" />
+            <HotelZoneHint :value="fromDateTimeInput(form.planned_end)" />
           </label>
           <div class="dialog-actions">
             <button type="button" class="btn-secondary" :disabled="saving" @click="emit('close')">
@@ -39,6 +40,7 @@ import { useChangeRoomMaintenanceMutation } from '@/features/property/queries'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import type { Room, RoomMaintenanceStatus } from '@/features/property/api'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
+import HotelZoneHint from '@/shared/components/HotelZoneHint.vue'
 
 const props = withDefaults(
   defineProps<{

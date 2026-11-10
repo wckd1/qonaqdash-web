@@ -74,7 +74,9 @@
               <td :data-label="t('tasks.col_assignee')">
                 {{ assigneeLabel(task) }}
               </td>
-              <td :data-label="t('tasks.col_updated')">{{ formatDateTime(task.updated_at) }}</td>
+              <td :data-label="t('tasks.col_updated')">
+                <MomentTime :value="task.updated_at" empty="—" />
+              </td>
             </tr>
           </tbody>
         </table>
@@ -149,19 +151,19 @@
               </template>
               <template v-if="isMaintenance(selectedTask) && selectedTask.planned_end">
                 <dt>{{ t('rooms.fields.planned_end') }}</dt>
-                <dd>{{ formatDateTime(selectedTask.planned_end) }}</dd>
+                <dd><MomentTime :value="selectedTask.planned_end" empty="—" /></dd>
               </template>
               <dt>{{ t('tasks.col_assignee') }}</dt>
               <dd>{{ assigneeLabel(selectedTask) }}</dd>
               <dt>{{ t('tasks.col_updated') }}</dt>
-              <dd>{{ formatDateTime(selectedTask.updated_at) }}</dd>
+              <dd><MomentTime :value="selectedTask.updated_at" empty="—" /></dd>
               <template v-if="selectedTask.completed_at">
                 <dt>{{ t('tasks.completed_at') }}</dt>
-                <dd>{{ formatDateTime(selectedTask.completed_at) }}</dd>
+                <dd><MomentTime :value="selectedTask.completed_at" empty="—" /></dd>
               </template>
               <template v-if="selectedTask.canceled_at">
                 <dt>{{ t('tasks.canceled_at') }}</dt>
-                <dd>{{ formatDateTime(selectedTask.canceled_at) }}</dd>
+                <dd><MomentTime :value="selectedTask.canceled_at" empty="—" /></dd>
               </template>
             </dl>
 
@@ -230,6 +232,7 @@
                 required
                 :disabled="actionSaving"
               />
+              <HotelZoneHint :value="fromDateTimeInput(editForm.planned_end)" />
             </label>
             <label v-if="canAssign">
               {{ t('tasks.col_assignee') }}
@@ -296,6 +299,7 @@
               required
               :disabled="createSaving"
             />
+            <HotelZoneHint :value="fromDateTimeInput(createForm.planned_end)" />
           </label>
         </template>
         <label v-if="canAssign">
@@ -347,7 +351,8 @@ import type {
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
-import { NUMERIC_DATE_TIME_SECONDS } from '@/shared/lib/moment'
+import MomentTime from '@/shared/components/MomentTime.vue'
+import HotelZoneHint from '@/shared/components/HotelZoneHint.vue'
 
 type AnyTask = HousekeepingTask | MaintenanceTask
 
@@ -365,7 +370,7 @@ const HOUSEKEEPING_STATUSES: HousekeepingTaskStatus[] = [
 const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'canceled']
 
 const { t } = useI18n()
-const { formatMoment, toDateTimeInput, fromDateTimeInput } = useHotelTime()
+const { toDateTimeInput, fromDateTimeInput } = useHotelTime()
 const createHousekeeping = useCreateHousekeepingTaskMutation()
 const updateHousekeeping = useUpdateHousekeepingTaskMutation()
 const changeHousekeepingStatus = useChangeHousekeepingStatusMutation()
@@ -480,10 +485,6 @@ function transitionBtnClass(next: TaskStatus): string {
   if (next === 'canceled') return 'action-toolbar__btn--cancel'
   if (next === 'inspection') return 'action-toolbar__btn--check-out'
   return 'action-toolbar__btn--check-in'
-}
-
-function formatDateTime(value: string | null | undefined): string {
-  return formatMoment(value, NUMERIC_DATE_TIME_SECONDS) || '—'
 }
 
 function allowedTransitions(status: TaskStatus): TaskStatus[] {

@@ -8,7 +8,10 @@
 
     <template v-else>
       <span class="form-view-control__label">{{ label }}:</span>
-      <span class="form-view-control__value">{{ displayValue }}</span>
+      <span class="form-view-control__value">
+        <MomentTime v-if="momentValue" :value="momentValue" />
+        <template v-else>{{ displayValue }}</template>
+      </span>
     </template>
   </template>
 </template>
@@ -18,10 +21,11 @@ import { computed } from 'vue'
 import type { FormNode, FormInputNode, FormSelectNode } from '@/shared/form-dsl/types'
 import ArrayRenderer from './ArrayRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
-import { bindToPath, getValueByPath, formatDateTime, companionLabelFullBind } from '../utils'
+import { bindToPath, getValueByPath, formatDateField, companionLabelFullBind } from '../utils'
 import { evaluateNodeState } from '../formNodeConditions'
 import { formatPhoneDisplay } from '../phoneMask'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
+import MomentTime from '@/shared/components/MomentTime.vue'
 
 const props = defineProps({
   node: { type: Object as () => FormNode, required: true },
@@ -51,6 +55,14 @@ const label = computed(() => resolveFormCatalogString(inputNode.value.label ?? '
 
 const rawValue = computed(() => getValueByPath(props.data, path.value))
 
+/** The value of a `datetime` field: a moment on the hotel clock. */
+const momentValue = computed(() => {
+  const val = rawValue.value
+  return props.node.type === 'datetime' && typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)
+    ? val
+    : ''
+})
+
 const displayValue = computed(() => {
   const val = rawValue.value
   const n = props.node
@@ -70,14 +82,8 @@ const displayValue = computed(() => {
     return String(val ?? '')
   }
 
-  if (
-    (n.type === 'datetime' || n.type === 'date') &&
-    val != null &&
-    typeof val === 'string' &&
-    val.match(/^\d{4}-\d{2}-\d{2}/)
-  ) {
-    const format = n.type === 'datetime' ? 'date-time' : 'date'
-    return formatDateTime(val, timeZone.value, { type: format })
+  if (n.type === 'date' && typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+    return formatDateField(val, timeZone.value)
   }
 
   if (n.type === 'phone' && val != null && typeof val === 'string' && val.length > 0) {

@@ -151,6 +151,10 @@
     "required": "Обязательное поле",
     "actions": "Действия"
   },
+  "time": {
+    "employee_time": "Ваше время: {time}",
+    "hotel_time": "Время отеля, {zone}"
+  },
   "fields": {
     "first_name": "Имя",
     "last_name": "Фамилия",

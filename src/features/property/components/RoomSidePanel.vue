@@ -74,7 +74,7 @@
             v-if="room.maintenance_status === 'under_maintenance' && room.maintenance_planned_end"
           >
             <dt>{{ t('rooms.fields.planned_end') }}</dt>
-            <dd>{{ formatDateTime(room.maintenance_planned_end) }}</dd>
+            <dd><MomentTime :value="room.maintenance_planned_end" empty="—" /></dd>
           </template>
         </dl>
       </div>
@@ -95,11 +95,9 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import type { Room, RoomType } from '@/features/property/api'
-import { useHotelTime } from '@/shared/composables/useHotelTime'
-import { NUMERIC_DATE_TIME_SECONDS } from '@/shared/lib/moment'
+import MomentTime from '@/shared/components/MomentTime.vue'
 
 const { t } = useI18n()
-const { formatMoment } = useHotelTime()
 const { canCleaning, canMaintenance } = useRoomActionAccess()
 
 const props = defineProps<{
@@ -151,10 +149,6 @@ function housekeepingBadgeClass(v: string | undefined): string {
 
 function maintenanceBadgeClass(v: string | undefined): string {
   return `room-status-badge--maintenance-${v ?? 'none'}`
-}
-
-function formatDateTime(value: string | null | undefined): string {
-  return formatMoment(value, NUMERIC_DATE_TIME_SECONDS) || '—'
 }
 </script>
 

@@ -70,7 +70,7 @@
                   entry.description
                 }}</span>
               </td>
-              <td class="folio-section__cell-date">{{ fmtDateTime(entry.created_at) }}</td>
+              <td class="folio-section__cell-date"><MomentTime :value="entry.created_at" /></td>
               <td
                 class="folio-section__col-amount"
                 :class="{
@@ -123,8 +123,7 @@ import { billQuery } from '@/features/billing/queries'
 import { useQuery } from '@pinia/colada'
 import { formatMoney } from '@/shared/lib/money'
 import { formatLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
-import { SHORT_DATE_TIME } from '@/shared/lib/moment'
-import { useHotelTime } from '@/shared/composables/useHotelTime'
+import MomentTime from '@/shared/components/MomentTime.vue'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import PaymentDialog from '@/features/billing/components/PaymentDialog.vue'
 import RefundDialog from '@/features/billing/components/RefundDialog.vue'
@@ -138,7 +137,6 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
-const { formatMoment } = useHotelTime()
 const { canCollectPayment, canModifyBilling, canRefundBilling } = usePermissions()
 
 type DialogKind = 'payment' | 'refund' | 'adjustment' | null
@@ -223,10 +221,6 @@ function fmtMoney(amount: number): string {
 function fmtDelta(amount: number): string {
   const formatted = fmtMoney(Math.abs(amount))
   return amount < 0 ? `−${formatted}` : `+${formatted}`
-}
-
-function fmtDateTime(iso: string): string {
-  return formatMoment(iso, SHORT_DATE_TIME)
 }
 
 defineExpose({ reload: () => billQ.refetch() })

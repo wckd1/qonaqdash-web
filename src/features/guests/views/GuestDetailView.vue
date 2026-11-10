@@ -83,8 +83,12 @@
           </thead>
           <tbody>
             <tr v-for="b in previousBookings" :key="b.id">
-              <td :data-label="t('fields.check_in')">{{ formatDate(b.stay?.check_in) }}</td>
-              <td :data-label="t('fields.check_out')">{{ formatDate(b.stay?.check_out) }}</td>
+              <td :data-label="t('fields.check_in')">
+                <MomentTime :value="b.stay?.check_in" date-only empty="—" />
+              </td>
+              <td :data-label="t('fields.check_out')">
+                <MomentTime :value="b.stay?.check_out" date-only empty="—" />
+              </td>
               <td :data-label="t('fields.status')">
                 <BookingStatusBadge :status="b.status" />
               </td>
@@ -163,11 +167,9 @@ import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import { useHotelTime } from '@/shared/composables/useHotelTime'
-import { MEDIUM_DATE } from '@/shared/lib/moment'
+import MomentTime from '@/shared/components/MomentTime.vue'
 
 const { t, locale } = useI18n()
-const { formatMoment } = useHotelTime()
 const route = useRoute()
 const { success } = useNotification()
 const { canModifyGuests, canBlockGuests, canViewBookings } = usePermissions()
@@ -229,10 +231,6 @@ const isGuestBlocked = computed(() => {
 const guestForm = computed(() =>
   composeGuestFormFromEntity(currentGuest.value ?? null, formQ.data.value ?? null),
 )
-
-function formatDate(iso: string | null | undefined) {
-  return formatMoment(iso, MEDIUM_DATE) || '—'
-}
 
 /**
  * Guest name from API: response has "data" with "first_name" and "last_name".

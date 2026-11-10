@@ -3,11 +3,9 @@ import {
   formatMoment,
   localDateOf,
   MEDIUM_DATE,
-  MEDIUM_DATE_TIME,
   momentFromWallTime,
   sameClock,
   timeZoneLabel,
-  NUMERIC_DATE_TIME_SECONDS,
   SHORT_DATE_TIME,
   wallTimeOf,
 } from '@/shared/lib/moment'
@@ -197,13 +195,8 @@ describe('formatMoment', () => {
   })
 
   test('formats with the presets', () => {
-    expect(spaces(formatMoment(moment, 'en-US', TASHKENT, MEDIUM_DATE_TIME))).toBe(
-      'Mar 5, 2026, 2:30 PM',
-    )
     expect(formatMoment(moment, 'en-US', TASHKENT, MEDIUM_DATE)).toBe('Mar 5, 2026')
-    expect(formatMoment(moment, 'ru-RU', TASHKENT, NUMERIC_DATE_TIME_SECONDS)).toBe(
-      '05.03.2026, 14:30:05',
-    )
+    expect(formatMoment(moment, 'ru-RU', TASHKENT, MEDIUM_DATE)).toBe('5 мар. 2026 г.')
   })
 
   test('takes the date of the zone', () => {

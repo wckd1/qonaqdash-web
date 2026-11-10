@@ -139,30 +139,17 @@ export function momentFromWallTime(date: LocalDate, time: string, timeZone: stri
   return new Date(matching ?? wall - offsetBefore)
 }
 
-/** Date and time, short: `05.03.2026, 14:30`, `3/5/26, 2:30 PM`. */
+/**
+ * The two formats of moments (owner decision 2026-11-10). Date and time,
+ * short, without seconds: `05.03.2026, 14:30`, `3/5/26, 2:30 PM`.
+ */
 export const SHORT_DATE_TIME: Intl.DateTimeFormatOptions = {
   dateStyle: 'short',
   timeStyle: 'short',
 }
 
-/** Date with the month name and time: `5 мар. 2026 г., 14:30`, `Mar 5, 2026, 2:30 PM`. */
-export const MEDIUM_DATE_TIME: Intl.DateTimeFormatOptions = {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-}
-
-/** Date with the month name: `5 мар. 2026 г.`, `Mar 5, 2026`. */
+/** Only the date, with the month name: `5 мар. 2026 г.`, `Mar 5, 2026`. */
 export const MEDIUM_DATE: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }
-
-/** Date and time with seconds, all digits: `05.03.2026, 14:30:05`, `3/5/2026, 2:30:05 PM`. */
-export const NUMERIC_DATE_TIME_SECONDS: Intl.DateTimeFormatOptions = {
-  year: 'numeric',
-  month: 'numeric',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: 'numeric',
-  second: 'numeric',
-}
 
 const displayFormatters = new Map<string, Intl.DateTimeFormat>()
 

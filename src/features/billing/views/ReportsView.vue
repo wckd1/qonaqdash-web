@@ -235,7 +235,7 @@
                           }}</span>
                         </td>
                         <td class="reports-view__cell-date">
-                          {{ fmtDateTime(entry.created_at) }}
+                          <MomentTime :value="entry.created_at" />
                         </td>
                         <td
                           class="reports-view__col-money"
@@ -419,7 +419,7 @@
                         {{ bill.booking_id.slice(0, 8) }}…
                       </router-link>
                     </td>
-                    <td class="reports-view__cell-date">{{ fmtDateTime(bill.opened_at) }}</td>
+                    <td class="reports-view__cell-date"><MomentTime :value="bill.opened_at" /></td>
                     <td class="reports-view__col-money">{{ fmtMoney(bill.total_charges) }}</td>
                     <td class="reports-view__col-money reports-view__cell--credit">
                       {{ fmtMoney(bill.total_payments) }}
@@ -467,8 +467,8 @@ import {
   NUMERIC_DATE,
   startOfMonth,
 } from '@/shared/lib/localDate'
-import { SHORT_DATE_TIME } from '@/shared/lib/moment'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
+import MomentTime from '@/shared/components/MomentTime.vue'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { APP_NAME } from '@/shared/i18n/documentTitle'
 
@@ -477,7 +477,7 @@ type LedgerGrouping = 'entries' | 'daily' | 'monthly'
 type PresetId = 'this_month' | 'last_month' | 'last_7' | 'last_30' | 'last_90' | 'custom'
 
 const { t, locale } = useI18n()
-const { formatMoment, today } = useHotelTime()
+const { today } = useHotelTime()
 const hotelQ = useQuery(hotelQuery)
 const hotel = computed(() => hotelQ.data.value ?? null)
 
@@ -718,10 +718,6 @@ function fmtDelta(amount: number): string {
 
 function fmtShortDate(date: string): string {
   return formatLocalDate(date, locale.value, NUMERIC_DATE)
-}
-
-function fmtDateTime(iso: string): string {
-  return formatMoment(iso, SHORT_DATE_TIME)
 }
 
 function fmtMonth(ym: string): string {

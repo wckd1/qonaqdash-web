@@ -104,7 +104,7 @@
             v-if="room.maintenance_status === 'under_maintenance' && room.maintenance_planned_end"
           >
             <dt>{{ t('rooms.fields.planned_end') }}</dt>
-            <dd>{{ formatDateTime(room.maintenance_planned_end) }}</dd>
+            <dd><MomentTime :value="room.maintenance_planned_end" empty="—" /></dd>
           </template>
         </dl>
         <form v-else class="room-detail-edit" @submit.prevent="onSave">
@@ -140,7 +140,9 @@
         <ul v-else class="room-activity__list">
           <li v-for="entry in activityEntries" :key="entry.event_id" class="room-activity__item">
             <span class="room-activity__title">{{ activityTitle(entry) }}</span>
-            <span class="room-activity__meta">{{ formatDateTime(entry.occurred_at) }}</span>
+            <span class="room-activity__meta"
+              ><MomentTime :value="entry.occurred_at" empty="—"
+            /></span>
           </li>
         </ul>
       </section>
@@ -221,14 +223,14 @@ import {
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
-import { NUMERIC_DATE_TIME_SECONDS } from '@/shared/lib/moment'
+import MomentTime from '@/shared/components/MomentTime.vue'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import type { RoomActivityEntry, RoomAvailabilityStatus } from '@/features/property/api'
 
 const { t, locale } = useI18n()
-const { formatMoment } = useHotelTime()
+const { formatMoment, zoneLabel } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const { canManageRooms } = usePermissions()
@@ -343,8 +345,11 @@ function maintenanceBadgeClass(v: string | undefined): string {
   return `room-status-badge--maintenance-${v ?? 'none'}`
 }
 
-function formatDateTime(value: string | null | undefined): string {
-  return formatMoment(value, NUMERIC_DATE_TIME_SECONDS) || '—'
+/** A moment inside a text line: the hotel zone label goes into the text. */
+function momentText(value: string): string {
+  const text = formatMoment(value) || '—'
+  const zone = value ? zoneLabel(value) : ''
+  return zone ? `${text} ${zone}` : text
 }
 
 function activityTitle(entry: RoomActivityEntry): string {
@@ -367,7 +372,7 @@ function activityTitle(entry: RoomActivityEntry): string {
       })
     case 'RoomMaintenancePlannedEndChanged':
       return t('rooms.activity.planned_end_changed', {
-        value: formatDateTime(readString('planned_end')),
+        value: momentText(readString('planned_end')),
       })
     default: {
       // Event types the contract adds later still get a readable line.

@@ -80,8 +80,12 @@
               @click="openPanel(booking)"
             >
               <td :data-label="t('fields.guest')">{{ bookingGuestName(booking) }}</td>
-              <td :data-label="t('fields.check_in')">{{ formatDate(booking.stay?.check_in) }}</td>
-              <td :data-label="t('fields.check_out')">{{ formatDate(booking.stay?.check_out) }}</td>
+              <td :data-label="t('fields.check_in')">
+                <MomentTime :value="booking.stay?.check_in" date-only empty="—" />
+              </td>
+              <td :data-label="t('fields.check_out')">
+                <MomentTime :value="booking.stay?.check_out" date-only empty="—" />
+              </td>
               <td :data-label="t('fields.status')">
                 <BookingStatusBadge :status="booking.status" />
               </td>
@@ -116,13 +120,11 @@ import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import type { BookingItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import { useHotelTime } from '@/shared/composables/useHotelTime'
-import { MEDIUM_DATE } from '@/shared/lib/moment'
+import MomentTime from '@/shared/components/MomentTime.vue'
 
 const DEBOUNCE_MS = 300
 
 const { t } = useI18n()
-const { formatMoment } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const { canCreateBookings } = usePermissions()
@@ -164,10 +166,6 @@ function bookingGuestName(booking: BookingPanelRow | null | undefined) {
   const last = g.last_name ?? ''
   const parts = [first, last].filter(Boolean)
   return parts.length ? parts.join(' ') : (g.email ?? '—')
-}
-
-function formatDate(iso: string | null | undefined) {
-  return formatMoment(iso, MEDIUM_DATE) || '—'
 }
 
 function openPanel(booking: BookingItem) {

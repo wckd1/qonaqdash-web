@@ -1,71 +1,40 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { dateFieldValue, formatDateTime } from '@/shared/form-dsl/utils'
+import { dateFieldValue, formatDateField } from '@/shared/form-dsl/utils'
 
 const TASHKENT = 'Asia/Tashkent'
 const LOS_ANGELES = 'America/Los_Angeles'
-
-// 14:30 and 09:07 on the clock of Tashkent (+05:00).
-const MORNING = '2026-03-05T04:07:00Z'
-const AFTERNOON = '2026-03-05T09:30:00Z'
 
 afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('formatDateTime', () => {
-  test('formats date and 24-hour time for the locale on the clock of the zone', () => {
-    expect(formatDateTime(AFTERNOON, TASHKENT, { locale: 'ru-RU' })).toBe('05.03.2026 14:30')
-    expect(formatDateTime(AFTERNOON, TASHKENT, { locale: 'en-US' })).toBe('03/05/2026 14:30')
-    expect(formatDateTime(MORNING, TASHKENT, { locale: 'en-US' })).toBe('03/05/2026 09:07')
-    expect(formatDateTime(AFTERNOON, LOS_ANGELES, { locale: 'en-US' })).toBe('03/05/2026 01:30')
-  })
-
-  test('takes the date of the zone around midnight', () => {
-    expect(formatDateTime('2026-03-04T20:00:00Z', TASHKENT, { locale: 'en-US' })).toBe(
-      '03/05/2026 01:00',
-    )
-  })
-
-  test('does not depend on the zone of the runtime', () => {
-    vi.stubEnv('TZ', LOS_ANGELES)
-    expect(formatDateTime(AFTERNOON, TASHKENT, { locale: 'ru-RU' })).toBe('05.03.2026 14:30')
-  })
-
-  test('formats only the date when asked', () => {
-    expect(formatDateTime(AFTERNOON, TASHKENT, { type: 'date', locale: 'ru-RU' })).toBe(
-      '05.03.2026',
-    )
-    expect(formatDateTime(AFTERNOON, TASHKENT, { type: 'date', locale: 'en-US' })).toBe(
-      '03/05/2026',
-    )
+describe('formatDateField', () => {
+  test('formats the calendar day for the locale', () => {
+    expect(formatDateField('2026-03-05', TASHKENT, 'ru-RU')).toBe('05.03.2026')
+    expect(formatDateField('2026-03-05', TASHKENT, 'en-US')).toBe('03/05/2026')
   })
 
   // A date field keeps a calendar day: it read as UTC midnight and showed the day before west of UTC.
   test('shows the calendar day of a date field in every zone', () => {
     vi.stubEnv('TZ', LOS_ANGELES)
-    expect(formatDateTime('2026-03-05', LOS_ANGELES, { type: 'date', locale: 'en-US' })).toBe(
-      '03/05/2026',
-    )
-    expect(formatDateTime('2026-03-05', TASHKENT, { type: 'date', locale: 'en-US' })).toBe(
-      '03/05/2026',
-    )
+    expect(formatDateField('2026-03-05', LOS_ANGELES, 'en-US')).toBe('03/05/2026')
+    expect(formatDateField('2026-03-05', TASHKENT, 'en-US')).toBe('03/05/2026')
+  })
+
+  test('reads a moment in a date field as its date in the zone', () => {
+    expect(formatDateField('2026-03-04T20:00:00Z', TASHKENT, 'en-US')).toBe('03/05/2026')
+    expect(formatDateField('2026-03-04T20:00:00Z', LOS_ANGELES, 'en-US')).toBe('03/04/2026')
   })
 
   test('uses the app locale when no locale is given', () => {
     // The app falls back to English in tests (no pinned locale, jsdom navigator is en-US).
-    expect(formatDateTime(AFTERNOON, TASHKENT)).toBe('03/05/2026 14:30')
+    expect(formatDateField('2026-03-05', TASHKENT)).toBe('03/05/2026')
   })
 
-  test('returns unparseable strings unchanged', () => {
-    expect(formatDateTime('not a date', TASHKENT, { locale: 'en-US' })).toBe('not a date')
-    expect(formatDateTime('not a date', TASHKENT, { type: 'date', locale: 'en-US' })).toBe(
-      'not a date',
-    )
-  })
-
-  test('returns an empty string for missing values', () => {
-    expect(formatDateTime(null, TASHKENT)).toBe('')
-    expect(formatDateTime(undefined, TASHKENT)).toBe('')
+  test('returns unparseable strings unchanged and an empty string for missing values', () => {
+    expect(formatDateField('not a date', TASHKENT, 'en-US')).toBe('not a date')
+    expect(formatDateField(null, TASHKENT)).toBe('')
+    expect(formatDateField(undefined, TASHKENT)).toBe('')
   })
 })
 

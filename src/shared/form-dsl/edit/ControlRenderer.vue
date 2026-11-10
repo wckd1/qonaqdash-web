@@ -118,6 +118,10 @@
             @focus="onTextInputFocus"
             @blur="onTextInputBlur"
           />
+          <HotelZoneHint
+            v-if="node.type === 'datetime'"
+            :value="typeof localValue === 'string' ? localValue : ''"
+          />
           <p v-if="errorMessage" class="form-field-error">{{ errorMessage }}</p>
         </div>
       </div>
@@ -147,6 +151,7 @@ import {
   dateFieldValue,
 } from '../utils'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
+import HotelZoneHint from '@/shared/components/HotelZoneHint.vue'
 import { availableRoomsKey, guestPickerAnchorKey, fieldConstraintsKey } from '@/shared/injectKeys'
 import { evaluateNodeState } from '../formNodeConditions'
 import { guardBeforeInput } from '../inputGuard'

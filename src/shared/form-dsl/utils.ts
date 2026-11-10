@@ -6,7 +6,7 @@ import { i18n } from '@/i18n'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { intlLocaleFromAppLocale } from '@/shared/i18n/resolveLocale'
 import { formatLocalDate, isLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
-import { formatMoment, localDateOf } from '@/shared/lib/moment'
+import { localDateOf } from '@/shared/lib/moment'
 import type { FormSelectItem } from '@/shared/form-dsl/types'
 
 // ---------------------------------------------------------------------------
@@ -276,9 +276,6 @@ export function getFilteredRoomSelectOptions(
 // Date / time formatting
 // ---------------------------------------------------------------------------
 
-/** 24-hour time of a `datetime` field: `14:30`. */
-const FIELD_TIME: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hour12: false }
-
 /**
  * The value of a `date` field as a calendar day `YYYY-MM-DD`. The field keeps
  * a calendar day, which no time zone shifts; a moment (RFC 3339) in it reads as
@@ -289,22 +286,15 @@ export function dateFieldValue(value: string, timeZone: string): string {
 }
 
 /**
- * Format the value of a `datetime` or `date` field for display (locale-aware):
- * a `datetime` is a moment shown on the clock of `timeZone`, a `date` is a calendar day.
+ * Format the value of a `date` field for display (locale-aware): a calendar day,
+ * `05.03.2026`. A `datetime` field is a moment and shows through `MomentTime`.
  */
-export function formatDateTime(
+export function formatDateField(
   value: string | null | undefined,
   timeZone: string,
-  options: { type?: 'date' | 'date-time'; locale?: string } = {},
+  locale: string = intlLocaleFromAppLocale(i18n.global.locale.value as 'en' | 'ru'),
 ): string {
   if (value == null || typeof value !== 'string') return String(value ?? '')
-  const locale = options.locale ?? intlLocaleFromAppLocale(i18n.global.locale.value as 'en' | 'ru')
-  if (options.type === 'date') {
-    const date = dateFieldValue(value, timeZone)
-    return date ? formatLocalDate(date, locale, NUMERIC_DATE) : value
-  }
-  if (Number.isNaN(new Date(value).getTime())) return value
-  const datePart = formatMoment(value, locale, timeZone, NUMERIC_DATE)
-  const timePart = formatMoment(value, locale, timeZone, FIELD_TIME)
-  return `${datePart} ${timePart}`
+  const date = dateFieldValue(value, timeZone)
+  return date ? formatLocalDate(date, locale, NUMERIC_DATE) : value
 }

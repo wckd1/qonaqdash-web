@@ -23,6 +23,7 @@ Treat **new product behavior**, **API integration changes**, and **visible UI ch
 ## Tech Stack
 
 - **Frontend**: Vue 3 + TypeScript + Vite + Pinia + Vue Router + Pico CSS (`vue-tsc` in build)
+- **Node**: 22 (`.nvmrc`, `engines` in `package.json`; CI reads `.nvmrc`)
 - **Backend**: Go modular monolith, REST JSON API, JWT auth (HS256)
 
 ## Architecture

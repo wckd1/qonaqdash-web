@@ -23,6 +23,7 @@ export const SEED_USERS: SeedUser[] = [
   { role: 'director', email: 'director@qonaqdash.test', password: DEMO_PASSWORD },
   { role: 'reception', email: 'reception@qonaqdash.test', password: DEMO_PASSWORD },
   { role: 'housekeeper', email: 'housekeeper@qonaqdash.test', password: DEMO_PASSWORD },
+  { role: 'technician', email: 'maintenance@qonaqdash.test', password: DEMO_PASSWORD },
   { role: 'viewer', email: 'viewer@qonaqdash.test', password: DEMO_PASSWORD },
 ]
 

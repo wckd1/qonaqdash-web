@@ -92,7 +92,10 @@ const AREAS_WITH_OWNED_SCOPE: readonly PermissionArea[] = [
 
 function levelOptionsFor(area: PermissionArea, action: PermissionAction): number[] {
   const current = permissionLevel(props.modelValue, area, action) as number
-  const max = Math.max(userMaxLevel.value, current)
+  // Nobody grants a level above their own for that permission (the server refuses
+  // it with iam.permission_escalation); a level the employee already has stays.
+  const own = permissionLevel(userPermissions.value, area, action) as number
+  const max = Math.max(Math.min(userMaxLevel.value, own), current)
   const ownedAllowed = AREAS_WITH_OWNED_SCOPE.includes(area) || current === OWNED_LEVEL
   return [0, 1, 2, 3].filter((level) => {
     if (level > max) return false

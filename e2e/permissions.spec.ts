@@ -20,20 +20,6 @@ async function employeeIdOf(page: Page, email: string): Promise<string> {
   return found.id
 }
 
-/** Sets one permission in the open permissions dialog and saves; resolves with the response status. */
-async function savePermission(page: Page, actionLabel: string, levelLabel: string) {
-  const dialog = page.getByRole('dialog')
-  await dialog
-    .locator('.permission-matrix__row', { hasText: actionLabel })
-    .locator('select')
-    .selectOption({ label: levelLabel })
-  const saved = page.waitForResponse(
-    (r) => r.request().method() === 'PUT' && /\/permissions$/.test(new URL(r.url()).pathname),
-  )
-  await dialog.getByRole('button', { name: en.common.save }).click()
-  return (await saved).status()
-}
-
 // WP2: the organization owner holds every permission, which nobody may change.
 test("director sees the owner's permissions read-only", async ({ page }) => {
   await login(page, seedUser('director'))
@@ -55,24 +41,23 @@ test("director sees the owner's permissions read-only", async ({ page }) => {
 })
 
 // WP2 B17: a permission manager cannot grant a permission they do not hold.
-test('director cannot grant a permission above their own', async ({ page }) => {
+test('director is offered permissions only up to their own levels', async ({ page }) => {
   const director = seedUser('director')
   await login(page, director)
   await page.goto(`/employees/${await employeeIdOf(page, director.email)}/details`)
 
   await page.getByRole('button', { name: en.employees.manage_permissions_action }).click()
-  // The director may view bookings, but not create them.
-  const status = await savePermission(
-    page,
-    en.permissions.actions.bookings.create,
+  const row = (label: string) =>
+    page
+      .getByRole('dialog')
+      .locator('.permission-matrix__row', { hasText: label })
+      .locator('select option')
+  // The director views bookings at hotel level, but may not create them.
+  await expect(row(en.permissions.actions.bookings.view)).toHaveText([
+    en.permissions.level['0'],
     en.permissions.level['2'],
-  )
-
-  expect(status).toBe(403)
-  await expect(page.getByRole('dialog').getByRole('alert')).toContainText(
-    `${en.permissions.areas.bookings}: ${en.permissions.actions.bookings.create}`,
-  )
-  await expect(page.locator('.toast')).toHaveCount(0)
+  ])
+  await expect(row(en.permissions.actions.bookings.create)).toHaveText([en.permissions.level['0']])
 })
 
 // WP2: without employee rights the staff admin is not offered, and a direct link is refused.

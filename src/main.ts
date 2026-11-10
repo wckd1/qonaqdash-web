@@ -1,7 +1,9 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { PiniaColada } from '@pinia/colada'
 import { i18n } from '@/i18n'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import { piniaColadaOptions } from '@/shared/api/queryCache'
 import router from '@/router'
 import App from '@/App.vue'
 
@@ -10,6 +12,7 @@ import '@/assets/main.css'
 
 const app = createApp(App)
 app.use(createPinia())
+app.use(PiniaColada, piniaColadaOptions)
 useSettingsStore()
 app.use(i18n)
 app.use(router)

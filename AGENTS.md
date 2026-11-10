@@ -22,7 +22,7 @@ Treat **new product behavior**, **API integration changes**, and **visible UI ch
 
 ## Tech Stack
 
-- **Frontend**: Vue 3 + TypeScript + Vite + Pinia + Vue Router + Pico CSS (`vue-tsc` in build)
+- **Frontend**: Vue 3 + TypeScript + Vite + Pinia + Pinia Colada + Vue Router + Pico CSS (`vue-tsc` in build)
 - **Node**: 22 (`.nvmrc`, `engines` in `package.json`; CI reads `.nvmrc`)
 - **Backend**: Go modular monolith, REST JSON API, JWT auth (HS256)
 
@@ -35,6 +35,20 @@ Treat **new product behavior**, **API integration changes**, and **visible UI ch
 - **Feature API modules**: Each feature has its own `api.ts` (e.g. `src/features/auth/api.ts`) for HTTP and parsing; stores stay thin and call these modules. **Shared domain / contract types** live in **`src/shared/types/`** (e.g. `bookings.ts`, `guests.ts`, `property.ts`, `auth.ts`); feature `api.ts` files **re-export** those types so existing `import type { … } from '@/features/…/api'` continues to work.
 - **Employees feature**: Follow the same runtime FormDSL pattern as guests/bookings: feature-local `api.ts` + thin Pinia store in `src/features/employees/`, cached `GET /api/employees/form?target=…`, builder route at `/manage/forms/employees`, and list → side panel → full detail navigation. Employee profile now also carries a **special access-settings section** (occupations + permission overrides + effective-permissions preview) when the actor has `hotel.manage_permissions`; occupation templates live under **Hotel → Occupations** (`/manage/hotel/occupations`) and use the shared permission matrix UI. For role-family metadata, use **`GET /api/occupations/role-groups`** as the create-time source of truth; empty groups are intentional and let the frontend render all valid role families.
 - **API integration**: Endpoint details live in **[swagger.yaml](docs/swagger.yaml)**; narrative integration rules in **[integration.md](docs/integration.md)**. If the backend should change shape or add endpoints/params to support the frontend properly, say so explicitly (what to return, why). Do not paper over gaps in silence. **Record every proposed backend change under «Открытые вопросы» in the current brief** (method and path, what is needed, how the frontend will use it).
+
+## Server state (Pinia Colada)
+
+Server data lives in the Pinia Colada query cache (decision D14), not in Pinia stores. Pinia stores keep only UI state and the session (tokens, locale, the cached permissions snapshot for route guards).
+
+- **Where:** each feature keeps its queries and mutations in `queries.ts` next to its `api.ts`. `api.ts` stays plain HTTP and parsing; `queries.ts` adds keys, caching and invalidation.
+- **Keys:** `[feature, kind, ...params]`, built only by the feature's key factory (`bookingKeys`, `guestKeys`, …), e.g. `['bookings', 'list', { q }]`, `['bookings', 'detail', id]`, `['bookings', 'grid', { from, to }]`. Params are plain JSON (objects, not refs). `['bookings']` matches every bookings entry and `['bookings', 'detail']` every detail, so invalidation can target a whole feature or kind.
+- **Queries:** define options once with `defineQueryOptions` in `queries.ts` and use them in views as `useQuery(() => bookingDetailQuery(id.value))`. The query function passes `signal` to axios, so a superseded or cancelled request is aborted. Use `enabled` for permission or missing-param gates, `placeholderData: (prev) => prev` where a list keeps its rows while a new search loads.
+- **Mutations:** `useXxxMutation()` composables in `queries.ts` wrap `useMutation`. On success they update or invalidate every key whose data the request changed, including keys of other features (a check-out also changes tasks, rooms and the folio). Views do not refetch by hand after a mutation.
+- **Reading outside components:** route guards and the API client use `useQueryCache()` (`queryCache.fetch(queryCache.ensure(options))`).
+- **No hand-made loading state:** no "already loaded" flags, no `mutateAndRefresh` chains, no sequence counters for stale responses. Loading and errors come from `isPending`, `asyncStatus` and `error` of the query.
+- **Defaults** (`src/shared/api/queryCache.ts`): `staleTime` 5 s and `gcTime` 5 min from Pinia Colada; no refetch on window focus or reconnect, so a background refetch cannot replace data under a form being edited. Edit forms copy query data into local state once.
+- **Form definitions** keep their own hash cache (`src/shared/forms/loadRuntimeFormDefinition.ts`, reworked in WP7); queries call it like any other API function.
+- **Unit tests:** `setupColada()` from `src/test-utils/colada.ts` gives a fresh Pinia with Pinia Colada and runs composables in the app context.
 
 ## Feature implementation (quick pointer)
 

@@ -314,7 +314,7 @@ const sortedRooms = computed(() => {
   return [...rooms.value]
     .map((r) => ({
       ...r,
-      room_type_name: r.room_type_name || typeNameById.get(r.room_type_id) || '',
+      room_type_name: typeNameById.get(r.room_type_id) || '',
     }))
     .sort((a, b) => {
       const ai = order.get(a.room_type_id) ?? 999

@@ -1,6 +1,6 @@
 import type { InjectionKey, Ref } from 'vue'
 import type { EntryKey, UseQueryOptions } from '@pinia/colada'
-import type { AvailableRoom } from '@/shared/types/property'
+import type { Schemas } from '@/shared/api/typed'
 import type { FormNode } from '@/shared/types/forms'
 
 /** Guest typeahead: API rows from `GET /api/guests?q=`. */
@@ -24,7 +24,9 @@ export type GuestSearchQuery = (q: string) => {
 
 export const guestSearchKey: InjectionKey<GuestSearchQuery> = Symbol('guestSearch')
 
-export const availableRoomsKey: InjectionKey<Ref<AvailableRoom[]>> = Symbol('availableRooms')
+/** Rooms free for the stay being edited (`GET /api/property/rooms/available`). */
+export const availableRoomsKey: InjectionKey<Ref<Schemas['propertyhttp.AvailableRoomResponse'][]>> =
+  Symbol('availableRooms')
 
 /** FormDSL builder context (manage → form definition UI). */
 export interface FormBuildContext {

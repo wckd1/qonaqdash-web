@@ -94,7 +94,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
-import type { Room, RoomType } from '@/shared/types/property'
+import type { Room, RoomType } from '@/features/property/api'
 
 const { t } = useI18n()
 const { canCleaning, canMaintenance } = useRoomActionAccess()

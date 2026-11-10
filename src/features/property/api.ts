@@ -1,128 +1,94 @@
-import api, { type RequestOptions } from '@/shared/api/client'
-import type {
-  AvailableRoom,
-  Hotel,
-  Room,
-  RoomActivityEntry,
-  RoomAvailabilityStatus,
-  RoomHousekeepingStatus,
-  RoomMaintenanceStatus,
-  RoomType,
-} from '@/shared/types/property'
+import type { RequestOptions } from '@/shared/api/client'
+import { typedApi, type Schemas } from '@/shared/api/typed'
 
-/**
- * Current JWT hotel profile (display name).
- * @returns {Promise<Hotel>}
- */
-export function fetchHotel(options: RequestOptions = {}): Promise<Hotel> {
-  return api.get('/api/property/hotel', { signal: options.signal }).then(({ data }) => data)
+export type Hotel = Schemas['propertyhttp.HotelResponse']
+export type UpdateHotelBody = Schemas['propertyhttp.UpdateHotelRequest']
+export type RoomType = Schemas['propertyhttp.RoomTypeResponse']
+export type Room = Schemas['propertyhttp.RoomResponse']
+export type RoomAvailabilityStatus = Room['availability_status']
+export type RoomHousekeepingStatus = Room['housekeeping_status']
+export type RoomMaintenanceStatus = Room['maintenance_status']
+export type AvailableRoom = Schemas['propertyhttp.AvailableRoomResponse']
+export type AvailableRoomState = AvailableRoom['state']
+export type RoomActivityEntry = Schemas['propertyhttp.RoomActivityEntryResponse']
+
+/** `q` only when it is not blank. */
+function searchQuery(q: string | undefined): { q?: string } {
+  return q?.trim() ? { q: q.trim() } : {}
 }
 
-/**
- * @param body.name - Display name (trimmed server-side; required non-empty).
- * @param body.currency - ISO 4217 alpha-3 (required).
- * @param body.check_in_hour - Default check-in time (e.g. "14:00").
- * @param body.check_out_hour - Default check-out time (e.g. "12:00").
- */
-export function updateHotel(body: {
-  name: string
-  currency: string
-  check_in_hour: string
-  check_out_hour: string
-}): Promise<Hotel> {
-  return api
+/** Current JWT hotel profile (display name, currency, default hours). */
+export function fetchHotel(options: RequestOptions = {}): Promise<Hotel> {
+  return typedApi.get('/api/property/hotel', { signal: options.signal }).then(({ data }) => data)
+}
+
+export function updateHotel(body: UpdateHotelBody): Promise<Hotel> {
+  return typedApi
     .put('/api/property/hotel', {
-      name: body.name,
-      currency: body.currency,
-      check_in_hour: body.check_in_hour,
-      check_out_hour: body.check_out_hour,
+      body: {
+        name: body.name,
+        currency: body.currency,
+        check_in_hour: body.check_in_hour,
+        check_out_hour: body.check_out_hour,
+      },
     })
     .then(({ data }) => data)
 }
 
-/**
- * @param {{ q?: string }} [params] - Optional search query; backend filters by type name/description or room number.
- * @returns {Promise<RoomType[]>}
- */
+/** Room types; `q` filters by type name/description or room number on the backend. */
 export function fetchRoomTypes(
   params: { q?: string } = {},
   options: RequestOptions = {},
 ): Promise<RoomType[]> {
-  const config = {
-    signal: options.signal,
-    ...(params.q?.trim() ? { params: { q: params.q.trim() } } : {}),
-  }
-  return api
-    .get('/api/property/room-types', config)
-    .then(({ data }) => data.room_types ?? data ?? [])
+  return typedApi
+    .get('/api/property/room-types', { query: searchQuery(params.q), signal: options.signal })
+    .then(({ data }) => data)
 }
 
-/**
- * @param body.name - Required non-empty.
- * @param body.description - Optional.
- */
 export function createRoomType(body: { name: string; description?: string }): Promise<RoomType> {
-  return api
+  return typedApi
     .post('/api/property/room-types', {
-      name: body.name,
-      description: body.description || undefined,
+      body: { name: body.name, description: body.description || undefined },
     })
     .then(({ data }) => data)
 }
 
-/**
- * @param id - Room type UUID.
- * @param body.name - Required non-empty.
- * @param body.description - Optional.
- */
 export function updateRoomType(
   id: string,
   body: { name: string; description?: string },
 ): Promise<RoomType> {
-  return api
-    .put(`/api/property/room-types/${id}`, {
-      name: body.name,
-      description: body.description || undefined,
+  return typedApi
+    .put('/api/property/room-types/{id}', {
+      path: { id },
+      body: { name: body.name, description: body.description || undefined },
     })
     .then(({ data }) => data)
 }
 
-/**
- * Soft-deletes the room type (allowed only when no active rooms use it).
- * @param {string} id
- * @returns {Promise<void>}
- */
+/** Soft-deletes the room type (allowed only when no active rooms use it). */
 export function deleteRoomType(id: string): Promise<void> {
-  return api.delete(`/api/property/room-types/${id}`).then(() => undefined)
+  return typedApi.delete('/api/property/room-types/{id}', { path: { id } }).then(() => undefined)
 }
 
-/**
- * @param {{ q?: string }} [params] - Optional search query; backend filters by room number.
- * @returns {Promise<Room[]>}
- */
+/** Rooms; `q` filters by room number on the backend. */
 export function fetchRooms(
   params: { q?: string } = {},
   options: RequestOptions = {},
 ): Promise<Room[]> {
-  const config = {
-    signal: options.signal,
-    ...(params.q?.trim() ? { params: { q: params.q.trim() } } : {}),
-  }
-  return api.get('/api/property/rooms', config).then(({ data }) => data.rooms ?? data ?? [])
+  return typedApi
+    .get('/api/property/rooms', { query: searchQuery(params.q), signal: options.signal })
+    .then(({ data }) => data)
 }
 
 export function fetchRoom(id: string, options: RequestOptions = {}): Promise<Room> {
-  return api.get(`/api/property/rooms/${id}`, { signal: options.signal }).then(({ data }) => data)
+  return typedApi
+    .get('/api/property/rooms/{id}', { path: { id }, signal: options.signal })
+    .then(({ data }) => data)
 }
 
-/**
- * @param {string} roomTypeId
- * @param {string} number
- * @returns {Promise<Room>}
- */
 export function createRoom(roomTypeId: string, number: string): Promise<Room> {
-  return api
-    .post('/api/property/rooms', { room_type_id: roomTypeId, number })
+  return typedApi
+    .post('/api/property/rooms', { body: { room_type_id: roomTypeId, number } })
     .then(({ data }) => data)
 }
 
@@ -134,36 +100,41 @@ export function updateRoom(
   id: string,
   body: { room_type_id: string; number: string },
 ): Promise<Room> {
-  return api
-    .put(`/api/property/rooms/${id}`, {
-      room_type_id: body.room_type_id,
-      number: body.number,
+  return typedApi
+    .put('/api/property/rooms/{id}', {
+      path: { id },
+      body: { room_type_id: body.room_type_id, number: body.number },
     })
     .then(({ data }) => data)
 }
 
 /** Set the **availability** axis. `ooo` removes the room from availability. */
 export function changeRoomAvailability(id: string, status: RoomAvailabilityStatus): Promise<Room> {
-  return api.put(`/api/property/rooms/${id}/availability`, { status }).then(({ data }) => data)
+  return typedApi
+    .put('/api/property/rooms/{id}/availability', { path: { id }, body: { status } })
+    .then(({ data }) => data)
 }
 
-/** Set the **housekeeping** axis. Backend returns 204; re-fetch the room to read new state. */
+/** Set the **housekeeping** axis. Backend returns 204. */
 export function changeRoomHousekeeping(id: string, status: RoomHousekeepingStatus): Promise<void> {
-  return api.put(`/api/property/rooms/${id}/housekeeping`, { status }).then(() => undefined)
+  return typedApi
+    .put('/api/property/rooms/{id}/housekeeping', { path: { id }, body: { status } })
+    .then(() => undefined)
 }
 
 /**
  * Set the **maintenance** axis. `under_maintenance` requires `planned_end`
- * (RFC 3339). `none` clears `planned_end` server-side.
- * Backend returns 204; re-fetch the room to read new state.
+ * (RFC 3339). `none` clears `planned_end` server-side. Backend returns 204.
  */
 export function changeRoomMaintenance(
   id: string,
   body: { status: RoomMaintenanceStatus; planned_end?: string | null },
 ): Promise<void> {
-  const payload: Record<string, unknown> = { status: body.status }
+  const payload: Schemas['propertyhttp.ChangeRoomMaintenanceRequest'] = { status: body.status }
   if (body.planned_end != null && body.planned_end !== '') payload.planned_end = body.planned_end
-  return api.put(`/api/property/rooms/${id}/maintenance`, payload).then(() => undefined)
+  return typedApi
+    .put('/api/property/rooms/{id}/maintenance', { path: { id }, body: payload })
+    .then(() => undefined)
 }
 
 /** Append-only room event history (audit). */
@@ -171,18 +142,24 @@ export function fetchRoomActivity(
   id: string,
   options: RequestOptions = {},
 ): Promise<RoomActivityEntry[]> {
-  return api
-    .get(`/api/property/rooms/${id}/activity`, { signal: options.signal })
-    .then(({ data }) => (Array.isArray(data) ? data : (data?.entries ?? [])))
+  return typedApi
+    .get('/api/property/rooms/{id}/activity', { path: { id }, signal: options.signal })
+    .then(({ data }) => data)
 }
 
-/**
- * Soft-deletes the room (hidden from list / availability; historical references keep resolving).
- * @param {string} id
- * @returns {Promise<void>}
- */
+/** Soft-deletes the room (hidden from list / availability; historical references keep resolving). */
 export function deleteRoom(id: string): Promise<void> {
-  return api.delete(`/api/property/rooms/${id}`).then(() => undefined)
+  return typedApi.delete('/api/property/rooms/{id}', { path: { id } }).then(() => undefined)
+}
+
+/** `dd.MM.yyyy` in local time, as `GET /api/property/rooms/available` expects. */
+function availabilityDate(value: Date | string | null): string | undefined {
+  if (value == null) return undefined
+  const d = typeof value === 'string' ? new Date(value) : value
+  if (Number.isNaN(d.getTime())) return undefined
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  return `${day}.${month}.${d.getFullYear()}`
 }
 
 /**
@@ -191,37 +168,22 @@ export function deleteRoom(id: string): Promise<void> {
  * `warnings` so the UI can surface dirty / required-maintenance warnings
  * without hiding the room.
  *
- * @param {Date | string | null} from - Start date (inclusive)
- * @param {Date | string | null} to - End date (exclusive)
- * @param {{ excludeBookingId?: string }} [options] - With both dates set, pass booking id to send query `exclude` (rooms occupied only by that booking stay available; ignored without `from`+`to` per API).
+ * @param from - Start date (inclusive)
+ * @param to - End date (exclusive)
+ * @param options.excludeBookingId - With both dates set, rooms occupied only by that booking stay available.
  */
 export function fetchAvailableRooms(
   from: Date | string | null,
   to: Date | string | null,
   options: { excludeBookingId?: string } & RequestOptions = {},
 ): Promise<AvailableRoom[]> {
-  const params: Record<string, string> = {}
-  if (from != null) {
-    const d = typeof from === 'string' ? new Date(from) : from
-    if (!Number.isNaN(d.getTime())) {
-      const day = String(d.getDate()).padStart(2, '0')
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      params.from = `${day}.${month}.${d.getFullYear()}`
-    }
+  const query: { from?: string; to?: string; exclude?: string } = {
+    from: availabilityDate(from),
+    to: availabilityDate(to),
   }
-  if (to != null) {
-    const d = typeof to === 'string' ? new Date(to) : to
-    if (!Number.isNaN(d.getTime())) {
-      const day = String(d.getDate()).padStart(2, '0')
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      params.to = `${day}.${month}.${d.getFullYear()}`
-    }
-  }
-  const ex = options.excludeBookingId
-  if (params.from && params.to && typeof ex === 'string' && ex.trim() !== '') {
-    params.exclude = ex.trim()
-  }
-  return api
-    .get('/api/property/rooms/available', { params, signal: options.signal })
-    .then(({ data }) => (Array.isArray(data) ? data : (data?.rooms ?? [])))
+  const ex = options.excludeBookingId?.trim()
+  if (query.from && query.to && ex) query.exclude = ex
+  return typedApi
+    .get('/api/property/rooms/available', { query, signal: options.signal })
+    .then(({ data }) => data)
 }

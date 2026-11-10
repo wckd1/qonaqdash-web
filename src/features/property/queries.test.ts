@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { useQuery } from '@pinia/colada'
 import { setupColada, type ColadaTestContext } from '@/test-utils/colada'
-import type { Hotel } from '@/shared/types/property'
+import type { Hotel } from '@/features/property/api'
 
 const server = vi.hoisted(() => ({
   hotel: {

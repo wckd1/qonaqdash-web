@@ -6,7 +6,7 @@ import type {
   RoomAvailabilityStatus,
   RoomHousekeepingStatus,
   RoomMaintenanceStatus,
-} from '@/shared/types/property'
+} from '@/features/property/api'
 
 /** Search text as it goes into a key: trimmed, so `' a'` and `'a'` share an entry. */
 function searchParam(q: string | undefined): { q: string } {

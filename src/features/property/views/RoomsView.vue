@@ -363,7 +363,7 @@ import {
 } from '@/features/property/queries'
 import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
-import type { Room, RoomType } from '@/shared/types/property'
+import type { Room, RoomType } from '@/features/property/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
 

@@ -344,7 +344,7 @@ import type {
   TaskDomain,
   TaskStatus,
 } from '@/shared/types/tasks'
-import type { Room } from '@/shared/types/property'
+import type { Room } from '@/features/property/api'
 import type { EmployeeListItem } from '@/shared/types/employees'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -463,7 +463,7 @@ function roomLabel(id: string | undefined): string {
 }
 
 function roomDisplay(room: Room): string {
-  return `${room.number}${room.room_type_name ? ` — ${room.room_type_name}` : ''}`
+  return room.number
 }
 
 function employeeLabel(id: string | null | undefined): string {

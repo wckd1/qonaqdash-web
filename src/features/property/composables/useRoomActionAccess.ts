@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import type { RoomHousekeepingStatus, RoomMaintenanceStatus } from '@/shared/types/property'
+import type { RoomHousekeepingStatus, RoomMaintenanceStatus } from '@/features/property/api'
 
 /**
  * Maps task permissions to the subset of room-axis statuses the actor may set.

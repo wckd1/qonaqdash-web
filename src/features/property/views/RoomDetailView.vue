@@ -223,7 +223,7 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
-import type { RoomActivityEntry, RoomAvailabilityStatus } from '@/shared/types/property'
+import type { RoomActivityEntry, RoomAvailabilityStatus } from '@/features/property/api'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -369,8 +369,11 @@ function activityTitle(entry: RoomActivityEntry): string {
       return t('rooms.activity.planned_end_changed', {
         value: formatDateTime(readString('planned_end')),
       })
-    default:
-      return t(`rooms.activity.event.${entry.event_type}`, entry.event_type)
+    default: {
+      // Event types the contract adds later still get a readable line.
+      const type = String(entry.event_type)
+      return t(`rooms.activity.event.${type}`, type)
+    }
   }
 }
 

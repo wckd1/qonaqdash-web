@@ -37,7 +37,7 @@ import { ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useChangeRoomMaintenanceMutation } from '@/features/property/queries'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
-import type { Room, RoomMaintenanceStatus } from '@/shared/types/property'
+import type { Room, RoomMaintenanceStatus } from '@/features/property/api'
 
 const props = withDefaults(
   defineProps<{

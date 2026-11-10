@@ -270,7 +270,7 @@ const days = computed(() => listDaysInclusive(props.rangeFrom, props.rangeTo))
  * Body rows: type section headers + room rows (rooms must already be sorted by type).
  * @returns {Array<{ kind: 'type-header', key: string, title: string } | { kind: 'room', key: string, room: object }>}
  */
-function cellAriaLabel(roomNumber, day) {
+function cellAriaLabel(roomNumber: string, day: Date) {
   void locale.value
   return t('grid.cell_aria', { number: roomNumber, date: formatLocalYmd(day) })
 }
@@ -334,7 +334,7 @@ const colWidth = computed(() => {
 
 const rangeOriginMs = computed(() => startOfDay(props.rangeFrom).getTime())
 
-function barGeometry(checkIn, checkOut) {
+function barGeometry(checkIn: Date, checkOut: Date) {
   const rawStart = (checkIn.getTime() - rangeOriginMs.value) / dayMs
   const rawEnd = (checkOut.getTime() - rangeOriginMs.value) / dayMs
   const maxDay = days.value.length
@@ -347,7 +347,7 @@ function barGeometry(checkIn, checkOut) {
   return { left, width }
 }
 
-function statusClass(status) {
+function statusClass(status: string | undefined) {
   const s = (status || '').toLowerCase()
   if (s === 'confirmed') return 'reservation-bar--confirmed'
   if (s === 'checked_in') return 'reservation-bar--checked-in'
@@ -413,7 +413,7 @@ const barLayouts = computed((): BarLayout[] => {
   return layouts
 })
 
-function onBarClick(bar) {
+function onBarClick(bar: BarLayout) {
   emit('select-booking', bar.panelBooking)
 }
 
@@ -454,7 +454,7 @@ function openBarMenuAt(
   })
 }
 
-function openBarMenuFromContext(event, bar) {
+function openBarMenuFromContext(event: MouseEvent, bar: BarLayout) {
   cancelDragSelect()
   closeCellMenu()
   openBarMenuAt(
@@ -481,7 +481,7 @@ function cancelDragSelect() {
   window.removeEventListener('mouseup', onWindowMouseUp, true)
 }
 
-function openCellMenuAt(x, y, roomId, rangeFirst, rangeLast) {
+function openCellMenuAt(x: number, y: number, roomId: string, rangeFirst: Date, rangeLast: Date) {
   closeBarMenu()
   cellMenu.value = {
     roomId,
@@ -508,7 +508,7 @@ function openCellMenuAt(x, y, roomId, rangeFirst, rangeLast) {
   })
 }
 
-function openCellMenuFromContext(event, roomId, day) {
+function openCellMenuFromContext(event: MouseEvent, roomId: string, day: Date) {
   cancelDragSelect()
   closeCellMenu()
   closeBarMenu()
@@ -517,7 +517,7 @@ function openCellMenuFromContext(event, roomId, day) {
   openCellMenuAt(event.clientX, event.clientY, roomId, d, d)
 }
 
-function onCellMouseDown(event, roomId, day) {
+function onCellMouseDown(event: MouseEvent, roomId: string, day: Date) {
   if (event.button !== 0) return
   closeCellMenu()
   closeBarMenu()
@@ -528,7 +528,7 @@ function onCellMouseDown(event, roomId, day) {
   window.addEventListener('mouseup', onWindowMouseUp, true)
 }
 
-function onCellMouseEnter(roomId, day) {
+function onCellMouseEnter(roomId: string, day: Date) {
   if (!selectPointerDown.value || !dragSelectState.value) return
   if (roomId !== dragSelectState.value.roomId) return
   const d = startOfDay(day)
@@ -537,7 +537,7 @@ function onCellMouseEnter(roomId, day) {
   dragSelectState.value.endDay = d
 }
 
-function onWindowMouseUp(event) {
+function onWindowMouseUp(event: MouseEvent) {
   if (event.button !== 0) return
   window.removeEventListener('mouseup', onWindowMouseUp, true)
   const state = dragSelectState.value
@@ -569,7 +569,7 @@ function parseHourMinute(hhmm: string): [number, number] {
  * @param {Date} lastDay - Last selected column: departure day for multi-day span;
  *   if same as firstDay, one night → checkout next day.
  */
-function goToNewBooking(roomId, firstDay, lastDay) {
+function goToNewBooking(roomId: string, firstDay: Date, lastDay: Date) {
   const [ciH, ciM] = parseHourMinute(hotel.value?.check_in_hour || '14:00')
   const [coH, coM] = parseHourMinute(hotel.value?.check_out_hour || '12:00')
 
@@ -597,8 +597,8 @@ function goToNewBooking(roomId, firstDay, lastDay) {
   })
 }
 
-function onDocumentPointerDown(event) {
-  const t = /** @type {Node | null} */ event.target
+function onDocumentPointerDown(event: PointerEvent) {
+  const t = event.target as Node | null
   if (cellMenu.value) {
     const el = cellMenuEl.value
     if (!el?.contains(t)) closeCellMenu()
@@ -609,7 +609,7 @@ function onDocumentPointerDown(event) {
   }
 }
 
-function onDocumentKeydown(event) {
+function onDocumentKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     if (selectPointerDown.value) {
       cancelDragSelect()

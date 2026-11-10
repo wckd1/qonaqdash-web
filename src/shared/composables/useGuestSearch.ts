@@ -7,10 +7,8 @@ const DEBOUNCE_MS = 300
 
 /**
  * Build search query from guest section fields (first_name, last_name, phone, email).
- * @param {Record<string, unknown>} guest
- * @returns {string}
  */
-export function buildGuestSearchQuery(guest) {
+export function buildGuestSearchQuery(guest: Record<string, unknown> | null | undefined): string {
   if (!guest || typeof guest !== 'object') return ''
   const first = guest.first_name
   const last = guest.last_name
@@ -25,10 +23,8 @@ export function buildGuestSearchQuery(guest) {
 
 /**
  * Map API guest to form guest with id.
- * @param {{ id: string, first_name?: string, last_name?: string, email?: string, phone?: string }} apiGuest
- * @returns {{ id: string, first_name: string, last_name: string, email: string, phone: string }}
  */
-export function apiGuestToFormGuest(apiGuest) {
+export function apiGuestToFormGuest(apiGuest: GuestSearchRow | null | undefined) {
   if (!apiGuest) return {}
   return {
     id: apiGuest.id,
@@ -42,11 +38,14 @@ export function apiGuestToFormGuest(apiGuest) {
 /**
  * Guest typeahead for booking form guest section. Watches guest fields, runs a
  * debounced search query, exposes results and select.
- * @param {() => Record<string, unknown>} getFormData - Returns current form data (has .guest)
+ * @param getFormData - Returns current form data (has .guest)
  * @param searchQuery - Query options of the guest search for a text, e.g. `guestListQuery`
  * @returns Reactive search state + `select` (refs unwrap in templates when accessed on this object).
  */
-export function useGuestSearch(getFormData, searchQuery: GuestSearchQuery) {
+export function useGuestSearch(
+  getFormData: () => { guest?: Record<string, unknown> } | null | undefined,
+  searchQuery: GuestSearchQuery,
+) {
   /** Search text the results are for; set when the debounce fires. */
   const query = ref('')
   /** True between typing a valid query and debounce firing */
@@ -90,7 +89,7 @@ export function useGuestSearch(getFormData, searchQuery: GuestSearchQuery) {
    * Returns new form data with guest section filled from API guest. Caller should emit('update:modelValue', data).
    * Clears local query/results after call.
    */
-  function select(apiGuest) {
+  function select(apiGuest: GuestSearchRow | null | undefined) {
     if (!apiGuest?.id) return null
     const guest = apiGuestToFormGuest(apiGuest)
     const next = JSON.parse(JSON.stringify(getFormData() ?? {}))

@@ -427,7 +427,7 @@ const userMenuOpen = ref(false)
 /** Management subnav: closed by default; opens when visiting /manage/* or user toggles. */
 const manageNavOpen = ref(false)
 
-function onManageNavToggle(e) {
+function onManageNavToggle(e: Event) {
   const el = e.target
   if (!(el instanceof HTMLDetailsElement)) return
   if (sidebarCollapsed.value) {

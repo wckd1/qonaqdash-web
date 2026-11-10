@@ -37,7 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
   const employeeId = computed(() => user.value?.employeeId ?? null)
   const userId = computed(() => user.value?.sub ?? null)
 
-  function setTokens(access, refresh) {
+  function setTokens(access: string, refresh?: string | null) {
     accessToken.value = access
     refreshToken.value = refresh || ''
     localStorage.setItem(TOKEN_KEY, access)
@@ -55,12 +55,12 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(REFRESH_TOKEN_KEY)
   }
 
-  async function login(email, password) {
+  async function login(email: string, password: string) {
     const tokens = await authApi.login(email, password)
     setTokens(tokens.access_token, tokens.refresh_token)
   }
 
-  async function completeInvite(token, password) {
+  async function completeInvite(token: string, password: string) {
     const tokens = await authApi.completeInvite(token, password)
     setTokens(tokens.access_token, tokens.refresh_token)
   }

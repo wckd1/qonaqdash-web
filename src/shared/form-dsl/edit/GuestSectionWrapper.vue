@@ -114,7 +114,7 @@ import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { useI18n } from 'vue-i18n'
 import { buildGuestSearchQuery, useGuestSearch } from '@/shared/composables/useGuestSearch'
-import { guestSearchKey, guestPickerAnchorKey } from '@/shared/injectKeys'
+import { guestSearchKey, guestPickerAnchorKey, type GuestSearchRow } from '@/shared/injectKeys'
 import { resolveGroupTitle } from '../utils'
 
 const props = defineProps({
@@ -224,7 +224,7 @@ watch(
 )
 
 watch(
-  () => buildGuestSearchQuery(props.data?.guest),
+  () => buildGuestSearchQuery(props.data?.guest as Record<string, unknown> | undefined),
   () => {
     pickerDismissed.value = false
   },
@@ -276,7 +276,7 @@ function guestPickerOptionAriaLabel(g: Record<string, unknown>): string {
   return parts.join('. ')
 }
 
-function onSelectGuest(apiGuest: Record<string, unknown>) {
+function onSelectGuest(apiGuest: GuestSearchRow) {
   if (!searchContext) return
   const next = searchContext.select(apiGuest)
   if (next) emit('update:data', next)

@@ -4,7 +4,7 @@
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "verbatimModuleSyntax": false,
     "noEmit": true,
     "allowJs": false,

@@ -10,6 +10,7 @@ import {
   normalizeLocale,
   resolveInitialLocale,
   hasPinnedLocale,
+  type AppLocale,
 } from '@/shared/i18n/resolveLocale'
 
 const PERMISSIONS_STORAGE_KEY = 'qonaqdash.account.permissions'
@@ -34,15 +35,14 @@ export const useSettingsStore = defineStore('settings', () => {
   const permissions = ref<Permissions | null>(readCachedPermissions())
   const permissionsLoaded = ref(permissions.value !== null)
 
-  function syncVueI18n(code) {
+  function syncVueI18n(code: AppLocale) {
     i18n.global.locale.value = code
   }
 
   /**
-   * @param {string} code
-   * @param {{ persist?: boolean }} [opts] - persist=true writes LOCALE_STORAGE_KEY (language pin in settings UI).
+   * @param opts.persist - true writes LOCALE_STORAGE_KEY (language pin in settings UI).
    */
-  function setLocale(code, { persist = false } = {}) {
+  function setLocale(code: string | null | undefined, { persist = false } = {}) {
     const normalized = normalizeLocale(code)
     if (!normalized || !SUPPORTED_LOCALES.includes(normalized)) return
     locale.value = normalized

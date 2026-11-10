@@ -17,7 +17,7 @@ const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
 const { locale } = storeToRefs(settingsStore)
 
-function applyDocumentLang(code) {
+function applyDocumentLang(code: string) {
   document.documentElement.lang = code === 'ru' ? 'ru' : 'en'
 }
 

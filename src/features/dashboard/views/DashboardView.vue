@@ -382,7 +382,7 @@ function onPeriodSelect(ev: Event) {
 }
 
 /** Sets dates to the standard window for this inclusive period length (anchored on today). */
-function applyPeriodLength(n) {
+function applyPeriodLength(n: number) {
   const { from, to } = rangeForPeriod(n)
   fromStr.value = from
   toStr.value = to

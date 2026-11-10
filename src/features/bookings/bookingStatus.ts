@@ -2,61 +2,44 @@
  * Booking lifecycle: `data.status` on merged booking form envelope (detail data + runtime form).
  * Status is a root-level BookingItem field, not nested under `stay`.
  *
- * @param {Record<string, unknown> | null | undefined} bookingResponse
- * @returns {string | undefined}
+ * @param bookingResponse - merged envelope `{ data: { status, … } }`, or anything else
  */
-export function getBookingStatusFromResponse(bookingResponse) {
+export function getBookingStatusFromResponse(bookingResponse: unknown): string | undefined {
   if (!bookingResponse || typeof bookingResponse !== 'object') return undefined
-  const data = bookingResponse.data
-  if (data && typeof data === 'object' && data.status != null && data.status !== '') {
-    return String(data.status)
-  }
+  const data = (bookingResponse as { data?: unknown }).data
+  if (!data || typeof data !== 'object') return undefined
+  const status = (data as { status?: unknown }).status
+  if (status != null && status !== '') return String(status)
   return undefined
 }
 
 /**
  * UI may offer edit when PUT is allowed (confirmed or checked_in per API).
  *
- * @param {string | undefined} status
- * @returns {boolean}
  */
-export function bookingStatusAllowsEdit(status) {
+export function bookingStatusAllowsEdit(status: string | undefined): boolean {
   return status === 'confirmed' || status === 'checked_in'
 }
 
 /**
  * Normalize API / UI status strings for comparisons (snake_case, US spelling for canceled).
  *
- * @param {string | undefined | null} status
- * @returns {string | undefined}
  */
-export function normalizeBookingStatus(status) {
+export function normalizeBookingStatus(status: string | undefined | null): string | undefined {
   if (status == null || status === '') return undefined
   let s = String(status).trim().toLowerCase().replace(/-/g, '_')
   if (s === 'cancelled') s = 'canceled'
   return s
 }
 
-/**
- * @param {string | undefined} status
- * @returns {boolean}
- */
-export function bookingStatusAllowsCheckIn(status) {
+export function bookingStatusAllowsCheckIn(status: string | undefined): boolean {
   return normalizeBookingStatus(status) === 'confirmed'
 }
 
-/**
- * @param {string | undefined} status
- * @returns {boolean}
- */
-export function bookingStatusAllowsCheckOut(status) {
+export function bookingStatusAllowsCheckOut(status: string | undefined): boolean {
   return normalizeBookingStatus(status) === 'checked_in'
 }
 
-/**
- * @param {string | undefined} status
- * @returns {boolean}
- */
-export function bookingStatusAllowsCancel(status) {
+export function bookingStatusAllowsCancel(status: string | undefined): boolean {
   return normalizeBookingStatus(status) === 'confirmed'
 }

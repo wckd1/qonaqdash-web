@@ -2,7 +2,8 @@ import type { JwtClaims } from '@/shared/types/auth'
 
 const TOKEN_KEY = 'access_token'
 
-function decode(token) {
+/** JWT payload without signature check; `null` when the token is missing or malformed. */
+function decode(token: string | null | undefined): Record<string, unknown> | null {
   if (!token) return null
   try {
     const base64 = token.split('.')[1]
@@ -14,7 +15,7 @@ function decode(token) {
 }
 
 export function useJwt() {
-  function getClaims(token): JwtClaims | null {
+  function getClaims(token?: string | null): JwtClaims | null {
     const raw = token ?? localStorage.getItem(TOKEN_KEY)
     const payload = decode(raw)
     if (!payload) return null
@@ -31,11 +32,11 @@ export function useJwt() {
     }
   }
 
-  function isExpired(token) {
+  function isExpired(token?: string | null): boolean {
     const raw = token ?? localStorage.getItem(TOKEN_KEY)
-    const payload = decode(raw)
-    if (!payload?.exp) return true
-    return Date.now() >= payload.exp * 1000
+    const exp = decode(raw)?.exp
+    if (typeof exp !== 'number' || !exp) return true
+    return Date.now() >= exp * 1000
   }
 
   return { decode, getClaims, isExpired }

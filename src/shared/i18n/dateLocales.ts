@@ -1,8 +1,5 @@
 import { enUS, ru } from 'date-fns/locale'
 
-/**
- * @param {'en' | 'ru'} code
- */
-export function dateFnsLocaleForApp(code) {
+export function dateFnsLocaleForApp(code: string) {
   return code === 'ru' ? ru : enUS
 }

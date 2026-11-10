@@ -89,7 +89,7 @@ export function fetchEmployees(
   return api
     .get('/api/employees', config)
     .then(({ data }) => (Array.isArray(data) ? data : (data?.employees ?? data ?? [])))
-    .then((rows) => rows.map(normalizeEmployeeListItem).filter((row) => row.id))
+    .then((rows: unknown[]) => rows.map(normalizeEmployeeListItem).filter((row) => row.id))
 }
 
 export function fetchEmployee(
@@ -176,7 +176,7 @@ export function listOccupations(options: RequestOptions = {}): Promise<Occupatio
   return api
     .get('/api/occupations', { signal: options.signal })
     .then(({ data }) => (Array.isArray(data) ? data : (data?.role_groups ?? data ?? [])))
-    .then((rows) =>
+    .then((rows: unknown[]) =>
       rows.map(normalizeOccupationRoleGroup).filter((row) => row.role_key && row.role_title),
     )
 }
@@ -218,7 +218,7 @@ export function replaceEmployeeOccupations(
         ? data.occupation_ids.filter((value: unknown): value is string => typeof value === 'string')
         : [],
       occupations: Array.isArray(data?.occupations)
-        ? data.occupations.map(normalizeOccupation).filter((row) => row.id)
+        ? (data.occupations as unknown[]).map(normalizeOccupation).filter((row) => row.id)
         : [],
     }))
 }
@@ -233,7 +233,7 @@ export function replaceEmployeePermissions(
       ? data.occupation_ids.filter((value: unknown): value is string => typeof value === 'string')
       : [],
     occupation_templates: Array.isArray(data?.occupation_templates)
-      ? data.occupation_templates.map(normalizeOccupation).filter((row) => row.id)
+      ? (data.occupation_templates as unknown[]).map(normalizeOccupation).filter((row) => row.id)
       : [],
     permission_overrides: parsePermissions(data?.permission_overrides),
     effective_permissions: parsePermissions(data?.effective_permissions),

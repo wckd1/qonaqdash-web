@@ -61,7 +61,7 @@ defineProps({
 const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
 
-function onInput(e) {
-  emit('update:modelValue', (e.target.value ?? '').trim())
+function onInput(e: Event) {
+  emit('update:modelValue', ((e.target as HTMLInputElement).value ?? '').trim())
 }
 </script>

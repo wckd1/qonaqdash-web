@@ -145,7 +145,9 @@ const cancelMutation = useCancelBookingMutation()
 const { success } = useNotification()
 const { canOperateBookings, canCancelBookings } = usePermissions()
 
-const pending = ref(null)
+type PendingAction = 'checkIn' | 'checkOut' | 'cancel'
+
+const pending = ref<PendingAction | null>(null)
 const running = ref(false)
 const forceUnpaidAck = ref(false)
 const dialogTitleId = useId()
@@ -211,7 +213,7 @@ watch(
   },
 )
 
-function openConfirm(kind) {
+function openConfirm(kind: PendingAction) {
   forceUnpaidAck.value = false
   pending.value = kind
 }

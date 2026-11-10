@@ -1,16 +1,13 @@
-/** @typedef {'en' | 'ru'} AppLocale */
+export type AppLocale = 'en' | 'ru'
 
 export const LOCALE_STORAGE_KEY = 'qd_locale'
 
-/** @type {AppLocale[]} */
-export const SUPPORTED_LOCALES = ['en', 'ru']
+export const SUPPORTED_LOCALES: AppLocale[] = ['en', 'ru']
 
 /**
  * Map BCP 47 / navigator tags to a supported app locale, or null.
- * @param {string | null | undefined} tag
- * @returns {AppLocale | null}
  */
-export function normalizeLocale(tag) {
+export function normalizeLocale(tag: string | null | undefined): AppLocale | null {
   if (tag == null || typeof tag !== 'string') return null
   let base = tag.split('-')[0].toLowerCase()
   try {
@@ -26,9 +23,8 @@ export function normalizeLocale(tag) {
 
 /**
  * Pinned storage → first supported navigator language → English.
- * @returns {AppLocale}
  */
-export function resolveInitialLocale() {
+export function resolveInitialLocale(): AppLocale {
   try {
     const pinned = localStorage.getItem(LOCALE_STORAGE_KEY)
     const n = normalizeLocale(pinned)
@@ -50,9 +46,8 @@ export function resolveInitialLocale() {
 /**
  * True when the user has pinned a language via `qd_locale` (see settings UI / setLocale persist).
  * Used when merging server user settings so a pin overrides server default locale.
- * @returns {boolean}
  */
-export function hasPinnedLocale() {
+export function hasPinnedLocale(): boolean {
   try {
     const pinned = localStorage.getItem(LOCALE_STORAGE_KEY)
     const n = normalizeLocale(pinned)
@@ -64,9 +59,7 @@ export function hasPinnedLocale() {
 
 /**
  * Tag for Intl.DateTimeFormat etc.
- * @param {AppLocale} code
- * @returns {string}
  */
-export function intlLocaleFromAppLocale(code) {
+export function intlLocaleFromAppLocale(code: AppLocale): string {
   return code === 'ru' ? 'ru-RU' : 'en-US'
 }

@@ -1,20 +1,18 @@
+import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { i18n } from '@/i18n'
 
 export const APP_NAME = 'QonaqDash'
 
 /**
  * Browser tab title: "{page} · QonaqDash". Empty page part yields app name only.
- * @param {string} pagePart
- * @returns {string}
  */
-export function formatDocumentTitle(pagePart) {
+export function formatDocumentTitle(pagePart: string): string {
   const part = typeof pagePart === 'string' ? pagePart.trim() : ''
   if (!part) return APP_NAME
   return `${part} · ${APP_NAME}`
 }
 
-/** @type {Record<string, string>} */
-const ROUTE_TITLE_KEYS = {
+const ROUTE_TITLE_KEYS: Record<string, string> = {
   dashboard: 'page_title.dashboard',
   'manage-hotel': 'page_title.hotel',
   'manage-hotel-occupations': 'page_title.hotel_occupations',
@@ -43,9 +41,8 @@ const ROUTE_TITLE_KEYS = {
 
 /**
  * Set document.title from route (static routes). Detail routes use a provisional title until views refine it.
- * @param {import('vue-router').RouteLocationNormalizedLoaded} route
  */
-export function applyDocumentTitleFromRoute(route) {
+export function applyDocumentTitleFromRoute(route: RouteLocationNormalizedLoaded) {
   const name = route.name
   if (typeof name !== 'string') {
     document.title = APP_NAME

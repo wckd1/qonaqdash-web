@@ -224,7 +224,7 @@ const guestForm = computed(() =>
   composeGuestFormFromEntity(currentGuest.value ?? null, formQ.data.value ?? null),
 )
 
-function formatDate(iso) {
+function formatDate(iso: string | null | undefined) {
   if (!iso) return '—'
   try {
     return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })

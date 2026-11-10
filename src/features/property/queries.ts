@@ -2,7 +2,7 @@ import { defineQueryOptions, useMutation, useQueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import * as propertyApi from '@/features/property/api'
 import type {
-  Hotel,
+  UpdateHotelBody,
   RoomAvailabilityStatus,
   RoomHousekeepingStatus,
   RoomMaintenanceStatus,
@@ -97,7 +97,7 @@ const ROOM_STATE_DEPENDENT_KEYS = [['bookings', 'grid'], ['tasks']] as const
 export function useUpdateHotelMutation() {
   const queryCache = useQueryCache()
   return useMutation({
-    mutation: (body: Omit<Hotel, 'id'>) => propertyApi.updateHotel(body),
+    mutation: (body: UpdateHotelBody) => propertyApi.updateHotel(body),
     // Other screens read currency and check-in/out hours from the hotel query.
     onSuccess: () => invalidateKeys(queryCache, [propertyKeys.hotel]),
   })

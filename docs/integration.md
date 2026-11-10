@@ -24,6 +24,32 @@ This document is the **narrative** companion to the machine-readable API contrac
 - **Errors.** Every error response references the shared `sharedhttp.ErrorResponse` schema (section 3). The only extended body is **409** `booking.outstanding_balance` on check-out (`bookinghttp.OutstandingBalanceErrorResponse`, the same envelope plus `outstanding_balance`). The documented statuses match what the handlers answer: every permission route documents **403**, every operation with a body **413**.
 - **Conformance.** `make contract-conformance` (also a CI job) runs the server on the demo seed in a temporary database and drives every operation with `tools/openapiconv/conformance`, including requests without a token, from an employee without permissions, with malformed ids and with oversized bodies. It fails when a status is not documented for the operation, a body does not match its schema, or an operation is not exercised.
 
+### Time model (D6)
+
+Every hotel lives in its own time zone, and every operation with time goes through it. A manager in another zone and daylight saving changes shift nothing.
+
+- **Hotel time zone.** `GET /api/property/hotel` returns `timezone`, an IANA name (`Asia/Almaty`). It is set at provisioning (`timezone` of `POST /api/internal/provision`, default `property.default_timezone` of the config, `UTC` when the config has none) and changed with `PUT /api/property/hotel` (`hotel.manage`; omitted or empty keeps it). A change is refused with **409** `property.timezone_locked_by_bookings` while the hotel has an active (checked in) or future (confirmed, check-out not passed) booking: their nights would shift. An unknown name is **400** `property.hotel_invalid_timezone` (`iam.provision_invalid_timezone` at provisioning).
+- **Moments** — check-in and check-out of a stay, the planned end of a repair, `created_at` of tasks, ledger entries and rules, the opening of a bill — are instants (`timestamptz`), sent and returned in RFC 3339 with an offset. Requests accept any offset (`2026-03-15T09:00:00Z` and `2026-03-15T14:00:00+05:00` are the same moment). **Responses of hotel-scoped endpoints carry the offset of the hotel zone**: the value is unchanged, only the offset shows the hotel clock. Each booking has its own check-in and check-out moments; the hotel's `check_in_hour` and `check_out_hour` are only defaults the client puts into the form.
+- **Local dates** are dates in the hotel zone. Calendar operations work on them:
+  - the **nights** of a stay are the local dates from the check-in date to the check-out date, not included: a stay from 14:00 to 16:00 two days later has two nights, whatever the times of day, the offset the client sent and daylight saving changes. A stay must have at least one night: check-in and check-out on the same local date are rejected (`booking.dates_required`, `property.list_check_out_before_check_in`);
+  - the days and months of reports, the grid columns and "today" (the client derives today from `timezone`; the server uses the hotel's today as the cut-off of accommodation corrections after check-in).
+- **Inventory by nights.** Double booking is prevented per room and night, by a database constraint on the nights of active stays (`confirmed`, `checked_in`). A stay that starts on the check-out date of the previous guest fits at any time of day: an early check-in does not conflict with a late check-out, that is an operational matter, not a sale. Stays sharing a night are rejected with **409** `booking.overbooking`.
+- **Availability rule** (one rule for the room picker `GET /api/property/rooms/available` and for booking create and update). A room cannot be sold for night *d* when:
+  - another active stay holds it that night;
+  - it is out of order (`availability_status = ooo`), for as long as the status lasts;
+  - it is under maintenance and the planned end is later than the hotel check-in hour on day *d* (a repair until 13:00 with check-in at 14:00 leaves the night free); a repair without a planned end blocks every night.
+- **Calendar periods** in requests are hotel-local dates `YYYY-MM-DD`, half-open `[from, to)`: `from` is included, `to` is not, and `to` must be after `from`.
+
+  | Endpoint | Period | Meaning |
+  |----------|--------|---------|
+  | `GET /api/bookings?from&to` | optional, either bound may be omitted | bookings with a night in `[from, to)` |
+  | `GET /api/bookings/grid?from&to` | required | bookings with a night in `[from, to)`, canceled ones excluded |
+  | `GET /api/billing/reports/*?from&to` | required | entries from local midnight of `from` to local midnight of `to`; days and months in the hotel zone |
+  | pricing rule condition `date_range` (`from`, `to` in the body) | required | nights with `from <= night < to` |
+
+  A malformed or missing date is **400** `common.invalid_date` (`fields` names the parameter), `to` not after `from` is **400** `common.invalid_range`; pricing rule bodies keep their codes (`pricing.pricing_rule_invalid_condition`, `pricing.pricing_rule_invalid_date_range`). RFC 3339 moments are not accepted as period bounds.
+- **Display** (client): show and enter times in the hotel zone; when the browser zone differs, show the hotel zone label next to times and the employee's local time on hover.
+
 ---
 
 ## 1. Architecture overview
@@ -83,7 +109,7 @@ In Swagger UI, each error status row is labeled with normal HTTP wording (e.g. *
 | **C2 — Refresh** | `POST /api/auth/refresh` with refresh JWT |
 | **D — Account** | `GET` / `PUT /api/account` |
 
-**Provisioning locally.** The endpoint exists only when the server runs with `environment: development` (the example config). Send `Secret-Key: <server.secret_key>` and `{organization_name, hotel_name, user_email, user_first_name, user_last_name}`; the response carries `invite_token`, which `POST /api/auth/invite/{token}` with `{password}` turns into a login. `make seed` provisions the demo organization the same way. Outside development there is no provisioning route.
+**Provisioning locally.** The endpoint exists only when the server runs with `environment: development` (the example config). Send `Secret-Key: <server.secret_key>` and `{organization_name, hotel_name, timezone?, user_email, user_first_name, user_last_name}` (`timezone` is the IANA zone of the hotel, default `property.default_timezone`); the response carries `invite_token`, which `POST /api/auth/invite/{token}` with `{password}` turns into a login. `make seed` provisions the demo organization the same way. Outside development there is no provisioning route.
 
 **Login organization (temporary, until WP6).** A user (one email) may be an employee of several organizations: creating an employee with the email of an existing user links that user to the organization. Login issues tokens for **the organization the user logged into last; if there is none yet, the earliest one the user was linked to**. Refresh keeps the organization of the refresh token. Choosing the organization at login comes in WP6.
 
@@ -118,7 +144,7 @@ Every route that needs a permission declares it (`internal/infra/di/route_access
 
 - **Sub-operations** of an allowed action need no right of their own: a booking with a new inline guest creates the guest with `bookings.create` alone; `cleaning` / `under_maintenance` through the room-status aliases open the task without `create`.
 - **Data embedded in a response** needs no right of its resource: the guest and `outstanding_balance` of a booking, `room_number` and `assignee_name` of a task, `room_type_name` of ledger entries, quote nights and base rates, the stored quote of a booking (readable by every booking reader). Use these names instead of resolving the ids through `GET /api/property/room-types` or `GET /api/employees`, which need their own rights.
-- **Data an action cannot do without** is readable with the action's right: the room picker (`GET /api/property/rooms/available`) for booking writers and task creators, the hotel's rooms (the same endpoint without `from`/`to`) for every booking reader, since the reservation grid cannot be shown without them, assignee candidates (`GET /api/tasks/assignees`) for assigners, pricing condition candidates for rule managers, the basic hotel data for every employee of the hotel.
+- **Data an action cannot do without** is readable with the action's right: the room picker (`GET /api/property/rooms/available`) for booking writers and task creators, the hotel's rooms (the same endpoint without `check_in`/`check_out`) for every booking reader, since the reservation grid cannot be shown without them, assignee candidates (`GET /api/tasks/assignees`) for assigners, pricing condition candidates for rule managers, the basic hotel data for every employee of the hotel.
 - **A separate right stays** for an explicitly requested resource (guest list, room card, employee list) and for an explicit action with its own right: assigning (also `assignee_employee_id` on creation), granting permissions, `planned_end` and reassignment through the room-status aliases.
 
 The frontend follows the same rule: it does not hide embedded data and does not request a separate resource when the data already came in the response.
@@ -207,7 +233,7 @@ Invalid transitions → **422** with `booking.invalid_status_transition` (see Sw
 
 **Optimistic concurrency:** **409** with `booking.concurrent_modification` — re-fetch booking or form and retry (Swagger lists this on the relevant writes).
 
-**Room availability and concurrent writers:** `POST /api/bookings` and `PUT /api/bookings/{id}` (when dates or rooms change) can return **409** with `booking.overbooking` if nothing is available for the requested room type and stay window. That includes **races**: two sessions (e.g. front desk + OTA) can both see a free room, but only the first commit wins. The backend re-checks allocation right before commit and enforces non-overlapping **active** stays per physical room at persistence time, so the reservation grid and booking list stay aligned with what actually committed—there is no “event saved but grid out of date” split for those writes. **Client hint:** treat `booking.overbooking` like a lost race—reload availability (`GET /api/bookings/grid`, property availability helpers, etc.) and ask the user to adjust dates, room type, or specific room, then retry.
+**Room availability and concurrent writers:** `POST /api/bookings` and `PUT /api/bookings/{id}` (when dates or rooms change) can return **409** with `booking.overbooking` if nothing is available for the requested room type and stay window. That includes **races**: two sessions (e.g. front desk + OTA) can both see a free room, but only the first commit wins. The backend re-checks allocation right before commit and enforces one **active** stay per physical room and night (the nights of the Time model) at persistence time, so the reservation grid and booking list stay aligned with what actually committed—there is no “event saved but grid out of date” split for those writes. **Client hint:** treat `booking.overbooking` like a lost race—reload availability (`GET /api/bookings/grid`, property availability helpers, etc.) and ask the user to adjust dates, room type, or specific room, then retry.
 
 ---
 
@@ -283,11 +309,11 @@ Use the IAM permission tree for **UI composition**, but align it with the actual
 
 | Module / operation family | Primary permission(s) for UI | Notes |
 |---------------------------|------------------------------|-------|
-| **Property** hotel read | any employee of the hotel | Basic data (name, currency, check-in and check-out hours) for every screen; `hotel.view` gates no request any more |
+| **Property** hotel read | any employee of the hotel | Basic data (name, currency, check-in and check-out hours, time zone) for every screen; `hotel.view` gates no request any more |
 | **Property** hotel update | `hotel.manage` | Hotel settings writes |
 | **Property** rooms / room types read | `rooms.view` | Lists, detail, room activity |
-| **Property** room picker (`rooms/available` with `from`/`to`) | `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` | Choosing a room is a part of writing a booking or creating a task |
-| **Property** hotel rooms for the reservation grid (`rooms/available` without `from`/`to`) | the room picker rights or any booking read right (`bookings.view`, `operate`, `cancel`) | Every room of the hotel with its type name and state; the grid rows, no `rooms.view` needed |
+| **Property** room picker (`rooms/available` with `check_in`/`check_out`) | `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` | Choosing a room is a part of writing a booking or creating a task |
+| **Property** hotel rooms for the reservation grid (`rooms/available` without `check_in`/`check_out`) | the room picker rights or any booking read right (`bookings.view`, `operate`, `cancel`) | Every room of the hotel with its type name and state; the grid rows, no `rooms.view` needed |
 | **Property** rooms create | `rooms.create` | Create room / room type |
 | **Property** rooms update/delete | `rooms.manage` | Room and room type writes; availability / housekeeping / maintenance axis writes |
 | **Tasks** list/detail (housekeeping) | `housekeeping_tasks.view` | Housekeeping task pool |
@@ -330,7 +356,7 @@ These exceptions are intentional. Frontend should **not** over-restrict them.
 | **Accommodation quote during booking flow** | A user with `bookings.create` or `bookings.modify` may access pricing quote flows even without `pricing.view`; the stored quote of a booking (`GET /api/pricing/bookings/{id}/quote`) is readable by every booking reader (`bookings.view`, `modify`, `operate`, `cancel`) and with `bookings.create` | The quote is a part of the booking |
 | **Booking balance** | `outstanding_balance` in booking list, grid, detail, check-in and check-out is shown to everyone who gets the response; only `GET /api/billing/bookings/{id}/balance` needs a billing right | The balance is a part of the booking |
 | **Room picker** | `GET /api/property/rooms/available` with `bookings.create` / `bookings.modify` or a task `create` right, without `rooms.view` | Choosing a room is a part of the booking or task form |
-| **Reservation grid rows** | `GET /api/property/rooms/available` without `from`/`to` with any booking read right; with `from`/`to` it answers 403 unless the caller has a room picker right | The grid cannot be shown without the hotel's rooms; the grid response itself stays a list of bookings |
+| **Reservation grid rows** | `GET /api/property/rooms/available` without `check_in`/`check_out` with any booking read right; with them it answers 403 unless the caller has a room picker right | The grid cannot be shown without the hotel's rooms; the grid response itself stays a list of bookings |
 | **Assignee candidates** | `GET /api/tasks/assignees?type=` with the `assign` right of the type, without `employees.view`; it returns `id` and `name` only | The candidates are the data the assign action needs |
 | **Booking read/detail/list/grid for operational staff** | A user with `bookings.modify`, `bookings.operate`, or `bookings.cancel` may still need booking reads even without plain `bookings.view` | Read access is bundled into operational reservation workflows |
 | **Billing bill/balance reads for operators** | A user with `billing.collect_payment`, `billing.modify`, or `billing.refund` may still read bill/balance screens even without plain `billing.view` | Operators need folio context to perform the allowed action |
@@ -382,7 +408,7 @@ The **Pricing** bounded context exposes its HTTP API under **`/api/pricing/`** (
 
 | Entity | Purpose | Key constraint |
 |--------|---------|----------------|
-| **Pricing rule** | IF-THEN block with typed conditions and effect (percent/fixed, per-night/total). Conditions may target booking-form properties, one explicit date, or an inclusive date range. | `priority` unique per hotel; lower = first applied |
+| **Pricing rule** | IF-THEN block with typed conditions and effect (percent/fixed, per-night/total). Conditions may target booking-form properties, one explicit night date, or a half-open range of night dates `[from, to)` (hotel-local dates, see Time model). | `priority` unique per hotel; lower = first applied |
 
 **Admin surface:** the settings UI with three panels — **Base Rates** (`GET` / `PUT /api/pricing/base-rates`, bulk edit per room type), **Condition Candidates** (`GET /api/pricing/conditions`, hotel-scoped response; see §6.1), and the **Rules Builder** (CRUD under `/api/pricing/rules`). The admin creates hotel-scoped rules, but property-condition candidates combine a synthetic **`room_type`** row (same room-type list as the booking form runtime) with fields from the org-level booking form index. The typed condition model is described by the pricing API contract and the rules section below.
 
@@ -438,7 +464,7 @@ This distinction is important when deciding whether to hide the folio screen ent
 
 - `name`, `priority`, writable `status`, `conditions[]`, `effect`
 - response-only metadata: `id`, `created_at`, `updated_at`, `invalid_reason`
-- v1 condition families: `property`, `specific_date`, `date_range`
+- v1 condition families: `property`, `specific_date` (`date`: one night), `date_range` (`from`, `to`: the nights `from <= night < to`, `to` after `from`)
 - v1 property operators: `eq`, `not_eq` (both use `value`)
 
 **Invalidation semantics:** rules are hard-deleted only when explicitly deleted. If a booking form change breaks a rule reference, the rule remains stored but becomes `invalid` with `invalid_reason` until repaired by the admin (see §5.8 for codes and re-activation flow). The frontend should treat `invalid_reason.code` as the stable UI key for warning badges and repair prompts.
@@ -489,11 +515,11 @@ The grid is the main booking calendar: rooms on one axis, dates on the other.
 
 | Need | Typical API (details in Swagger) |
 |------|----------------------------------|
-| Bars / occupancy | `GET /api/bookings/grid?from=&to=` (`YYYY-MM-DD`; rows overlap that window by `check_in` / `check_out`) |
-| Room rows | `GET /api/property/rooms` |
-| Grouping by type | `GET /api/property/room-types` |
+| Bars / occupancy | `GET /api/bookings/grid?from=&to=` (hotel-local dates `YYYY-MM-DD`, `[from, to)`: the visible columns; a booking is returned when it has a night in them; canceled bookings are not returned) |
+| Room rows | `GET /api/property/rooms/available` without a stay (every room with its type name and state) |
+| Grouping by type | `room_type_id` / `room_type_name` of the room rows |
 
-**Layout:** the grid returns unified `BookingItem` objects — rooms are nested under `stay.rooms[]`. One row per physical room (grouped by type) on the client. Guest names are denormalized in the `guest` object.
+**Layout:** the grid returns unified `BookingItem` objects — rooms are nested under `stay.rooms[]`. One row per physical room (grouped by type) on the client. Guest names are denormalized in the `guest` object. Columns are hotel-local dates; a booking occupies the cells of its nights (check-in date to the day before the check-out date), so an arrival on the last visible day is shown, a departure on the first one is not, and a back-to-back stay starts in the cell after the previous one ends.
 
 **Suggested interactions:** empty cell → create with pre-filled dates/room; bar → detail; resize/drag → `PUT /api/bookings/{id}`; changing range → reload grid.
 
@@ -523,12 +549,12 @@ The booking module **does not persist** `adjustments` in stored booking data; it
 |----------|------------------------|
 | `POST /api/bookings` / `PUT /api/bookings/{id}` | Unified `BookingItem` has **no** `accommodation` — use `GET /api/pricing/bookings/{id}/quote` after write if you need the snapshot. |
 | `GET /api/bookings/{id}` | **No** `accommodation`, **no** `adjustments` — only `{ guest, stay, … }` + `_form`. |
-| `GET /api/bookings` (list) | `outstanding_balance` only |
+| `GET /api/bookings` (list) | `outstanding_balance` only (rooms under `stay.rooms[]` like every `BookingItem`) |
 | `GET /api/bookings/grid` | `outstanding_balance` only |
 
 List and grid endpoints include `outstanding_balance` — the current amount owed on the booking (updated by the billing projector after every balance-mutating operation).
 
-**Snapshot shape (stored / quote GET):** same line-by-line structure as the quote preview response: `nights[]`, `nights_subtotal`, `total_adjustments[]`, `grand_total`, `version`, `calculated_at`, plus optional **`manual_adjustments`** (raw inputs). Each line adjustment carries `source`, optional `source_id`, `name`, `type`, `value`, `apply_to`, `amount` (see §6.3). `version` increments on each re-quote; `calculated_at` is UTC.
+**Snapshot shape (stored / quote GET):** same line-by-line structure as the quote preview response: `nights[]`, `nights_subtotal`, `total_adjustments[]`, `grand_total`, `version`, `calculated_at`, plus optional **`manual_adjustments`** (raw inputs). Each line adjustment carries `source`, optional `source_id`, `name`, `type`, `value`, `apply_to`, `amount` (see §6.3). `version` increments on each re-quote; `calculated_at` is a moment with the hotel offset. Night `date`s are hotel-local dates.
 
 **Non-blocking:** if pricing fails (e.g. no base rates configured), the booking is created/updated successfully but no row exists in `pricing.booking_quotes` until a later successful quote — `GET …/quote` returns 404 until then.
 
@@ -595,7 +621,7 @@ When a booking is checked in (`PUT /api/bookings/{id}/check-in`), the **Pricing 
 
 ### 7.3 Financial reports
 
-The billing module exposes hotel-wide report endpoints under `/api/billing/reports/`. All endpoints use `organization_id` and `hotel_id` from the JWT (same as other hotel-scoped routes). Date-range endpoints accept `from` (inclusive) and `to` (exclusive) as query parameters in `YYYY-MM-DD` or RFC 3339 format.
+The billing module exposes hotel-wide report endpoints under `/api/billing/reports/`. All endpoints use `organization_id` and `hotel_id` from the JWT (same as other hotel-scoped routes). Date-range endpoints take `from` (included) and `to` (not included) as hotel-local dates `YYYY-MM-DD` (see Time model): the period runs from local midnight of `from` to local midnight of `to`. RFC 3339 is not accepted. Days and months of the breakdowns are dates in the hotel zone, so an entry half an hour before local midnight and one half an hour after it fall on different days. To show "March 1 to March 31" pass `from=2026-03-01&to=2026-04-01`.
 
 | Endpoint | Purpose | Date range |
 |----------|---------|------------|
@@ -621,7 +647,7 @@ Recommended rendering order: charges section first (line items + `total_charges`
 
 **Outstanding balances** returns all open guest bills with non-zero balance: `{ bills: [...], total_outstanding }`. Each bill carries `bill_id`, `booking_id`, `guest_id`, `status`, `opened_at`, `total_charges`, `total_payments`, `outstanding`. No date-range filter — always current state.
 
-**Error codes:** `common.invalid_date_range` (400) when `from`/`to` are missing, malformed, or `to` is not after `from`.
+**Error codes:** `common.invalid_date` (400) when `from`/`to` is missing or not a date `YYYY-MM-DD` (`fields` names it), `common.invalid_range` (400) when `to` is not after `from`.
 
 **Client integration:** amounts are minor currency units (same as all billing). Format with the hotel's `currency` from `GET /api/property/hotel`. All responses include a `period` object (`{ from, to }` as `YYYY-MM-DD`) for display context (except outstanding, which has no period).
 
@@ -631,13 +657,13 @@ Recommended rendering order: charges section first (line items + `total_charges`
 
 - **Never put `organization_id` / `hotel_id` in bodies** for tenancy — they come from the JWT.
 - **Guest** profiles are org-scoped (shared across hotels). **Property** and **booking** data are org + hotel scoped where Swagger marks hotel context.
-- **Dates:** RFC 3339 in JSON (e.g. `2026-03-15T14:00:00Z`); local display/timezone is a client concern.
+- **Dates and moments:** see Time model. Moments are RFC 3339 with an offset, returned with the hotel offset (`2026-03-15T14:00:00+05:00`); calendar dates and periods are hotel-local `YYYY-MM-DD`, periods `[from, to)`. Show and enter times in the hotel zone (`timezone` of `GET /api/property/hotel`).
 - **IDs:** UUID strings.
 - **Booking guest:** `guest.id` set → link existing; omit / null → create inline from nested fields.
 - **Rooms:** optional `roomID` → server auto-assigns a free room of that type; none free → **409** `booking.overbooking`.
 - **Blocked guests:** `DELETE /api/guests/{id}` blocks the profile; blocked guests remain in `GET /api/guests` and `GET /api/guests/{id}` with `blocked: true`.
 - **Currency & monetary values:** `GET /api/property/hotel` returns `currency` (ISO 4217, e.g. `KZT`). All monetary values (`base_rate_minor`, future ledger amounts) are **integers in minor currency units**. Convert to display format using the ISO 4217 exponent (e.g. `1000000` in `KZT` = 10 000.00 ₸ with exponent 2).
-- **Hotel hours:** `check_in_hour` / `check_out_hour` on `GET /api/property/hotel` (HH:MM, defaults `14:00` / `12:00`). Editable via `PUT /api/property/hotel`. The `check_out_hour` is used server-side as the close-of-day boundary for billing accommodation corrections.
+- **Hotel hours:** `check_in_hour` / `check_out_hour` on `GET /api/property/hotel` (HH:MM, defaults `14:00` / `12:00`, wall-clock times in the hotel zone). Editable via `PUT /api/property/hotel`. They are the default times of a new stay; the server uses `check_in_hour` for the maintenance rule of availability (see Time model). Accommodation corrections after check-in leave the nights before the hotel's today untouched.
 - **Room-type base rates:** managed via `GET` / `PUT /api/pricing/base-rates` (not on room-type CRUD). Returns `{ rates: [{ room_type_id, base_rate_minor }] }`. New room types start at 0; set the rate in the pricing Base Rates tab. Use the hotel's `currency` for display formatting.
 
 ---
@@ -697,19 +723,19 @@ Legacy `PUT /api/property/rooms/{id}` (full room update with the single `status`
 
 ### 9.2 Stay-aware availability (`rooms/available`)
 
-`GET /api/property/rooms/available?from=&to=&exclude=` is the single authoritative source for room selection. With `from`/`to` it is readable with `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` (owned level included): choosing a room is a part of writing a booking or creating a task, so the booking and task forms use it instead of `GET /api/property/rooms`.
+`GET /api/property/rooms/available?check_in=&check_out=&exclude=` is the single authoritative source for room selection. `check_in` and `check_out` are the moments of the stay in RFC 3339, the same values as `stay.check_in` / `stay.check_out` of the booking write (both or neither; the `dd.MM.yyyy` `from`/`to` of earlier versions is gone). The server turns them into nights in the hotel zone and applies the availability rule of the Time model, the same rule as the booking write, so a room listed here is accepted by it. With a stay it is readable with `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` (owned level included): choosing a room is a part of writing a booking or creating a task, so the booking and task forms use it instead of `GET /api/property/rooms`. **Error codes:** `property.list_check_in_check_out_both_or_neither`, `property.list_invalid_check_in`, `property.list_invalid_check_out`, `property.list_check_out_before_check_in` (check-out not on a later hotel date than check-in), `property.list_invalid_exclude_booking_id`.
 
-Without `from`/`to` it lists **every room of the hotel**, blocked ones included with their `state` (`blocked_by_inventory`, `blocked_by_maintenance`), each with `room_type_id` and `room_type_name`. This form is also readable by every booking reader (`bookings.view`, `bookings.operate`, `bookings.cancel`): use it for the rows of the reservation grid instead of `GET /api/property/rooms` and `GET /api/property/room-types`, which need `rooms.view`. Each item in the response carries:
+Without a stay it lists **every room of the hotel**, blocked ones included with their `state` (`blocked_by_inventory`, `blocked_by_maintenance`), each with `room_type_id` and `room_type_name`. This form is also readable by every booking reader (`bookings.view`, `bookings.operate`, `bookings.cancel`): use it for the rows of the reservation grid instead of `GET /api/property/rooms` and `GET /api/property/room-types`, which need `rooms.view`. Each item in the response carries:
 
 - `state`: one of
   - `selectable` — offerable with no warnings
   - `selectable_with_warning` — offerable but operationally imperfect (see `warnings[]`)
   - `blocked_by_inventory` — `availability_status = ooo` (filtered out of a stay, listed without one)
-  - `blocked_by_maintenance` — `maintenance_status = under_maintenance` and the stay overlaps `planned_end` (filtered out of a stay, listed without one)
-  - `blocked_by_occupancy` — already reserved in the window
+  - `blocked_by_maintenance` — `maintenance_status = under_maintenance` and the planned end is later than the hotel check-in hour on the first night (or no planned end); without a stay every room under maintenance (filtered out of a stay, listed without one)
+  - `blocked_by_occupancy` — another active stay holds the room on a night of the stay
 - `warnings[]`: string keys for i18n. Current values: `housekeeping.dirty`, `housekeeping.cleaning`, `housekeeping.inspection`, `maintenance.required`, `availability.ooo`, `availability.occupied`, `maintenance.under_maintenance`.
 
-**Front-desk guidance:** a dirty, cleaning, or inspection-pending room remains selectable with a warning — do not hide it from the picker. The server enforces the same rules as the booking write path, so a room marked `ooo` or `under_maintenance` (within the stay window) cannot be assigned even if the client bypasses the UI filter.
+**Front-desk guidance:** a dirty, cleaning, or inspection-pending room remains selectable with a warning — do not hide it from the picker. The server enforces the same rule on the booking write path, so a room out of order or under maintenance for a night of the stay cannot be assigned even if the client bypasses the UI filter, and a room the picker offers is accepted.
 
 ### 9.3 Checkout → housekeeping
 

@@ -133,7 +133,7 @@ const dirty = computed(
 )
 
 /** Copies server values into the form; `fallback` fills fields the response lacks. */
-function applyHotel(data: Partial<Hotel> | undefined, fallback: Omit<Hotel, 'id'>) {
+function applyHotel(data: Partial<Hotel> | undefined, fallback: Omit<Hotel, 'id' | 'timezone'>) {
   const n = typeof data?.name === 'string' ? data.name : fallback.name
   name.value = n
   originalName.value = n

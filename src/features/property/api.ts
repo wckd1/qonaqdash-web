@@ -30,6 +30,7 @@ export function updateHotel(body: UpdateHotelBody): Promise<Hotel> {
         currency: body.currency,
         check_in_hour: body.check_in_hour,
         check_out_hour: body.check_out_hour,
+        timezone: body.timezone,
       },
     })
     .then(({ data }) => data)

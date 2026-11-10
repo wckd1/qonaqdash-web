@@ -241,7 +241,8 @@ export interface paths {
     /**
      * List ledger entries
      * @description Returns a paginated, filterable list of all ledger entries for the current hotel. Supports multiple entry_type values (comma-separated).
-     *     **Error codes:** common.invalid_date_range.
+     *     `from` and `to` are hotel-local dates `YYYY-MM-DD` of the period `[from, to)`: the period starts at local midnight of `from` and ends at local midnight of `to`, not included. Days and months are dates in the hotel time zone.
+     *     **Error codes:** common.invalid_date, common.invalid_range.
      */
     get: operations['listLedgerEntries']
     put?: never
@@ -262,7 +263,8 @@ export interface paths {
     /**
      * Daily breakdown
      * @description Returns charges, payments, refunds, and net totals grouped by day for the current hotel within the specified date range. Supports multi-value entry_type filter (comma-separated).
-     *     **Error codes:** common.invalid_date_range.
+     *     `from` and `to` are hotel-local dates `YYYY-MM-DD` of the period `[from, to)`: the period starts at local midnight of `from` and ends at local midnight of `to`, not included. Days and months are dates in the hotel time zone.
+     *     **Error codes:** common.invalid_date, common.invalid_range.
      */
     get: operations['getDailyBreakdown']
     put?: never
@@ -283,7 +285,8 @@ export interface paths {
     /**
      * Monthly breakdown
      * @description Returns charges, payments, refunds, and net totals grouped by month for the current hotel within the specified date range. Supports multi-value entry_type filter (comma-separated).
-     *     **Error codes:** common.invalid_date_range.
+     *     `from` and `to` are hotel-local dates `YYYY-MM-DD` of the period `[from, to)`: the period starts at local midnight of `from` and ends at local midnight of `to`, not included. Days and months are dates in the hotel time zone.
+     *     **Error codes:** common.invalid_date, common.invalid_range.
      */
     get: operations['getMonthlyBreakdown']
     put?: never
@@ -324,7 +327,8 @@ export interface paths {
     /**
      * Financial overview
      * @description Returns aggregated revenue breakdown (accommodation, adjustments, service charges), payments, refunds, corrections, net balance, and current total outstanding for the hotel.
-     *     **Error codes:** common.invalid_date_range.
+     *     `from` and `to` are hotel-local dates `YYYY-MM-DD` of the period `[from, to)`: the period starts at local midnight of `from` and ends at local midnight of `to`, not included. Days and months are dates in the hotel time zone.
+     *     **Error codes:** common.invalid_date, common.invalid_range.
      */
     get: operations['getFinancialOverview']
     put?: never
@@ -344,9 +348,9 @@ export interface paths {
     }
     /**
      * List bookings
-     * @description Distinct bookings (read model). Optional `q` on guest name. With `from`+`to` (`YYYY-MM-DD`, UTC midnight): `check_out >= from` **and** `check_in <= to`.
+     * @description Distinct bookings (read model), each with its rooms under `stay.rooms[]`. Optional `q` on guest name. `from` and `to` are hotel-local dates `YYYY-MM-DD` of the period `[from, to)`: a booking is listed when it has a night in it (a night is the local date from the check-in date to the check-out date, not included). Either bound may be omitted (unbounded).
      *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
-     *     **Error codes:** booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
+     *     **Error codes:** common.invalid_date, common.invalid_range.
      */
     get: operations['listBookings']
     put?: never
@@ -514,9 +518,9 @@ export interface paths {
     }
     /**
      * Get reservation grid
-     * @description Bookings in the date range with rooms nested under `stay.rooms[]`. Overlap: `check_in <= to` and `check_out >= from` (dates `YYYY-MM-DD`, UTC midnight). `from` and `to` required.
+     * @description Bookings with a night in the period, rooms nested under `stay.rooms[]`. `from` and `to` (required) are hotel-local dates `YYYY-MM-DD` of the period `[from, to)`, the grid columns: a booking is shown when it has a night in it (a night is the local date from the check-in date to the check-out date, not included), so an arrival on the last visible day is shown and a departure on the first one is not. Canceled bookings are not shown.
      *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
-     *     **Error codes:** booking.grid_from_to_required, booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
+     *     **Error codes:** common.invalid_date, common.invalid_range.
      */
     get: operations['getReservationGrid']
     put?: never
@@ -747,7 +751,7 @@ export interface paths {
     }
     /**
      * List bookings by guest
-     * @description Bookings for CRM “previous stays”; same item shape as GET `/api/bookings` (empty array if none).
+     * @description Bookings for CRM “previous stays”; same item shape as GET `/api/bookings`, rooms under `stay.rooms[]` (empty array if none).
      *     **Error codes:** common.invalid_guest_id.
      */
     get: operations['listGuestBookings']
@@ -815,8 +819,8 @@ export interface paths {
     put?: never
     /**
      * Provision a new organization
-     * @description Internal bootstrap: creates organization, hotel, user, and employee in one transaction. Requires `Secret-Key` header (not Bearer auth). `user_first_name`/`user_last_name` seed the auth user and are copied once into the created employee profile (no further sync).
-     *     **Error codes:** 400 — iam.provision_fields_required. 401 — iam.secret_key_missing, iam.secret_key_invalid. 409 — iam.provision_conflict.
+     * @description Internal bootstrap: creates organization, hotel, user, and employee in one transaction. Requires `Secret-Key` header (not Bearer auth). `user_first_name`/`user_last_name` seed the auth user and are copied once into the created employee profile (no further sync). Optional `timezone` (IANA) is the hotel time zone; omitted or empty takes `property.default_timezone` of the config.
+     *     **Error codes:** 400 — iam.provision_fields_required, iam.provision_invalid_timezone. 401 — iam.secret_key_missing, iam.secret_key_invalid. 409 — iam.provision_conflict.
      */
     post: operations['provisionOrganization']
     delete?: never
@@ -1044,15 +1048,15 @@ export interface paths {
     }
     /**
      * Get hotel profile
-     * @description Hotel from JWT (org + hotel scope). Includes the hotel's default `currency` (ISO 4217 alpha-3).
+     * @description Hotel from JWT (org + hotel scope). Includes the hotel's default `currency` (ISO 4217 alpha-3) and its IANA `timezone`: nights, report days, grid columns and "today" are dates in this zone, and moments in responses carry its offset.
      *     Basic hotel data every employee of the hotel needs: readable by any employee of the hotel, no permission required. Changing it (`PUT`) needs `hotel.manage`.
      *     **Error codes:** property.hotel_not_found.
      */
     get: operations['getHotel']
     /**
      * Update hotel profile
-     * @description `name` and `currency` required; name trimmed server-side.
-     *     **Error codes:** property.hotel_name_required, property.hotel_invalid_currency; property.hotel_not_found.
+     * @description `name` and `currency` required; name trimmed server-side. `timezone` (IANA) is optional: omitted or empty keeps the zone. It changes only while the hotel has no active (checked in) or future (confirmed, check-out not passed) bookings, otherwise 409: their nights would shift.
+     *     **Error codes:** property.hotel_name_required, property.hotel_invalid_currency, property.hotel_invalid_check_in_hour, property.hotel_invalid_check_out_hour, property.hotel_invalid_timezone; property.hotel_not_found; property.timezone_locked_by_bookings.
      */
     put: operations['updateHotel']
     post?: never
@@ -1264,9 +1268,9 @@ export interface paths {
     }
     /**
      * List available rooms
-     * @description Room picker: omit `from`/`to` for all rooms of the hotel, blocked ones included with their `state` (the rows of the reservation grid). With `from`+`to` (`dd.MM.yyyy`), only rooms free in that range. With `exclude` (booking UUID) and a range, that booking’s occupancy is ignored so its rooms stay selectable.
-     *     Choosing a room is a part of writing a booking or creating a task: with `from`+`to` readable with `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` (owned level included). Without them the list of the hotel's rooms is also readable by every booking reader (`bookings.view`, `bookings.operate`, `bookings.cancel`): the reservation grid cannot be shown without it.
-     *     **Error codes:** property.list_from_to_both_or_neither, property.list_invalid_from_date, property.list_invalid_to_date, property.list_to_before_from, property.list_invalid_exclude_booking_id.
+     * @description Room picker: omit `check_in`/`check_out` for all rooms of the hotel, blocked ones included with their `state` (the rows of the reservation grid). With both, the moments of the stay in RFC 3339 like the booking write (`stay.check_in`, `stay.check_out`), only rooms sellable for every night of the stay. The nights are the hotel-local dates from the check-in date to the check-out date, not included: the same rule as the booking write, so a room listed here is accepted by it. A room is blocked on night *d* when another active stay holds it that night, when it is out of order, or when it is under maintenance with a planned end later than the hotel check-in hour on day *d* (without a planned end, every night). With `exclude` (booking UUID) and a stay, that booking's occupancy is ignored so its rooms stay selectable.
+     *     Choosing a room is a part of writing a booking or creating a task: with a stay readable with `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` (owned level included). Without it the list of the hotel's rooms is also readable by every booking reader (`bookings.view`, `bookings.operate`, `bookings.cancel`): the reservation grid cannot be shown without it.
+     *     **Error codes:** property.list_check_in_check_out_both_or_neither, property.list_invalid_check_in, property.list_invalid_check_out, property.list_check_out_before_check_in, property.list_invalid_exclude_booking_id.
      */
     get: operations['listAvailableRooms']
     put?: never
@@ -1822,16 +1826,18 @@ export interface components {
     'bookinghttp.BookingStayData': {
       /**
        * Format: date-time
-       * @example 2026-03-15T14:00:00Z
+       * @description RFC 3339 with the hotel offset
+       * @example 2026-03-15T14:00:00+05:00
        */
       check_in: string
       /**
        * Format: date-time
-       * @example 2026-03-17T12:00:00Z
+       * @description RFC 3339 with the hotel offset
+       * @example 2026-03-17T12:00:00+05:00
        */
       check_out: string
-      /** @description omitted in list items */
-      rooms?: components['schemas']['bookinghttp.BookingRoomData'][]
+      /** @description every room of the booking, in every response */
+      rooms: components['schemas']['bookinghttp.BookingRoomData'][]
     }
     'bookinghttp.BookingStayInput': {
       /**
@@ -1947,17 +1953,33 @@ export interface components {
       status: 'confirmed' | 'checked_in' | 'checked_out' | 'canceled'
       stay: components['schemas']['guesthttp.GuestBookingStayData']
     }
+    'guesthttp.GuestBookingRoomData': {
+      /**
+       * Format: uuid
+       * @example 550e8400-e29b-41d4-a716-446655440020
+       */
+      room_id?: string
+      /**
+       * Format: uuid
+       * @example 550e8400-e29b-41d4-a716-446655440010
+       */
+      room_type: string
+    }
     'guesthttp.GuestBookingStayData': {
       /**
        * Format: date-time
-       * @example 2026-03-15T14:00:00Z
+       * @description RFC 3339 with the offset of the booking's hotel
+       * @example 2026-03-15T14:00:00+05:00
        */
       check_in: string
       /**
        * Format: date-time
-       * @example 2026-03-17T12:00:00Z
+       * @description RFC 3339 with the offset of the booking's hotel
+       * @example 2026-03-17T12:00:00+05:00
        */
       check_out: string
+      /** @description every room of the booking */
+      rooms: components['schemas']['guesthttp.GuestBookingRoomData'][]
     }
     'guesthttp.GuestDataRequest': {
       /** @example john@example.com */
@@ -2594,6 +2616,11 @@ export interface components {
       hotel_name: string
       /** @example Qonaq Hotel Group */
       organization_name: string
+      /**
+       * @description IANA time zone of the hotel; omitted or empty takes property.default_timezone of the config
+       * @example Asia/Almaty
+       */
+      timezone?: string
       /** @example admin@qonaq.com */
       user_email: string
       /** @example Aigerim */
@@ -2904,6 +2931,7 @@ export interface components {
     'pricinghttp.RuleConditionDTO': {
       /**
        * Format: date
+       * @description specific_date: the night
        * @example 2026-12-31
        */
       date?: string
@@ -2911,6 +2939,7 @@ export interface components {
       field_id?: string
       /**
        * Format: date
+       * @description date_range: first night, included
        * @example 2026-12-25
        */
       from?: string
@@ -2918,7 +2947,8 @@ export interface components {
       operator?: components['schemas']['domain.PropertyOperator']
       /**
        * Format: date
-       * @example 2026-12-31
+       * @description date_range: end, not included; after from
+       * @example 2027-01-01
        */
       to?: string
       /** @example property */
@@ -3060,6 +3090,11 @@ export interface components {
       id: string
       /** @example Grand Plaza */
       name: string
+      /**
+       * @description IANA time zone: nights, report days, grid columns and shown times follow it
+       * @example Asia/Almaty
+       */
+      timezone: string
     }
     'propertyhttp.RoomActivityEntryResponse': {
       event_id: string
@@ -3152,6 +3187,11 @@ export interface components {
        * @example Grand Plaza
        */
       name: string
+      /**
+       * @description IANA time zone; empty or omitted keeps the current one. A change is 409 while the hotel has active or future bookings
+       * @example Asia/Almaty
+       */
+      timezone?: string
     }
     'propertyhttp.UpdateRoomRequest': {
       /**
@@ -4201,9 +4241,9 @@ export interface operations {
   listLedgerEntries: {
     parameters: {
       query: {
-        /** @description Start date (inclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period start, hotel-local date YYYY-MM-DD, included */
         from: string
-        /** @description End date (exclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period end, hotel-local date YYYY-MM-DD, not included; after from */
         to: string
         /** @description Filter by entry type(s), comma-separated */
         entry_type?: string
@@ -4268,9 +4308,9 @@ export interface operations {
   getDailyBreakdown: {
     parameters: {
       query: {
-        /** @description Start date (inclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period start, hotel-local date YYYY-MM-DD, included */
         from: string
-        /** @description End date (exclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period end, hotel-local date YYYY-MM-DD, not included; after from */
         to: string
         /** @description Filter by entry type(s), comma-separated */
         entry_type?: string
@@ -4331,9 +4371,9 @@ export interface operations {
   getMonthlyBreakdown: {
     parameters: {
       query: {
-        /** @description Start date (inclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period start, hotel-local date YYYY-MM-DD, included */
         from: string
-        /** @description End date (exclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period end, hotel-local date YYYY-MM-DD, not included; after from */
         to: string
         /** @description Filter by entry type(s), comma-separated */
         entry_type?: string
@@ -4441,9 +4481,9 @@ export interface operations {
   getFinancialOverview: {
     parameters: {
       query: {
-        /** @description Start date (inclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period start, hotel-local date YYYY-MM-DD, included */
         from: string
-        /** @description End date (exclusive, RFC 3339 or YYYY-MM-DD) */
+        /** @description Period end, hotel-local date YYYY-MM-DD, not included; after from */
         to: string
       }
       header?: never
@@ -4504,9 +4544,9 @@ export interface operations {
       query?: {
         /** @description Search by guest first/last name (substring) */
         q?: string
-        /** @description With `to`: filter check_out >= this date (YYYY-MM-DD) */
+        /** @description Period start, hotel-local date YYYY-MM-DD, included */
         from?: string
-        /** @description With `from`: filter check_in <= this date (YYYY-MM-DD) */
+        /** @description Period end, hotel-local date YYYY-MM-DD, not included; after from */
         to?: string
       }
       header?: never
@@ -5297,9 +5337,9 @@ export interface operations {
   getReservationGrid: {
     parameters: {
       query: {
-        /** @description Range start date YYYY-MM-DD */
+        /** @description Period start, hotel-local date YYYY-MM-DD, included */
         from: string
-        /** @description Range end date YYYY-MM-DD */
+        /** @description Period end, hotel-local date YYYY-MM-DD, not included; after from */
         to: string
       }
       header?: never
@@ -7865,6 +7905,15 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
       /** @description Request Entity Too Large */
       413: {
         headers: {
@@ -8883,11 +8932,11 @@ export interface operations {
   listAvailableRooms: {
     parameters: {
       query?: {
-        /** @description Start date (dd.MM.yyyy); required together with to */
-        from?: string
-        /** @description End date (dd.MM.yyyy); required together with from */
-        to?: string
-        /** @description Booking UUID; only with from+to — rooms occupied solely by this booking in the range count as available */
+        /** @description Check-in moment, RFC 3339 (2026-03-15T14:00:00+05:00); required together with check_out */
+        check_in?: string
+        /** @description Check-out moment, RFC 3339, on a later hotel date than check_in; required together with check_in */
+        check_out?: string
+        /** @description Booking UUID; only with check_in+check_out — rooms occupied solely by this booking count as available */
         exclude?: string
       }
       header?: never

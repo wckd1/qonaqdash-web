@@ -37,3 +37,25 @@ test('viewer opens a booking when the stored quote is forbidden', async ({ page 
   await login(page, seedUser('viewer'))
   await opensFirstBooking(page)
 })
+
+// WP2 B8: the stored quote is readable with `bookings.view` alone.
+test('a role with only bookings.view sees the stored quote of a booking', async ({ page }) => {
+  // The housekeeper may view bookings, but has no pricing or billing rights.
+  await login(page, seedUser('housekeeper'))
+  const token = await page.evaluate(() => localStorage.getItem('access_token'))
+  const bookings = (await (
+    await page.request.get('/api/bookings', { headers: { Authorization: `Bearer ${token}` } })
+  ).json()) as { id: string; status: string }[]
+  // The accommodation summary shows until check-in.
+  const confirmed = bookings.find((b) => b.status === 'confirmed')
+  if (!confirmed) throw new Error('The demo seed has no confirmed booking')
+
+  const quote = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === `/api/pricing/bookings/${confirmed.id}/quote`,
+  )
+  await page.goto(`/bookings/${confirmed.id}/details`)
+
+  expect((await quote).status()).toBe(200)
+  await expect(page.getByRole('heading', { name: en.bookings.accommodation_title })).toBeVisible()
+  await expect(page.locator('.error-message')).toHaveCount(0)
+})

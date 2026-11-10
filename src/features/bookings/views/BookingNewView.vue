@@ -54,12 +54,14 @@ import type { ManualAdjustmentInput } from '@/features/pricing/api'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 
 import { guestSearchKey, availableRoomsKey, fieldConstraintsKey } from '@/shared/injectKeys'
 
 provide(guestSearchKey, (q) => guestListQuery(q))
 
 const { t } = useI18n()
+const { today, toWallTime, fromWallTime, toDateTimeInput } = useHotelTime()
 const route = useRoute()
 const router = useRouter()
 const createBooking = useCreateBookingMutation()
@@ -78,39 +80,16 @@ const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 const manualAdjustments = ref<ManualAdjustmentInput[]>([])
 
-function formatDatetimeLocal(d: Date): string {
-  if (Number.isNaN(d.getTime())) return ''
-  const y = d.getFullYear()
-  const mo = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const h = String(d.getHours()).padStart(2, '0')
-  const mi = String(d.getMinutes()).padStart(2, '0')
-  return `${y}-${mo}-${day}T${h}:${mi}`
-}
-
-function isoToDatetimeLocal(iso: string): string {
-  return formatDatetimeLocal(new Date(iso))
-}
-
-function parseHourMinute(hhmm: string): [number, number] {
-  const parts = hhmm.split(':')
-  return [parseInt(parts[0], 10) || 0, parseInt(parts[1], 10) || 0]
-}
-
+/** Today of the hotel at the given hotel hour, as a `datetime-local` value. */
 function todayWithHotelHour(hourSetting: string): string {
-  const now = new Date()
-  const [h, m] = parseHourMinute(hourSetting)
-  now.setHours(h, m, 0, 0)
-  return formatDatetimeLocal(now)
+  return toDateTimeInput(fromWallTime(today(), hourSetting))
 }
 
+/** A moment at midnight of the hotel moves to the hotel hour of that day. */
 function applyDefaultHour(isoValue: string, hourSetting: string): string {
-  const d = new Date(isoValue)
-  if (Number.isNaN(d.getTime())) return isoValue
-  if (d.getHours() !== 0 || d.getMinutes() !== 0) return isoValue
-  const [h, m] = parseHourMinute(hourSetting)
-  d.setHours(h, m, 0, 0)
-  return d.toISOString()
+  const wall = toWallTime(isoValue)
+  if (!wall || wall.time !== '00:00') return isoValue
+  return fromWallTime(wall.date, hourSetting) || isoValue
 }
 
 const checkInMinLocal = computed(() => todayWithHotelHour(hotel.value?.check_in_hour || '14:00'))
@@ -120,7 +99,7 @@ const checkOutMinLocal = computed(() => {
   if (!raw || typeof raw !== 'object') return checkInMinLocal.value
   const stay = raw as Record<string, unknown>
   const checkIn = typeof stay.check_in === 'string' ? stay.check_in : ''
-  return checkIn ? isoToDatetimeLocal(checkIn) : checkInMinLocal.value
+  return checkIn ? toDateTimeInput(checkIn) : checkInMinLocal.value
 })
 
 const fieldConstraints = computed(() => ({
@@ -249,10 +228,7 @@ onMounted(async () => {
       await mergeRouteQueryIntoForm()
     } else {
       const ciHour = hotel.value?.check_in_hour || '14:00'
-      const now = new Date()
-      const [h, m] = parseHourMinute(ciHour)
-      now.setHours(h, m, 0, 0)
-      stayObj.check_in = now.toISOString()
+      stayObj.check_in = fromWallTime(today(), ciHour)
     }
   } catch (err: unknown) {
     loadError.value = formatUnknownApiError(err) || t('bookings.form_load_failed')

@@ -365,7 +365,7 @@ const HOUSEKEEPING_STATUSES: HousekeepingTaskStatus[] = [
 const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'canceled']
 
 const { t } = useI18n()
-const { formatMoment } = useHotelTime()
+const { formatMoment, toDateTimeInput, fromDateTimeInput } = useHotelTime()
 const createHousekeeping = useCreateHousekeepingTaskMutation()
 const updateHousekeeping = useUpdateHousekeepingTaskMutation()
 const changeHousekeepingStatus = useChangeHousekeepingStatusMutation()
@@ -513,14 +513,6 @@ function isTerminal(status: TaskStatus): boolean {
   return status === 'done' || status === 'canceled'
 }
 
-function toDateTimeLocal(iso: string | null | undefined): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
 function openPanel(task: AnyTask) {
   selectedTask.value = task
   panelError.value = ''
@@ -538,7 +530,7 @@ function beginEdit() {
   if (!task) return
   editForm.value = {
     description: task.description ?? '',
-    planned_end: isMaintenance(task) ? toDateTimeLocal(task.planned_end) : '',
+    planned_end: isMaintenance(task) ? toDateTimeInput(task.planned_end) : '',
     assignee_employee_id: task.assignee_employee_id ?? '',
   }
   panelError.value = ''
@@ -566,7 +558,7 @@ async function submitEdit() {
       if (canOperate.value) {
         body.description = editForm.value.description.trim()
         body.planned_end = editForm.value.planned_end
-          ? new Date(editForm.value.planned_end).toISOString()
+          ? fromDateTimeInput(editForm.value.planned_end)
           : null
       }
       if (canAssign.value) {
@@ -661,7 +653,7 @@ async function submitCreate() {
       await createMaintenance.mutateAsync({
         room_id: createForm.value.room_id,
         description,
-        planned_end: new Date(createForm.value.planned_end).toISOString(),
+        planned_end: fromDateTimeInput(createForm.value.planned_end),
         assignee_employee_id: assignee,
       })
     } else {

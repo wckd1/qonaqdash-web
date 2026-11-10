@@ -38,6 +38,7 @@ import { useI18n } from 'vue-i18n'
 import { useChangeRoomMaintenanceMutation } from '@/features/property/queries'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import type { Room, RoomMaintenanceStatus } from '@/features/property/api'
+import { useHotelTime } from '@/shared/composables/useHotelTime'
 
 const props = withDefaults(
   defineProps<{
@@ -54,6 +55,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { toDateTimeInput, fromDateTimeInput } = useHotelTime()
 const changeMaintenance = useChangeRoomMaintenanceMutation()
 const titleId = useId()
 
@@ -75,21 +77,13 @@ watch(
       current && allowed.includes(current) ? current : (allowed[0] ?? 'none')
     form.value = {
       status: initial,
-      planned_end: toLocalDateTimeInput(r?.maintenance_planned_end ?? ''),
+      planned_end: toDateTimeInput(r?.maintenance_planned_end),
     }
     errorMsg.value = ''
     saving.value = false
   },
   { immediate: true },
 )
-
-function toLocalDateTimeInput(iso: string): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
 
 async function submit() {
   const r = props.room
@@ -100,7 +94,7 @@ async function submit() {
   } = { status: form.value.status }
   if (form.value.status === 'under_maintenance') {
     if (!form.value.planned_end) return
-    body.planned_end = new Date(form.value.planned_end).toISOString()
+    body.planned_end = fromDateTimeInput(form.value.planned_end)
   }
   saving.value = true
   errorMsg.value = ''

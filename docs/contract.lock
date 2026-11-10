@@ -1,13 +1,13 @@
 {
   "backend": {
-    "commit": "b64b830e78cb59393bdd99306e86362133fb3a38",
+    "commit": "309e1b6a834db113e09e02bbd87d34fd9984d22e",
     "branch": "wp-01-contract",
     "dirty": false
   },
-  "synced_at": "2026-11-10T12:24:28.535Z",
+  "synced_at": "2026-11-10T13:22:38.224Z",
   "files": {
-    "docs/openapi.yaml": "sha256:e45cc041b2c76c31a3a20ba793518b881583cf4a8a7a610ff143ca553749b082",
-    "docs/swagger.yaml": "sha256:915b9971a44d9c33f7e291853595dcecdbf2222f5c8c72a2e050dc896be75a6b",
-    "docs/integration.md": "sha256:1148f0eeb8c1c206c6fc866d6d04dc046e8edff6fd2ee1ac28ee1db40f006b64"
+    "docs/openapi.yaml": "sha256:78ef30ad38f8be8c3ef66eea1b8b193ccd7778a33a9359c989cf5543fe40e282",
+    "docs/swagger.yaml": "sha256:ea27500df5601ac823d07050ccea0fee168390405d9433dea4adc6d063c4a692",
+    "docs/integration.md": "sha256:90a22978f867ce9b1cf379bdc8b5ed85e52b5653d465a9574634120371a1d88d"
   }
 }

@@ -529,7 +529,7 @@ export interface paths {
     put?: never
     /**
      * Create employee
-     * @description Raw form `data` per org employee schema; linked to the current JWT hotel by default.
+     * @description Raw form `data` per org employee schema; linked to the current JWT hotel by default. The response carries the created employee under `employee`, including its `id`.
      *     **Error codes:** iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; **422** `common.validation_failed` when payload fails org employee form `rules`.
      */
     post: operations['createEmployee']
@@ -665,7 +665,7 @@ export interface paths {
     put?: never
     /**
      * Create guest
-     * @description Flat form `data` per org schema; relational columns extracted server-side.
+     * @description Flat form `data` per org schema; relational columns extracted server-side. An `id` key in the body is ignored; the response carries the new guest `id`.
      *     **Error codes:** guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
      */
     post: operations['createGuest']
@@ -684,13 +684,13 @@ export interface paths {
     }
     /**
      * Get guest
-     * @description Flat profile JSON matching the org guest schema.
+     * @description Flat profile JSON matching the org guest schema, plus `id`, `blocked` and `_form`.
      *     **Error codes:** common.invalid_guest_id; guest.not_found.
      */
     get: operations['getGuest']
     /**
      * Update guest
-     * @description Flat `data` same as POST; relational columns re-extracted.
+     * @description Flat `data` same as POST; relational columns re-extracted. The guest is identified by the path: an `id` key in the body is ignored and not stored.
      *     **Error codes:** common.invalid_guest_id; guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; guest.not_found; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules`.
      */
     put: operations['updateGuest']
@@ -1456,10 +1456,8 @@ export interface components {
         | 'correction'
       /** @example 550e8400-e29b-41d4-a716-446655440080 */
       id: string
-      /** @description free-form, depends on entry_type */
-      metadata: {
-        [key: string]: unknown
-      }
+      /** @description keys depend on entry_type */
+      metadata: components['schemas']['billinghttp.LedgerEntryMetadata']
     }
     'billinghttp.LedgerEntryDTO': {
       /** @example 10000 */
@@ -1489,10 +1487,47 @@ export interface components {
         | 'correction'
       /** @example 550e8400-e29b-41d4-a716-446655440080 */
       id: string
-      /** @description free-form, depends on entry_type */
-      metadata: {
-        [key: string]: unknown
-      }
+      /** @description keys depend on entry_type */
+      metadata: components['schemas']['billinghttp.LedgerEntryMetadata']
+    }
+    'billinghttp.LedgerEntryMetadata': {
+      /**
+       * Format: date
+       * @description Date of the night: accommodation nights, per-night adjustments and their corrections.
+       * @example 2026-03-15
+       */
+      date?: string
+      /**
+       * Format: uuid
+       * @description ReversesEntryID is the payment a refund reverses.
+       * @example 550e8400-e29b-41d4-a716-446655440080
+       */
+      reverses_entry_id?: string
+      /**
+       * Format: uuid
+       * @description RoomTypeID of the night: accommodation nights and their corrections.
+       * @example 550e8400-e29b-41d4-a716-446655440010
+       */
+      room_type_id?: string
+      /**
+       * @description Scope is set on stay-level (total) adjustments and their corrections.
+       * @example total
+       * @enum {string}
+       */
+      scope?: 'total'
+      /**
+       * @description SnapshotVersion of the pricing snapshot an accommodation correction was computed from.
+       * @example 2
+       */
+      snapshot_version?: number
+      /**
+       * Format: uuid
+       * @description SourceID of the pricing rule or adjustment behind a rule or manual adjustment.
+       * @example 550e8400-e29b-41d4-a716-446655440300
+       */
+      source_id?: string
+    } & {
+      [key: string]: unknown
     }
     'billinghttp.LedgerListResponse': {
       entries: components['schemas']['billinghttp.LedgerEntryDTO'][]
@@ -1848,6 +1883,8 @@ export interface components {
       email?: string | null
       /** @example John */
       first_name: string
+      /** @example 550e8400-e29b-41d4-a716-446655440030 */
+      id: string
       /** @example Doe */
       last_name: string
       /** @example +77001234567 */
@@ -2041,6 +2078,8 @@ export interface components {
       email: string
       /** @example Aida */
       first_name: string
+      /** @example 550e8400-e29b-41d4-a716-446655440020 */
+      id: string
       /** @example Nur */
       last_name: string
       /** @description null when the employee has no occupations */
@@ -2612,11 +2651,32 @@ export interface components {
       manual_adjustments?: components['schemas']['pricinghttp.QuoteManualAdjustmentDTO'][] | null
       rooms: components['schemas']['pricinghttp.QuoteRoomDTO'][]
     }
+    'pricinghttp.ConditionCandidateDTO': {
+      /** @example stay.booking_source */
+      bind?: string
+      /** @example booking_source */
+      field_id: string
+      /** @example fields.booking_source */
+      label?: string
+      /** @description select items; omitted when the node has none */
+      options?: components['schemas']['pricinghttp.ConditionCandidateOption'][]
+      /**
+       * @description node types eligible for conditions
+       * @example select
+       * @enum {string}
+       */
+      type: 'select'
+    }
+    'pricinghttp.ConditionCandidateOption': {
+      disabled?: boolean
+      /** @example OTA */
+      label: string
+      /** @description the item value as in the form; null is the "any" room type option */
+      value: unknown
+    }
     'pricinghttp.ConditionsResponse': {
-      /** @description Conditions are condition candidates copied from booking form nodes ({field_id, type, label, bind, options}); free-form. */
-      conditions: {
-        [key: string]: unknown
-      }[]
+      /** @description Conditions are the fields pricing rules may match on: the hotel room_type select first, then the indexed booking form fields. */
+      conditions: components['schemas']['pricinghttp.ConditionCandidateDTO'][]
       /** @example a1b2c3d4e5 */
       hash: string
     }
@@ -6646,7 +6706,10 @@ export interface operations {
   getPricingConditions: {
     parameters: {
       query?: never
-      header?: never
+      header?: {
+        /** @description Optional. Send the ETag response header value from a prior GET (hash wrapped in ASCII double quotes); matches the JSON hash field. */
+        'If-None-Match'?: string
+      }
       path?: never
       cookie?: never
     }
@@ -6655,11 +6718,26 @@ export interface operations {
       /** @description OK */
       200: {
         headers: {
+          /** @description no-store */
+          'Cache-Control'?: string
+          /** @description The hash in ASCII double quotes */
+          ETag?: string
           [name: string]: unknown
         }
         content: {
           'application/json': components['schemas']['pricinghttp.ConditionsResponse']
         }
+      }
+      /** @description Not Modified — client sent matching If-None-Match */
+      304: {
+        headers: {
+          /** @description no-store */
+          'Cache-Control'?: string
+          /** @description The hash in ASCII double quotes */
+          ETag?: string
+          [name: string]: unknown
+        }
+        content?: never
       }
       /** @description Unauthorized */
       401: {

@@ -39,6 +39,12 @@ Treat **new product behavior**, **API integration changes**, and **visible UI ch
 
 The **blocking checklist** (API contract, page spec & catalog, design authority, implementation quality, i18n, build/linters, task overview) lives at the top: **Feature implementation (definition of done)**.
 
+## Architecture principles
+
+The owner's architecture principles in `qonaqdash-docs/architecture.md` are mandatory for every work package. Decisions in `qonaqdash-docs/work/decisions.md` follow them.
+
+- **Dependencies (principle 4).** A new dependency, runtime or dev, is added only with a justification in the package hand-off; the PM checks it at acceptance. Use the web platform first (`fetch`, `Intl`, `<dialog>`, …). On the frontend, prefer the community's common patterns and libraries when they make the code clearer and easier to maintain: axios stays. The current list of what stays and what gets replaced is decision D18.
+
 ## Work packages
 
 Work is planned in `qonaqdash-docs/work/`: a PM session writes briefs, and the backend and frontend agents work on them in parallel. Process and hand-off format: `qonaqdash-docs/work/README.md`; accepted decisions: `qonaqdash-docs/work/decisions.md`.

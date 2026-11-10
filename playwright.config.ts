@@ -21,6 +21,9 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     locale: 'en-US',
+    // The zone of the demo hotels, so the browser and the hotel clock agree unless a
+    // scenario sets another `timezoneId`.
+    timezoneId: 'Asia/Almaty',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

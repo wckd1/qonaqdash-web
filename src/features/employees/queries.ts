@@ -2,7 +2,7 @@ import { defineQueryOptions, useMutation, useQueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import { snapshotForm, type RuntimeFormSnapshot } from '@/shared/forms/formSnapshot'
 import type { FormNode } from '@/shared/types/forms'
-import type { Permissions } from '@/shared/types/permissions'
+import type { Permissions } from '@/shared/lib/permissions'
 import * as employeesApi from '@/features/employees/api'
 
 /** Search text as it goes into a key: trimmed, so `' a'` and `'a'` share an entry. */

@@ -136,7 +136,11 @@ import { useI18n } from 'vue-i18n'
 import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import PermissionMatrix from '@/features/employees/components/PermissionMatrix.vue'
 import { useQuery } from '@pinia/colada'
-import type { OccupationRoleGroup, OccupationTemplate } from '@/features/employees/api'
+import type {
+  OccupationRoleGroup,
+  OccupationRoleKey,
+  OccupationTemplate,
+} from '@/features/employees/api'
 import {
   occupationsQuery,
   useCreateOccupationMutation,
@@ -144,7 +148,7 @@ import {
   useUpdateOccupationMutation,
 } from '@/features/employees/queries'
 import { clonePermissions } from '@/shared/lib/permissions'
-import type { Permissions } from '@/shared/types/permissions'
+import type { Permissions } from '@/shared/lib/permissions'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
 
@@ -173,7 +177,7 @@ const drafts = ref<OccupationDraft[]>([])
 // Selection state
 const selectedId = ref<string | null>(null)
 const mode = ref<'none' | 'edit' | 'create'>('none')
-const creatingRoleKey = ref('')
+const creatingRoleKey = ref<OccupationRoleKey | ''>('')
 const createDraft = reactive<{ title: string; permissions: Permissions }>({
   title: '',
   permissions: {},
@@ -256,7 +260,7 @@ function selectOccupation(id: string) {
   mode.value = 'edit'
 }
 
-function startCreate(roleKey: string) {
+function startCreate(roleKey: OccupationRoleKey) {
   creatingRoleKey.value = roleKey
   createDraft.title = ''
   createDraft.permissions = {}
@@ -280,12 +284,13 @@ watch(() => occupationsQ.data.value, syncFromQuery, { immediate: true })
 
 // CRUD
 async function onCreate() {
-  if (!createDraft.title.trim()) return
+  const roleKey = creatingRoleKey.value
+  if (!createDraft.title.trim() || !roleKey) return
   saving.value = true
   try {
     const created = await createOccupation.mutateAsync({
       title: createDraft.title.trim(),
-      role_key: creatingRoleKey.value,
+      role_key: roleKey,
       permissions: createDraft.permissions,
     })
     syncFromQuery()

@@ -33,7 +33,8 @@ import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PermissionMatrix from '@/features/employees/components/PermissionMatrix.vue'
 import { useReplaceEmployeePermissionsMutation } from '@/features/employees/queries'
-import type { EmployeePermissionsResponse, Permissions } from '@/shared/types/permissions'
+import type { EmployeePermissionsResponse } from '@/features/employees/api'
+import type { Permissions } from '@/shared/lib/permissions'
 import {
   clonePermissions,
   permissionLevel,

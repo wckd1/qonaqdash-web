@@ -132,7 +132,8 @@ import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import type { OccupationTemplate, Permissions } from '@/shared/types/permissions'
+import type { OccupationSummary } from '@/features/employees/api'
+import type { Permissions } from '@/shared/lib/permissions'
 import { clonePermissions, parsePermissions } from '@/shared/lib/permissions'
 
 const { t, te, locale } = useI18n()
@@ -180,12 +181,9 @@ const employeeForm = computed(() =>
 
 /** Access settings come with the employee; they reload with it after every change. */
 const accessLoading = computed(() => detailQ.isPending.value)
-const assignedOccupations = computed<OccupationTemplate[]>(() => {
-  const rawOccs = (currentEmployee.value as Record<string, unknown> | null)?.occupations
-  return Array.isArray(rawOccs)
-    ? (rawOccs as OccupationTemplate[]).filter((o) => o && typeof o.id === 'string')
-    : []
-})
+const assignedOccupations = computed<OccupationSummary[]>(
+  () => currentEmployee.value?.occupations ?? [],
+)
 const selectedOccupationIds = computed(() => assignedOccupations.value.map((o) => o.id))
 const effectivePermissions = computed<Permissions>(() =>
   clonePermissions(

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { i18n } from '@/i18n'
 import type { Schemas } from '@/shared/api/typed'
-import type { Permissions } from '@/shared/types/permissions'
+import type { Permissions } from '@/shared/lib/permissions'
 import { extractPermissionsBundle, parsePermissions } from '@/shared/lib/permissions'
 import {
   LOCALE_STORAGE_KEY,

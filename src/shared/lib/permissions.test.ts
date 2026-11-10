@@ -14,7 +14,7 @@ import {
   resolveAccessibleHomeRoute,
   type AccessContext,
 } from '@/shared/lib/permissions'
-import type { Permissions } from '@/shared/types/permissions'
+import type { Permissions } from '@/shared/lib/permissions'
 
 function ctx(permissions: Permissions | null, hasHotelContext = true): AccessContext {
   return { permissions, hasHotelContext }

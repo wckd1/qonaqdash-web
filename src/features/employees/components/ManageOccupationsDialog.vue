@@ -62,7 +62,7 @@ import {
   occupationsQuery,
   useReplaceEmployeeOccupationsMutation,
 } from '@/features/employees/queries'
-import type { EmployeeOccupationsResponse } from '@/shared/types/permissions'
+import type { EmployeeOccupationsResponse } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
 

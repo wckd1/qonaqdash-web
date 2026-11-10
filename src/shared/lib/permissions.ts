@@ -1,4 +1,13 @@
-import type { Permissions, PermissionLevel } from '@/shared/types/permissions'
+import type { Schemas } from '@/shared/api/typed'
+
+/**
+ * Permission bundle as the app keeps it: every area and action optional, as in
+ * the overrides of the contract. Full bundles from the API fit it.
+ */
+export type Permissions = Schemas['iamhttp.PermissionOverridesResponse']
+export type PermissionLevel = NonNullable<
+  Schemas['iamhttp.BookingsPermissionsOverrideResponse']['view']
+>
 
 export type PermissionArea = keyof Permissions
 export type PermissionAction =

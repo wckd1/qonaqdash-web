@@ -345,7 +345,7 @@ import type {
   TaskStatus,
 } from '@/features/tasks/api'
 import type { Room } from '@/features/property/api'
-import type { EmployeeListItem } from '@/shared/types/employees'
+import type { EmployeeListItem } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
 

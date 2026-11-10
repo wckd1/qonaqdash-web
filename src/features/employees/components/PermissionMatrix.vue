@@ -43,7 +43,7 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import type { Permissions } from '@/shared/types/permissions'
+import type { Permissions } from '@/shared/lib/permissions'
 import {
   PERMISSION_AREA_ORDER,
   permissionActionsFor,

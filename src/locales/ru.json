@@ -30,7 +30,7 @@
       "subtitle": "Введите учётные данные, чтобы продолжить",
       "email": "Эл. почта",
       "password": "Пароль",
-      "email_placeholder": "name@domain.com",
+      "email_placeholder": "name{'@'}domain.com",
       "password_placeholder": "Ваш пароль",
       "sign_in": "Войти",
       "signing_in": "Вход…",

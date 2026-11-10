@@ -30,7 +30,7 @@
       "subtitle": "Enter your credentials to continue",
       "email": "Email",
       "password": "Password",
-      "email_placeholder": "name@domain.com",
+      "email_placeholder": "name{'@'}domain.com",
       "password_placeholder": "Your password",
       "sign_in": "Sign in",
       "signing_in": "Signing in…",

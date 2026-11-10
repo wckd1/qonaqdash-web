@@ -71,7 +71,7 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@pinia/colada'
 import { accountQuery, useUpdateAccountMutation } from '@/features/auth/queries'
-import type { AccountBundleResponse } from '@/features/auth/api'
+import type { AccountBundleResponse, UpdateAccountRequest } from '@/features/auth/api'
 import { formatApiError, formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const { t } = useI18n()
@@ -108,7 +108,7 @@ function serverLocaleToChoice(loc: unknown) {
   return ''
 }
 
-function choiceToPayloadLocale(choice: string) {
+function choiceToPayloadLocale(choice: string): 'en' | 'ru' | null {
   if (choice === 'en' || choice === 'ru') return choice
   return null
 }
@@ -133,15 +133,14 @@ watch(
   { immediate: true },
 )
 
-function buildPayload(): Record<string, unknown> {
-  const payload: Record<string, unknown> = {}
+function buildPayload(): UpdateAccountRequest {
+  const payload: UpdateAccountRequest = {}
   if (email.value.trim() !== originalEmail.value.trim()) {
     payload.account = { email: email.value.trim() }
   }
   if (newPassword.value.length > 0) {
-    const prev = (payload.account as Record<string, string> | undefined) ?? {}
     payload.account = {
-      ...prev,
+      ...payload.account,
       currentPassword: currentPassword.value,
       newPassword: newPassword.value,
     }

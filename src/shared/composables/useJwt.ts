@@ -1,4 +1,12 @@
-import type { JwtClaims } from '@/shared/types/auth'
+/** Claims the app reads from the access token (decoded on the client, never verified). */
+export interface JwtClaims {
+  sub: string | null
+  email: string | null
+  orgId: string | null
+  hotelId: string | null
+  employeeId: string | null
+  tokenUse: 'access' | 'refresh' | null
+}
 
 const TOKEN_KEY = 'access_token'
 

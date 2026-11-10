@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { i18n } from '@/i18n'
-import type { AccountBundleResponse } from '@/features/auth/api'
+import type { Schemas } from '@/shared/api/typed'
 import type { Permissions } from '@/shared/types/permissions'
 import { extractPermissionsBundle, parsePermissions } from '@/shared/lib/permissions'
 import {
@@ -72,7 +72,7 @@ export const useSettingsStore = defineStore('settings', () => {
    * 2. Server returns `null` or an unsupported value → fall back to `navigator` languages.
    * 3. Navigator reports no supported language → fall back to English.
    */
-  function applyAccount(data: AccountBundleResponse) {
+  function applyAccount(data: Schemas['iamhttp.AccountBundleResponse']) {
     const nextPermissions = extractPermissionsBundle(data)
     if (nextPermissions) {
       permissions.value = nextPermissions

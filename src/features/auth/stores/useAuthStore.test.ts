@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { useQueryCache } from '@pinia/colada'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
+import type { AccountBundleResponse } from '@/features/auth/api'
 import { makeJwt, makeToken } from '@/test-utils/jwt'
 
 const ACCESS_KEY = 'access_token'
@@ -133,7 +134,10 @@ describe('useAuthStore: token storage', () => {
     queryCache.setQueryData(['property', 'hotel'], { id: 'hotel-1', name: 'City' })
     queryCache.setQueryData(['pricing', 'base-rates'], [{ room_type_id: 'rt-1' }])
     const settings = useSettingsStore()
-    settings.applyAccount({ effective_permissions: { bookings: { view: 2 } } })
+    settings.applyAccount({
+      permissions: { bookings: { view: 2 } },
+      settings: { locale: null },
+    } as AccountBundleResponse)
 
     auth.logout()
 

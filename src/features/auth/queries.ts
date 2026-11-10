@@ -40,7 +40,7 @@ export const inviteQuery = defineQueryOptions((token: string) => ({
 export function useUpdateAccountMutation() {
   const queryCache = useQueryCache()
   return useMutation({
-    mutation: (body: Record<string, unknown>) => authApi.updateAccount(body),
+    mutation: (body: authApi.UpdateAccountRequest) => authApi.updateAccount(body),
     // Reload so the locale and the sidebar name follow the saved account.
     onSuccess: () =>
       refreshAccount(queryCache).then(

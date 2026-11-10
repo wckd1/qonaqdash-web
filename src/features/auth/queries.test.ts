@@ -5,7 +5,7 @@ vi.mock('@/features/auth/api', () => ({
   fetchAccount: vi.fn(async () => ({
     account: { email: 'owner@example.test' },
     settings: { locale: 'ru' },
-    effective_permissions: { bookings: { view: 2 } },
+    permissions: { bookings: { view: 2 } },
   })),
 }))
 

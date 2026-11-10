@@ -7,8 +7,6 @@ import {
 } from '@/shared/forms/loadRuntimeFormDefinition'
 import type { FormRef, FormNode } from '@/shared/form-dsl/types'
 import type { GuestFormFields } from '@/features/guests/api'
-import type { AccommodationSnapshot, ManualAdjustmentInput } from '@/features/pricing/api'
-import { fetchStoredBookingQuote, type StoredBookingQuote } from '@/features/pricing/api'
 
 export type { FormRef }
 export type { AccommodationSnapshot, ManualAdjustmentInput } from '@/features/pricing/api'
@@ -50,13 +48,14 @@ export interface BookingFormDefinitionResponse {
   data?: Record<string, unknown>
 }
 
-/** Booking detail merged with its runtime form and stored quote, for `FormView` / `FormEdit`. */
+/**
+ * Booking detail merged with its runtime form, for `FormView` / `FormEdit`.
+ * The stored quote is a separate query (`bookingQuoteQuery` in pricing).
+ */
 export interface BookingFormResponse {
   definition?: FormNode
   data?: Record<string, unknown>
   guest?: Record<string, unknown>
-  accommodation?: AccommodationSnapshot
-  adjustments?: ManualAdjustmentInput[]
   outstanding_balance?: number
 }
 
@@ -199,12 +198,11 @@ export function invalidateBookingRuntimeFormCache(): void {
 }
 
 /**
- * Merge aggregate detail + runtime form + optional stored quote from pricing.
+ * Merge aggregate detail + runtime form.
  */
 export function mergeBookingDetailWithRuntimeForm(
   detail: BookingDetailData,
   form: Pick<BookingFormDefinitionResponse, 'definition'>,
-  storedQuote?: StoredBookingQuote | null,
 ): BookingFormResponse {
   return {
     definition: form.definition,
@@ -214,28 +212,22 @@ export function mergeBookingDetailWithRuntimeForm(
       status: detail.status,
       id: detail.id,
     },
-    accommodation: storedQuote?.accommodation,
-    adjustments: storedQuote?.manual_adjustments?.length
-      ? storedQuote.manual_adjustments
-      : undefined,
     outstanding_balance: detail.outstanding_balance,
   }
 }
 
 /**
- * Booking aggregate + `GET /api/pricing/bookings/{id}/quote` + runtime form (hash-keyed cache).
+ * Booking aggregate + runtime form (hash-keyed cache). The stored quote is not
+ * part of it: a role that may read the booking but not the quote still opens it.
  */
 export async function fetchBookingWithRuntimeForm(
   id: string,
   target: 'edit' | 'view' = 'view',
   options: RequestOptions = {},
 ): Promise<BookingFormResponse> {
-  const [{ detail, formRef }, storedQuote] = await Promise.all([
-    fetchBooking(id, options),
-    fetchStoredBookingQuote(id, options),
-  ])
+  const { detail, formRef } = await fetchBooking(id, options)
   const form = await loadBookingRuntimeForm(target, formRef?.hash, { force: false })
-  return mergeBookingDetailWithRuntimeForm(detail, form, storedQuote)
+  return mergeBookingDetailWithRuntimeForm(detail, form)
 }
 
 export function fetchBookingFormDefinition(options: RequestOptions = {}): Promise<{

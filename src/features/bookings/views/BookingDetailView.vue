@@ -66,8 +66,8 @@
           />
           <FormView :definition="bookingForm.definition" :data="bookingForm.data" />
           <AccommodationSummary
-            v-if="currentBooking?.accommodation && showAccommodationPanel"
-            :accommodation="currentBooking.accommodation"
+            v-if="storedQuote?.accommodation && showAccommodationPanel"
+            :accommodation="storedQuote.accommodation"
             :currency="hotelCurrency"
             :room-type-names="roomTypeNames"
           />
@@ -120,6 +120,7 @@ import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { bookingDetailQuery, useUpdateBookingMutation } from '@/features/bookings/queries'
 import { useQuery } from '@pinia/colada'
 import { availableRoomsQuery, hotelQuery, roomTypeListQuery } from '@/features/property/queries'
+import { bookingQuoteQuery } from '@/features/pricing/queries'
 import { guestListQuery } from '@/features/guests/queries'
 import {
   getBookingStatusFromResponse,
@@ -180,6 +181,15 @@ const detailQ = useQuery(() => ({
     previousEntry?.key[2] === bookingId.value ? previous : undefined,
 }))
 const currentBooking = computed(() => (bookingId.value ? (detailQ.data.value ?? null) : null))
+/**
+ * Stored quote: a query of its own, so a role that may not read it (`403`)
+ * still opens the booking, only without the accommodation summary.
+ */
+const quoteQ = useQuery(() => ({
+  ...bookingQuoteQuery(bookingId.value ?? ''),
+  enabled: !!bookingId.value,
+}))
+const storedQuote = computed(() => (bookingId.value ? (quoteQ.data.value ?? null) : null))
 const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
 const loadError = computed(() =>
   detailQ.error.value && !notFound.value
@@ -291,8 +301,8 @@ watch(editing, (isEdit) => {
     if (!editFormData.value.stay)
       editFormData.value.stay = { check_in: '', check_out: '', rooms: [] }
     if (!Array.isArray(editFormData.value.stay.rooms)) editFormData.value.stay.rooms = []
-    editManualAdjustments.value = currentBooking.value?.adjustments
-      ? JSON.parse(JSON.stringify(currentBooking.value.adjustments))
+    editManualAdjustments.value = storedQuote.value?.manual_adjustments.length
+      ? JSON.parse(JSON.stringify(storedQuote.value.manual_adjustments))
       : []
     errorsMap.value = {}
   }
@@ -344,8 +354,10 @@ watch(
 async function startEdit() {
   if (!bookingId.value) return
   formTarget.value = 'edit'
-  const { error } = await detailQ.refresh()
-  if (!error) editing.value = true
+  // Saving sends the manual adjustments of the stored quote back, so editing
+  // waits for the quote too: without it a save would drop them.
+  const [detail, quote] = await Promise.all([detailQ.refresh(), quoteQ.refresh()])
+  if (!detail.error && !quote.error) editing.value = true
 }
 
 function cancelEdit() {

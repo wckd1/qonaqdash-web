@@ -11,6 +11,9 @@ export const pricingKeys = {
   ruleList: ['pricing', 'rules', 'list'] as const,
   /** Calculated stay quotes; they depend on base rates and rules. */
   quotes: ['pricing', 'quote'] as const,
+  /** Stored quotes of bookings; a booking change re-quotes the booking. */
+  bookingQuotes: ['pricing', 'booking-quote'] as const,
+  bookingQuote: (bookingId: string) => ['pricing', 'booking-quote', bookingId] as const,
 }
 
 export const baseRatesQuery = defineQueryOptions({
@@ -68,6 +71,15 @@ export function useDeleteRuleMutation() {
     onSuccess: () => invalidateKeys(queryCache, [pricingKeys.rules, pricingKeys.quotes]),
   })
 }
+
+/**
+ * Stored quote of a booking: the accommodation snapshot and the manual
+ * adjustments; `null` while the booking has no quote yet.
+ */
+export const bookingQuoteQuery = defineQueryOptions((bookingId: string) => ({
+  key: pricingKeys.bookingQuote(bookingId),
+  query: ({ signal }) => pricingApi.fetchStoredBookingQuote(bookingId, { signal }),
+}))
 
 /** Price of a stay as the booking form describes it (`POST /api/pricing/quote`). */
 export const stayQuoteQuery = defineQueryOptions((body: CalculateQuoteRequest) => ({

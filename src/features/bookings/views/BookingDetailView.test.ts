@@ -165,4 +165,44 @@ describe('BookingDetailView', () => {
     expect(w.findComponent({ name: 'FormView' }).exists()).toBe(true)
     expect(button(w, en.common.edit).exists()).toBe(true)
   })
+
+  // F6: a view-only role may not read the stored quote; the booking still opens.
+  test('opens the booking when the stored quote is forbidden', async () => {
+    signIn({ view: 2 })
+    http.routes.set(`GET /api/pricing/bookings/${BOOKING_ID}/quote`, () =>
+      apiError(403, 'common.forbidden'),
+    )
+    const w = await openBooking()
+
+    expect(w.find('.error-message').exists()).toBe(false)
+    expect(w.findComponent({ name: 'FormView' }).exists()).toBe(true)
+    expect(w.findComponent({ name: 'AccommodationSummary' }).exists()).toBe(false)
+  })
+
+  test('shows the stored quote and sends its manual adjustments back on save', async () => {
+    signIn({ view: 2, modify: 2 })
+    const adjustment = {
+      name: 'Late check-out',
+      effect: { type: 'fixed', value: 500000, apply_to: 'total' },
+    }
+    http.routes.set(`GET /api/pricing/bookings/${BOOKING_ID}/quote`, () => ({
+      status: 200,
+      data: { ...storedQuote, manual_adjustments: [adjustment] },
+    }))
+    let saved: Record<string, unknown> | undefined
+    http.routes.set(`PUT /api/bookings/${BOOKING_ID}`, (config) => {
+      saved = JSON.parse(String(config.data)) as Record<string, unknown>
+      return { status: 200, data: booking }
+    })
+    const w = await openBooking()
+
+    expect(w.findComponent({ name: 'AccommodationSummary' }).exists()).toBe(true)
+
+    await button(w, en.common.edit).trigger('click')
+    await flushPromises()
+    await button(w, en.common.save).trigger('click')
+    await flushPromises()
+
+    expect(saved?.adjustments).toEqual([adjustment])
+  })
 })

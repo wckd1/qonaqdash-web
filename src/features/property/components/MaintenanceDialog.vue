@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useChangeRoomMaintenanceMutation } from '@/features/property/queries'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import type { Room, RoomMaintenanceStatus } from '@/shared/types/property'
 
@@ -50,11 +50,11 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   close: []
-  saved: [room: Room]
+  saved: []
 }>()
 
 const { t } = useI18n()
-const store = usePropertyStore()
+const changeMaintenance = useChangeRoomMaintenanceMutation()
 const titleId = useId()
 
 const form = ref<{
@@ -105,8 +105,8 @@ async function submit() {
   saving.value = true
   errorMsg.value = ''
   try {
-    const updated = await store.changeRoomMaintenance(r.id, body)
-    emit('saved', updated)
+    await changeMaintenance.mutateAsync({ id: r.id, ...body })
+    emit('saved')
   } catch (err: unknown) {
     errorMsg.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {

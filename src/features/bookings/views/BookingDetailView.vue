@@ -119,7 +119,8 @@ import { useHashTab } from '@/shared/composables/useHashTab'
 import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms } from '@/features/property/api'
 import type { AvailableRoom } from '@/shared/types/property'
@@ -151,7 +152,8 @@ provide(guestSearchKey, (q) => fetchGuests({ q }))
 const { t, locale } = useI18n()
 const route = useRoute()
 const store = useBookingStore()
-const propertyStore = usePropertyStore()
+const hotelQ = useQuery(hotelQuery)
+const roomTypesQuery = useQuery(roomTypeListQuery())
 const { canModifyBookings, canAccessBookingFolio } = usePermissions()
 const { currentBooking } = storeToRefs(store)
 const loadError = ref('')
@@ -186,7 +188,7 @@ const editStayBranch = computed(() => {
   return raw as Record<string, unknown>
 })
 
-const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? '')
+const hotelCurrency = computed(() => hotelQ.data.value?.currency ?? '')
 
 function removeManualAdjustment(name: string) {
   editManualAdjustments.value = editManualAdjustments.value.filter((a) => a.name !== name)
@@ -194,7 +196,7 @@ function removeManualAdjustment(name: string) {
 
 const roomTypeNames = computed(() => {
   const map: Record<string, string> = {}
-  for (const rt of propertyStore.roomTypes) map[rt.id] = rt.name
+  for (const rt of roomTypesQuery.data.value ?? []) map[rt.id] = rt.name
   return map
 })
 
@@ -261,8 +263,6 @@ async function load() {
   store.clearCurrentBooking()
   loadError.value = ''
   notFound.value = false
-  propertyStore.fetchHotel()
-  propertyStore.fetchRoomTypes()
   try {
     await store.fetchBooking(id, { formTarget: 'view' })
   } catch (err: unknown) {

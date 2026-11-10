@@ -326,7 +326,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '@/features/tasks/stores/useTasksStore'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery, useQueryCache } from '@pinia/colada'
+import { propertyKeys, roomListQuery } from '@/features/property/queries'
+import { invalidateKeys } from '@/shared/api/queryCache'
 import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
 import type {
   HousekeepingTask,
@@ -358,10 +360,11 @@ const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'd
 
 const { t } = useI18n()
 const tasksStore = useTasksStore()
-const propertyStore = usePropertyStore()
+const queryCache = useQueryCache()
+const roomsQuery = useQuery(roomListQuery())
 const employeeStore = useEmployeeStore()
 const permissions = usePermissions()
-const { rooms } = storeToRefs(propertyStore)
+const rooms = computed(() => roomsQuery.data.value ?? [])
 const { employees } = storeToRefs(employeeStore)
 const { housekeeping, maintenance } = storeToRefs(tasksStore)
 
@@ -513,7 +516,6 @@ async function reload() {
 
 async function loadSupporting() {
   const ops: Promise<unknown>[] = []
-  if (!rooms.value.length) ops.push(propertyStore.fetchRooms())
   if (!employees.value.length && canAssign.value) {
     ops.push(employeeStore.fetchEmployees())
   }
@@ -601,9 +603,8 @@ async function submitEdit() {
     selectedTask.value = updated
     quickAssignSelection.value = updated.assignee_employee_id ?? ''
     editing.value = false
-    if (updated.room_id) {
-      void propertyStore.refreshRoom(updated.room_id).catch(() => {})
-    }
+    // Room housekeeping and maintenance states follow its tasks.
+    void invalidateKeys(queryCache, [propertyKeys.rooms])
   } catch (err: unknown) {
     panelError.value = formatUnknownApiError(err) || t('tasks.save_failed')
   } finally {
@@ -643,9 +644,8 @@ async function applyStatus(next: TaskStatus) {
           status: next as Exclude<HousekeepingTaskStatus, 'open'>,
         })
     selectedTask.value = updated
-    if (updated.room_id) {
-      void propertyStore.refreshRoom(updated.room_id).catch(() => {})
-    }
+    // Room housekeeping and maintenance states follow its tasks.
+    void invalidateKeys(queryCache, [propertyKeys.rooms])
   } catch (err: unknown) {
     panelError.value = formatUnknownApiError(err) || t('tasks.save_failed')
   } finally {

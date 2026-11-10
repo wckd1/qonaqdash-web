@@ -15,9 +15,8 @@ async function apiHeaders(page: Page): Promise<Record<string, string>> {
   return { Authorization: `Bearer ${token}` }
 }
 
-// Known bug F8, fixed in WP1 by invalidating the hotel query on save.
 // F8: the hotel data other screens use is refreshed after the settings are saved.
-test.fail('saved hotel settings show on other screens without a reload', async ({ page }) => {
+test('saved hotel settings show on other screens without a reload', async ({ page }) => {
   await page.goto('/manage/hotel')
   await expect(page.getByRole('heading', { level: 1, name: en.hotel.title })).toBeVisible()
   const original = (await (

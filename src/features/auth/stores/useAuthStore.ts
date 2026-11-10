@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useJwt } from '@/shared/composables/useJwt'
 import * as authApi from '@/features/auth/api'
+import { clearServerState } from '@/shared/api/queryCache'
 
 const TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
@@ -66,9 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function logout() {
     clearTokens()
-    void import('@/features/property/stores/usePropertyStore').then(({ usePropertyStore }) => {
-      usePropertyStore().resetState()
-    })
+    clearServerState()
     void import('@/shared/stores/useSettingsStore').then(({ useSettingsStore }) => {
       useSettingsStore().resetState()
     })

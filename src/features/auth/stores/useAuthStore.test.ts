@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { useQueryCache } from '@pinia/colada'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { makeJwt, makeToken } from '@/test-utils/jwt'
 
@@ -120,5 +121,19 @@ describe('useAuthStore: token storage', () => {
     expect(auth.isAuthenticated).toBe(false)
     expect(localStorage.getItem(ACCESS_KEY)).toBeNull()
     expect(localStorage.getItem(REFRESH_KEY)).toBeNull()
+  })
+
+  // F2: the next user in the same tab must not see the previous user's data.
+  test('logout drops cached server data', () => {
+    localStorage.setItem(ACCESS_KEY, makeToken('access', 600))
+    localStorage.setItem(REFRESH_KEY, makeToken('refresh', 3600))
+    const auth = createStore()
+    const queryCache = useQueryCache()
+    queryCache.setQueryData(['property', 'hotel'], { id: 'hotel-1', name: 'City' })
+    queryCache.setQueryData(['pricing', 'base-rates'], [{ room_type_id: 'rt-1' }])
+
+    auth.logout()
+
+    expect(queryCache.getEntries()).toHaveLength(0)
   })
 })

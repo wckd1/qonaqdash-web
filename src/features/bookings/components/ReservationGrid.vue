@@ -133,7 +133,8 @@ import { useSettingsStore } from '@/shared/stores/useSettingsStore'
 import { dateFnsLocaleForApp } from '@/shared/i18n/dateLocales'
 import BookingStatusActions from '@/features/bookings/components/BookingStatusActions.vue'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery } from '@/features/property/queries'
 
 type RoomRow = Room & { room_type_name?: string }
 
@@ -186,7 +187,7 @@ const settingsStore = useSettingsStore()
 const { locale: appLocale } = storeToRefs(settingsStore)
 const dateFnsLocale = computed(() => dateFnsLocaleForApp(appLocale.value))
 
-const propertyStore = usePropertyStore()
+const { data: hotel } = useQuery(hotelQuery)
 
 const emit = defineEmits<{
   'select-booking': [booking: GridPanelBooking]
@@ -569,8 +570,8 @@ function parseHourMinute(hhmm: string): [number, number] {
  *   if same as firstDay, one night → checkout next day.
  */
 function goToNewBooking(roomId, firstDay, lastDay) {
-  const [ciH, ciM] = parseHourMinute(propertyStore.hotel?.check_in_hour || '14:00')
-  const [coH, coM] = parseHourMinute(propertyStore.hotel?.check_out_hour || '12:00')
+  const [ciH, ciM] = parseHourMinute(hotel.value?.check_in_hour || '14:00')
+  const [coH, coM] = parseHourMinute(hotel.value?.check_out_hour || '12:00')
 
   const first = startOfDay(firstDay)
   const last = startOfDay(lastDay)

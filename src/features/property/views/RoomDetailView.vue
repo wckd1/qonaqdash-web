@@ -205,35 +205,36 @@
 import { computed, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import CleaningDialog from '@/features/property/components/CleaningDialog.vue'
 import MaintenanceDialog from '@/features/property/components/MaintenanceDialog.vue'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import {
+  roomActivityQuery,
+  roomDetailQuery,
+  roomTypeListQuery,
+  useChangeRoomAvailabilityMutation,
+  useChangeRoomHousekeepingMutation,
+  useChangeRoomMaintenanceMutation,
+  useDeleteRoomMutation,
+  useUpdateRoomMutation,
+} from '@/features/property/queries'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
-import type { Room, RoomActivityEntry, RoomAvailabilityStatus } from '@/shared/types/property'
+import type { RoomActivityEntry, RoomAvailabilityStatus } from '@/shared/types/property'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const store = usePropertyStore()
 const { canManageRooms } = usePermissions()
 const { cleaningStatuses, maintenanceStatuses, canCleaning, canMaintenance } = useRoomActionAccess()
-const { roomTypes, rooms } = storeToRefs(store)
 
 const deleteTitleId = useId()
 
-const loadError = ref('')
-const notFound = ref(false)
 const roomError = ref('')
 const axisSaving = ref(false)
-
-const activityEntries = ref<RoomActivityEntry[]>([])
-const activityLoading = ref(false)
-const activityError = ref('')
 
 const cleaningOpen = ref(false)
 const maintenanceOpen = ref(false)
@@ -254,11 +255,36 @@ const roomId = computed(() => {
   return null
 })
 
-const room = computed<Room | null>(() => {
-  const id = roomId.value
-  if (!id) return null
-  return rooms.value.find((r) => r.id === id) ?? null
+const roomTypesQuery = useQuery(roomTypeListQuery())
+const roomQuery = useQuery(() => ({
+  ...roomDetailQuery(roomId.value ?? ''),
+  enabled: !!roomId.value,
+}))
+const activityQuery = useQuery(() => ({
+  ...roomActivityQuery(roomId.value ?? ''),
+  enabled: !!roomId.value,
+}))
+const changeAvailability = useChangeRoomAvailabilityMutation()
+const changeHousekeeping = useChangeRoomHousekeepingMutation()
+const changeMaintenance = useChangeRoomMaintenanceMutation()
+const updateRoom = useUpdateRoomMutation()
+const deleteRoom = useDeleteRoomMutation()
+
+const roomTypes = computed(() => roomTypesQuery.data.value ?? [])
+const room = computed(() => roomQuery.data.value ?? null)
+const notFound = computed(() => httpErrorResponse(roomQuery.error.value)?.status === 404)
+const loadError = computed(() => {
+  const err = roomTypesQuery.error.value ?? (notFound.value ? null : roomQuery.error.value)
+  return err ? formatUnknownApiError(err) || t('rooms.load_failed') : ''
 })
+
+const activityEntries = computed<RoomActivityEntry[]>(() => activityQuery.data.value ?? [])
+const activityLoading = computed(() => activityQuery.isPending.value)
+const activityError = computed(() =>
+  activityQuery.error.value
+    ? formatUnknownApiError(activityQuery.error.value) || t('rooms.load_failed')
+    : '',
+)
 
 const roomType = computed(() => {
   const r = room.value
@@ -274,60 +300,6 @@ const headerTitle = computed(() => {
     ? t('rooms.detail_title_with_type', { number: r.number, type: typeName })
     : t('rooms.detail_title', { number: r.number })
 })
-
-async function ensureLists() {
-  try {
-    await store.fetchRoomTypes()
-    await store.fetchRooms()
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
-  }
-}
-
-async function loadRoom() {
-  const id = roomId.value
-  if (!id) return
-  loadError.value = ''
-  notFound.value = false
-  try {
-    await ensureLists()
-    if (!room.value) {
-      await store.refreshRoom(id)
-    }
-  } catch (err: unknown) {
-    if (httpErrorResponse(err)?.status === 404) {
-      notFound.value = true
-    } else {
-      loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
-    }
-  }
-}
-
-async function loadActivity() {
-  const id = roomId.value
-  if (!id) return
-  activityLoading.value = true
-  activityError.value = ''
-  try {
-    activityEntries.value = await store.fetchRoomActivity(id)
-  } catch (err: unknown) {
-    activityError.value = formatUnknownApiError(err) || t('rooms.load_failed')
-  } finally {
-    activityLoading.value = false
-  }
-}
-
-watch(
-  () => roomId.value,
-  async (id) => {
-    if (!id) return
-    await loadRoom()
-    if (!notFound.value && !loadError.value) {
-      await loadActivity()
-    }
-  },
-  { immediate: true },
-)
 
 watch(
   [headerTitle, locale],
@@ -409,8 +381,7 @@ async function toggleAvailability() {
   axisSaving.value = true
   roomError.value = ''
   try {
-    await store.changeRoomAvailability(r.id, next)
-    await loadActivity()
+    await changeAvailability.mutateAsync({ id: r.id, status: next })
   } catch (err: unknown) {
     roomError.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {
@@ -426,8 +397,7 @@ async function openCleaningDialog() {
     axisSaving.value = true
     roomError.value = ''
     try {
-      await store.changeRoomHousekeeping(r.id, allowed[0])
-      await loadActivity()
+      await changeHousekeeping.mutateAsync({ id: r.id, status: allowed[0] })
     } catch (err: unknown) {
       roomError.value = formatUnknownApiError(err) || t('rooms.load_failed')
     } finally {
@@ -446,8 +416,7 @@ async function openMaintenanceDialog() {
     axisSaving.value = true
     roomError.value = ''
     try {
-      await store.changeRoomMaintenance(r.id, { status: allowed[0] })
-      await loadActivity()
+      await changeMaintenance.mutateAsync({ id: r.id, status: allowed[0] })
     } catch (err: unknown) {
       roomError.value = formatUnknownApiError(err) || t('rooms.load_failed')
     } finally {
@@ -458,10 +427,9 @@ async function openMaintenanceDialog() {
   maintenanceOpen.value = true
 }
 
-async function onAxisSaved() {
+function onAxisSaved() {
   cleaningOpen.value = false
   maintenanceOpen.value = false
-  await loadActivity()
 }
 
 function startEdit() {
@@ -485,7 +453,7 @@ async function onSave() {
   editSaving.value = true
   editError.value = ''
   try {
-    await store.updateRoom(r.id, { room_type_id, number: number.trim() })
+    await updateRoom.mutateAsync({ id: r.id, room_type_id, number: number.trim() })
     editing.value = false
   } catch (err: unknown) {
     editError.value = formatUnknownApiError(err) || t('rooms.load_failed')
@@ -510,7 +478,7 @@ async function confirmDelete() {
   deleteSaving.value = true
   deleteError.value = ''
   try {
-    await store.deleteRoom(r.id)
+    await deleteRoom.mutateAsync(r.id)
     deleteOpen.value = false
     router.push({ name: 'rooms' })
   } catch (err: unknown) {

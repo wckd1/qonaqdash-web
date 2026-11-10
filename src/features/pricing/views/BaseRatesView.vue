@@ -71,7 +71,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
 import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
 import {
   minorToMajor,
@@ -84,14 +85,24 @@ import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
-const propertyStore = usePropertyStore()
 const pricingStore = usePricingStore()
 const { canAdjustPricing } = usePermissions()
-const { roomTypes, hotel } = storeToRefs(propertyStore)
+const hotelQ = useQuery(hotelQuery)
+const roomTypesQ = useQuery(roomTypeListQuery())
+const hotel = computed(() => hotelQ.data.value ?? null)
+const roomTypes = computed(() => roomTypesQ.data.value ?? [])
 const { baseRates } = storeToRefs(pricingStore)
 
-const loading = ref(true)
-const loadError = ref('')
+const ratesLoading = ref(true)
+const ratesError = ref('')
+const loading = computed(
+  () => hotelQ.isPending.value || roomTypesQ.isPending.value || ratesLoading.value,
+)
+const loadError = computed(() => {
+  const err = hotelQ.error.value ?? roomTypesQ.error.value
+  if (err) return formatUnknownApiError(err) || t('pricing.load_failed')
+  return ratesError.value
+})
 const saving = ref(false)
 const saveError = ref('')
 
@@ -150,12 +161,11 @@ async function saveAll() {
 
 onMounted(async () => {
   try {
-    await propertyStore.fetchHotel()
-    await Promise.all([propertyStore.fetchRoomTypes(), pricingStore.fetchBaseRates()])
+    await pricingStore.fetchBaseRates()
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('pricing.load_failed')
+    ratesError.value = formatUnknownApiError(err) || t('pricing.load_failed')
   } finally {
-    loading.value = false
+    ratesLoading.value = false
   }
 })
 </script>

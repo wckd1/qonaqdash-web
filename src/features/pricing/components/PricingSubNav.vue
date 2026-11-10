@@ -22,13 +22,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery } from '@/features/property/queries'
 import { getCurrencySymbol } from '@/shared/lib/money'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
-const { hotel } = storeToRefs(usePropertyStore())
+const { data: hotel } = useQuery(hotelQuery)
 const { canAccessHotelGeneral, canAccessPricingBaseRates, canAccessPricingRules } = usePermissions()
 
 const currencyCode = computed(() => hotel.value?.currency ?? 'USD')

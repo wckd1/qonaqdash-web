@@ -322,7 +322,8 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
 import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery } from '@/features/property/queries'
 import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared/types/commercial'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
@@ -331,11 +332,11 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
 const pricingStore = usePricingStore()
-const propertyStore = usePropertyStore()
+const hotelQ = useQuery(hotelQuery)
 const { canManagePricing } = usePermissions()
 const { rules, conditionCandidates } = storeToRefs(pricingStore)
 
-const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? 'USD')
+const hotelCurrency = computed(() => hotelQ.data.value?.currency ?? 'USD')
 
 const effectSymbol = computed(() =>
   ruleForm.value.effect.type === 'percent' ? '%' : getCurrencySymbol(hotelCurrency.value),
@@ -349,8 +350,14 @@ function candidateByFieldId(fieldId: string): ConditionCandidate | undefined {
   return conditionCandidates.value.find((c) => c.field_id === fieldId)
 }
 
-const loading = ref(true)
-const loadError = ref('')
+const rulesLoading = ref(true)
+const rulesError = ref('')
+const loading = computed(() => rulesLoading.value || hotelQ.isPending.value)
+const loadError = computed(() =>
+  hotelQ.error.value
+    ? formatUnknownApiError(hotelQ.error.value) || t('pricing.load_failed')
+    : rulesError.value,
+)
 
 const dialogOpen = ref(false)
 const editingId = ref('')
@@ -461,18 +468,14 @@ function effectSummary(rule: PricingRule): string {
 }
 
 async function load() {
-  loadError.value = ''
-  loading.value = true
+  rulesError.value = ''
+  rulesLoading.value = true
   try {
-    await Promise.all([
-      pricingStore.fetchRules(true),
-      pricingStore.fetchConditionCandidates(),
-      propertyStore.fetchHotel(),
-    ])
+    await Promise.all([pricingStore.fetchRules(true), pricingStore.fetchConditionCandidates()])
   } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('pricing.load_failed')
+    rulesError.value = formatUnknownApiError(err) || t('pricing.load_failed')
   } finally {
-    loading.value = false
+    rulesLoading.value = false
   }
 }
 

@@ -157,9 +157,9 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { addDays, differenceInCalendarDays, startOfDay, startOfToday, subDays } from 'date-fns'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { roomListQuery, roomTypeListQuery } from '@/features/property/queries'
 import { fetchBookingGrid, type BookingItem } from '@/features/bookings/api'
 import type { GridPanelBooking } from '@/features/bookings/panelTypes'
 import ReservationGrid from '@/features/bookings/components/ReservationGrid.vue'
@@ -176,14 +176,25 @@ const STORAGE_LAST_PERIOD = 'qonaqdash.dashboard.gridLastPeriod'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const propertyStore = usePropertyStore()
 const { canCreateBookings } = usePermissions()
-const { rooms, roomTypes } = storeToRefs(propertyStore)
+const roomTypesQuery = useQuery(roomTypeListQuery())
+const roomsQuery = useQuery(roomListQuery())
+const roomTypes = computed(() => roomTypesQuery.data.value ?? [])
+const rooms = computed(() => roomsQuery.data.value ?? [])
 
 const fromStr = ref('')
 const toStr = ref('')
-const loading = ref(true)
-const loadError = ref('')
+const gridLoading = ref(true)
+const gridError = ref('')
+const loading = computed(
+  () => gridLoading.value || roomTypesQuery.isPending.value || roomsQuery.isPending.value,
+)
+const roomsError = computed(() => roomTypesQuery.error.value ?? roomsQuery.error.value)
+const loadError = computed(() =>
+  roomsError.value
+    ? formatUnknownApiError(roomsError.value) || t('dashboard.load_failed')
+    : gridError.value,
+)
 const gridEntries = ref<BookingItem[]>([])
 /** Grid selection: panel stays on dashboard (no navigation to bookings list). */
 const selectedBooking = ref<GridPanelBooking | null>(null)
@@ -309,21 +320,20 @@ const rangeToDate = computed(() => {
 })
 
 async function loadGridData() {
-  loadError.value = ''
+  gridError.value = ''
   if (!isValidRange(fromStr.value, toStr.value)) {
-    loadError.value = t('dashboard.invalid_range')
+    gridError.value = t('dashboard.invalid_range')
     gridEntries.value = []
     return
   }
-  loading.value = true
+  gridLoading.value = true
   try {
-    await Promise.all([propertyStore.fetchRoomTypes(), propertyStore.fetchRooms()])
     gridEntries.value = await fetchBookingGrid({ from: fromStr.value, to: toStr.value })
   } catch (err: unknown) {
     gridEntries.value = []
-    loadError.value = formatUnknownApiError(err) || t('dashboard.load_failed')
+    gridError.value = formatUnknownApiError(err) || t('dashboard.load_failed')
   } finally {
-    loading.value = false
+    gridLoading.value = false
   }
 }
 
@@ -368,15 +378,15 @@ function applyPeriodLength(n) {
 }
 
 function onDateFieldChange() {
-  loadError.value = ''
+  gridError.value = ''
   if (!isValidYmd(fromStr.value) || !isValidYmd(toStr.value)) {
-    loadError.value = t('dashboard.valid_dates_hint')
+    gridError.value = t('dashboard.valid_dates_hint')
     return
   }
   const fromD = parseLocalYmd(fromStr.value)
   const toD = parseLocalYmd(toStr.value)
   if (Number.isNaN(fromD.getTime()) || Number.isNaN(toD.getTime())) {
-    loadError.value = t('dashboard.valid_dates_hint')
+    gridError.value = t('dashboard.valid_dates_hint')
     return
   }
   if (toD < fromD) {
@@ -404,7 +414,7 @@ function jumpToday() {
 
 /** Shift the visible window by the current inclusive period length. */
 function shiftRange(direction: number) {
-  loadError.value = ''
+  gridError.value = ''
   if (!isValidRange(fromStr.value, toStr.value)) return
   const fromD = startOfDay(parseLocalYmd(fromStr.value))
   const toD = startOfDay(parseLocalYmd(toStr.value))

@@ -442,8 +442,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHashTab } from '@/shared/composables/useHashTab'
-import { storeToRefs } from 'pinia'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery } from '@/features/property/queries'
 import {
   fetchOverview,
   fetchDailyBreakdown,
@@ -467,8 +467,8 @@ type LedgerGrouping = 'entries' | 'daily' | 'monthly'
 type PresetId = 'this_month' | 'last_month' | 'last_7' | 'last_30' | 'last_90' | 'custom'
 
 const { t, locale } = useI18n()
-const propertyStore = usePropertyStore()
-const { hotel } = storeToRefs(propertyStore)
+const hotelQ = useQuery(hotelQuery)
+const hotel = computed(() => hotelQ.data.value ?? null)
 
 const currencyCode = computed(() => hotel.value?.currency ?? 'USD')
 
@@ -880,11 +880,8 @@ function loadMoreLedger() {
 }
 
 onMounted(async () => {
-  try {
-    await propertyStore.fetchHotel()
-  } catch {
-    /* hotel currency fallback to USD */
-  }
+  // Wait for the hotel currency; on error amounts fall back to USD.
+  await hotelQ.refresh()
   ensureDataLoaded()
 })
 </script>

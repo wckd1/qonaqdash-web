@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import type {
   AvailableRoom,
   Hotel,
@@ -14,8 +14,8 @@ import type {
  * Current JWT hotel profile (display name).
  * @returns {Promise<Hotel>}
  */
-export function fetchHotel(): Promise<Hotel> {
-  return api.get('/api/property/hotel').then(({ data }) => data)
+export function fetchHotel(options: RequestOptions = {}): Promise<Hotel> {
+  return api.get('/api/property/hotel', { signal: options.signal }).then(({ data }) => data)
 }
 
 /**
@@ -44,8 +44,14 @@ export function updateHotel(body: {
  * @param {{ q?: string }} [params] - Optional search query; backend filters by type name/description or room number.
  * @returns {Promise<RoomType[]>}
  */
-export function fetchRoomTypes(params: { q?: string } = {}): Promise<RoomType[]> {
-  const config = params.q?.trim() ? { params: { q: params.q.trim() } } : {}
+export function fetchRoomTypes(
+  params: { q?: string } = {},
+  options: RequestOptions = {},
+): Promise<RoomType[]> {
+  const config = {
+    signal: options.signal,
+    ...(params.q?.trim() ? { params: { q: params.q.trim() } } : {}),
+  }
   return api
     .get('/api/property/room-types', config)
     .then(({ data }) => data.room_types ?? data ?? [])
@@ -94,13 +100,19 @@ export function deleteRoomType(id: string): Promise<void> {
  * @param {{ q?: string }} [params] - Optional search query; backend filters by room number.
  * @returns {Promise<Room[]>}
  */
-export function fetchRooms(params: { q?: string } = {}): Promise<Room[]> {
-  const config = params.q?.trim() ? { params: { q: params.q.trim() } } : {}
+export function fetchRooms(
+  params: { q?: string } = {},
+  options: RequestOptions = {},
+): Promise<Room[]> {
+  const config = {
+    signal: options.signal,
+    ...(params.q?.trim() ? { params: { q: params.q.trim() } } : {}),
+  }
   return api.get('/api/property/rooms', config).then(({ data }) => data.rooms ?? data ?? [])
 }
 
-export function fetchRoom(id: string): Promise<Room> {
-  return api.get(`/api/property/rooms/${id}`).then(({ data }) => data)
+export function fetchRoom(id: string, options: RequestOptions = {}): Promise<Room> {
+  return api.get(`/api/property/rooms/${id}`, { signal: options.signal }).then(({ data }) => data)
 }
 
 /**
@@ -155,9 +167,12 @@ export function changeRoomMaintenance(
 }
 
 /** Append-only room event history (audit). */
-export function fetchRoomActivity(id: string): Promise<RoomActivityEntry[]> {
+export function fetchRoomActivity(
+  id: string,
+  options: RequestOptions = {},
+): Promise<RoomActivityEntry[]> {
   return api
-    .get(`/api/property/rooms/${id}/activity`)
+    .get(`/api/property/rooms/${id}/activity`, { signal: options.signal })
     .then(({ data }) => (Array.isArray(data) ? data : (data?.entries ?? [])))
 }
 
@@ -183,7 +198,7 @@ export function deleteRoom(id: string): Promise<void> {
 export function fetchAvailableRooms(
   from: Date | string | null,
   to: Date | string | null,
-  options: { excludeBookingId?: string } = {},
+  options: { excludeBookingId?: string } & RequestOptions = {},
 ): Promise<AvailableRoom[]> {
   const params: Record<string, string> = {}
   if (from != null) {
@@ -207,6 +222,6 @@ export function fetchAvailableRooms(
     params.exclude = ex.trim()
   }
   return api
-    .get('/api/property/rooms/available', { params })
+    .get('/api/property/rooms/available', { params, signal: options.signal })
     .then(({ data }) => (Array.isArray(data) ? data : (data?.rooms ?? [])))
 }

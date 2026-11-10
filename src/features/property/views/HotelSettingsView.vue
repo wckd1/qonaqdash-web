@@ -92,10 +92,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useQuery } from '@pinia/colada'
 import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
-import * as propertyApi from '@/features/property/api'
+import { hotelQuery, useUpdateHotelMutation } from '@/features/property/queries'
+import type { Hotel } from '@/shared/types/property'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { CURRENCY_CODES, getCurrencySymbol } from '@/shared/lib/money'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -103,9 +105,14 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 const { t } = useI18n()
 const { canManageHotel } = usePermissions()
 
-const loading = ref(true)
-const saving = ref(false)
-const loadError = ref('')
+const hotel = useQuery(hotelQuery)
+const updateHotel = useUpdateHotelMutation()
+
+const loading = computed(() => hotel.isPending.value)
+const saving = computed(() => updateHotel.isLoading.value)
+const loadError = computed(() =>
+  hotel.error.value ? formatUnknownApiError(hotel.error.value) || t('hotel.load_error') : '',
+)
 const validationError = ref('')
 
 const name = ref('')
@@ -125,33 +132,43 @@ const dirty = computed(
     checkOutHour.value !== originalCheckOutHour.value,
 )
 
-async function load() {
-  loadError.value = ''
-  loading.value = true
-  try {
-    const data = await propertyApi.fetchHotel()
-    const n = typeof data?.name === 'string' ? data.name : ''
-    name.value = n
-    originalName.value = n
-    const c = typeof data?.currency === 'string' && data.currency ? data.currency : 'USD'
-    currency.value = c
-    originalCurrency.value = c
-    const ci =
-      typeof data?.check_in_hour === 'string' && data.check_in_hour ? data.check_in_hour : '14:00'
-    checkInHour.value = ci
-    originalCheckInHour.value = ci
-    const co =
-      typeof data?.check_out_hour === 'string' && data.check_out_hour
-        ? data.check_out_hour
-        : '12:00'
-    checkOutHour.value = co
-    originalCheckOutHour.value = co
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('hotel.load_error')
-  } finally {
-    loading.value = false
-  }
+/** Copies server values into the form; `fallback` fills fields the response lacks. */
+function applyHotel(data: Partial<Hotel> | undefined, fallback: Omit<Hotel, 'id'>) {
+  const n = typeof data?.name === 'string' ? data.name : fallback.name
+  name.value = n
+  originalName.value = n
+  const c = typeof data?.currency === 'string' && data.currency ? data.currency : fallback.currency
+  currency.value = c
+  originalCurrency.value = c
+  const ci =
+    typeof data?.check_in_hour === 'string' && data.check_in_hour
+      ? data.check_in_hour
+      : fallback.check_in_hour
+  checkInHour.value = ci
+  originalCheckInHour.value = ci
+  const co =
+    typeof data?.check_out_hour === 'string' && data.check_out_hour
+      ? data.check_out_hour
+      : fallback.check_out_hour
+  checkOutHour.value = co
+  originalCheckOutHour.value = co
 }
+
+// Fill the form from the hotel query, but never over unsaved edits.
+watch(
+  () => hotel.data.value,
+  (data) => {
+    if (data && !dirty.value) {
+      applyHotel(data, {
+        name: '',
+        currency: 'USD',
+        check_in_hour: '14:00',
+        check_out_hour: '12:00',
+      })
+    }
+  },
+  { immediate: true },
+)
 
 const currencyConfirmOpen = ref(false)
 const pendingCurrency = ref('')
@@ -188,41 +205,19 @@ async function onSave() {
     return
   }
 
-  saving.value = true
+  const body = {
+    name: trimmed,
+    currency: currency.value,
+    check_in_hour: checkInHour.value,
+    check_out_hour: checkOutHour.value,
+  }
   try {
-    const data = await propertyApi.updateHotel({
-      name: trimmed,
-      currency: currency.value,
-      check_in_hour: checkInHour.value,
-      check_out_hour: checkOutHour.value,
-    })
-    const n = typeof data?.name === 'string' ? data.name : trimmed
-    name.value = n
-    originalName.value = n
-    const c = typeof data?.currency === 'string' && data.currency ? data.currency : currency.value
-    currency.value = c
-    originalCurrency.value = c
-    const ci =
-      typeof data?.check_in_hour === 'string' && data.check_in_hour
-        ? data.check_in_hour
-        : checkInHour.value
-    checkInHour.value = ci
-    originalCheckInHour.value = ci
-    const co =
-      typeof data?.check_out_hour === 'string' && data.check_out_hour
-        ? data.check_out_hour
-        : checkOutHour.value
-    checkOutHour.value = co
-    originalCheckOutHour.value = co
+    applyHotel(await updateHotel.mutateAsync(body), body)
   } catch (err: unknown) {
     const msg = formatUnknownApiError(err)
     if (msg) validationError.value = msg
-  } finally {
-    saving.value = false
   }
 }
-
-onMounted(load)
 </script>
 
 <style scoped>

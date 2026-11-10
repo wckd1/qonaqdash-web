@@ -16,6 +16,12 @@ function isInlineValidatedEntityWrite(method: string, path: string): boolean {
 }
 import { useNotification } from '@/shared/composables/useNotification'
 
+/** Per-request options the feature API functions accept, e.g. the query `signal`. */
+export interface RequestOptions {
+  /** Aborts the request, e.g. when Pinia Colada supersedes or cancels a query. */
+  signal?: AbortSignal
+}
+
 const TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
 

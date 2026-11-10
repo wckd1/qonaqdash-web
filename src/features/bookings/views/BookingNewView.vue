@@ -43,7 +43,8 @@ import { ref, computed, onMounted, provide, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
 import { fetchGuests } from '@/features/guests/api'
 import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
 import type { AvailableRoom } from '@/shared/types/property'
@@ -65,7 +66,9 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useBookingStore()
-const propertyStore = usePropertyStore()
+const hotelQ = useQuery(hotelQuery)
+const roomTypesQuery = useQuery(roomTypeListQuery())
+const hotel = computed(() => hotelQ.data.value ?? null)
 
 const loading = ref(true)
 const loadError = ref('')
@@ -115,9 +118,7 @@ function applyDefaultHour(isoValue: string, hourSetting: string): string {
   return d.toISOString()
 }
 
-const checkInMinLocal = computed(() =>
-  todayWithHotelHour(propertyStore.hotel?.check_in_hour || '14:00'),
-)
+const checkInMinLocal = computed(() => todayWithHotelHour(hotel.value?.check_in_hour || '14:00'))
 
 const checkOutMinLocal = computed(() => {
   const raw = formData.value.stay
@@ -140,10 +141,10 @@ const stayBranch = computed(() => {
   return raw as Record<string, unknown>
 })
 
-const hotelCurrency = computed(() => propertyStore.hotel?.currency ?? '')
+const hotelCurrency = computed(() => hotel.value?.currency ?? '')
 const roomTypeNames = computed(() => {
   const map: Record<string, string> = {}
-  for (const rt of propertyStore.roomTypes) map[rt.id] = rt.name
+  for (const rt of roomTypesQuery.data.value ?? []) map[rt.id] = rt.name
   return map
 })
 
@@ -204,8 +205,8 @@ watch(
     const raw = formData.value.stay
     if (!raw || typeof raw !== 'object') return
     const stay = raw as Record<string, unknown>
-    const ciHour = propertyStore.hotel?.check_in_hour || '14:00'
-    const coHour = propertyStore.hotel?.check_out_hour || '12:00'
+    const ciHour = hotel.value?.check_in_hour || '14:00'
+    const coHour = hotel.value?.check_out_hour || '12:00'
 
     if (typeof checkIn === 'string' && checkIn) {
       const corrected = applyDefaultHour(checkIn, ciHour)
@@ -244,8 +245,8 @@ async function mergeRouteQueryIntoForm() {
 onMounted(async () => {
   loading.value = true
   loadError.value = ''
-  const hotelPromise = propertyStore.fetchHotel()
-  propertyStore.fetchRoomTypes()
+  // The default check-in time comes from the hotel, so wait for it with the form.
+  const hotelPromise = hotelQ.refresh(true)
   try {
     const [template] = await Promise.all([store.fetchBookingForm(), hotelPromise])
     bookingForm.value = template as BookingFormRuntime
@@ -261,7 +262,7 @@ onMounted(async () => {
     if (hasQueryDates) {
       await mergeRouteQueryIntoForm()
     } else {
-      const ciHour = propertyStore.hotel?.check_in_hour || '14:00'
+      const ciHour = hotel.value?.check_in_hour || '14:00'
       const now = new Date()
       const [h, m] = parseHourMinute(ciHour)
       now.setHours(h, m, 0, 0)

@@ -379,14 +379,14 @@ import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { useSettingsStore } from '@/shared/stores/useSettingsStore'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { hotelQuery } from '@/features/property/queries'
 import { usePermissions } from '@/shared/composables/usePermissions'
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const settingsStore = useSettingsStore()
-const propertyStore = usePropertyStore()
 const {
   homeRouteName,
   canAccessDashboard,
@@ -404,7 +404,8 @@ const {
   canAccessReports,
 } = usePermissions()
 const { accountEmail } = storeToRefs(settingsStore)
-const { hotel } = storeToRefs(propertyStore)
+const hotelQ = useQuery(() => ({ ...hotelQuery, enabled: !!authStore.hotelId }))
+const hotel = computed(() => hotelQ.data.value ?? null)
 
 /**
  * Short form / settings pages: main height fits content (no tall empty column).
@@ -514,13 +515,4 @@ function logout() {
 
 onMounted(() => document.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
-
-watch(
-  () => authStore.hotelId,
-  (hotelId) => {
-    if (!hotelId) return
-    void propertyStore.fetchHotel().catch(() => {})
-  },
-  { immediate: true },
-)
 </script>

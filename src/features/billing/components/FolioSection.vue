@@ -118,9 +118,9 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
 import { fetchGuestBill, type BillResponse, type LedgerEntry } from '@/features/billing/api'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useQuery } from '@pinia/colada'
+import { roomTypeListQuery } from '@/features/property/queries'
 import { formatMoney } from '@/shared/lib/money'
 import { httpErrorResponse } from '@/shared/unknownError'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
@@ -138,9 +138,8 @@ const props = defineProps<{
 const { t, locale } = useI18n()
 const { canCollectPayment, canModifyBilling, canRefundBilling } = usePermissions()
 
-const propertyStore = usePropertyStore()
-const { roomTypes } = storeToRefs(propertyStore)
-propertyStore.fetchRoomTypes()
+const roomTypesQuery = useQuery(roomTypeListQuery())
+const roomTypes = computed(() => roomTypesQuery.data.value ?? [])
 
 type DialogKind = 'payment' | 'refund' | 'adjustment' | null
 const activeDialog = ref<DialogKind>(null)

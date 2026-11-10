@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import { useChangeRoomHousekeepingMutation } from '@/features/property/queries'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import type { Room, RoomHousekeepingStatus } from '@/shared/types/property'
 
@@ -45,11 +45,11 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   close: []
-  saved: [room: Room]
+  saved: []
 }>()
 
 const { t } = useI18n()
-const store = usePropertyStore()
+const changeHousekeeping = useChangeRoomHousekeepingMutation()
 const titleId = useId()
 
 const form = ref<{ status: RoomHousekeepingStatus }>({ status: 'clean' })
@@ -80,8 +80,8 @@ async function submit() {
   saving.value = true
   errorMsg.value = ''
   try {
-    const updated = await store.changeRoomHousekeeping(r.id, next)
-    emit('saved', updated)
+    await changeHousekeeping.mutateAsync({ id: r.id, status: next })
+    emit('saved')
   } catch (err: unknown) {
     errorMsg.value = formatUnknownApiError(err) || t('rooms.load_failed')
   } finally {

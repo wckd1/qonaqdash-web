@@ -343,15 +343,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, watch, useId, computed } from 'vue'
+import { ref, nextTick, useId, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import RoomSidePanel from '@/features/property/components/RoomSidePanel.vue'
 import CleaningDialog from '@/features/property/components/CleaningDialog.vue'
 import MaintenanceDialog from '@/features/property/components/MaintenanceDialog.vue'
 import SearchBar from '@/shared/components/SearchBar.vue'
-import { usePropertyStore } from '@/features/property/stores/usePropertyStore'
+import {
+  roomListQuery,
+  roomTypeListQuery,
+  useChangeRoomHousekeepingMutation,
+  useChangeRoomMaintenanceMutation,
+  useCreateRoomMutation,
+  useCreateRoomTypeMutation,
+  useDeleteRoomTypeMutation,
+  useUpdateRoomTypeMutation,
+} from '@/features/property/queries'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import { useRoomActionAccess } from '@/features/property/composables/useRoomActionAccess'
 import type { Room, RoomType } from '@/shared/types/property'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
@@ -360,12 +370,35 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 const DEBOUNCE_MS = 300
 
 const { t } = useI18n()
-const store = usePropertyStore()
 const { canCreateRooms, canManageRooms } = usePermissions()
 const { cleaningStatuses, maintenanceStatuses } = useRoomActionAccess()
-const { roomTypes, rooms } = storeToRefs(store)
 
-const selectedRoom = ref<Room | null>(null)
+const searchQuery = ref('')
+const debouncedQuery = useDebouncedRef(searchQuery, DEBOUNCE_MS)
+// Keep the current rows on screen while a new search loads.
+const roomTypesQuery = useQuery(() => ({
+  ...roomTypeListQuery(debouncedQuery.value),
+  placeholderData: (previous) => previous,
+}))
+const roomsQuery = useQuery(() => ({
+  ...roomListQuery(debouncedQuery.value),
+  placeholderData: (previous) => previous,
+}))
+const roomTypes = computed(() => roomTypesQuery.data.value ?? [])
+const rooms = computed(() => roomsQuery.data.value ?? [])
+
+const createRoomType = useCreateRoomTypeMutation()
+const updateRoomType = useUpdateRoomTypeMutation()
+const deleteRoomType = useDeleteRoomTypeMutation()
+const createRoom = useCreateRoomMutation()
+const changeHousekeeping = useChangeRoomHousekeepingMutation()
+const changeMaintenance = useChangeRoomMaintenanceMutation()
+
+const selectedRoomId = ref<string | null>(null)
+/** The selected room as in the current list; closes the panel when the room leaves it. */
+const selectedRoom = computed<Room | null>(
+  () => rooms.value.find((r) => r.id === selectedRoomId.value) ?? null,
+)
 const selectedRoomType = computed(() => {
   const r = selectedRoom.value
   if (!r) return null
@@ -377,10 +410,20 @@ const maintenanceOpen = ref(false)
 
 const removeTypeTitleId = useId()
 
-const initialLoading = ref(true)
-const searching = ref(false)
-const loadError = ref('')
-const searchQuery = ref('')
+const initialLoading = computed(() => roomTypesQuery.isPending.value || roomsQuery.isPending.value)
+const searching = computed(
+  () => !initialLoading.value && (roomTypesQuery.isLoading.value || roomsQuery.isLoading.value),
+)
+const actionError = ref('')
+// A new search replaces the error of a failed room action, as a reload did before.
+watch(debouncedQuery, () => {
+  actionError.value = ''
+})
+const loadError = computed(() => {
+  const err = roomTypesQuery.error.value ?? roomsQuery.error.value
+  if (err) return formatUnknownApiError(err) || t('rooms.load_failed')
+  return actionError.value
+})
 
 const addTypeOpen = ref(false)
 const addTypeForm = ref({ name: '', description: '' })
@@ -406,18 +449,16 @@ const expandedTypes = ref<Set<string>>(new Set())
 const addTypeNameRef = ref<HTMLInputElement | null>(null)
 const addRoomNumberRef = ref<HTMLInputElement | null>(null)
 
-let searchDebounceId: ReturnType<typeof setTimeout> | null = null
-
 function roomsByType(roomTypeId: string) {
   return rooms.value.filter((r) => r.room_type_id === roomTypeId)
 }
 
 function openPanel(room: Room) {
-  selectedRoom.value = room
+  selectedRoomId.value = room.id
 }
 
 function closePanel() {
-  selectedRoom.value = null
+  selectedRoomId.value = null
 }
 
 async function onCleaning() {
@@ -426,9 +467,9 @@ async function onCleaning() {
   const allowed = cleaningStatuses.value
   if (allowed.length === 1) {
     try {
-      await store.changeRoomHousekeeping(r.id, allowed[0])
+      await changeHousekeeping.mutateAsync({ id: r.id, status: allowed[0] })
     } catch (err: unknown) {
-      loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
+      actionError.value = formatUnknownApiError(err) || t('rooms.load_failed')
     }
     return
   }
@@ -441,9 +482,9 @@ async function onMaintenance() {
   const allowed = maintenanceStatuses.value
   if (allowed.length === 1 && allowed[0] !== 'under_maintenance') {
     try {
-      await store.changeRoomMaintenance(r.id, { status: allowed[0] })
+      await changeMaintenance.mutateAsync({ id: r.id, status: allowed[0] })
     } catch (err: unknown) {
-      loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
+      actionError.value = formatUnknownApiError(err) || t('rooms.load_failed')
     }
     return
   }
@@ -495,10 +536,10 @@ async function submitAddType() {
   if (!addTypeForm.value.name?.trim()) return
   addTypeSaving.value = true
   try {
-    const created = await store.createRoomType(
-      addTypeForm.value.name.trim(),
-      addTypeForm.value.description?.trim() || '',
-    )
+    const created = await createRoomType.mutateAsync({
+      name: addTypeForm.value.name.trim(),
+      description: addTypeForm.value.description?.trim() || '',
+    })
     expandedTypes.value.add(created.id)
     closeAddTypeDialog()
   } catch {
@@ -529,11 +570,11 @@ async function submitEditType() {
   editTypeSaving.value = true
   editTypeError.value = ''
   try {
-    await store.updateRoomType(
-      editTypeId.value,
-      editTypeForm.value.name.trim(),
-      editTypeForm.value.description?.trim() || '',
-    )
+    await updateRoomType.mutateAsync({
+      id: editTypeId.value,
+      name: editTypeForm.value.name.trim(),
+      description: editTypeForm.value.description?.trim() || '',
+    })
     closeEditTypeDialog()
   } catch (err: unknown) {
     editTypeError.value = formatUnknownApiError(err) || t('rooms.load_failed')
@@ -560,7 +601,7 @@ async function confirmRemoveType() {
   removeTypeSaving.value = true
   removeTypeError.value = ''
   try {
-    await store.deleteRoomType(rt.id)
+    await deleteRoomType.mutateAsync(rt.id)
     closeRemoveTypeConfirm()
   } catch (err: unknown) {
     removeTypeError.value = formatUnknownApiError(err) || t('rooms.load_failed')
@@ -586,7 +627,7 @@ async function submitAddRoom() {
   const typeId = addRoomType.value.id
   addRoomSaving.value = true
   try {
-    await store.createRoom(typeId, addRoomForm.value.number.trim())
+    await createRoom.mutateAsync({ roomTypeId: typeId, number: addRoomForm.value.number.trim() })
     expandedTypes.value.add(typeId)
     closeAddRoomDialog()
   } catch {
@@ -595,45 +636,6 @@ async function submitAddRoom() {
     addRoomSaving.value = false
   }
 }
-
-async function load(params: { q?: string } = {}, isInitial = false) {
-  loadError.value = ''
-  if (isInitial) {
-    initialLoading.value = true
-  } else {
-    searching.value = true
-  }
-  try {
-    await store.fetchRoomTypes(params)
-    await store.fetchRooms(params)
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('rooms.load_failed')
-  } finally {
-    initialLoading.value = false
-    searching.value = false
-  }
-}
-
-watch(
-  rooms,
-  () => {
-    const sel = selectedRoom.value
-    if (!sel) return
-    const fresh = rooms.value.find((r) => r.id === sel.id)
-    selectedRoom.value = fresh ?? null
-  },
-  { deep: true },
-)
-
-watch(searchQuery, (q) => {
-  if (searchDebounceId) clearTimeout(searchDebounceId)
-  searchDebounceId = setTimeout(() => {
-    searchDebounceId = null
-    load(q ? { q } : {})
-  }, DEBOUNCE_MS)
-})
-
-onMounted(() => load({}, true))
 </script>
 
 <style scoped>

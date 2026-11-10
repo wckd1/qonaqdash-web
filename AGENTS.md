@@ -47,6 +47,7 @@ Server data lives in the Pinia Colada query cache (decision D14), not in Pinia s
 - **Reading outside components:** route guards and the API client use `useQueryCache()` (`queryCache.fetch(queryCache.ensure(options))`).
 - **No hand-made loading state:** no "already loaded" flags, no `mutateAndRefresh` chains, no sequence counters for stale responses. Loading and errors come from `isPending`, `asyncStatus` and `error` of the query.
 - **Defaults** (`src/shared/api/queryCache.ts`): `staleTime` 5 s and `gcTime` 5 min from Pinia Colada; no refetch on window focus or reconnect, so a background refetch cannot replace data under a form being edited. Edit forms copy query data into local state once.
+- **Logout** calls `clearServerState()` (`src/shared/api/queryCache.ts`): it drops every cached entry, so the next user never sees the previous user's data.
 - **Form definitions** keep their own hash cache (`src/shared/forms/loadRuntimeFormDefinition.ts`, reworked in WP7); queries call it like any other API function.
 - **Unit tests:** `setupColada()` from `src/test-utils/colada.ts` gives a fresh Pinia with Pinia Colada and runs composables in the app context.
 
@@ -134,7 +135,7 @@ Work is planned in `qonaqdash-docs/work/`: a PM session writes briefs, and the b
 ## Frontend / Vue
 
 - **Pinia in views**: Use `storeToRefs(store)` when destructuring store state so async updates stay reactive.
-- **Pinia — property lists**: `usePropertyStore` idempotently hydrates full `fetchRoomTypes` / `fetchRooms` via flags (not `array.length`). Non-empty `q` clears **both** flags (search can return partial lists).
+- **Property data**: hotel, room types, rooms and availability come from `src/features/property/queries.ts`. A search `q` is part of the key, so a filtered list never replaces the full one that other screens read.
 - **Pinia — form templates**: Guest: `_form.hash` on `GET /api/guests/:id` keys hash-based runtime cache (`src/shared/forms/formDefinitionCache.ts`, `qonaqdash-docs/forms-caching.md`); Pinia slots `guestFormTemplate` / `guestFormRuntimeView` hold the last loaded snapshot; `replaceGuestFormTemplate` invalidates disk+memory runtime cache. Booking: same pattern with `fetchBooking` + `loadBookingRuntimeForm`; create flow keeps `bookingFormTemplate` for edit until invalidated. Runtime `GET …/form` responses include `hash`; detail payloads include `_form: { id, hash }`. **Create guest/booking:** every open sends `GET …/form?target=edit` with `If-None-Match: "<last hash>"` when known (`guestCreateFormHash` / `bookingCreateFormHash`); `304` keeps cached definition, `200` refreshes after backend form changes (`loadRuntimeFormDefinition`).
 - **Guest/booking lists**: No session skip-cache for list fetches — search and filters break a single "full list" invariant.
 - **Router**: Catch-all under main layout for 404 inside shell. **Static routes before dynamic** (e.g. `guests/new` before `guests/:id`). Dashboard/home link: **`router-link-exact-active`** when all routes nest under `/`, so home is not active on every page.

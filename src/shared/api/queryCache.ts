@@ -1,4 +1,9 @@
-import { useQueryCache, type PiniaColadaOptions, type QueryCache } from '@pinia/colada'
+import {
+  useQueryCache,
+  type EntryKey,
+  type PiniaColadaOptions,
+  type QueryCache,
+} from '@pinia/colada'
 
 /**
  * Pinia Colada setup shared by the app and unit tests.
@@ -32,4 +37,13 @@ export function clearServerState(queryCache: QueryCache = useQueryCache()): void
       queryCache.remove(entry)
     }
   }
+}
+
+/**
+ * Marks every entry under the given keys stale and waits until the entries in
+ * use have fetched again, so a mutation resolves with fresh data on screen.
+ * A failed refetch stays in that query's `error`; it does not fail the mutation.
+ */
+export async function invalidateKeys(queryCache: QueryCache, keys: EntryKey[]): Promise<void> {
+  await Promise.all(keys.map((key) => queryCache.invalidateQueries({ key }).catch(() => undefined)))
 }

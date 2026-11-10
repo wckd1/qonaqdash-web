@@ -5,6 +5,8 @@ import {
   MEDIUM_DATE,
   MEDIUM_DATE_TIME,
   momentFromWallTime,
+  sameClock,
+  timeZoneLabel,
   NUMERIC_DATE_TIME_SECONDS,
   SHORT_DATE_TIME,
   wallTimeOf,
@@ -220,5 +222,26 @@ describe('formatMoment', () => {
     expect(formatMoment('', 'en', BERLIN)).toBe('')
     expect(formatMoment('soon', 'en', BERLIN)).toBe('soon')
     expect(formatMoment(moment, 'not a locale!', BERLIN)).toBe(moment)
+  })
+})
+
+describe('zones side by side', () => {
+  test('sameClock compares what the clocks show at the moment', () => {
+    expect(sameClock('2026-03-05T09:30:00Z', TASHKENT, 'Asia/Karachi')).toBe(true)
+    expect(sameClock('2026-03-05T09:30:00Z', TASHKENT, BERLIN)).toBe(false)
+    // London and Lisbon agree all year; Berlin and London never do.
+    expect(sameClock('2026-07-01T12:00:00Z', 'Europe/London', 'Europe/Lisbon')).toBe(true)
+    expect(sameClock('2026-07-01T12:00:00Z', BERLIN, 'Europe/London')).toBe(false)
+    expect(sameClock('x', TASHKENT, BERLIN)).toBe(true)
+  })
+
+  test('timeZoneLabel gives the offset of the zone at the moment', () => {
+    expect(timeZoneLabel('2026-03-05T09:30:00Z', TASHKENT, 'en')).toBe('GMT+5')
+    expect(timeZoneLabel('2026-03-05T09:30:00Z', TASHKENT, 'ru')).toBe('GMT+5')
+    expect(timeZoneLabel('2026-01-15T12:00:00Z', BERLIN, 'en')).toBe('GMT+1')
+    expect(timeZoneLabel('2026-07-15T12:00:00Z', BERLIN, 'en')).toBe('GMT+2')
+    expect(timeZoneLabel('2026-07-15T12:00:00Z', NEW_YORK, 'en')).toBe('GMT-4')
+    expect(timeZoneLabel('2026-07-15T12:00:00Z', 'UTC', 'en')).toBe('GMT')
+    expect(timeZoneLabel('x', TASHKENT, 'en')).toBe('')
   })
 })

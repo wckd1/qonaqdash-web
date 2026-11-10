@@ -89,7 +89,7 @@ function offsetAt(ms: number, timeZone: string): number {
   return utcMs(c.year, c.month, c.day, c.hour, c.minute, c.second) - wholeSeconds
 }
 
-/** The time zone of the browser, for the hint with the employee's own time. */
+/** The time zone of the browser: the employee's own clock. */
 export function browserTimeZone(): string {
   return new Intl.DateTimeFormat().resolvedOptions().timeZone
 }
@@ -178,6 +178,29 @@ function displayFormatter(
     displayFormatters.set(key, cached)
   }
   return cached
+}
+
+/** `true` when the clocks of both zones show the same time at the moment (Asia/Almaty and Asia/Tashkent). */
+export function sameClock(moment: MomentInput, zoneA: string, zoneB: string): boolean {
+  if (zoneA === zoneB) return true
+  const ms = epochMs(moment)
+  if (Number.isNaN(ms)) return true
+  return offsetAt(ms, zoneA) === offsetAt(ms, zoneB)
+}
+
+/** Short label of the zone at the moment, as an offset: `GMT+5`, `GMT-4`, `GMT`. `''` when invalid. */
+export function timeZoneLabel(moment: MomentInput, timeZone: string, locale: string): string {
+  const ms = epochMs(moment)
+  if (Number.isNaN(ms)) return ''
+  try {
+    return (
+      displayFormatter(locale, timeZone, { timeZoneName: 'shortOffset' })
+        .formatToParts(ms)
+        .find((part) => part.type === 'timeZoneName')?.value ?? ''
+    )
+  } catch {
+    return ''
+  }
 }
 
 /**

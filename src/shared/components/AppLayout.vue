@@ -381,7 +381,10 @@ import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 import { accountQuery } from '@/features/auth/queries'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { provideHotelTime } from '@/shared/composables/useHotelTime'
 const { t } = useI18n()
+// One hotel clock for every screen of the shell.
+provideHotelTime()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()

@@ -23,41 +23,37 @@ for (const user of SEED_USERS) {
   })
 }
 
-// Known bug F2, fixed in WP1 by the Pinia Colada cache reset on logout.
 // F2: after a logout, the next user in the same tab sees none of the previous
 // user's data. The owner works in Qonaq City Hotel, the director in Qonaq
 // Mountain Lodge, and each hotel has its own base rates.
-test.fail(
-  'shows no data of the previous user after logging in as another user',
-  async ({ page }) => {
-    const rateInputs = page.locator('.base-rates__amount-input')
-    async function openBaseRates(): Promise<void> {
-      await openFromSidebar(page, en.nav.pricing)
-      await page.getByRole('link', { name: en.pricing.tab_base_rates }).click()
-      await expect(rateInputs.first()).toBeVisible()
-    }
+test('shows no data of the previous user after logging in as another user', async ({ page }) => {
+  const rateInputs = page.locator('.base-rates__amount-input')
+  async function openBaseRates(): Promise<void> {
+    await openFromSidebar(page, en.nav.pricing)
+    await page.getByRole('link', { name: en.pricing.tab_base_rates }).click()
+    await expect(rateInputs.first()).toBeVisible()
+  }
 
-    await login(page, seedUser('owner'))
-    await openBaseRates()
+  await login(page, seedUser('owner'))
+  await openBaseRates()
 
-    await logout(page)
-    await submitLogin(page, seedUser('director'))
-    await openBaseRates()
+  await logout(page)
+  await submitLogin(page, seedUser('director'))
+  await openBaseRates()
 
-    const token = await page.evaluate(() => localStorage.getItem('access_token'))
-    const { rates } = (await (
-      await page.request.get('/api/pricing/base-rates', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-    ).json()) as { rates: { base_rate_minor: number }[] }
-    // Rates are shown in major units; the demo currencies have two decimals.
-    const expected = rates.map((r) => String(r.base_rate_minor / 100)).sort()
-    await expect
-      .poll(async () =>
-        (
-          await rateInputs.evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value))
-        ).sort(),
-      )
-      .toEqual(expected)
-  },
-)
+  const token = await page.evaluate(() => localStorage.getItem('access_token'))
+  const { rates } = (await (
+    await page.request.get('/api/pricing/base-rates', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  ).json()) as { rates: { base_rate_minor: number }[] }
+  // Rates are shown in major units; the demo currencies have two decimals.
+  const expected = rates.map((r) => String(r.base_rate_minor / 100)).sort()
+  await expect
+    .poll(async () =>
+      (
+        await rateInputs.evaluateAll((els) => els.map((el) => (el as HTMLInputElement).value))
+      ).sort(),
+    )
+    .toEqual(expected)
+})

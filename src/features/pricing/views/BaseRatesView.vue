@@ -67,13 +67,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
-import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
+import { baseRatesQuery, useUpdateBaseRatesMutation } from '@/features/pricing/queries'
 import {
   minorToMajor,
   majorToMinor,
@@ -85,23 +84,21 @@ import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t } = useI18n()
-const pricingStore = usePricingStore()
 const { canAdjustPricing } = usePermissions()
 const hotelQ = useQuery(hotelQuery)
 const roomTypesQ = useQuery(roomTypeListQuery())
+const ratesQ = useQuery(baseRatesQuery)
+const updateBaseRates = useUpdateBaseRatesMutation()
 const hotel = computed(() => hotelQ.data.value ?? null)
 const roomTypes = computed(() => roomTypesQ.data.value ?? [])
-const { baseRates } = storeToRefs(pricingStore)
+const baseRates = computed(() => ratesQ.data.value ?? [])
 
-const ratesLoading = ref(true)
-const ratesError = ref('')
 const loading = computed(
-  () => hotelQ.isPending.value || roomTypesQ.isPending.value || ratesLoading.value,
+  () => hotelQ.isPending.value || roomTypesQ.isPending.value || ratesQ.isPending.value,
 )
 const loadError = computed(() => {
-  const err = hotelQ.error.value ?? roomTypesQ.error.value
-  if (err) return formatUnknownApiError(err) || t('pricing.load_failed')
-  return ratesError.value
+  const err = hotelQ.error.value ?? roomTypesQ.error.value ?? ratesQ.error.value
+  return err ? formatUnknownApiError(err) || t('pricing.load_failed') : ''
 })
 const saving = ref(false)
 const saveError = ref('')
@@ -150,7 +147,7 @@ async function saveAll() {
       room_type_id: rt.id,
       base_rate_minor: edits.value.get(rt.id) ?? rateForRoomType(rt.id),
     }))
-    await pricingStore.updateBaseRates(updatedRates)
+    await updateBaseRates.mutateAsync(updatedRates)
     edits.value.clear()
   } catch (err: unknown) {
     saveError.value = formatUnknownApiError(err) || t('pricing.base_rates_save_failed')
@@ -158,16 +155,6 @@ async function saveAll() {
     saving.value = false
   }
 }
-
-onMounted(async () => {
-  try {
-    await pricingStore.fetchBaseRates()
-  } catch (err: unknown) {
-    ratesError.value = formatUnknownApiError(err) || t('pricing.load_failed')
-  } finally {
-    ratesLoading.value = false
-  }
-})
 </script>
 
 <style scoped>

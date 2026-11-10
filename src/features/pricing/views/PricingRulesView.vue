@@ -317,11 +317,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
-import { usePricingStore } from '@/features/pricing/stores/usePricingStore'
+import {
+  conditionCandidatesQuery,
+  ruleListQuery,
+  useCreateRuleMutation,
+  useDeleteRuleMutation,
+  useUpdateRuleMutation,
+} from '@/features/pricing/queries'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared/types/commercial'
@@ -331,10 +336,15 @@ import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 const { t, locale } = useI18n()
-const pricingStore = usePricingStore()
 const hotelQ = useQuery(hotelQuery)
+const rulesQ = useQuery(ruleListQuery)
+const candidatesQ = useQuery(conditionCandidatesQuery)
+const createRule = useCreateRuleMutation()
+const updateRule = useUpdateRuleMutation()
+const deleteRule = useDeleteRuleMutation()
 const { canManagePricing } = usePermissions()
-const { rules, conditionCandidates } = storeToRefs(pricingStore)
+const rules = computed(() => rulesQ.data.value ?? [])
+const conditionCandidates = computed(() => candidatesQ.data.value?.conditions ?? [])
 
 const hotelCurrency = computed(() => hotelQ.data.value?.currency ?? 'USD')
 
@@ -350,14 +360,13 @@ function candidateByFieldId(fieldId: string): ConditionCandidate | undefined {
   return conditionCandidates.value.find((c) => c.field_id === fieldId)
 }
 
-const rulesLoading = ref(true)
-const rulesError = ref('')
-const loading = computed(() => rulesLoading.value || hotelQ.isPending.value)
-const loadError = computed(() =>
-  hotelQ.error.value
-    ? formatUnknownApiError(hotelQ.error.value) || t('pricing.load_failed')
-    : rulesError.value,
+const loading = computed(
+  () => rulesQ.isPending.value || candidatesQ.isPending.value || hotelQ.isPending.value,
 )
+const loadError = computed(() => {
+  const err = rulesQ.error.value ?? candidatesQ.error.value ?? hotelQ.error.value
+  return err ? formatUnknownApiError(err) || t('pricing.load_failed') : ''
+})
 
 const dialogOpen = ref(false)
 const editingId = ref('')
@@ -465,18 +474,6 @@ function effectSummary(rule: PricingRule): string {
   const scope =
     e.apply_to === 'per_night' ? t('pricing.rule_effect_per_night') : t('pricing.rule_effect_total')
   return `${sign}${money} ${scope}`
-}
-
-async function load() {
-  rulesError.value = ''
-  rulesLoading.value = true
-  try {
-    await Promise.all([pricingStore.fetchRules(true), pricingStore.fetchConditionCandidates()])
-  } catch (err: unknown) {
-    rulesError.value = formatUnknownApiError(err) || t('pricing.load_failed')
-  } finally {
-    rulesLoading.value = false
-  }
 }
 
 function conditionToFormState(c: PricingCondition): ConditionFormState {
@@ -617,9 +614,9 @@ async function submitDialog() {
 
   try {
     if (editingId.value) {
-      await pricingStore.updateRule(editingId.value, body)
+      await updateRule.mutateAsync({ id: editingId.value, body })
     } else {
-      await pricingStore.createRule(body)
+      await createRule.mutateAsync(body)
     }
     closeDialog()
   } catch (err: unknown) {
@@ -646,7 +643,7 @@ async function confirmDelete() {
   deleting.value = true
   deleteError.value = ''
   try {
-    await pricingStore.deleteRule(deleteTarget.value.id)
+    await deleteRule.mutateAsync(deleteTarget.value.id)
     closeDeleteConfirm()
   } catch (err: unknown) {
     deleteError.value = formatUnknownApiError(err) || t('pricing.save_failed')
@@ -654,8 +651,6 @@ async function confirmDelete() {
     deleting.value = false
   }
 }
-
-onMounted(load)
 </script>
 
 <style scoped>

@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import { parseStoredBookingQuoteResponse } from '@/shared/lib/accommodationQuoteParse'
 import { httpErrorResponse } from '@/shared/unknownError'
 import type {
@@ -34,8 +34,10 @@ export interface StoredBookingQuote {
 // Base rates
 // ---------------------------------------------------------------------------
 
-export function fetchBaseRates(): Promise<BaseRateItem[]> {
-  return api.get('/api/pricing/base-rates').then(({ data }) => data?.rates ?? [])
+export function fetchBaseRates(options: RequestOptions = {}): Promise<BaseRateItem[]> {
+  return api
+    .get('/api/pricing/base-rates', { signal: options.signal })
+    .then(({ data }) => data?.rates ?? [])
 }
 
 export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRateItem[]> {
@@ -53,12 +55,14 @@ export interface ConditionCandidatesResult {
 
 export function fetchConditionCandidates(
   ifNoneMatch?: string,
+  options: RequestOptions = {},
 ): Promise<ConditionCandidatesResult | null> {
   const headers: Record<string, string> = {}
   if (ifNoneMatch) headers['If-None-Match'] = `"${ifNoneMatch}"`
   return api
     .get('/api/pricing/conditions', {
       headers,
+      signal: options.signal,
       validateStatus: (s) => s === 200 || s === 304,
     })
     .then((res) => {
@@ -84,8 +88,8 @@ export interface CreatePricingRulePayload {
 
 export type UpdatePricingRulePayload = CreatePricingRulePayload
 
-export function fetchPricingRules(): Promise<PricingRule[]> {
-  return api.get('/api/pricing/rules').then(({ data }) => data ?? [])
+export function fetchPricingRules(options: RequestOptions = {}): Promise<PricingRule[]> {
+  return api.get('/api/pricing/rules', { signal: options.signal }).then(({ data }) => data ?? [])
 }
 
 export function fetchPricingRule(id: string): Promise<PricingRule> {

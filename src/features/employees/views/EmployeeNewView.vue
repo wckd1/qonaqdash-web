@@ -120,8 +120,7 @@ async function onSubmit() {
     inviteDialog.value = {
       open: true,
       token: created.invite_token ?? '',
-      // The create response has no employee id, so "open employee" falls back to the list.
-      employeeId: '',
+      employeeId: created.employee.id,
     }
   } catch (err: unknown) {
     const mapped = formErrorsMapFromHttpError(err)

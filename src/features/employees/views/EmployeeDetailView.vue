@@ -119,6 +119,7 @@ import {
   employeeRuntimeFormQuery,
   useUpdateEmployeeMutation,
 } from '@/features/employees/queries'
+import { employeeProfileFields } from '@/features/employees/api'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { refreshAccount } from '@/features/auth/queries'
 import FormView from '@/shared/form-dsl/FormView.vue'
@@ -233,7 +234,7 @@ function displayTitle(title: string): string {
 
 watch(editing, (isEdit) => {
   if (isEdit && employeeForm.value) {
-    editFormData.value = { ...employeeForm.value.data }
+    editFormData.value = employeeProfileFields(employeeForm.value.data)
     errorsMap.value = {}
   }
 })
@@ -255,7 +256,7 @@ watch(
 
 function cancelEdit() {
   editing.value = false
-  if (employeeForm.value) editFormData.value = { ...employeeForm.value.data }
+  if (employeeForm.value) editFormData.value = employeeProfileFields(employeeForm.value.data)
 }
 
 async function onSave() {

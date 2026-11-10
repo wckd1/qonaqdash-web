@@ -39,6 +39,28 @@ export interface EmployeeDetailPayload {
   formRef: FormRef | null
 }
 
+/** Keys the server adds to an employee response: identity, form and access settings. */
+const EMPLOYEE_SERVER_KEYS = [
+  'id',
+  '_form',
+  'blocked',
+  'effective_permissions',
+  'permission_overrides',
+  'occupation_ids',
+  'occupations',
+] as const
+
+/**
+ * Profile fields of employee form data: the standard and custom fields of the
+ * employee form, without the keys the server owns. The edit form starts from
+ * them, and they are all a create or update sends.
+ */
+export function employeeProfileFields(data: Record<string, unknown>): Record<string, unknown> {
+  const profile = { ...data }
+  for (const key of EMPLOYEE_SERVER_KEYS) delete profile[key]
+  return profile
+}
+
 export function parseEmployeeDetailPayload(raw: EmployeeDetailResponse): EmployeeDetailPayload {
   return {
     data: { ...raw },
@@ -131,7 +153,7 @@ export async function createEmployee(
   data: Record<string, unknown>,
 ): Promise<CreateEmployeeResponse> {
   return typedApi
-    .post('/api/employees', { body: data as EmployeeDataRequest })
+    .post('/api/employees', { body: employeeProfileFields(data) as EmployeeDataRequest })
     .then(({ data: res }) => res)
 }
 
@@ -142,7 +164,7 @@ export function updateEmployee(
   return typedApi
     .put('/api/employees/{employee_id}', {
       path: { employee_id: id },
-      body: data as EmployeeDataRequest,
+      body: employeeProfileFields(data) as EmployeeDataRequest,
     })
     .then(({ data: res }) => parseEmployeeDetailPayload(res))
 }

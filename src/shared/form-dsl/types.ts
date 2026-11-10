@@ -1,11 +1,15 @@
-/** `_form` on guest/booking detail payloads — canonical definition fingerprint (see `docs/forms-caching.md`). */
-export interface FormRef {
-  id: string
-  hash: string
-}
+import type { Schemas } from '@/shared/api/typed'
+
+/**
+ * FormDSL: the form definition language of the runtime forms. The contract
+ * keeps `definition` free-form; these types describe what the renderers read.
+ */
+
+/** `_form` on guest, booking and employee details: the form and the hash of its definition. */
+export type FormRef = Schemas['bookinghttp.FormRef']
 
 // ---------------------------------------------------------------------------
-// FormDSL node types (see docs/forms-dsl.md)
+// FormDSL node types
 // ---------------------------------------------------------------------------
 
 export type FormNodeType =

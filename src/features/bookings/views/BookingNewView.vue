@@ -51,7 +51,7 @@ import {
 } from '@/features/property/queries'
 import { bookingCreateFormQuery, useCreateBookingMutation } from '@/features/bookings/queries'
 import { guestListQuery } from '@/features/guests/queries'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'

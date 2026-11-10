@@ -251,7 +251,7 @@
 <script setup lang="ts">
 import { computed, inject, ref, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { FormNode, FormStackNode, FormGroupNode } from '@/shared/types/forms'
+import type { FormNode, FormStackNode, FormGroupNode } from '@/shared/form-dsl/types'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { canMutateBuildNode, isGuestImmutableBuildGroup } from './buildChangability'

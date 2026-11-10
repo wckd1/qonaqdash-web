@@ -3,7 +3,7 @@
  * Definition always comes from the API (or cached runtime GET …/form), never from the client.
  */
 
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 
 /**
  * Fill template `data` from API payload: only keys already in `templateData` are written.

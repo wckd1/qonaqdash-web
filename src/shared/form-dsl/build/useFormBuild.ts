@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import type { FieldSettingsDraft } from './formBuildMutations'
 
 const blankFieldSettings = (): FieldSettingsDraft => ({

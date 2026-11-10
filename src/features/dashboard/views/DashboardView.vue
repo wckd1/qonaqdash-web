@@ -224,8 +224,8 @@ function onGridBookingUpdated() {
     ...sel,
     status: entry.status,
     guest: {
-      first_name: entry.guest.first_name ?? '',
-      last_name: entry.guest.last_name ?? '',
+      first_name: entry.guest?.first_name ?? '',
+      last_name: entry.guest?.last_name ?? '',
     },
     stay: {
       check_in: entry.stay.check_in,

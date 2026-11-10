@@ -21,8 +21,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { FormNode, FormArrayNode } from '@/shared/types/forms'
-import { INPUT_NODE_TYPES } from '@/shared/types/forms'
+import type { FormNode, FormArrayNode } from '@/shared/form-dsl/types'
+import { INPUT_NODE_TYPES } from '@/shared/form-dsl/types'
 import ControlRenderer from './ControlRenderer.vue'
 import LayoutRenderer from './LayoutRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'

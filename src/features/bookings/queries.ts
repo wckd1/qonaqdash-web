@@ -1,7 +1,7 @@
 import { defineQueryOptions, useMutation, useQueryCache, type QueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import { snapshotForm, type RuntimeFormSnapshot } from '@/shared/forms/formSnapshot'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import * as bookingsApi from '@/features/bookings/api'
 import type { CreateBookingPayload } from '@/features/bookings/api'
 

@@ -241,7 +241,7 @@ const occupiedCellKeys = computed(() => {
     if (Number.isNaN(ciDate.getTime()) || Number.isNaN(coDate.getTime())) continue
     const ciMs = startOfDay(ciDate).getTime()
     const coMs = startOfDay(coDate).getTime()
-    for (const room of entry.stay.rooms) {
+    for (const room of entry.stay.rooms ?? []) {
       if (!room.room_id) continue
       for (let cursor = ciMs; cursor < coMs; cursor += dayMs) {
         set.add(`${room.room_id}-${cursor}`)
@@ -372,16 +372,16 @@ const barLayouts = computed((): BarLayout[] => {
     if (!geom) continue
     const { left, width } = geom
 
-    const fn = (e.guest.first_name || '').trim()
-    const ln = (e.guest.last_name || '').trim()
+    const fn = (e.guest?.first_name || '').trim()
+    const ln = (e.guest?.last_name || '').trim()
     const label = [fn, ln].filter(Boolean).join(' ') || t('grid.bar_fallback')
 
     const panel: GridPanelBooking = {
       id: e.id,
       status: e.status,
       guest: {
-        first_name: e.guest.first_name ?? '',
-        last_name: e.guest.last_name ?? '',
+        first_name: e.guest?.first_name ?? '',
+        last_name: e.guest?.last_name ?? '',
       },
       stay: {
         check_in: e.stay.check_in,
@@ -389,7 +389,7 @@ const barLayouts = computed((): BarLayout[] => {
       },
     }
 
-    for (const room of e.stay.rooms) {
+    for (const room of e.stay.rooms ?? []) {
       const rid = room.room_id
       if (rid == null) continue
       const rowTop = tops.get(rid)

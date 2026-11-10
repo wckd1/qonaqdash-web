@@ -27,7 +27,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@pinia/colada'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import {
   employeeFormDefinitionQuery,
   useUpdateEmployeeFormDefinitionMutation,

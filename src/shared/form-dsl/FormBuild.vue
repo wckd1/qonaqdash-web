@@ -97,7 +97,7 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import LayoutRenderer from './build/LayoutRenderer.vue'
 import {
   addBuildChild,

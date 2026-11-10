@@ -2,7 +2,7 @@
  * Mutations for FormDSL WYSIWYG builder. Mutates definition nodes in place.
  */
 
-import type { FormNode, FormStackNode, FormGroupNode, FormInputNode } from '@/shared/types/forms'
+import type { FormNode, FormStackNode, FormGroupNode, FormInputNode } from '@/shared/form-dsl/types'
 
 /** Max direct children for horizontal stacks. */
 export const MAX_HORIZONTAL_LAYOUT_CHILDREN = 2

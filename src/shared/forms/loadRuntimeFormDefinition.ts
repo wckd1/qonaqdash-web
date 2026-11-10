@@ -1,5 +1,5 @@
 import api from '@/shared/api/client'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import {
   getCachedFormDefinition,
   setCachedFormDefinition,

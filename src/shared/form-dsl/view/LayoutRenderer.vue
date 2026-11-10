@@ -46,8 +46,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { FormNode } from '@/shared/types/forms'
-import { INPUT_NODE_TYPES } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
+import { INPUT_NODE_TYPES } from '@/shared/form-dsl/types'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { resolveGroupTitle } from '../utils'

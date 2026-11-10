@@ -135,7 +135,7 @@ import type {
   FormSelectItem,
   FormButtonNode,
   FormActionStep,
-} from '@/shared/types/forms'
+} from '@/shared/form-dsl/types'
 import ArrayRenderer from './ArrayRenderer.vue'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import {

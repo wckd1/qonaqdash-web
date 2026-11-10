@@ -4,7 +4,7 @@
  * whether to block the input. No flicker, no cursor issues.
  */
 
-import type { FormFieldRules, FormNodeType } from '@/shared/types/forms'
+import type { FormFieldRules, FormNodeType } from '@/shared/form-dsl/types'
 
 /** Guard for standalone number inputs outside FormDSL. */
 export function guardNumberBeforeInput(e: InputEvent, rules?: FormFieldRules): void {

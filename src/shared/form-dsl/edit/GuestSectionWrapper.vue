@@ -108,8 +108,8 @@ import {
   useId,
   type CSSProperties,
 } from 'vue'
-import type { FormNode, FormGroupNode } from '@/shared/types/forms'
-import { INPUT_NODE_TYPES } from '@/shared/types/forms'
+import type { FormNode, FormGroupNode } from '@/shared/form-dsl/types'
+import { INPUT_NODE_TYPES } from '@/shared/form-dsl/types'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import { useI18n } from 'vue-i18n'

@@ -1,7 +1,7 @@
 import { defineQueryOptions, useMutation, useQueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import { snapshotForm, type RuntimeFormSnapshot } from '@/shared/forms/formSnapshot'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 import type { Permissions } from '@/shared/lib/permissions'
 import * as employeesApi from '@/features/employees/api'
 

@@ -48,8 +48,8 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { FormNode, FormArrayNode } from '@/shared/types/forms'
-import { INPUT_NODE_TYPES } from '@/shared/types/forms'
+import type { FormNode, FormArrayNode } from '@/shared/form-dsl/types'
+import { INPUT_NODE_TYPES } from '@/shared/form-dsl/types'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import ControlRenderer from './ControlRenderer.vue'
 import IconTrash from '../build/icons/IconTrash.vue'

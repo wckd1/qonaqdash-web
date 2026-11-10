@@ -5,7 +5,7 @@ import {
   loadRuntimeFormDefinition,
   type LoadRuntimeFormOptions,
 } from '@/shared/forms/loadRuntimeFormDefinition'
-import type { FormRef, FormNode } from '@/shared/types/forms'
+import type { FormRef, FormNode } from '@/shared/form-dsl/types'
 
 export type { FormRef }
 

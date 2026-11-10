@@ -2,7 +2,7 @@
  * FormDSL condition evaluator: visible_when / hidden_when / enabled_when / disabled_when.
  */
 
-import type { FormCondition, FormConditionOrArray } from '@/shared/types/forms'
+import type { FormCondition, FormConditionOrArray } from '@/shared/form-dsl/types'
 import { getValueByBind } from './utils'
 
 /**

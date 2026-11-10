@@ -42,8 +42,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { FormNode, FormGroupNode } from '@/shared/types/forms'
-import { INPUT_NODE_TYPES } from '@/shared/types/forms'
+import type { FormNode, FormGroupNode } from '@/shared/form-dsl/types'
+import { INPUT_NODE_TYPES } from '@/shared/form-dsl/types'
 import LayoutRenderer from './LayoutRenderer.vue'
 import ControlRenderer from './ControlRenderer.vue'
 import GuestSectionWrapper from './GuestSectionWrapper.vue'

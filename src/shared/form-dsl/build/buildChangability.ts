@@ -2,7 +2,7 @@
  * Build-mode (WYSIWYG) changability for FormBuild (which nodes can be mutated).
  */
 
-import type { FormArrayNode, FormGroupNode, FormNode, FormStackNode } from '@/shared/types/forms'
+import type { FormArrayNode, FormGroupNode, FormNode, FormStackNode } from '@/shared/form-dsl/types'
 
 export function isBuildChangable(node: FormNode | undefined): boolean {
   if (!node || typeof node !== 'object') return true

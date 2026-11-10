@@ -1,7 +1,7 @@
 import type { InjectionKey, Ref } from 'vue'
 import type { EntryKey, UseQueryOptions } from '@pinia/colada'
 import type { Schemas } from '@/shared/api/typed'
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 
 /** Guest typeahead: API rows from `GET /api/guests?q=`. */
 export type GuestSearchRow = {

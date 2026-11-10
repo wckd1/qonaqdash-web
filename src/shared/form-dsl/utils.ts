@@ -5,7 +5,7 @@
 import { i18n } from '@/i18n'
 import { resolveFormCatalogString } from '@/shared/i18n/formCatalog'
 import { intlLocaleFromAppLocale } from '@/shared/i18n/resolveLocale'
-import type { FormSelectItem } from '@/shared/types/forms'
+import type { FormSelectItem } from '@/shared/form-dsl/types'
 
 // ---------------------------------------------------------------------------
 // Bind path helpers

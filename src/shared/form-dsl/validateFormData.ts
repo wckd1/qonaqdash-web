@@ -10,7 +10,7 @@ import {
   type FormInputNode,
   type FormNode,
   type FormSelectNode,
-} from '@/shared/types/forms'
+} from '@/shared/form-dsl/types'
 import { bindToPath, getValueByPath } from './utils'
 import { localizeValidationError } from './formValidationI18n'
 import { evaluateNodeState } from './formNodeConditions'

@@ -1,4 +1,4 @@
-import type { FormNode } from '@/shared/types/forms'
+import type { FormNode } from '@/shared/form-dsl/types'
 
 /** Pinia-stored form definition + empty template data. Used by guest and booking stores. */
 export interface FormTemplate {

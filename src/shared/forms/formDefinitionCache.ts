@@ -1,4 +1,4 @@
-import type { FormRef, FormNode } from '@/shared/types/forms'
+import type { FormRef, FormNode } from '@/shared/form-dsl/types'
 
 export type FormDomainId = 'guest' | 'booking' | 'employee'
 

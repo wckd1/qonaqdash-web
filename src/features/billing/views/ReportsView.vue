@@ -459,14 +459,15 @@ import {
   type OutstandingBalancesResponse,
 } from '@/features/billing/api'
 import { formatMoney } from '@/shared/lib/money'
+import { formatLocalDate, NUMERIC_DATE } from '@/shared/lib/localDate'
 import {
-  addDays,
-  addMonths,
-  daysBetween,
-  formatLocalDate,
-  NUMERIC_DATE,
-  startOfMonth,
-} from '@/shared/lib/localDate'
+  isValidReportDays,
+  presetDays,
+  reportApiPeriod,
+  reportDayCount,
+  shiftReportDays,
+  type ReportPresetId as PresetId,
+} from '@/features/billing/reportPeriod'
 import { useHotelTime } from '@/shared/composables/useHotelTime'
 import MomentTime from '@/shared/components/MomentTime.vue'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
@@ -474,10 +475,9 @@ import { APP_NAME } from '@/shared/i18n/documentTitle'
 
 type TabId = 'overview' | 'ledger' | 'outstanding'
 type LedgerGrouping = 'entries' | 'daily' | 'monthly'
-type PresetId = 'this_month' | 'last_month' | 'last_7' | 'last_30' | 'last_90' | 'custom'
 
 const { t, locale } = useI18n()
-const { today } = useHotelTime()
+const { today, whenReady } = useHotelTime()
 const hotelQ = useQuery(hotelQuery)
 const hotel = computed(() => hotelQ.data.value ?? null)
 
@@ -508,26 +508,6 @@ function printReport() {
   window.print()
 }
 
-function computePresetRange(preset: PresetId): { from: string; to: string } {
-  const todayStr = today()
-  const monthStart = startOfMonth(todayStr)
-
-  switch (preset) {
-    case 'this_month':
-      return { from: monthStart, to: addMonths(monthStart, 1) }
-    case 'last_month':
-      return { from: addMonths(monthStart, -1), to: monthStart }
-    case 'last_7':
-      return { from: addDays(todayStr, -6), to: addDays(todayStr, 1) }
-    case 'last_30':
-      return { from: addDays(todayStr, -29), to: addDays(todayStr, 1) }
-    case 'last_90':
-      return { from: addDays(todayStr, -89), to: addDays(todayStr, 1) }
-    default:
-      return { from: todayStr, to: addDays(todayStr, 1) }
-  }
-}
-
 const activePreset = ref<PresetId>('this_month')
 
 const presetOptions = computed(() => [
@@ -539,12 +519,19 @@ const presetOptions = computed(() => [
   { id: 'custom' as PresetId, label: t('billing.preset_custom') },
 ])
 
-const initialRange = computePresetRange('this_month')
-const fromStr = ref(initialRange.from)
-const toStr = ref(initialRange.to)
+/** The period of the toolbar, both days included; set from the hotel today once the hotel loads. */
+const fromStr = ref('')
+const toStr = ref('')
 
 function isValidRange(): boolean {
-  return Boolean(fromStr.value && toStr.value && fromStr.value < toStr.value)
+  return isValidReportDays({ from: fromStr.value, to: toStr.value })
+}
+
+function applyPreset(id: PresetId) {
+  const range = presetDays(id, today())
+  fromStr.value = range.from
+  toStr.value = range.to
+  onRangeChanged()
 }
 
 function onPresetSelect(e: Event) {
@@ -555,10 +542,7 @@ function onPresetSelect(e: Event) {
     return
   }
   activePreset.value = id
-  const range = computePresetRange(id)
-  fromStr.value = range.from
-  toStr.value = range.to
-  onRangeChanged()
+  applyPreset(id)
 }
 
 function onDateFieldChange() {
@@ -586,13 +570,13 @@ function shiftRange(direction: 1 | -1) {
       step = 90
       break
     default:
-      step = daysBetween(fromStr.value, toStr.value)
+      step = reportDayCount({ from: fromStr.value, to: toStr.value })
   }
   if (!(step > 0)) return
 
-  const newFrom = addDays(fromStr.value, step * direction)
-  fromStr.value = newFrom
-  toStr.value = addDays(newFrom, step)
+  const next = shiftReportDays({ from: fromStr.value, to: toStr.value }, step, direction)
+  fromStr.value = next.from
+  toStr.value = next.to
   onRangeChanged()
 }
 
@@ -604,14 +588,14 @@ const ledgerEntryTypeFilter = ref('')
 const hasTypeFilter = computed(() => ledgerEntryTypeFilter.value !== '')
 
 /**
- * Filter of the reports on screen. It follows the toolbar only when the range
- * is valid, so a half-typed date keeps the last report instead of a blank one.
+ * Filter of the reports on screen, with the API period `[from, to)`. It follows
+ * the toolbar only when the range is valid, so a half-typed date keeps the last
+ * report instead of a blank one.
  */
-const appliedParams = ref({
-  from: fromStr.value,
-  to: toStr.value,
-  entry_type: '',
-})
+const appliedParams = ref({ from: '', to: '', entry_type: '' })
+
+// The first period counts from the hotel today.
+void whenReady().then(() => applyPreset(activePreset.value))
 
 // The hotel currency formats the amounts; wait for it before the first report.
 const hotelReady = computed(() => !hotelQ.isPending.value)
@@ -749,7 +733,8 @@ function entryTitle(entry: ReportLedgerEntry): string {
 // ---------------------------------------------------------------------------
 
 function onRangeChanged() {
-  appliedParams.value = { ...appliedParams.value, from: fromStr.value, to: toStr.value }
+  const period = reportApiPeriod({ from: fromStr.value, to: toStr.value })
+  appliedParams.value = { ...appliedParams.value, ...period }
 }
 
 function onEntryTypeFilterChange() {

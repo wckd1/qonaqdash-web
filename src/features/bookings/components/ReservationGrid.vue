@@ -352,7 +352,7 @@ function statusClass(status: string | undefined) {
   if (s === 'confirmed') return 'reservation-bar--confirmed'
   if (s === 'checked_in') return 'reservation-bar--checked-in'
   if (s === 'checked_out') return 'reservation-bar--checked-out'
-  if (s === 'canceled' || s === 'cancelled') return 'reservation-bar--canceled'
+  if (s === 'canceled') return 'reservation-bar--canceled'
   return 'reservation-bar--default'
 }
 

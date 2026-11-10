@@ -38,6 +38,6 @@ test('lists housekeeping tasks and changes a task status', async ({ page }) => {
   await expect(row).toContainText(en.tasks.status.in_progress)
   await expect(panel).toContainText(en.tasks.status.in_progress)
 
-  await panel.getByRole('button', { name: en.tasks.status_action.cancelled }).click()
-  await expect(row).toContainText(en.tasks.status.cancelled)
+  await panel.getByRole('button', { name: en.tasks.status_action.canceled }).click()
+  await expect(row).toContainText(en.tasks.status.canceled)
 })

@@ -159,9 +159,9 @@
                 <dt>{{ t('tasks.completed_at') }}</dt>
                 <dd>{{ formatDateTime(selectedTask.completed_at) }}</dd>
               </template>
-              <template v-if="selectedTask.cancelled_at">
-                <dt>{{ t('tasks.cancelled_at') }}</dt>
-                <dd>{{ formatDateTime(selectedTask.cancelled_at) }}</dd>
+              <template v-if="selectedTask.canceled_at">
+                <dt>{{ t('tasks.canceled_at') }}</dt>
+                <dd>{{ formatDateTime(selectedTask.canceled_at) }}</dd>
               </template>
             </dl>
 
@@ -360,9 +360,9 @@ const HOUSEKEEPING_STATUSES: HousekeepingTaskStatus[] = [
   'in_progress',
   'inspection',
   'done',
-  'cancelled',
+  'canceled',
 ]
-const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'cancelled']
+const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'canceled']
 
 const { t } = useI18n()
 const roomsQuery = useQuery(roomListQuery())
@@ -485,7 +485,7 @@ function statusBadgeClass(status: TaskStatus): string {
 
 function transitionBtnClass(next: TaskStatus): string {
   // Start / Complete → positive (check-in); Send to inspection → neutral (check-out); Cancel → destructive.
-  if (next === 'cancelled') return 'action-toolbar__btn--cancel'
+  if (next === 'canceled') return 'action-toolbar__btn--cancel'
   if (next === 'inspection') return 'action-toolbar__btn--check-out'
   return 'action-toolbar__btn--check-in'
 }
@@ -501,27 +501,27 @@ function allowedTransitions(status: TaskStatus): TaskStatus[] {
   if (isMaintenanceDomain.value) {
     switch (status as MaintenanceTaskStatus) {
       case 'open':
-        return ['in_progress', 'cancelled']
+        return ['in_progress', 'canceled']
       case 'in_progress':
-        return ['done', 'cancelled']
+        return ['done', 'canceled']
       default:
         return []
     }
   }
   switch (status as HousekeepingTaskStatus) {
     case 'open':
-      return ['in_progress', 'cancelled']
+      return ['in_progress', 'canceled']
     case 'in_progress':
-      return ['inspection', 'cancelled']
+      return ['inspection', 'canceled']
     case 'inspection':
-      return ['done', 'cancelled']
+      return ['done', 'canceled']
     default:
       return []
   }
 }
 
 function isTerminal(status: TaskStatus): boolean {
-  return status === 'done' || status === 'cancelled'
+  return status === 'done' || status === 'canceled'
 }
 
 function toDateTimeLocal(iso: string | null | undefined): string {
@@ -761,7 +761,7 @@ watch(
   border-color: rgba(45, 138, 62, 0.3);
 }
 
-.task-status-badge--cancelled {
+.task-status-badge--canceled {
   color: var(--ink-tertiary);
   background: var(--surface-2);
 }

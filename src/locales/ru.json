@@ -512,7 +512,7 @@
     "col_updated": "Обновлено",
     "description_placeholder": "Краткое описание для исполнителя",
     "completed_at": "Завершено",
-    "cancelled_at": "Отменено",
+    "canceled_at": "Отменено",
     "unassigned": "Не назначено",
     "assign_title": "Назначение",
     "panel_toolbar_aria": "Действия над задачей",
@@ -531,13 +531,13 @@
       "in_progress": "В работе",
       "inspection": "На проверке",
       "done": "Выполнена",
-      "cancelled": "Отменена"
+      "canceled": "Отменена"
     },
     "status_action": {
       "in_progress": "В работу",
       "inspection": "На проверку",
       "done": "Завершить",
-      "cancelled": "Отменить"
+      "canceled": "Отменить"
     }
   },
   "dashboard": {

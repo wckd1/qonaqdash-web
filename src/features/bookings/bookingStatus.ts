@@ -22,14 +22,12 @@ export function bookingStatusAllowsEdit(status: string | undefined): boolean {
 }
 
 /**
- * Normalize API / UI status strings for comparisons (snake_case, US spelling for canceled).
+ * Normalize API / UI status strings for comparisons (snake_case).
  *
  */
 export function normalizeBookingStatus(status: string | undefined | null): string | undefined {
   if (status == null || status === '') return undefined
-  let s = String(status).trim().toLowerCase().replace(/-/g, '_')
-  if (s === 'cancelled') s = 'canceled'
-  return s
+  return String(status).trim().toLowerCase().replace(/-/g, '_')
 }
 
 export function bookingStatusAllowsCheckIn(status: string | undefined): boolean {

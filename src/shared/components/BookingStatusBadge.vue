@@ -31,7 +31,7 @@ const chipClass = computed(() => {
   if (s === 'confirmed') return 'status-chip--confirmed'
   if (s === 'checked-in') return 'status-chip--checked-in'
   if (s === 'checked-out') return 'status-chip--checked-out'
-  if (s === 'canceled' || s === 'cancelled') return 'status-chip--canceled'
+  if (s === 'canceled') return 'status-chip--canceled'
   return ''
 })
 </script>

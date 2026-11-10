@@ -512,7 +512,7 @@
     "col_updated": "Updated",
     "description_placeholder": "Short summary for the assignee",
     "completed_at": "Completed",
-    "cancelled_at": "Cancelled",
+    "canceled_at": "Cancelled",
     "unassigned": "Unassigned",
     "assign_title": "Assignment",
     "panel_toolbar_aria": "Task status actions",
@@ -531,13 +531,13 @@
       "in_progress": "In progress",
       "inspection": "Inspection",
       "done": "Done",
-      "cancelled": "Cancelled"
+      "canceled": "Cancelled"
     },
     "status_action": {
       "in_progress": "Start",
       "inspection": "Send to inspection",
       "done": "Complete",
-      "cancelled": "Cancel"
+      "canceled": "Cancel"
     }
   },
   "dashboard": {

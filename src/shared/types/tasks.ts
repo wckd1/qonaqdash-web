@@ -8,9 +8,9 @@ export type TaskDomain = 'housekeeping' | 'maintenance'
 
 export type TaskSource = 'manual' | 'auto_checkout'
 
-export type HousekeepingTaskStatus = 'open' | 'in_progress' | 'inspection' | 'done' | 'cancelled'
+export type HousekeepingTaskStatus = 'open' | 'in_progress' | 'inspection' | 'done' | 'canceled'
 
-export type MaintenanceTaskStatus = 'open' | 'in_progress' | 'done' | 'cancelled'
+export type MaintenanceTaskStatus = 'open' | 'in_progress' | 'done' | 'canceled'
 
 export type TaskStatus = HousekeepingTaskStatus | MaintenanceTaskStatus
 
@@ -25,7 +25,7 @@ interface TaskBase {
   created_at?: string
   updated_at?: string
   completed_at?: string | null
-  cancelled_at?: string | null
+  canceled_at?: string | null
 }
 
 export interface HousekeepingTask extends TaskBase {

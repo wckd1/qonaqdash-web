@@ -42,12 +42,15 @@
 import { ref, computed, onMounted, provide, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
 import { useQuery } from '@pinia/colada'
-import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
+import {
+  availableRoomsQuery,
+  hotelQuery,
+  roomListQuery,
+  roomTypeListQuery,
+} from '@/features/property/queries'
+import { bookingCreateFormQuery, useCreateBookingMutation } from '@/features/bookings/queries'
 import { guestListQuery } from '@/features/guests/queries'
-import { fetchAvailableRooms, fetchRooms } from '@/features/property/api'
-import type { AvailableRoom } from '@/shared/types/property'
 import type { FormNode } from '@/shared/types/forms'
 import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
@@ -65,7 +68,9 @@ provide(guestSearchKey, (q) => guestListQuery(q))
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const store = useBookingStore()
+const createBooking = useCreateBookingMutation()
+const formQ = useQuery(bookingCreateFormQuery)
+const roomsQ = useQuery(roomListQuery())
 const hotelQ = useQuery(hotelQuery)
 const roomTypesQuery = useQuery(roomTypeListQuery())
 const hotel = computed(() => hotelQ.data.value ?? null)
@@ -79,9 +84,6 @@ const formData = ref<Record<string, unknown>>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
 const manualAdjustments = ref<ManualAdjustmentInput[]>([])
-const availableRooms = ref<AvailableRoom[]>([])
-
-provide(availableRoomsKey, availableRooms)
 
 function formatDatetimeLocal(d: Date): string {
   if (Number.isNaN(d.getTime())) return ''
@@ -167,32 +169,29 @@ const { quote, quoteLoading, quoteError } = useBookingQuote(
   manualAdjustments,
 )
 
-watch(
-  () => {
-    const raw = formData.value.stay
-    if (!raw || typeof raw !== 'object') return [undefined, undefined] as const
-    const b = raw as Record<string, unknown>
-    return [b.check_in, b.check_out] as const
-  },
-  async ([checkIn, checkOut]) => {
-    if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
-      availableRooms.value = []
-      return
-    }
-    const from = new Date(checkIn)
-    const to = new Date(checkOut)
-    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
-      availableRooms.value = []
-      return
-    }
-    try {
-      availableRooms.value = await fetchAvailableRooms(from, to)
-    } catch {
-      availableRooms.value = []
-    }
-  },
-  { immediate: true },
+/** Range of the stay for the room picker; `null` until both dates are valid. */
+const availableRoomsRange = computed(() => {
+  const raw = formData.value.stay
+  if (!raw || typeof raw !== 'object') return null
+  const { check_in: checkIn, check_out: checkOut } = raw as Record<string, unknown>
+  if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
+    return null
+  }
+  if (Number.isNaN(new Date(checkIn).getTime()) || Number.isNaN(new Date(checkOut).getTime())) {
+    return null
+  }
+  return { from: checkIn, to: checkOut }
+})
+const availableRoomsQ = useQuery(() => ({
+  ...availableRoomsQuery(availableRoomsRange.value ?? { from: '', to: '' }),
+  enabled: !!availableRoomsRange.value,
+}))
+const availableRooms = computed(() =>
+  availableRoomsRange.value && !availableRoomsQ.error.value
+    ? (availableRoomsQ.data.value ?? [])
+    : [],
 )
+provide(availableRoomsKey, availableRooms)
 
 watch(
   () => {
@@ -230,14 +229,10 @@ async function mergeRouteQueryIntoForm() {
   if (checkIn) stay.check_in = checkIn
   if (checkOut) stay.check_out = checkOut
   if (roomId) {
-    try {
-      const list = await fetchRooms()
-      const room = list.find((r) => r.id === roomId)
-      if (room?.room_type_id) {
-        stay.rooms = [{ room_type: room.room_type_id, room_id: room.id }]
-      }
-    } catch {
-      /* keep existing rooms */
+    const { data: list } = await roomsQ.refresh()
+    const room = list?.find((r) => r.id === roomId)
+    if (room?.room_type_id) {
+      stay.rooms = [{ room_type: room.room_type_id, room_id: room.id }]
     }
   }
 }
@@ -248,8 +243,9 @@ onMounted(async () => {
   // The default check-in time comes from the hotel, so wait for it with the form.
   const hotelPromise = hotelQ.refresh(true)
   try {
-    const [template] = await Promise.all([store.fetchBookingForm(), hotelPromise])
-    bookingForm.value = template as BookingFormRuntime
+    // Every open revalidates the form (`If-None-Match`); take it once, after that request.
+    const [form] = await Promise.all([formQ.refresh(true), hotelPromise])
+    bookingForm.value = JSON.parse(JSON.stringify(form.data)) as BookingFormRuntime
     formData.value = JSON.parse(JSON.stringify(bookingForm.value.data ?? {}))
     if (!formData.value.guest) formData.value.guest = {}
     const guestObj = formData.value.guest as Record<string, unknown>
@@ -301,7 +297,7 @@ async function onSubmit() {
     if (manualAdjustments.value.length) {
       payload.adjustments = JSON.parse(JSON.stringify(manualAdjustments.value))
     }
-    const created = await store.createBooking(payload)
+    const created = await createBooking.mutateAsync(payload)
     router.push(`/bookings/${created.id}/details`)
   } catch (err: unknown) {
     submitting.value = false

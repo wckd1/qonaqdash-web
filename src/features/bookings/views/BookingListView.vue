@@ -99,23 +99,20 @@
         </table>
       </template>
     </div>
-    <BookingSidePanel
-      :booking="selectedBooking"
-      @close="closePanel"
-      @booking-updated="refreshBookings"
-    />
+    <BookingSidePanel :booking="selectedBooking" @close="closePanel" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import SearchBar from '@/shared/components/SearchBar.vue'
 import BookingStatusBadge from '@/shared/components/BookingStatusBadge.vue'
 import BookingSidePanel from '@/features/bookings/components/BookingSidePanel.vue'
-import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { bookingListQuery } from '@/features/bookings/queries'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import type { BookingItem } from '@/features/bookings/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -125,15 +122,23 @@ const DEBOUNCE_MS = 300
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const store = useBookingStore()
 const { canCreateBookings } = usePermissions()
-const { bookings } = storeToRefs(store)
 
-const initialLoading = ref(true)
-const searching = ref(false)
-const loadError = ref('')
 const searchQuery = ref('')
-let searchDebounceId: ReturnType<typeof setTimeout> | null = null
+const debouncedQuery = useDebouncedRef(searchQuery, DEBOUNCE_MS)
+// Keep the current rows on screen while a new search loads.
+const bookingsQuery = useQuery(() => ({
+  ...bookingListQuery({ q: debouncedQuery.value }),
+  placeholderData: (previous) => previous,
+}))
+const bookings = computed(() => bookingsQuery.data.value ?? [])
+const initialLoading = computed(() => bookingsQuery.isPending.value)
+const searching = computed(() => !initialLoading.value && bookingsQuery.isLoading.value)
+const loadError = computed(() =>
+  bookingsQuery.error.value
+    ? formatUnknownApiError(bookingsQuery.error.value) || t('bookings.load_failed')
+    : '',
+)
 
 const selectedBookingId = computed(() => {
   const id = route.params.id
@@ -179,40 +184,4 @@ function openPanel(booking: BookingItem) {
 function closePanel() {
   router.push('/bookings')
 }
-
-/**
- * @param {{ q?: string }} [params]
- * @param {boolean} [isInitial]
- */
-function refreshBookings() {
-  const q = searchQuery.value.trim()
-  return load(q ? { q } : {})
-}
-
-async function load(params: { q?: string } = {}, isInitial = false) {
-  loadError.value = ''
-  if (isInitial) {
-    initialLoading.value = true
-  } else {
-    searching.value = true
-  }
-  try {
-    await store.fetchBookings(params)
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('bookings.load_failed')
-  } finally {
-    initialLoading.value = false
-    searching.value = false
-  }
-}
-
-watch(searchQuery, (q) => {
-  if (searchDebounceId) clearTimeout(searchDebounceId)
-  searchDebounceId = setTimeout(() => {
-    searchDebounceId = null
-    load(q ? { q } : {})
-  }, DEBOUNCE_MS)
-})
-
-onMounted(() => load({}, true))
 </script>

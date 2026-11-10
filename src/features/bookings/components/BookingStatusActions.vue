@@ -108,7 +108,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import {
+  useCancelBookingMutation,
+  useCheckInMutation,
+  useCheckOutMutation,
+} from '@/features/bookings/queries'
 import {
   bookingStatusAllowsCheckIn,
   bookingStatusAllowsCheckOut,
@@ -135,7 +139,9 @@ const props = defineProps({
 const emit = defineEmits(['updated'])
 
 const { t } = useI18n()
-const store = useBookingStore()
+const checkInMutation = useCheckInMutation()
+const checkOutMutation = useCheckOutMutation()
+const cancelMutation = useCancelBookingMutation()
 const { success } = useNotification()
 const { canOperateBookings, canCancelBookings } = usePermissions()
 
@@ -221,12 +227,13 @@ async function runPending() {
   if (!id || !kind) return
   running.value = true
   try {
-    if (kind === 'checkIn') await store.checkIn(id)
+    if (kind === 'checkIn') await checkInMutation.mutateAsync(id)
     else if (kind === 'checkOut')
-      await store.checkOut(id, {
+      await checkOutMutation.mutateAsync({
+        id,
         forceUnpaid: checkoutRequiresForceAck.value ? forceUnpaidAck.value : false,
       })
-    else if (kind === 'cancel') await store.cancel(id)
+    else if (kind === 'cancel') await cancelMutation.mutateAsync(id)
     success(t('bookings.status_action_success'))
     pending.value = null
     emit('updated')

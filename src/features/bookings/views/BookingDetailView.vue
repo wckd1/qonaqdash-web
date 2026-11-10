@@ -116,14 +116,11 @@ import { ref, computed, watch, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useHashTab } from '@/shared/composables/useHashTab'
-import { storeToRefs } from 'pinia'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
-import { useBookingStore } from '@/features/bookings/stores/useBookingStore'
+import { bookingDetailQuery, useUpdateBookingMutation } from '@/features/bookings/queries'
 import { useQuery } from '@pinia/colada'
-import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
+import { availableRoomsQuery, hotelQuery, roomTypeListQuery } from '@/features/property/queries'
 import { guestListQuery } from '@/features/guests/queries'
-import { fetchAvailableRooms } from '@/features/property/api'
-import type { AvailableRoom } from '@/shared/types/property'
 import {
   getBookingStatusFromResponse,
   bookingStatusAllowsEdit,
@@ -151,22 +148,44 @@ provide(guestSearchKey, (q) => guestListQuery(q))
 
 const { t, locale } = useI18n()
 const route = useRoute()
-const store = useBookingStore()
+const updateBooking = useUpdateBookingMutation()
 const hotelQ = useQuery(hotelQuery)
 const roomTypesQuery = useQuery(roomTypeListQuery())
 const { canModifyBookings, canAccessBookingFolio } = usePermissions()
-const { currentBooking } = storeToRefs(store)
-const loadError = ref('')
-const notFound = ref(false)
 const concurrentError = ref('')
 const editing = ref(false)
 const editFormData = ref<BookingFormDataDraft>({})
 const editManualAdjustments = ref<ManualAdjustmentInput[]>([])
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
-const availableRooms = ref<AvailableRoom[]>([])
 const folioRef = ref<InstanceType<typeof FolioSection> | null>(null)
 const activeTab = useHashTab('details', ['details', 'folio'] as const)
+
+function routeParamId(): string | null {
+  const id = route.params.id
+  if (typeof id === 'string' && id) return id
+  if (Array.isArray(id) && id[0]) return id[0]
+  return null
+}
+
+const bookingId = computed(() => routeParamId())
+
+/** Runtime form the booking is shown with: `edit` while editing, `view` otherwise. */
+const formTarget = ref<'view' | 'edit'>('view')
+const detailQ = useQuery(() => ({
+  ...bookingDetailQuery({ id: bookingId.value ?? '', target: formTarget.value }),
+  enabled: !!bookingId.value,
+  // Switching between the view and the edit form keeps the booking on screen.
+  placeholderData: (previous, previousEntry) =>
+    previousEntry?.key[2] === bookingId.value ? previous : undefined,
+}))
+const currentBooking = computed(() => (bookingId.value ? (detailQ.data.value ?? null) : null))
+const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
+const loadError = computed(() =>
+  detailQ.error.value && !notFound.value
+    ? formatUnknownApiError(detailQ.error.value) || t('bookings.detail_load_failed')
+    : '',
+)
 
 const showTabs = computed(() => {
   const status = getBookingStatusFromResponse(currentBooking.value)
@@ -178,8 +197,6 @@ const showAccommodationPanel = computed(() => {
   const status = getBookingStatusFromResponse(currentBooking.value)
   return status !== 'checked_in' && status !== 'checked_out'
 })
-
-provide(availableRoomsKey, availableRooms)
 
 const editStayBranch = computed(() => {
   if (!editing.value) return null
@@ -217,15 +234,6 @@ const { quote, quoteLoading, quoteError } = useBookingQuote(
   () => (editing.value ? (bookingId.value ?? undefined) : undefined),
 )
 
-function routeParamId(): string | null {
-  const id = route.params.id
-  if (typeof id === 'string' && id) return id
-  if (Array.isArray(id) && id[0]) return id[0]
-  return null
-}
-
-const bookingId = computed(() => routeParamId())
-
 /** Edit when API allows PUT (confirmed or checked_in). */
 const canEdit = computed(() => {
   const status = getBookingStatusFromResponse(currentBooking.value)
@@ -233,7 +241,9 @@ const canEdit = computed(() => {
 })
 
 /** Merged runtime form + GET /api/bookings/:id `{ guest, stay }` data. */
-const bookingForm = computed(() => normalizeBookingFormResponse(currentBooking.value ?? null))
+const bookingForm = computed(() =>
+  normalizeBookingFormResponse(currentBooking.value as Record<string, unknown> | null),
+)
 
 /** Title line from FormResponse (data.guest) or flat Booking (guest). */
 const guestDisplayName = computed(() => {
@@ -257,22 +267,10 @@ const page_title = computed(() => {
   return name ? t('page_title.booking_with_guest', { name }) : t('page_title.booking')
 })
 
+/** Reloads the booking in the view form, e.g. after a concurrent change. */
 async function load() {
-  const id = routeParamId()
-  if (!id) return
-  store.clearCurrentBooking()
-  loadError.value = ''
-  notFound.value = false
-  try {
-    await store.fetchBooking(id, { formTarget: 'view' })
-  } catch (err: unknown) {
-    if (httpErrorResponse(err)?.status === 404) {
-      store.clearCurrentBooking()
-      notFound.value = true
-    } else {
-      loadError.value = formatUnknownApiError(err) || t('bookings.detail_load_failed')
-    }
-  }
+  formTarget.value = 'view'
+  await detailQ.refetch()
 }
 
 watch(editing, (isEdit) => {
@@ -292,42 +290,37 @@ watch(editing, (isEdit) => {
   }
 })
 
-watch(
-  () =>
-    editing.value
-      ? [editFormData.value?.stay?.check_in, editFormData.value?.stay?.check_out]
-      : [null, null],
-  async ([checkIn, checkOut]) => {
-    if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
-      availableRooms.value = []
-      return
-    }
-    const from = new Date(checkIn)
-    const to = new Date(checkOut)
-    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
-      availableRooms.value = []
-      return
-    }
-    try {
-      const id = typeof route.params.id === 'string' ? route.params.id : ''
-      availableRooms.value = await fetchAvailableRooms(from, to, {
-        excludeBookingId: id || undefined,
-      })
-    } catch {
-      availableRooms.value = []
-    }
-  },
-  { immediate: true },
+/** Range of the edited stay for the room picker; `null` until both dates are valid. */
+const availableRoomsRange = computed(() => {
+  if (!editing.value) return null
+  const checkIn = editFormData.value?.stay?.check_in
+  const checkOut = editFormData.value?.stay?.check_out
+  if (typeof checkIn !== 'string' || typeof checkOut !== 'string' || !checkIn || !checkOut) {
+    return null
+  }
+  if (Number.isNaN(new Date(checkIn).getTime()) || Number.isNaN(new Date(checkOut).getTime())) {
+    return null
+  }
+  return { from: checkIn, to: checkOut, excludeBookingId: bookingId.value ?? undefined }
+})
+const availableRoomsQ = useQuery(() => ({
+  ...availableRoomsQuery(availableRoomsRange.value ?? { from: '', to: '' }),
+  enabled: !!availableRoomsRange.value,
+}))
+const availableRooms = computed(() =>
+  availableRoomsRange.value && !availableRoomsQ.error.value
+    ? (availableRoomsQ.data.value ?? [])
+    : [],
 )
+provide(availableRoomsKey, availableRooms)
 
 watch(
   () => route.params.id,
-  (newId) => {
-    if (newId) load()
+  () => {
+    formTarget.value = 'view'
     editing.value = false
     concurrentError.value = ''
   },
-  { immediate: true },
 )
 
 watch(
@@ -341,13 +334,14 @@ watch(
 )
 
 async function startEdit() {
-  const id = bookingId.value
-  if (!id) return
-  await store.fetchBooking(id, { formTarget: 'edit' })
-  editing.value = true
+  if (!bookingId.value) return
+  formTarget.value = 'edit'
+  const { error } = await detailQ.refresh()
+  if (!error) editing.value = true
 }
 
 function cancelEdit() {
+  formTarget.value = 'view'
   editing.value = false
   editManualAdjustments.value = []
   if (bookingForm.value) {
@@ -391,7 +385,12 @@ async function onSave() {
     if (editManualAdjustments.value.length) {
       payload.adjustments = JSON.parse(JSON.stringify(editManualAdjustments.value))
     }
-    await store.updateBooking(bookingId.value, payload as CreateBookingPayload)
+    await updateBooking.mutateAsync({
+      id: bookingId.value,
+      payload: payload as CreateBookingPayload,
+    })
+    formTarget.value = 'view'
+    await detailQ.refresh()
     editing.value = false
   } catch (err: unknown) {
     if (httpErrorResponse(err)?.status === 409) {

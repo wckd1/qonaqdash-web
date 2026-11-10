@@ -128,9 +128,12 @@ export function fetchStayQuote(
  */
 export async function fetchStoredBookingQuote(
   bookingId: string,
+  options: RequestOptions = {},
 ): Promise<StoredBookingQuote | null> {
   try {
-    const { data } = await api.get(`/api/pricing/bookings/${encodeURIComponent(bookingId)}/quote`)
+    const { data } = await api.get(`/api/pricing/bookings/${encodeURIComponent(bookingId)}/quote`, {
+      signal: options.signal,
+    })
     return parseStoredBookingQuoteResponse(data)
   } catch (err: unknown) {
     if (httpErrorResponse(err)?.status === 404) return null

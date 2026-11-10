@@ -61,11 +61,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import { normalizeBookingFormResponse } from '@/shared/form-dsl/normalizeFormResponse'
-import { fetchBookingWithRuntimeForm, type BookingFormResponse } from '@/features/bookings/api'
+import { useQuery } from '@pinia/colada'
+import { bookingDetailQuery } from '@/features/bookings/queries'
 import type { BookingSidePanelRef } from '@/features/bookings/panelTypes'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
@@ -89,14 +90,23 @@ const emit = defineEmits<{
   'booking-updated': []
 }>()
 
-const detailEntity = ref<BookingFormResponse | null>(null)
-const loading = ref(false)
-const loadError = ref('')
-const notFound = ref(false)
+const bookingId = computed(() => props.booking?.id ?? '')
+const detailQ = useQuery(() => ({
+  ...bookingDetailQuery({ id: bookingId.value, target: 'view' }),
+  enabled: !!bookingId.value,
+}))
+const detailEntity = computed(() => (bookingId.value ? (detailQ.data.value ?? null) : null))
+const loading = computed(() => !!bookingId.value && detailQ.isPending.value)
+const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
+const loadError = computed(() =>
+  detailQ.error.value && !notFound.value
+    ? formatUnknownApiError(detailQ.error.value) || t('bookings.detail_load_failed')
+    : '',
+)
 
-let loadSeq = 0
-
-const bookingForm = computed(() => normalizeBookingFormResponse(detailEntity.value ?? null))
+const bookingForm = computed(() =>
+  normalizeBookingFormResponse(detailEntity.value as Record<string, unknown> | null),
+)
 
 const panelBookingStatus = computed(
   () => getBookingStatusFromResponse(detailEntity.value) ?? props.booking?.status,
@@ -149,51 +159,8 @@ const bookingPanelTitle = computed(() => {
   return name ? t('page_title.booking_with_guest', { name }) : t('page_title.booking')
 })
 
-async function onBookingStatusMutation() {
-  const id = props.booking?.id
-  if (!id) return
-  const seq = loadSeq
-  try {
-    const entity = await fetchBookingWithRuntimeForm(id, 'view')
-    if (seq !== loadSeq) return
-    detailEntity.value = entity
-    emit('booking-updated')
-  } catch (err: unknown) {
-    if (seq !== loadSeq) return
-    loadError.value = formatUnknownApiError(err) || t('bookings.detail_load_failed')
-  }
+/** The action reloads the booking views; the host only hears about it. */
+function onBookingStatusMutation() {
+  emit('booking-updated')
 }
-
-watch(
-  () => props.booking?.id,
-  async (id) => {
-    if (!id) {
-      detailEntity.value = null
-      loadError.value = ''
-      notFound.value = false
-      loading.value = false
-      return
-    }
-    const seq = ++loadSeq
-    loading.value = true
-    loadError.value = ''
-    notFound.value = false
-    detailEntity.value = null
-    try {
-      const entity = await fetchBookingWithRuntimeForm(id, 'view')
-      if (seq !== loadSeq) return
-      detailEntity.value = entity
-    } catch (err: unknown) {
-      if (seq !== loadSeq) return
-      if (httpErrorResponse(err)?.status === 404) {
-        notFound.value = true
-      } else {
-        loadError.value = formatUnknownApiError(err) || t('bookings.detail_load_failed')
-      }
-    } finally {
-      if (seq === loadSeq) loading.value = false
-    }
-  },
-  { immediate: true },
-)
 </script>

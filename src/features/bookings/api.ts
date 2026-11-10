@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import { clearFormDefinitionsFor, normalizeFormRef } from '@/shared/forms/formDefinitionCache'
 import {
   loadRuntimeFormDefinition,
@@ -63,9 +63,15 @@ export function parseBookingDetailPayload(raw: unknown): BookingDetailPayload {
   }
 }
 
-export function fetchBookingGrid(params: { from: string; to: string }): Promise<BookingItem[]> {
+export function fetchBookingGrid(
+  params: { from: string; to: string },
+  options: RequestOptions = {},
+): Promise<BookingItem[]> {
   return api
-    .get('/api/bookings/grid', { params: { from: params.from, to: params.to } })
+    .get('/api/bookings/grid', {
+      params: { from: params.from, to: params.to },
+      signal: options.signal,
+    })
     .then(({ data }) => (Array.isArray(data) ? data : (data?.entries ?? data?.grid ?? [])))
 }
 
@@ -75,8 +81,12 @@ export function createBooking(body: CreateBookingPayload): Promise<BookingItem> 
 
 export function fetchBookings(
   params: { q?: string; from?: string; to?: string } = {},
+  options: RequestOptions = {},
 ): Promise<BookingItem[]> {
-  const config: { params: Record<string, string> } = { params: {} }
+  const config: { params: Record<string, string>; signal?: AbortSignal } = {
+    params: {},
+    signal: options.signal,
+  }
   if (params.q?.trim()) config.params.q = params.q.trim()
   if (params.from) config.params.from = params.from
   if (params.to) config.params.to = params.to
@@ -156,20 +166,21 @@ export function mergeBookingDetailWithRuntimeForm(
 export async function fetchBookingWithRuntimeForm(
   id: string,
   target: 'edit' | 'view' = 'view',
+  options: RequestOptions = {},
 ): Promise<BookingFormResponse> {
   const [{ detail, formRef }, storedQuote] = await Promise.all([
-    fetchBooking(id),
-    fetchStoredBookingQuote(id),
+    fetchBooking(id, options),
+    fetchStoredBookingQuote(id, options),
   ])
   const form = await loadBookingRuntimeForm(target, formRef?.hash, { force: false })
   return mergeBookingDetailWithRuntimeForm(detail, form, storedQuote)
 }
 
-export function fetchBookingFormDefinition(): Promise<{
+export function fetchBookingFormDefinition(options: RequestOptions = {}): Promise<{
   definition: FormNode
   hash: string
 }> {
-  return api.get('/api/bookings/form/definition').then(({ data }) => ({
+  return api.get('/api/bookings/form/definition', { signal: options.signal }).then(({ data }) => ({
     definition: (data.definition ?? {}) as FormNode,
     hash: String(data.hash ?? ''),
   }))
@@ -184,8 +195,13 @@ export function updateBookingFormDefinition(body: {
   }))
 }
 
-export function fetchBooking(id: string): Promise<BookingDetailPayload> {
-  return api.get(`/api/bookings/${id}`).then(({ data }) => parseBookingDetailPayload(data))
+export function fetchBooking(
+  id: string,
+  options: RequestOptions = {},
+): Promise<BookingDetailPayload> {
+  return api
+    .get(`/api/bookings/${id}`, { signal: options.signal })
+    .then(({ data }) => parseBookingDetailPayload(data))
 }
 
 export function updateBooking(id: string, body: CreateBookingPayload): Promise<BookingItem> {

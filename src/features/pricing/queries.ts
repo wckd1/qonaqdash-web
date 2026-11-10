@@ -1,7 +1,7 @@
 import { defineQueryOptions, useMutation, useQueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import * as pricingApi from '@/features/pricing/api'
-import type { BaseRateItem } from '@/shared/types/commercial'
+import type { BaseRateItem, CalculateQuoteRequest } from '@/shared/types/commercial'
 
 export const pricingKeys = {
   all: ['pricing'] as const,
@@ -68,3 +68,10 @@ export function useDeleteRuleMutation() {
     onSuccess: () => invalidateKeys(queryCache, [pricingKeys.rules, pricingKeys.quotes]),
   })
 }
+
+/** Price of a stay as the booking form describes it (`POST /api/pricing/quote`). */
+export const stayQuoteQuery = defineQueryOptions((body: CalculateQuoteRequest) => ({
+  // `JSON.parse(JSON.stringify())` drops `undefined` fields, which a key cannot hold.
+  key: [...pricingKeys.quotes, JSON.parse(JSON.stringify(body))] as const,
+  query: ({ signal }) => pricingApi.fetchStayQuote(body, signal),
+}))

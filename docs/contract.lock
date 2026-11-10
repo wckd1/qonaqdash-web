@@ -1,12 +1,13 @@
 {
   "backend": {
-    "commit": "9eae97a2d740f12b687cb3272c3eeb0d3b2e6e24",
-    "branch": "wp-00-foundation",
+    "commit": "b64b830e78cb59393bdd99306e86362133fb3a38",
+    "branch": "wp-01-contract",
     "dirty": false
   },
-  "synced_at": "2026-11-10T10:17:51.641Z",
+  "synced_at": "2026-11-10T12:24:28.535Z",
   "files": {
-    "docs/swagger.yaml": "sha256:e58f40501dcd6786f29f400bac4c1add5bef0a9531d8cdea963425ba57262d3e",
-    "docs/integration.md": "sha256:56a10bce39f20de4f2bb59bd8f75e6e59141ada47196dde5d57adf084c09ba57"
+    "docs/openapi.yaml": "sha256:e45cc041b2c76c31a3a20ba793518b881583cf4a8a7a610ff143ca553749b082",
+    "docs/swagger.yaml": "sha256:915b9971a44d9c33f7e291853595dcecdbf2222f5c8c72a2e050dc896be75a6b",
+    "docs/integration.md": "sha256:1148f0eeb8c1c206c6fc866d6d04dc046e8edff6fd2ee1ac28ee1db40f006b64"
   }
 }

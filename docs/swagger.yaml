@@ -7,6 +7,9 @@ definitions:
       description:
         example: Late checkout fee
         type: string
+    required:
+    - amount
+    - description
     type: object
   billinghttp.AdjustmentResponse:
     properties:
@@ -15,6 +18,9 @@ definitions:
       outstanding_balance:
         example: 55000
         type: integer
+    required:
+    - entry
+    - outstanding_balance
     type: object
   billinghttp.BillHeader:
     properties:
@@ -23,6 +29,7 @@ definitions:
         type: string
       closed_at:
         example: "2026-03-17T12:00:00Z"
+        format: date-time
         type: string
       guest_id:
         example: 550e8400-e29b-41d4-a716-446655440030
@@ -32,10 +39,19 @@ definitions:
         type: string
       opened_at:
         example: "2026-03-15T14:00:00Z"
+        format: date-time
         type: string
       status:
+        enum:
+        - open
+        - closed
         example: open
         type: string
+    required:
+    - booking_id
+    - id
+    - opened_at
+    - status
     type: object
   billinghttp.BillResponse:
     properties:
@@ -48,6 +64,10 @@ definitions:
       outstanding_balance:
         example: 50000
         type: integer
+    required:
+    - bill
+    - entries
+    - outstanding_balance
     type: object
   billinghttp.BookingBalanceResponse:
     properties:
@@ -57,11 +77,16 @@ definitions:
       has_bill:
         example: false
         type: boolean
+    required:
+    - balance
+    - has_bill
     type: object
   billinghttp.CloseBillResponse:
     properties:
       bill:
         $ref: '#/definitions/billinghttp.BillHeader'
+    required:
+    - bill
     type: object
   billinghttp.DailyBreakdownResponse:
     properties:
@@ -71,6 +96,9 @@ definitions:
         type: array
       period:
         $ref: '#/definitions/billinghttp.PeriodDTO'
+    required:
+    - days
+    - period
     type: object
   billinghttp.DailyBreakdownRow:
     properties:
@@ -92,6 +120,13 @@ definitions:
       refunds:
         example: 5000
         type: integer
+    required:
+    - charges
+    - date
+    - entries_count
+    - net
+    - payments
+    - refunds
     type: object
   billinghttp.EntryDTO:
     properties:
@@ -100,23 +135,37 @@ definitions:
         type: integer
       created_at:
         example: "2026-03-15T14:00:00Z"
+        format: date-time
         type: string
       description:
         example: Night 2026-03-15
         type: string
       entry_type:
+        enum:
+        - accommodation_night
+        - rule_adjustment
+        - manual_adjustment
+        - system_adjustment
+        - service_charge
+        - payment
+        - refund
+        - accommodation_correction
+        - correction
         example: accommodation_night
         type: string
       id:
         example: 550e8400-e29b-41d4-a716-446655440080
         type: string
       metadata:
+        description: free-form, depends on entry_type
         type: object
-    type: object
-  billinghttp.ErrorResponse:
-    properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
+    required:
+    - balance_delta
+    - created_at
+    - description
+    - entry_type
+    - id
+    - metadata
     type: object
   billinghttp.LedgerEntryDTO:
     properties:
@@ -128,18 +177,38 @@ definitions:
         type: string
       created_at:
         example: "2026-03-15T14:00:00Z"
+        format: date-time
         type: string
       description:
         example: Night 2026-03-15
         type: string
       entry_type:
+        enum:
+        - accommodation_night
+        - rule_adjustment
+        - manual_adjustment
+        - system_adjustment
+        - service_charge
+        - payment
+        - refund
+        - accommodation_correction
+        - correction
         example: accommodation_night
         type: string
       id:
         example: 550e8400-e29b-41d4-a716-446655440080
         type: string
       metadata:
+        description: free-form, depends on entry_type
         type: object
+    required:
+    - balance_delta
+    - booking_id
+    - created_at
+    - description
+    - entry_type
+    - id
+    - metadata
     type: object
   billinghttp.LedgerListResponse:
     properties:
@@ -147,6 +216,8 @@ definitions:
         items:
           $ref: '#/definitions/billinghttp.LedgerEntryDTO'
         type: array
+    required:
+    - entries
     type: object
   billinghttp.MonthlyBreakdownResponse:
     properties:
@@ -156,6 +227,9 @@ definitions:
         type: array
       period:
         $ref: '#/definitions/billinghttp.PeriodDTO'
+    required:
+    - months
+    - period
     type: object
   billinghttp.MonthlyBreakdownRow:
     properties:
@@ -177,6 +251,13 @@ definitions:
       refunds:
         example: 50000
         type: integer
+    required:
+    - charges
+    - entries_count
+    - month
+    - net
+    - payments
+    - refunds
     type: object
   billinghttp.OutstandingBalancesResponse:
     properties:
@@ -187,6 +268,9 @@ definitions:
       total_outstanding:
         example: 150000
         type: integer
+    required:
+    - bills
+    - total_outstanding
     type: object
   billinghttp.OutstandingBillDTO:
     properties:
@@ -201,11 +285,15 @@ definitions:
         type: string
       opened_at:
         example: "2026-03-15T14:00:00Z"
+        format: date-time
         type: string
       outstanding:
         example: 20000
         type: integer
       status:
+        enum:
+        - open
+        - closed
         example: open
         type: string
       total_charges:
@@ -214,6 +302,14 @@ definitions:
       total_payments:
         example: -30000
         type: integer
+    required:
+    - bill_id
+    - booking_id
+    - opened_at
+    - outstanding
+    - status
+    - total_charges
+    - total_payments
     type: object
   billinghttp.OverviewResponse:
     properties:
@@ -246,6 +342,17 @@ definitions:
       total_outstanding:
         example: 85000
         type: integer
+    required:
+    - accommodation
+    - corrections
+    - manual_adjustments
+    - payments
+    - period
+    - refunds
+    - rule_adjustments
+    - service_charges
+    - total_charges
+    - total_outstanding
     type: object
   billinghttp.PaymentRequest:
     properties:
@@ -255,6 +362,8 @@ definitions:
       description:
         example: Full payment
         type: string
+    required:
+    - amount
     type: object
   billinghttp.PaymentResponse:
     properties:
@@ -263,6 +372,9 @@ definitions:
         type: integer
       entry:
         $ref: '#/definitions/billinghttp.EntryDTO'
+    required:
+    - balance
+    - entry
     type: object
   billinghttp.PeriodDTO:
     properties:
@@ -272,6 +384,9 @@ definitions:
       to:
         example: "2026-03-31"
         type: string
+    required:
+    - from
+    - to
     type: object
   billinghttp.RefundRequest:
     properties:
@@ -283,7 +398,11 @@ definitions:
         type: string
       reverses_entry_id:
         example: 550e8400-e29b-41d4-a716-446655440080
+        format: uuid
         type: string
+    required:
+    - amount
+    - reverses_entry_id
     type: object
   billinghttp.RefundResponse:
     properties:
@@ -292,29 +411,27 @@ definitions:
         type: integer
       entry:
         $ref: '#/definitions/billinghttp.EntryDTO'
+    required:
+    - balance
+    - entry
     type: object
   bookinghttp.BookingAdjustmentEffect:
     properties:
       apply_to:
+        enum:
+        - per_night
+        - total
         example: total
         type: string
       type:
+        enum:
+        - percent
+        - fixed
         example: percent
         type: string
       value:
         example: -1000
         type: integer
-    type: object
-  bookinghttp.BookingDataRequest:
-    properties:
-      adjustments:
-        items:
-          $ref: '#/definitions/bookinghttp.BookingManualAdjustmentInput'
-        type: array
-      guest:
-        $ref: '#/definitions/bookinghttp.BookingGuestInfo'
-      stay:
-        $ref: '#/definitions/bookinghttp.BookingStayData'
     type: object
   bookinghttp.BookingGuestInfo:
     properties:
@@ -326,6 +443,7 @@ definitions:
         type: string
       id:
         example: 550e8400-e29b-41d4-a716-446655440030
+        format: uuid
         type: string
       last_name:
         example: Doe
@@ -334,10 +452,34 @@ definitions:
         example: "+77001234567"
         type: string
     type: object
+  bookinghttp.BookingGuestInput:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+        x-nullable: true
+      first_name:
+        example: John
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440030
+        format: uuid
+        type: string
+        x-nullable: true
+      last_name:
+        example: Doe
+        type: string
+      phone:
+        example: "+77001234567"
+        type: string
+        x-nullable: true
+    type: object
   bookinghttp.BookingItem:
     properties:
       _form:
-        $ref: '#/definitions/bookinghttp.FormRef'
+        allOf:
+        - $ref: '#/definitions/bookinghttp.FormRef'
+        description: detail (GET /api/bookings/{id}) only
       guest:
         $ref: '#/definitions/bookinghttp.BookingGuestInfo'
       id:
@@ -347,10 +489,19 @@ definitions:
         example: 15000
         type: integer
       status:
+        enum:
+        - confirmed
+        - checked_in
+        - checked_out
+        - canceled
         example: confirmed
         type: string
       stay:
         $ref: '#/definitions/bookinghttp.BookingStayData'
+    required:
+    - id
+    - status
+    - stay
     type: object
   bookinghttp.BookingManualAdjustmentInput:
     properties:
@@ -364,29 +515,75 @@ definitions:
     properties:
       room_id:
         example: 550e8400-e29b-41d4-a716-446655440020
+        format: uuid
         type: string
       room_id_label:
         example: "101"
         type: string
       room_type:
         example: 550e8400-e29b-41d4-a716-446655440010
+        format: uuid
         type: string
       room_type_label:
         example: Standard Double
         type: string
+    required:
+    - room_type
+    type: object
+  bookinghttp.BookingRoomInput:
+    properties:
+      room_id:
+        example: 550e8400-e29b-41d4-a716-446655440020
+        format: uuid
+        type: string
+        x-nullable: true
+      room_type:
+        example: 550e8400-e29b-41d4-a716-446655440010
+        format: uuid
+        type: string
+    required:
+    - room_type
     type: object
   bookinghttp.BookingStayData:
     properties:
       check_in:
         example: "2026-03-15T14:00:00Z"
+        format: date-time
         type: string
       check_out:
         example: "2026-03-17T12:00:00Z"
+        format: date-time
         type: string
       rooms:
+        description: omitted in list items
         items:
           $ref: '#/definitions/bookinghttp.BookingRoomData'
         type: array
+    required:
+    - check_in
+    - check_out
+    type: object
+  bookinghttp.BookingStayInput:
+    properties:
+      check_in:
+        description: RFC3339
+        example: "2026-03-15T14:00:00Z"
+        format: date-time
+        type: string
+      check_out:
+        description: RFC3339, after check_in
+        example: "2026-03-17T12:00:00Z"
+        format: date-time
+        type: string
+      rooms:
+        items:
+          $ref: '#/definitions/bookinghttp.BookingRoomInput'
+        minItems: 1
+        type: array
+    required:
+    - check_in
+    - check_out
+    - rooms
     type: object
   bookinghttp.CheckOutRequest:
     properties:
@@ -394,10 +591,20 @@ definitions:
         example: false
         type: boolean
     type: object
-  bookinghttp.ErrorResponse:
+  bookinghttp.CreateBookingRequest:
     properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
+      adjustments:
+        items:
+          $ref: '#/definitions/bookinghttp.BookingManualAdjustmentInput'
+        type: array
+        x-nullable: true
+      guest:
+        $ref: '#/definitions/bookinghttp.BookingGuestInput'
+      stay:
+        $ref: '#/definitions/bookinghttp.BookingStayInput'
+    required:
+    - guest
+    - stay
     type: object
   bookinghttp.FormRef:
     properties:
@@ -407,15 +614,22 @@ definitions:
       id:
         example: booking
         type: string
+    required:
+    - hash
+    - id
     type: object
   bookinghttp.FormResponse:
     properties:
       definition:
-        example: '{"type":"stack"}'
-        type: string
+        description: FormDSL definition tree
+        type: object
       hash:
+        description: 'always set: content hash of the definition'
         example: a94f2c1e5b
         type: string
+    required:
+    - definition
+    - hash
     type: object
   bookinghttp.OutstandingBalanceError:
     properties:
@@ -428,16 +642,39 @@ definitions:
       outstanding_balance:
         example: 15000
         type: integer
+    required:
+    - code
+    - message
+    - outstanding_balance
     type: object
   bookinghttp.OutstandingBalanceErrorResponse:
     properties:
       error:
         $ref: '#/definitions/bookinghttp.OutstandingBalanceError'
+    required:
+    - error
+    type: object
+  bookinghttp.UpdateBookingRequest:
+    properties:
+      adjustments:
+        items:
+          $ref: '#/definitions/bookinghttp.BookingManualAdjustmentInput'
+        type: array
+        x-nullable: true
+      guest:
+        $ref: '#/definitions/bookinghttp.BookingGuestInput'
+      stay:
+        $ref: '#/definitions/bookinghttp.BookingStayInput'
+    required:
+    - stay
     type: object
   bookinghttp.UpdateFormRequest:
     properties:
       definition:
-        type: string
+        description: FormDSL definition tree
+        type: object
+    required:
+    - definition
     type: object
   domain.AdjustmentSource:
     enum:
@@ -493,11 +730,6 @@ definitions:
     - RuleStatusActive
     - RuleStatusDisabled
     - RuleStatusInvalid
-  guesthttp.ErrorResponse:
-    properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
-    type: object
   guesthttp.FormRef:
     properties:
       hash:
@@ -506,15 +738,22 @@ definitions:
       id:
         example: guest
         type: string
+    required:
+    - hash
+    - id
     type: object
   guesthttp.FormResponse:
     properties:
       definition:
-        example: '{"type":"stack"}'
-        type: string
+        description: FormDSL definition tree
+        type: object
       hash:
+        description: 'always set: content hash of the definition'
         example: a94f2c1e5b
         type: string
+    required:
+    - definition
+    - hash
     type: object
   guesthttp.GuestBookingGuestInfo:
     properties:
@@ -523,6 +762,7 @@ definitions:
         type: string
       id:
         example: 550e8400-e29b-41d4-a716-446655440030
+        format: uuid
         type: string
       last_name:
         example: Doe
@@ -536,25 +776,40 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440050
         type: string
       status:
+        enum:
+        - confirmed
+        - checked_in
+        - checked_out
+        - canceled
         example: confirmed
         type: string
       stay:
         $ref: '#/definitions/guesthttp.GuestBookingStayData'
+    required:
+    - id
+    - status
+    - stay
     type: object
   guesthttp.GuestBookingStayData:
     properties:
       check_in:
         example: "2026-03-15T14:00:00Z"
+        format: date-time
         type: string
       check_out:
         example: "2026-03-17T12:00:00Z"
+        format: date-time
         type: string
+    required:
+    - check_in
+    - check_out
     type: object
   guesthttp.GuestDataRequest:
     properties:
       email:
         example: john@example.com
         type: string
+        x-nullable: true
       first_name:
         example: John
         type: string
@@ -564,6 +819,10 @@ definitions:
       phone:
         example: "+77001234567"
         type: string
+        x-nullable: true
+    required:
+    - first_name
+    - last_name
     type: object
   guesthttp.GuestDetailWithFormMeta:
     properties:
@@ -575,6 +834,7 @@ definitions:
       email:
         example: john@example.com
         type: string
+        x-nullable: true
       first_name:
         example: John
         type: string
@@ -584,6 +844,12 @@ definitions:
       phone:
         example: "+77001234567"
         type: string
+        x-nullable: true
+    required:
+    - _form
+    - blocked
+    - first_name
+    - last_name
     type: object
   guesthttp.GuestListItem:
     properties:
@@ -605,11 +871,19 @@ definitions:
       phone:
         example: "+77001234567"
         type: string
+    required:
+    - blocked
+    - first_name
+    - id
+    - last_name
     type: object
   guesthttp.UpdateFormRequest:
     properties:
       definition:
-        type: string
+        description: FormDSL definition tree
+        type: object
+    required:
+    - definition
     type: object
   iamhttp.AccountBundleResponse:
     properties:
@@ -621,12 +895,19 @@ definitions:
         $ref: '#/definitions/iamhttp.AccountProfileBody'
       settings:
         $ref: '#/definitions/iamhttp.AccountSettingsBody'
+    required:
+    - account
+    - permissions
+    - profile
+    - settings
     type: object
   iamhttp.AccountInfoBody:
     properties:
       email:
         example: admin@qonaq.com
         type: string
+    required:
+    - email
     type: object
   iamhttp.AccountProfileBody:
     properties:
@@ -636,12 +917,21 @@ definitions:
       last_name:
         example: Nur
         type: string
+    required:
+    - first_name
+    - last_name
     type: object
   iamhttp.AccountSettingsBody:
     properties:
       locale:
+        enum:
+        - en
+        - ru
         example: en
         type: string
+        x-nullable: true
+    required:
+    - locale
     type: object
   iamhttp.AuthTokensResponse:
     properties:
@@ -651,70 +941,163 @@ definitions:
       refresh_token:
         example: eyJhbGciOiJIUzI1NiIs...
         type: string
+    required:
+    - access_token
+    - refresh_token
     type: object
   iamhttp.BillingPermissionsOverrideResponse:
     properties:
       collect_payment:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       modify:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       refund:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.BillingPermissionsResponse:
     properties:
       collect_payment:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       modify:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       refund:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.BookingsPermissionsOverrideResponse:
     properties:
       cancel:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       modify:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       operate:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.BookingsPermissionsResponse:
     properties:
       cancel:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       modify:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       operate:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
@@ -723,25 +1106,38 @@ definitions:
       password:
         example: secureP@ss123
         type: string
+    required:
+    - password
     type: object
   iamhttp.CreateEmployeeResponse:
     properties:
       employee:
-        type: object
+        $ref: '#/definitions/iamhttp.EmployeeDetailResponse'
       invite_token:
         example: aes-gcm-encrypted-token
         type: string
+    required:
+    - employee
     type: object
   iamhttp.CreateOccupationRequest:
     properties:
       permissions:
-        $ref: '#/definitions/iamhttp.PermissionsResponse'
+        $ref: '#/definitions/iamhttp.PermissionsRequest'
       role_key:
+        enum:
+        - executive
+        - administration_back_office
+        - revenue_pricing
+        - front_office
+        - housekeeping_operations
         example: front_office
         type: string
       title:
         example: Night Reception
         type: string
+    required:
+    - role_key
+    - title
     type: object
   iamhttp.EmployeeDataRequest:
     properties:
@@ -757,6 +1153,11 @@ definitions:
       phone:
         example: "+77001234567"
         type: string
+        x-nullable: true
+    required:
+    - email
+    - first_name
+    - last_name
     type: object
   iamhttp.EmployeeDetailResponse:
     properties:
@@ -774,9 +1175,11 @@ definitions:
         example: Nur
         type: string
       occupation_ids:
+        description: null when the employee has no occupations
         items:
           type: string
         type: array
+        x-nullable: true
       occupations:
         items:
           $ref: '#/definitions/iamhttp.OccupationSummaryResponse'
@@ -786,6 +1189,16 @@ definitions:
       phone:
         example: "+77001234567"
         type: string
+        x-nullable: true
+    required:
+    - _form
+    - effective_permissions
+    - email
+    - first_name
+    - last_name
+    - occupation_ids
+    - occupations
+    - permission_overrides
     type: object
   iamhttp.EmployeeListItem:
     properties:
@@ -801,6 +1214,11 @@ definitions:
       last_name:
         example: Nur
         type: string
+    required:
+    - email
+    - first_name
+    - id
+    - last_name
     type: object
   iamhttp.EmployeeOccupationsResponse:
     properties:
@@ -808,13 +1226,19 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440020
         type: string
       occupation_ids:
+        description: null when the employee has no occupations
         items:
           type: string
         type: array
+        x-nullable: true
       occupations:
         items:
           $ref: '#/definitions/iamhttp.OccupationResponse'
         type: array
+    required:
+    - employee_id
+    - occupation_ids
+    - occupations
     type: object
   iamhttp.EmployeePermissionsResponse:
     properties:
@@ -824,44 +1248,77 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440020
         type: string
       occupation_ids:
+        description: null when the employee has no occupations
         items:
           type: string
         type: array
+        x-nullable: true
       occupation_templates:
         items:
           $ref: '#/definitions/iamhttp.OccupationResponse'
         type: array
       permission_overrides:
         $ref: '#/definitions/iamhttp.PermissionOverridesResponse'
+    required:
+    - effective_permissions
+    - employee_id
+    - occupation_ids
+    - occupation_templates
+    - permission_overrides
     type: object
   iamhttp.EmployeesPermissionsOverrideResponse:
     properties:
       delete:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.EmployeesPermissionsResponse:
     properties:
       delete:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
-    type: object
-  iamhttp.ErrorResponse:
-    properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
     type: object
   iamhttp.FormRef:
     properties:
@@ -871,103 +1328,230 @@ definitions:
       id:
         example: employee
         type: string
+    required:
+    - hash
+    - id
     type: object
   iamhttp.FormResponse:
     properties:
       definition:
-        example: '{"type":"stack"}'
-        type: string
+        description: FormDSL definition tree
+        type: object
       hash:
+        description: 'always set: content hash of the definition'
         example: a94f2c1e5b
         type: string
+    required:
+    - definition
+    - hash
     type: object
   iamhttp.GuestsPermissionsOverrideResponse:
     properties:
       block:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       modify:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.GuestsPermissionsResponse:
     properties:
       block:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 0
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       modify:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.HotelPermissionsOverrideResponse:
     properties:
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage_occupations:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage_permissions:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.HotelPermissionsResponse:
     properties:
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage_occupations:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage_permissions:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.HousekeepingTasksPermissionsOverrideResponse:
     properties:
       assign:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       operate:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.HousekeepingTasksPermissionsResponse:
     properties:
       assign:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       operate:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
@@ -985,6 +1569,11 @@ definitions:
       user_id:
         example: 550e8400-e29b-41d4-a716-446655440002
         type: string
+    required:
+    - email
+    - organization_id
+    - organization_name
+    - user_id
     type: object
   iamhttp.LoginRequest:
     properties:
@@ -994,34 +1583,77 @@ definitions:
       password:
         example: secureP@ss123
         type: string
+    required:
+    - email
+    - password
     type: object
   iamhttp.MaintenanceTasksPermissionsOverrideResponse:
     properties:
       assign:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       operate:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.MaintenanceTasksPermissionsResponse:
     properties:
       assign:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       operate:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
@@ -1033,6 +1665,12 @@ definitions:
       permissions:
         $ref: '#/definitions/iamhttp.PermissionsResponse'
       role_key:
+        enum:
+        - executive
+        - administration_back_office
+        - revenue_pricing
+        - front_office
+        - housekeeping_operations
         example: front_office
         type: string
       role_title:
@@ -1041,6 +1679,12 @@ definitions:
       title:
         example: Front Office Supervisor
         type: string
+    required:
+    - id
+    - permissions
+    - role_key
+    - role_title
+    - title
     type: object
   iamhttp.OccupationRoleGroupResponse:
     properties:
@@ -1049,11 +1693,21 @@ definitions:
           $ref: '#/definitions/iamhttp.OccupationResponse'
         type: array
       role_key:
+        enum:
+        - executive
+        - administration_back_office
+        - revenue_pricing
+        - front_office
+        - housekeeping_operations
         example: front_office
         type: string
       role_title:
         example: iam.roles.front_office
         type: string
+    required:
+    - occupations
+    - role_key
+    - role_title
     type: object
   iamhttp.OccupationSummaryResponse:
     properties:
@@ -1061,6 +1715,12 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440030
         type: string
       role_key:
+        enum:
+        - executive
+        - administration_back_office
+        - revenue_pricing
+        - front_office
+        - housekeeping_operations
         example: front_office
         type: string
       role_title:
@@ -1069,6 +1729,11 @@ definitions:
       title:
         example: Front Office Supervisor
         type: string
+    required:
+    - id
+    - role_key
+    - role_title
+    - title
     type: object
   iamhttp.PermissionOverridesResponse:
     properties:
@@ -1091,7 +1756,7 @@ definitions:
       rooms:
         $ref: '#/definitions/iamhttp.RoomsPermissionsOverrideResponse'
     type: object
-  iamhttp.PermissionsResponse:
+  iamhttp.PermissionsRequest:
     properties:
       billing:
         $ref: '#/definitions/iamhttp.BillingPermissionsResponse'
@@ -1112,27 +1777,88 @@ definitions:
       rooms:
         $ref: '#/definitions/iamhttp.RoomsPermissionsResponse'
     type: object
+  iamhttp.PermissionsResponse:
+    properties:
+      billing:
+        $ref: '#/definitions/iamhttp.BillingPermissionsResponse'
+      bookings:
+        $ref: '#/definitions/iamhttp.BookingsPermissionsResponse'
+      employees:
+        $ref: '#/definitions/iamhttp.EmployeesPermissionsResponse'
+      guests:
+        $ref: '#/definitions/iamhttp.GuestsPermissionsResponse'
+      hotel:
+        $ref: '#/definitions/iamhttp.HotelPermissionsResponse'
+      housekeeping_tasks:
+        $ref: '#/definitions/iamhttp.HousekeepingTasksPermissionsResponse'
+      maintenance_tasks:
+        $ref: '#/definitions/iamhttp.MaintenanceTasksPermissionsResponse'
+      pricing:
+        $ref: '#/definitions/iamhttp.PricingPermissionsResponse'
+      rooms:
+        $ref: '#/definitions/iamhttp.RoomsPermissionsResponse'
+    required:
+    - billing
+    - bookings
+    - employees
+    - guests
+    - hotel
+    - housekeeping_tasks
+    - maintenance_tasks
+    - pricing
+    - rooms
+    type: object
   iamhttp.PricingPermissionsOverrideResponse:
     properties:
       adjust:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.PricingPermissionsResponse:
     properties:
       adjust:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
@@ -1153,6 +1879,12 @@ definitions:
       user_last_name:
         example: Serikova
         type: string
+    required:
+    - hotel_name
+    - organization_name
+    - user_email
+    - user_first_name
+    - user_last_name
     type: object
   iamhttp.ProvisionResponse:
     properties:
@@ -1168,46 +1900,87 @@ definitions:
       user_id:
         example: 550e8400-e29b-41d4-a716-446655440002
         type: string
+    required:
+    - hotel_id
+    - invite_token
+    - organization_id
+    - user_id
     type: object
   iamhttp.RefreshRequest:
     properties:
       refresh_token:
         example: eyJhbGciOiJIUzI1NiIs...
         type: string
+    required:
+    - refresh_token
     type: object
   iamhttp.ReplaceEmployeeOccupationsRequest:
     properties:
       occupation_ids:
+        description: omitted, null or [] unlinks all occupations
         items:
           type: string
         type: array
+        x-nullable: true
     type: object
   iamhttp.ReplaceEmployeePermissionsRequest:
     properties:
       overrides:
-        $ref: '#/definitions/iamhttp.PermissionOverridesResponse'
+        allOf:
+        - $ref: '#/definitions/iamhttp.PermissionOverridesResponse'
+        description: omitted clears all overrides
     type: object
   iamhttp.RoomsPermissionsOverrideResponse:
     properties:
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
   iamhttp.RoomsPermissionsResponse:
     properties:
       create:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       manage:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
       view:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 3
         example: 1
         type: integer
     type: object
@@ -1216,11 +1989,14 @@ definitions:
       currentPassword:
         description: Required with NewPassword when changing password
         type: string
+        x-nullable: true
       email:
         example: admin@qonaq.com
         type: string
+        x-nullable: true
       newPassword:
         type: string
+        x-nullable: true
     type: object
   iamhttp.UpdateAccountRequest:
     properties:
@@ -1228,27 +2004,53 @@ definitions:
         allOf:
         - $ref: '#/definitions/iamhttp.UpdateAccountAccountPart'
         description: Email/password changes
+        x-nullable: true
       settings:
-        additionalProperties: true
+        allOf:
+        - $ref: '#/definitions/iamhttp.UpdateAccountSettingsPart'
         description: Settings merged when present; per-key JSON null clears that key.
           Unknown keys → iam.unknown_setting_key.
-        type: object
+        x-nullable: true
+    type: object
+  iamhttp.UpdateAccountSettingsPart:
+    properties:
+      locale:
+        description: null or "" clears the setting
+        enum:
+        - en
+        - ru
+        - ""
+        example: en
+        type: string
+        x-nullable: true
     type: object
   iamhttp.UpdateFormRequest:
     properties:
       definition:
-        type: string
+        description: FormDSL definition tree
+        type: object
+    required:
+    - definition
     type: object
   iamhttp.UpdateOccupationRequest:
     properties:
       permissions:
-        $ref: '#/definitions/iamhttp.PermissionsResponse'
+        $ref: '#/definitions/iamhttp.PermissionsRequest'
       role_key:
+        enum:
+        - executive
+        - administration_back_office
+        - revenue_pricing
+        - front_office
+        - housekeeping_operations
         example: front_office
         type: string
       title:
         example: Night Reception
         type: string
+    required:
+    - role_key
+    - title
     type: object
   pricinghttp.BaseRateItemDTO:
     properties:
@@ -1258,6 +2060,9 @@ definitions:
       room_type_id:
         example: 550e8400-e29b-41d4-a716-446655440010
         type: string
+    required:
+    - base_rate_minor
+    - room_type_id
     type: object
   pricinghttp.BaseRatesResponse:
     properties:
@@ -1265,41 +2070,124 @@ definitions:
         items:
           $ref: '#/definitions/pricinghttp.BaseRateItemDTO'
         type: array
+    required:
+    - rates
+    type: object
+  pricinghttp.BookingQuoteNightDTO:
+    properties:
+      adjustments:
+        description: omitted when empty
+        items:
+          $ref: '#/definitions/pricinghttp.QuoteAdjustmentDTO'
+        type: array
+      base_rate:
+        example: 1000000
+        type: integer
+      date:
+        example: "2026-03-27"
+        format: date
+        type: string
+      room_type_id:
+        example: 550e8400-e29b-41d4-a716-446655440010
+        type: string
+      subtotal:
+        example: 1200000
+        type: integer
+    required:
+    - base_rate
+    - date
+    - room_type_id
+    - subtotal
+    type: object
+  pricinghttp.BookingQuoteResponse:
+    properties:
+      calculated_at:
+        example: "2026-03-26T12:00:00Z"
+        type: string
+      grand_total:
+        example: 2280000
+        type: integer
+      manual_adjustments:
+        description: ManualAdjustments echoes the `adjustments` of the last booking
+          write, as sent; use it for round-tripping on updates.
+        items:
+          $ref: '#/definitions/pricinghttp.QuoteManualAdjustmentDTO'
+        type: array
+        x-nullable: true
+      nights:
+        items:
+          $ref: '#/definitions/pricinghttp.BookingQuoteNightDTO'
+        type: array
+      nights_subtotal:
+        example: 2400000
+        type: integer
+      total_adjustments:
+        description: omitted when empty
+        items:
+          $ref: '#/definitions/pricinghttp.QuoteAdjustmentDTO'
+        type: array
+      version:
+        example: 1
+        type: integer
+    required:
+    - calculated_at
+    - grand_total
+    - nights
+    - nights_subtotal
+    - version
     type: object
   pricinghttp.CalculateQuoteRequest:
     properties:
       booking_data:
+        description: booking form data for property conditions; free-form
         type: object
+        x-nullable: true
       booking_id:
+        description: not used by the calculation
         example: 550e8400-e29b-41d4-a716-446655440050
         type: string
+        x-nullable: true
       check_in:
         example: "2026-03-27T14:00:00Z"
+        format: date-time
         type: string
       check_out:
         example: "2026-03-29T12:00:00Z"
+        format: date-time
         type: string
       guest_id:
         example: 550e8400-e29b-41d4-a716-446655440030
         type: string
+        x-nullable: true
       manual_adjustments:
         items:
           $ref: '#/definitions/pricinghttp.QuoteManualAdjustmentDTO'
         type: array
+        x-nullable: true
       rooms:
         items:
           $ref: '#/definitions/pricinghttp.QuoteRoomDTO'
+        minItems: 1
         type: array
+    required:
+    - check_in
+    - check_out
+    - rooms
     type: object
   pricinghttp.ConditionsResponse:
     properties:
       conditions:
+        description: Conditions are condition candidates copied from booking form
+          nodes ({field_id, type, label, bind, options}); free-form.
         items:
           type: object
         type: array
       hash:
         example: a1b2c3d4e5
         type: string
+    required:
+    - conditions
+    - hash
     type: object
   pricinghttp.CreatePricingRuleRequest:
     properties:
@@ -1307,6 +2195,7 @@ definitions:
         items:
           $ref: '#/definitions/pricinghttp.RuleConditionDTO'
         type: array
+        x-nullable: true
       effect:
         $ref: '#/definitions/pricinghttp.RuleEffectDTO'
       name:
@@ -1314,19 +2203,27 @@ definitions:
         type: string
       priority:
         example: 10
+        minimum: 1
         type: integer
       status:
+        description: omitted or null → active
+        enum:
+        - active
+        - disabled
         example: active
         type: string
-    type: object
-  pricinghttp.ErrorResponse:
-    properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
+        x-nullable: true
+    required:
+    - effect
+    - name
+    - priority
     type: object
   pricinghttp.InvalidReasonDTO:
     properties:
       code:
+        enum:
+        - field_deleted
+        - select_option_removed
         example: select_option_removed
         type: string
       condition_index:
@@ -1334,6 +2231,7 @@ definitions:
         type: integer
       details:
         additionalProperties: {}
+        description: free-form, depends on code
         type: object
       field_id:
         example: booking_source
@@ -1341,6 +2239,9 @@ definitions:
       message:
         example: rule references a removed select value
         type: string
+    required:
+    - code
+    - message
     type: object
   pricinghttp.PricingRuleResponse:
     properties:
@@ -1357,7 +2258,10 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440300
         type: string
       invalid_reason:
-        $ref: '#/definitions/pricinghttp.InvalidReasonDTO'
+        allOf:
+        - $ref: '#/definitions/pricinghttp.InvalidReasonDTO'
+        description: set when status is invalid
+        x-nullable: true
       name:
         example: OTA New Year surcharge
         type: string
@@ -1371,6 +2275,16 @@ definitions:
       updated_at:
         example: "2026-03-26T12:00:00Z"
         type: string
+    required:
+    - conditions
+    - created_at
+    - effect
+    - id
+    - invalid_reason
+    - name
+    - priority
+    - status
+    - updated_at
     type: object
   pricinghttp.QuoteAdjustmentDTO:
     properties:
@@ -1398,6 +2312,13 @@ definitions:
       value:
         example: 2000
         type: integer
+    required:
+    - amount
+    - apply_to
+    - name
+    - source
+    - type
+    - value
     type: object
   pricinghttp.QuoteManualAdjustmentDTO:
     properties:
@@ -1418,6 +2339,7 @@ definitions:
         type: integer
       date:
         example: "2026-03-27"
+        format: date
         type: string
       room_type_id:
         example: 550e8400-e29b-41d4-a716-446655440010
@@ -1425,23 +2347,33 @@ definitions:
       subtotal:
         example: 1200000
         type: integer
+    required:
+    - adjustments
+    - base_rate
+    - date
+    - room_type_id
+    - subtotal
     type: object
   pricinghttp.QuoteRoomDTO:
     properties:
       room_type_id:
         example: 550e8400-e29b-41d4-a716-446655440010
         type: string
+    required:
+    - room_type_id
     type: object
   pricinghttp.RuleConditionDTO:
     properties:
       date:
         example: "2026-12-31"
+        format: date
         type: string
       field_id:
         example: booking_source
         type: string
       from:
         example: "2026-12-25"
+        format: date
         type: string
       operator:
         allOf:
@@ -1449,6 +2381,7 @@ definitions:
         example: eq
       to:
         example: "2026-12-31"
+        format: date
         type: string
       type:
         allOf:
@@ -1457,6 +2390,8 @@ definitions:
       value:
         example: ota
         type: string
+    required:
+    - type
     type: object
   pricinghttp.RuleEffectDTO:
     properties:
@@ -1471,6 +2406,10 @@ definitions:
       value:
         example: 1500
         type: integer
+    required:
+    - apply_to
+    - type
+    - value
     type: object
   pricinghttp.StayQuoteResponse:
     properties:
@@ -1488,6 +2427,11 @@ definitions:
         items:
           $ref: '#/definitions/pricinghttp.QuoteAdjustmentDTO'
         type: array
+    required:
+    - grand_total
+    - nights
+    - nights_subtotal
+    - total_adjustments
     type: object
   pricinghttp.UpdateBaseRatesRequest:
     properties:
@@ -1495,6 +2439,7 @@ definitions:
         items:
           $ref: '#/definitions/pricinghttp.BaseRateItemDTO'
         type: array
+        x-nullable: true
     type: object
   pricinghttp.UpdatePricingRuleRequest:
     properties:
@@ -1502,6 +2447,7 @@ definitions:
         items:
           $ref: '#/definitions/pricinghttp.RuleConditionDTO'
         type: array
+        x-nullable: true
       effect:
         $ref: '#/definitions/pricinghttp.RuleEffectDTO'
       name:
@@ -1509,10 +2455,20 @@ definitions:
         type: string
       priority:
         example: 10
+        minimum: 1
         type: integer
       status:
+        description: omitted or null → active
+        enum:
+        - active
+        - disabled
         example: active
         type: string
+        x-nullable: true
+    required:
+    - effect
+    - name
+    - priority
     type: object
   propertyhttp.AvailableRoomResponse:
     properties:
@@ -1529,23 +2485,46 @@ definitions:
         example: Standard Double
         type: string
       state:
-        description: selectable | selectable_with_warning | blocked_by_inventory |
-          blocked_by_maintenance | blocked_by_occupancy.
+        enum:
+        - selectable
+        - selectable_with_warning
+        - blocked_by_inventory
+        - blocked_by_maintenance
+        - blocked_by_occupancy
         example: selectable_with_warning
         type: string
       warnings:
+        description: omitted when empty
         example:
         - housekeeping.dirty
         items:
+          enum:
+          - availability.ooo
+          - availability.occupied
+          - maintenance.under_maintenance
+          - maintenance.required
+          - housekeeping.dirty
+          - housekeeping.cleaning
+          - housekeeping.inspection
           type: string
         type: array
+    required:
+    - id
+    - number
+    - room_type_id
+    - room_type_name
+    - state
     type: object
   propertyhttp.ChangeRoomAvailabilityRequest:
     properties:
       status:
-        description: available | ooo
+        enum:
+        - available
+        - ooo
         example: ooo
         type: string
+    required:
+    - status
     type: object
   propertyhttp.ChangeRoomHousekeepingRequest:
     properties:
@@ -1553,29 +2532,45 @@ definitions:
         description: uuid or explicit null to clear.
         format: uuid
         type: string
+        x-nullable: true
       description:
         description: Task description (optional).
         type: string
       status:
-        description: dirty | cleaning | inspection | clean
+        enum:
+        - dirty
+        - cleaning
+        - inspection
+        - clean
         example: dirty
         type: string
+    required:
+    - status
     type: object
   propertyhttp.ChangeRoomMaintenanceRequest:
     properties:
       assignee_employee_id:
         format: uuid
         type: string
+        x-nullable: true
       description:
         example: HVAC coil replacement
         type: string
       planned_end:
+        description: required for required/under_maintenance when a task is created
+          or started
         example: "2026-04-20T12:00:00Z"
         type: string
+        x-nullable: true
       status:
-        description: none | required | under_maintenance
+        enum:
+        - none
+        - required
+        - under_maintenance
         example: under_maintenance
         type: string
+    required:
+    - status
     type: object
   propertyhttp.CreateRoomRequest:
     properties:
@@ -1587,20 +2582,21 @@ definitions:
         description: Must exist in this hotel
         example: 550e8400-e29b-41d4-a716-446655440010
         type: string
+    required:
+    - number
+    - room_type_id
     type: object
   propertyhttp.CreateRoomTypeRequest:
     properties:
       description:
         example: A cozy room with a double bed
         type: string
+        x-nullable: true
       name:
         example: Standard Double
         type: string
-    type: object
-  propertyhttp.ErrorResponse:
-    properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
+    required:
+    - name
     type: object
   propertyhttp.HotelResponse:
     properties:
@@ -1619,33 +2615,58 @@ definitions:
       name:
         example: Grand Plaza
         type: string
+    required:
+    - check_in_hour
+    - check_out_hour
+    - currency
+    - id
+    - name
     type: object
   propertyhttp.RoomActivityEntryResponse:
     properties:
       event_id:
         type: string
       event_type:
+        enum:
+        - RoomAvailabilityChanged
+        - RoomHousekeepingChanged
+        - RoomMaintenanceChanged
+        - RoomMaintenancePlannedEndChanged
         example: RoomHousekeepingChanged
         type: string
       metadata:
+        description: actor attribution
         type: object
       occurred_at:
         example: "2026-04-18T10:32:00Z"
         type: string
       payload:
+        description: event payload, depends on event_type
         type: object
       version:
         example: 4
         type: integer
+    required:
+    - event_id
+    - event_type
+    - occurred_at
+    - payload
+    - version
     type: object
   propertyhttp.RoomResponse:
     properties:
       availability_status:
-        description: 'One of: available, ooo.'
+        enum:
+        - available
+        - ooo
         example: available
         type: string
       housekeeping_status:
-        description: 'One of: dirty, cleaning, inspection, clean.'
+        enum:
+        - dirty
+        - cleaning
+        - inspection
+        - clean
         example: clean
         type: string
       id:
@@ -1660,7 +2681,10 @@ definitions:
         example: "2026-04-20T12:00:00Z"
         type: string
       maintenance_status:
-        description: 'One of: none, required, under_maintenance.'
+        enum:
+        - none
+        - required
+        - under_maintenance
         example: none
         type: string
       number:
@@ -1673,6 +2697,14 @@ definitions:
         description: Event-sourced version for optimistic concurrency.
         example: 3
         type: integer
+    required:
+    - availability_status
+    - housekeeping_status
+    - id
+    - maintenance_status
+    - number
+    - room_type_id
+    - version
     type: object
   propertyhttp.RoomTypeResponse:
     properties:
@@ -1685,13 +2717,18 @@ definitions:
       name:
         example: Standard Double
         type: string
+    required:
+    - id
+    - name
     type: object
   propertyhttp.UpdateHotelRequest:
     properties:
       check_in_hour:
+        description: HH:MM; empty or omitted → 14:00
         example: "14:00"
         type: string
       check_out_hour:
+        description: HH:MM; empty or omitted → 12:00
         example: "12:00"
         type: string
       currency:
@@ -1702,6 +2739,9 @@ definitions:
         description: Non-empty after trim
         example: Grand Plaza
         type: string
+    required:
+    - currency
+    - name
     type: object
   propertyhttp.UpdateRoomRequest:
     properties:
@@ -1712,15 +2752,21 @@ definitions:
       room_type_id:
         example: 550e8400-e29b-41d4-a716-446655440010
         type: string
+    required:
+    - number
+    - room_type_id
     type: object
   propertyhttp.UpdateRoomTypeRequest:
     properties:
       description:
         example: A cozy room with a double bed
         type: string
+        x-nullable: true
       name:
         example: Standard Double
         type: string
+    required:
+    - name
     type: object
   sharedhttp.APIError:
     properties:
@@ -1746,6 +2792,9 @@ definitions:
           rely on it for user-facing copy.
         example: unauthorized
         type: string
+    required:
+    - code
+    - message
     type: object
   sharedhttp.APIErrorIssue:
     properties:
@@ -1759,26 +2808,59 @@ definitions:
       message:
         example: first name is required
         type: string
+    required:
+    - code
+    - message
     type: object
-  taskshttp.ChangeStatusRequest:
+  sharedhttp.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/sharedhttp.APIError'
+    required:
+    - error
+    type: object
+  taskshttp.ChangeHousekeepingTaskStatusRequest:
     properties:
       status:
+        enum:
+        - in_progress
+        - inspection
+        - done
+        - canceled
         example: in_progress
         type: string
+    required:
+    - status
+    type: object
+  taskshttp.ChangeMaintenanceTaskStatusRequest:
+    properties:
+      status:
+        enum:
+        - in_progress
+        - done
+        - canceled
+        example: in_progress
+        type: string
+    required:
+    - status
     type: object
   taskshttp.CreateHousekeepingTaskRequest:
     properties:
       assignee_employee_id:
         type: string
+        x-nullable: true
       description:
         type: string
       room_id:
         type: string
+    required:
+    - room_id
     type: object
   taskshttp.CreateMaintenanceTaskRequest:
     properties:
       assignee_employee_id:
         type: string
+        x-nullable: true
       description:
         type: string
       planned_end:
@@ -1786,19 +2868,18 @@ definitions:
         type: string
       room_id:
         type: string
-    type: object
-  taskshttp.ErrorResponse:
-    properties:
-      error:
-        $ref: '#/definitions/sharedhttp.APIError'
+    required:
+    - planned_end
+    - room_id
     type: object
   taskshttp.HousekeepingTaskResponse:
     properties:
       assignee_employee_id:
         type: string
       booking_id:
+        description: set when source=auto_checkout
         type: string
-      cancelled_at:
+      canceled_at:
         type: string
       completed_at:
         type: string
@@ -1807,29 +2888,46 @@ definitions:
       created_by_employee_id:
         type: string
       description:
+        description: omitted when empty
         type: string
       id:
         type: string
       room_id:
         type: string
       source:
-        description: manual | auto_checkout
+        enum:
+        - manual
+        - auto_checkout
         example: manual
         type: string
       status:
-        description: open | in_progress | inspection | done | cancelled
+        enum:
+        - open
+        - in_progress
+        - inspection
+        - done
+        - canceled
         example: open
         type: string
       updated_at:
         type: string
       updated_by_employee_id:
         type: string
+    required:
+    - created_at
+    - created_by_employee_id
+    - id
+    - room_id
+    - source
+    - status
+    - updated_at
+    - updated_by_employee_id
     type: object
   taskshttp.MaintenanceTaskResponse:
     properties:
       assignee_employee_id:
         type: string
-      cancelled_at:
+      canceled_at:
         type: string
       completed_at:
         type: string
@@ -1838,6 +2936,7 @@ definitions:
       created_by_employee_id:
         type: string
       description:
+        description: omitted when empty
         type: string
       id:
         type: string
@@ -1847,41 +2946,62 @@ definitions:
       room_id:
         type: string
       source:
+        enum:
+        - manual
         example: manual
         type: string
       status:
-        description: open | in_progress | done | cancelled
+        enum:
+        - open
+        - in_progress
+        - done
+        - canceled
         example: open
         type: string
       updated_at:
         type: string
       updated_by_employee_id:
         type: string
+    required:
+    - created_at
+    - created_by_employee_id
+    - id
+    - room_id
+    - source
+    - status
+    - updated_at
+    - updated_by_employee_id
     type: object
   taskshttp.UpdateHousekeepingTaskRequest:
     properties:
       assignee_employee_id:
+        description: null clears the assignee
         format: uuid
         type: string
+        x-nullable: true
       description:
         type: string
     type: object
   taskshttp.UpdateMaintenanceTaskRequest:
     properties:
       assignee_employee_id:
+        description: null clears the assignee
         format: uuid
         type: string
+        x-nullable: true
       description:
         type: string
       planned_end:
+        description: null clears the date
         format: date-time
         type: string
+        x-nullable: true
     type: object
 info:
   contact: {}
   description: |-
     REST API for the QonaqDash hotel CRM modular monolith.
-    **Canonical contract:** this OpenAPI document (`docs/swagger.yaml` / `swagger.json`) lists every path, request and response model, field examples, and **per-status error `code` values** clients use for localization.
+    **Canonical contract:** the OpenAPI 3.0 document `docs/openapi.yaml`, generated from these annotations by `make swagger` (`docs/swagger.yaml` / `swagger.json` are the intermediate Swagger 2.0 output). It lists every path, request and response model, field examples, and **per-status error `code` values** clients use for localization.
     **Narrative guide:** auth flows, FormDSL editor vs runtime behaviour, reservation-grid UX, and tenancy rules live in **`docs/integration.md`** (same repository).
     ## Error envelope
     Failed requests return `{"error":{"code","message","fields?","issues?"}}`. Treat **`error.code`** as the stable i18n key (e.g. map `iam.email_already_in_use` to nested locale keys under `errors`).
@@ -1901,6 +3021,7 @@ paths:
       description: |-
         Current user account (Bearer + org context). Response includes `permissions`, sourced from the resolved authenticated actor for this request. In `settings`, JSON null means not set.
         **Error codes:** iam.user_not_found. Corrupt stored settings may yield 500.
+      operationId: getAccount
       produces:
       - application/json
       responses:
@@ -1911,15 +3032,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get account
@@ -1931,6 +3052,7 @@ paths:
       description: |-
         Partial merge of `account` and `settings`; omitted top-level keys unchanged (Bearer + org). Response includes the current request actor's `permissions`. Password change: send `currentPassword` and `newPassword`. Per-key JSON null in `settings` clears that key; unknown keys → 400.
         **Error codes:** 400 — iam.invalid_email, iam.unknown_setting_key, iam.invalid_setting_value. 401 — iam.current_password_incorrect, iam.current_password_required. 404 — iam.user_not_found. 409 — iam.email_already_in_use.
+      operationId: updateAccount
       parameters:
       - description: Partial account and settings
         in: body
@@ -1948,23 +3070,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update account
@@ -1975,6 +3097,7 @@ paths:
       description: |-
         Validates invite token for the registration UI (no auth).
         **Error codes:** 401 — iam.invite_token_expired, iam.invite_token_invalid. 409 — iam.user_already_registered, iam.invite_already_used.
+      operationId: getInvite
       parameters:
       - description: Invite token
         in: path
@@ -1991,15 +3114,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       summary: Get invite info
       tags:
       - IAM - Auth
@@ -2009,6 +3132,7 @@ paths:
       description: |-
         Sets password for the invited user (no auth); returns JWT pair.
         **Error codes:** 400 — iam.password_required. 401 — iam.invite_token_expired, iam.invite_token_invalid. 409 — iam.user_already_registered, iam.invite_already_used.
+      operationId: completeInvite
       parameters:
       - description: Invite token
         in: path
@@ -2031,19 +3155,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       summary: Complete invite registration
       tags:
       - IAM - Auth
@@ -2054,6 +3178,7 @@ paths:
       description: |-
         Email + password (no Bearer); returns JWT pair.
         **Error codes:** 400 — iam.email_password_required. 401 — iam.invalid_credentials, iam.registration_not_completed.
+      operationId: loginUser
       parameters:
       - description: Login credentials
         in: body
@@ -2071,15 +3196,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       summary: User login
       tags:
       - IAM - Auth
@@ -2090,6 +3215,7 @@ paths:
       description: |-
         Body: `refresh_token` (JWT with `token_use=refresh`). No Bearer access token on this route. Org/hotel on the new tokens come from the employee record.
         **Error codes:** 400 — iam.refresh_token_required. 401 — iam.refresh_token_expired, iam.refresh_token_invalid.
+      operationId: refreshSession
       parameters:
       - description: JSON body must include refresh_token (JWT with token_use=refresh)
         in: body
@@ -2107,15 +3233,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       summary: Refresh session
       tags:
       - IAM - Auth
@@ -2126,6 +3252,7 @@ paths:
       description: |-
         Appends a manual charge (positive amount) or credit (negative amount) to the open guest bill. The bill must exist and be open.
         **Error codes:** common.invalid_booking_id; billing.bill_not_found; billing.bill_closed; billing.amount_required; billing.description_required.
+      operationId: addManualAdjustment
       parameters:
       - description: Booking UUID
         in: path
@@ -2148,27 +3275,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Add manual adjustment
@@ -2179,6 +3306,7 @@ paths:
       description: |-
         Returns the aggregate balance for a booking. This works both pre-check-in (deposits only) and post-check-in (full bill). `has_bill` indicates whether a guest bill exists.
         **Error codes:** common.invalid_booking_id.
+      operationId: getBookingBalance
       parameters:
       - description: Booking UUID
         in: path
@@ -2195,19 +3323,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get booking balance
@@ -2218,6 +3346,7 @@ paths:
       description: |-
         Returns the guest bill header, all ledger entries, and the outstanding balance for the specified booking. Returns 404 if no bill exists (bill opens at check-in).
         **Error codes:** common.invalid_booking_id; billing.bill_not_found.
+      operationId: getBill
       parameters:
       - description: Booking UUID
         in: path
@@ -2234,23 +3363,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get guest bill
@@ -2261,6 +3390,7 @@ paths:
       description: |-
         Closes the open guest bill for the specified booking. A closed bill is read-only. May be closed with a non-zero balance (outstanding debt).
         **Error codes:** common.invalid_booking_id; billing.bill_not_found; billing.bill_closed.
+      operationId: closeBill
       parameters:
       - description: Booking UUID
         in: path
@@ -2277,27 +3407,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Close guest bill
@@ -2310,6 +3440,7 @@ paths:
       description: |-
         Records a payment against the booking. If a guest bill exists, the entry is attached to it. If no bill exists yet (pre-check-in), the entry is stored as a deposit with no bill reference and will be backfilled at check-in.
         **Error codes:** common.invalid_booking_id; billing.invalid_amount; billing.bill_closed.
+      operationId: recordPayment
       parameters:
       - description: Booking UUID
         in: path
@@ -2332,23 +3463,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Record payment
@@ -2361,6 +3492,7 @@ paths:
       description: |-
         Records a refund that reverses a prior payment. The referenced payment must exist, belong to the same booking, and be of type `payment`. Refund amount is stored as positive balance_delta (increases what guest owes).
         **Error codes:** common.invalid_booking_id; billing.invalid_amount; billing.payment_not_found; billing.not_a_payment; billing.bill_closed.
+      operationId: recordRefund
       parameters:
       - description: Booking UUID
         in: path
@@ -2383,27 +3515,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Record refund
@@ -2414,6 +3546,7 @@ paths:
       description: |-
         Returns a paginated, filterable list of all ledger entries for the current hotel. Supports multiple entry_type values (comma-separated).
         **Error codes:** common.invalid_date_range.
+      operationId: listLedgerEntries
       parameters:
       - description: Start date (inclusive, RFC 3339 or YYYY-MM-DD)
         example: '"2026-03-01"'
@@ -2452,19 +3585,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List ledger entries
@@ -2475,6 +3608,7 @@ paths:
       description: |-
         Returns charges, payments, refunds, and net totals grouped by day for the current hotel within the specified date range. Supports multi-value entry_type filter (comma-separated).
         **Error codes:** common.invalid_date_range.
+      operationId: getDailyBreakdown
       parameters:
       - description: Start date (inclusive, RFC 3339 or YYYY-MM-DD)
         example: '"2026-03-01"'
@@ -2503,19 +3637,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Daily breakdown
@@ -2526,6 +3660,7 @@ paths:
       description: |-
         Returns charges, payments, refunds, and net totals grouped by month for the current hotel within the specified date range. Supports multi-value entry_type filter (comma-separated).
         **Error codes:** common.invalid_date_range.
+      operationId: getMonthlyBreakdown
       parameters:
       - description: Start date (inclusive, RFC 3339 or YYYY-MM-DD)
         example: '"2026-01-01"'
@@ -2554,19 +3689,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Monthly breakdown
@@ -2576,6 +3711,7 @@ paths:
     get:
       description: Returns all open guest bills with non-zero outstanding balances
         for the current hotel, plus the total outstanding amount.
+      operationId: getOutstandingBalances
       produces:
       - application/json
       responses:
@@ -2586,15 +3722,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Outstanding balances
@@ -2605,6 +3741,7 @@ paths:
       description: |-
         Returns aggregated revenue breakdown (accommodation, adjustments, service charges), payments, refunds, corrections, net balance, and current total outstanding for the hotel.
         **Error codes:** common.invalid_date_range.
+      operationId: getFinancialOverview
       parameters:
       - description: Start date (inclusive, RFC 3339 or YYYY-MM-DD)
         example: '"2026-03-01"'
@@ -2628,19 +3765,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/billinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Financial overview
@@ -2651,6 +3788,7 @@ paths:
       description: |-
         Distinct bookings (read model). Optional `q` on guest name. With `from`+`to` (`YYYY-MM-DD`, UTC midnight): `check_out >= from` **and** `check_in <= to`.
         **Error codes:** booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
+      operationId: listBookings
       parameters:
       - description: Search by guest first/last name (substring)
         in: query
@@ -2676,19 +3814,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List bookings
@@ -2698,15 +3836,16 @@ paths:
       consumes:
       - application/json
       description: |-
-        Flat `{ guest, stay, adjustments? }` JSON (see `BookingDataRequest`). Optional top-level `adjustments` are manual pricing inputs forwarded to Pricing (not persisted on the booking stream). Room availability is checked twice before commit and the DB rejects overlapping active assignments for the same physical room, so concurrent creates (e.g. OTA + front desk) cannot double-book. `guest.id` links an existing profile; omit to create inline.
+        Flat `{ guest, stay, adjustments? }` JSON (see `CreateBookingRequest`). Optional top-level `adjustments` are manual pricing inputs forwarded to Pricing (not persisted on the booking stream). Room availability is checked twice before commit and the DB rejects overlapping active assignments for the same physical room, so concurrent creates (e.g. OTA + front desk) cannot double-book. `guest.id` links an existing profile; omit to create inline.
         **Error codes:** booking.invalid_data_format, booking.dates_required, booking.rooms_required, booking.room_type_required_each_room, booking.form_missing_stay_group, booking.guest_information_required; booking.overbooking; **409** `guest.duplicate` when inline guest creation hits an existing profile; **422** `common.validation_failed` with `error.issues[]` when payload fails org booking form `rules` (stay subtree and array rows) or inline guest constraints (e.g. `guest.email` / `guest.phone` `validation.contact_required`).
+      operationId: createBooking
       parameters:
       - description: Flat guest + stay (+ optional adjustments)
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/bookinghttp.BookingDataRequest'
+          $ref: '#/definitions/bookinghttp.CreateBookingRequest'
       produces:
       - application/json
       responses:
@@ -2717,27 +3856,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Form rules validation failed
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create booking
@@ -2748,6 +3887,7 @@ paths:
       description: |-
         Unified booking data from the aggregate. `stay.rooms[]` may include `room_type_label` and `room_id_label`. **`_form`** carries canonical form id (`booking`) and **hash**. Merge with GET `/api/bookings/form?target=view` definition on the client. Pricing data (accommodation snapshot, manual adjustments) is served by the pricing module via `GET /api/pricing/bookings/{id}/quote`. Once the booking is `checked_in` or `checked_out` the response also carries `outstanding_balance` (zero when fully paid, omitted before check-in).
         **Error codes:** common.invalid_booking_id; booking.not_found.
+      operationId: getBooking
       parameters:
       - description: Booking UUID
         in: path
@@ -2764,23 +3904,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get booking by id
@@ -2792,18 +3932,19 @@ paths:
       description: |-
         Dates, rooms, and form data when status is `confirmed` or `checked_in`; overbooking re-checked and stream + grid persist atomically with the same room-overlap DB guard as create. Optional top-level `adjustments` are manual pricing inputs forwarded to Pricing (not persisted on the booking stream). `version` in the response is the stream after save — not read from the request body.
         **Error codes:** common.invalid_booking_id; booking.invalid_data_format, booking.dates_required, booking.rooms_required, booking.room_type_required_each_room, booking.form_missing_stay_group, booking.guest_information_required; booking.not_found; booking.overbooking, booking.concurrent_modification; booking.invalid_status_transition; **422** `common.validation_failed` with `error.issues[]` when payload fails org booking form `rules`.
+      operationId: updateBooking
       parameters:
       - description: Booking UUID
         in: path
         name: id
         required: true
         type: string
-      - description: Flat guest + stay (+ optional adjustments)
+      - description: Flat stay (+ optional guest, adjustments)
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/bookinghttp.BookingDataRequest'
+          $ref: '#/definitions/bookinghttp.UpdateBookingRequest'
       produces:
       - application/json
       responses:
@@ -2814,31 +3955,31 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Form rules validation or unprocessable entity
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update booking
@@ -2849,6 +3990,7 @@ paths:
       description: |-
         Status: `confirmed` → `canceled`.
         **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition.
+      operationId: cancelBooking
       parameters:
       - description: Booking UUID
         in: path
@@ -2865,27 +4007,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Cancel booking
@@ -2896,6 +4038,7 @@ paths:
       description: |-
         Status: `confirmed` → `checked_in`. Response includes `outstanding_balance` reflecting the bill pricing opens on check-in.
         **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition.
+      operationId: checkInBooking
       parameters:
       - description: Booking UUID
         in: path
@@ -2912,27 +4055,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Check in
@@ -2950,6 +4093,7 @@ paths:
         in that case the bill stays open so the debt remains visible.
         When balance ≤ 0 (fully paid), the bill is auto-closed on check-out.
         **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition; booking.check_in_required_before_check_out; booking.outstanding_balance.
+      operationId: checkOutBooking
       parameters:
       - description: Booking UUID
         in: path
@@ -2971,19 +4115,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Outstanding Balance
           schema:
@@ -2991,11 +4135,11 @@ paths:
         "422":
           description: Unprocessable Entity
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Check out
@@ -3006,6 +4150,7 @@ paths:
       description: Use **target=edit** when creating a new booking (default). Use
         **target=view** when displaying an existing booking with data from GET …/bookings/{id}.
         Omit **target** → **edit**. Requires org **and** hotel in JWT.
+      operationId: getBookingForm
       parameters:
       - default: edit
         description: edit | view
@@ -3040,19 +4185,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get booking form (runtime)
@@ -3062,6 +4207,7 @@ paths:
     get:
       description: Persisted editor FormDSL only (no runtime merges). Org JWT required;
         hotel claim not required.
+      operationId: getBookingFormDefinition
       parameters:
       - description: Optional. Send the ETag response header value from a prior GET
           (hash wrapped in ASCII double quotes).
@@ -3088,15 +4234,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get booking form definition (editor)
@@ -3108,6 +4254,7 @@ paths:
       description: |-
         Saves org booking FormDSL definition. Validates core stay group. Triggers compilation of view/edit forms.
         **Error codes:** booking.invalid_data_format, booking.form_missing_stay_group; common.definition_required.
+      operationId: updateBookingFormDefinition
       parameters:
       - description: FormDSL definition
         in: body
@@ -3125,19 +4272,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update booking form definition (editor)
@@ -3148,6 +4295,7 @@ paths:
       description: |-
         Bookings in the date range with rooms nested under `stay.rooms[]`. Overlap: `check_in <= to` and `check_out >= from` (dates `YYYY-MM-DD`, UTC midnight). `from` and `to` required.
         **Error codes:** booking.grid_from_to_required, booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
+      operationId: getReservationGrid
       parameters:
       - description: Range start date YYYY-MM-DD
         example: '"2026-03-01"'
@@ -3173,19 +4321,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/bookinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get reservation grid
@@ -3194,6 +4342,7 @@ paths:
   /api/employees:
     get:
       description: Relational list only; full form data comes from GET `/api/employees/{employee_id}`.
+      operationId: listEmployees
       parameters:
       - description: Search by first name, last name, or email
         in: query
@@ -3211,11 +4360,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List employees
@@ -3227,6 +4376,7 @@ paths:
       description: |-
         Raw form `data` per org employee schema; linked to the current JWT hotel by default.
         **Error codes:** iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; **422** `common.validation_failed` when payload fails org employee form `rules`.
+      operationId: createEmployee
       parameters:
       - description: Employee form data
         in: body
@@ -3244,23 +4394,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Form rules validation failed
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create employee
@@ -3271,6 +4421,7 @@ paths:
       description: |-
         Flat profile JSON matching the org employee schema, with linked occupations, sparse permission overrides, effective permissions, and `_form` metadata.
         **Error codes:** common.invalid_employee_id; iam.employee_not_found.
+      operationId: getEmployee
       parameters:
       - description: Employee ID
         in: path
@@ -3287,19 +4438,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get employee
@@ -3311,6 +4462,7 @@ paths:
       description: |-
         Flat `data` same as POST.
         **Error codes:** common.invalid_employee_id; iam.invalid_email, iam.first_name_required, iam.last_name_required, iam.invalid_data_format; iam.employee_not_found; **422** `common.validation_failed` when payload fails org employee form `rules`.
+      operationId: updateEmployee
       parameters:
       - description: Employee ID
         in: path
@@ -3333,23 +4485,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Form rules validation failed
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update employee
@@ -3361,6 +4513,7 @@ paths:
       - application/json
       description: Replaces all occupation links for the employee with the provided
         `occupation_ids`.
+      operationId: replaceEmployeeOccupations
       parameters:
       - description: Employee ID
         in: path
@@ -3383,19 +4536,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Replace employee occupations
@@ -3409,6 +4562,7 @@ paths:
         primary hotel link. Effective permissions are computed as `override if present
         else merged occupation base`. The primary hotel link is `employee.hotel_id`
         when set, otherwise the first linked hotel.
+      operationId: replaceEmployeePermissions
       parameters:
       - description: Employee ID
         in: path
@@ -3431,19 +4585,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Replace employee permission overrides
@@ -3452,6 +4606,7 @@ paths:
   /api/employees/form:
     get:
       description: Compiled org employee FormDSL. Omit `target` → `edit`.
+      operationId: getEmployeeForm
       parameters:
       - default: edit
         description: edit | view
@@ -3486,15 +4641,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get employee form (runtime)
@@ -3503,6 +4658,7 @@ paths:
   /api/employees/form/definition:
     get:
       description: Persisted editor FormDSL for employees; round-trips with PUT `/api/employees/form/definition`.
+      operationId: getEmployeeFormDefinition
       parameters:
       - description: Optional. Send the ETag response header value from a prior GET
           (hash wrapped in ASCII double quotes).
@@ -3529,11 +4685,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get employee form definition (editor)
@@ -3545,6 +4701,7 @@ paths:
       description: |-
         Saves org employee FormDSL definition. Validates core fields and `main` group (first_name, last_name, email).
         **Error codes:** iam.form_missing_core; common.definition_required.
+      operationId: updateEmployeeFormDefinition
       parameters:
       - description: FormDSL definition
         in: body
@@ -3562,15 +4719,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update employee form definition (editor)
@@ -3580,6 +4737,7 @@ paths:
     get:
       description: 'Relational list only (`GuestListItem`); `q` filters name/email/phone.
         Blocked guests are included with `blocked: true`.'
+      operationId: listGuests
       parameters:
       - description: Search by guest name, email, or phone (case-insensitive substring)
         in: query
@@ -3597,15 +4755,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List guests
@@ -3617,6 +4775,7 @@ paths:
       description: |-
         Flat form `data` per org schema; relational columns extracted server-side.
         **Error codes:** guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
+      operationId: createGuest
       parameters:
       - description: Guest form data (flat object matching org guest schema)
         in: body
@@ -3634,23 +4793,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Form rules validation failed
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create guest
@@ -3661,6 +4820,7 @@ paths:
       description: |-
         Blocks a guest (marks `blocked_at`). Blocked guests remain visible in list and detail responses with `blocked: true`. Missing guest → 404.
         **Error codes:** common.invalid_guest_id; guest.not_found.
+      operationId: blockGuest
       parameters:
       - description: Guest UUID
         in: path
@@ -3673,23 +4833,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Block guest
@@ -3699,6 +4859,7 @@ paths:
       description: |-
         Flat profile JSON matching the org guest schema.
         **Error codes:** common.invalid_guest_id; guest.not_found.
+      operationId: getGuest
       parameters:
       - description: Guest UUID
         in: path
@@ -3715,23 +4876,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get guest
@@ -3743,6 +4904,7 @@ paths:
       description: |-
         Flat `data` same as POST; relational columns re-extracted.
         **Error codes:** common.invalid_guest_id; guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; guest.not_found; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules`.
+      operationId: updateGuest
       parameters:
       - description: Guest UUID
         in: path
@@ -3765,27 +4927,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "422":
           description: Form rules validation failed
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update guest
@@ -3796,6 +4958,7 @@ paths:
       description: |-
         Bookings for CRM “previous stays”; same item shape as GET `/api/bookings` (empty array if none).
         **Error codes:** common.invalid_guest_id.
+      operationId: listGuestBookings
       parameters:
       - description: Guest UUID
         in: path
@@ -3814,19 +4977,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List bookings by guest
@@ -3835,6 +4998,7 @@ paths:
   /api/guests/form:
     get:
       description: Compiled org guest FormDSL. Omit `target` → `edit`.
+      operationId: getGuestForm
       parameters:
       - default: edit
         description: edit | view
@@ -3869,19 +5033,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get guest form (runtime)
@@ -3891,6 +5055,7 @@ paths:
     get:
       description: Persisted editor FormDSL (no normalization); round-trips with PUT
         `/api/guests/form/definition`.
+      operationId: getGuestFormDefinition
       parameters:
       - description: Optional. Send the ETag response header value from a prior GET
           (hash wrapped in ASCII double quotes).
@@ -3917,15 +5082,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get guest form definition (editor)
@@ -3937,6 +5102,7 @@ paths:
       description: |-
         Saves org guest FormDSL definition. Validates core fields and `main` group (firstName, lastName, phone, email). Triggers compilation of view/edit forms.
         **Error codes:** guest.form_missing_core; common.definition_required.
+      operationId: updateGuestFormDefinition
       parameters:
       - description: FormDSL definition
         in: body
@@ -3954,19 +5120,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/guesthttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update guest form definition (editor)
@@ -3979,6 +5145,7 @@ paths:
       description: |-
         Internal bootstrap: creates organization, hotel, user, and employee in one transaction. Requires `Secret-Key` header (not Bearer auth). `user_first_name`/`user_last_name` seed the auth user and are copied once into the created employee profile (no further sync).
         **Error codes:** 400 — iam.provision_fields_required. 401 — iam.secret_key_missing, iam.secret_key_invalid. 409 — iam.provision_conflict.
+      operationId: provisionOrganization
       parameters:
       - description: Internal secret key
         in: header
@@ -4001,19 +5168,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       summary: Provision a new organization
       tags:
       - IAM - Internal
@@ -4023,6 +5190,7 @@ paths:
         key plus frontend i18n key, with current occupation templates grouped under
         each role. Empty role groups are included so clients do not need to guess
         valid `role_key` values for create/update flows.
+      operationId: listOccupations
       produces:
       - application/json
       responses:
@@ -4035,11 +5203,11 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List occupation templates
@@ -4049,6 +5217,7 @@ paths:
       consumes:
       - application/json
       description: Creates a new occupation template with default permissions.
+      operationId: createOccupation
       parameters:
       - description: Occupation payload
         in: body
@@ -4066,15 +5235,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create occupation template
@@ -4083,6 +5252,7 @@ paths:
   /api/occupations/{occupation_id}:
     delete:
       description: Deletes an occupation template by id.
+      operationId: deleteOccupation
       parameters:
       - description: Occupation ID
         in: path
@@ -4097,23 +5267,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete occupation template
@@ -4121,6 +5291,7 @@ paths:
       - IAM - RBAC
     get:
       description: Returns one occupation template by id.
+      operationId: getOccupation
       parameters:
       - description: Occupation ID
         in: path
@@ -4137,19 +5308,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get occupation template
@@ -4160,6 +5331,7 @@ paths:
       - application/json
       description: Updates title, role, and default permissions for an occupation
         template.
+      operationId: updateOccupation
       parameters:
       - description: Occupation ID
         in: path
@@ -4182,19 +5354,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/iamhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update occupation template
@@ -4204,6 +5376,7 @@ paths:
     get:
       description: Returns base rate (minor currency units) for each active room type
         in the hotel.
+      operationId: getBaseRates
       produces:
       - application/json
       responses:
@@ -4214,15 +5387,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get base rates
@@ -4234,6 +5407,7 @@ paths:
       description: |-
         Bulk update nightly base rates for room types. Each item must reference a valid room type in this hotel. `base_rate_minor` must be ≥ 0.
         **Error codes:** pricing.invalid_base_rate (negative value); pricing.room_type_not_found (unknown room type id in array).
+      operationId: updateBaseRates
       parameters:
       - description: Array of room type rates
         in: body
@@ -4251,23 +5425,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update base rates
@@ -4278,6 +5452,7 @@ paths:
       description: |-
         Returns the stored accommodation snapshot (pricing breakdown + manual adjustments) for a booking. Use `manual_adjustments` for round-tripping on updates. Returns 404 if no quote has been calculated yet.
         **Error codes:** common.invalid_booking_id; pricing.not_found.
+      operationId: getBookingQuote
       parameters:
       - description: Booking UUID
         in: path
@@ -4290,28 +5465,27 @@ paths:
         "200":
           description: Accommodation snapshot
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/pricinghttp.BookingQuoteResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get booking quote
@@ -4325,6 +5499,7 @@ paths:
         booking form runtime). Remaining rows come from the org index (saved at booking
         form save time). **`hash` / `ETag`** reflect the stored index only (not the
         live room-type list). Hotel scope required (same JWT as other pricing routes).
+      operationId: getPricingConditions
       produces:
       - application/json
       responses:
@@ -4335,15 +5510,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get pricing condition candidates
@@ -4356,6 +5531,7 @@ paths:
       description: |-
         Returns a night-by-night pricing breakdown with base rates and rule adjustments for the given stay parameters. Property conditions are evaluated against `booking_data` using the current booking form metadata. Only `active` rules are applied; `disabled` and `invalid` rules are skipped.
         **Evaluation order:** per-night rules (compound, priority order) → sum nights → total-scope rules (compound, priority order). Rounding: ROUND_HALF_UP after each rule.
+      operationId: calculateQuote
       parameters:
       - description: Stay parameters
         in: body
@@ -4373,19 +5549,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Calculate stay quote
@@ -4395,6 +5571,7 @@ paths:
     get:
       description: All rules for the JWT hotel, ordered by priority ascending (lowest
         = highest precedence first).
+      operationId: listPricingRules
       produces:
       - application/json
       responses:
@@ -4407,15 +5584,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List pricing rules
@@ -4427,6 +5604,7 @@ paths:
       description: |-
         A pricing rule combines typed conditions (property field match, specific date, date range) with an effect (percent or fixed adjustment, per-night or total scope). `priority` is a unique positive integer per hotel (lower = higher precedence). `status` defaults to `active` when omitted; only `active` and `disabled` are accepted on write. Property condition operators: `eq` (equals), `not_eq` (not equals); both use `value`. Property conditions are validated against the current booking form condition index; referencing a deleted field or removed select option is rejected.
         **Error codes:** pricing.pricing_rule_name_required, pricing.pricing_rule_priority_required, pricing.pricing_rule_invalid_status; pricing.pricing_rule_invalid_condition, pricing.pricing_rule_invalid_effect_type, pricing.pricing_rule_invalid_apply_to, pricing.pricing_rule_invalid_date_range; pricing.pricing_rule_condition_field_not_found, pricing.pricing_rule_condition_value_not_found; pricing.pricing_rule_priority_taken.
+      operationId: createPricingRule
       parameters:
       - description: Rule payload
         in: body
@@ -4444,23 +5622,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create pricing rule
@@ -4471,6 +5649,7 @@ paths:
       description: |-
         Hard-delete a pricing rule.
         **Error codes:** common.invalid_pricing_rule_id; pricing.pricing_rule_not_found.
+      operationId: deletePricingRule
       parameters:
       - description: Pricing rule UUID
         in: path
@@ -4485,23 +5664,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete pricing rule
@@ -4511,6 +5690,7 @@ paths:
       description: |-
         One pricing rule by id.
         **Error codes:** common.invalid_pricing_rule_id; pricing.pricing_rule_not_found.
+      operationId: getPricingRule
       parameters:
       - description: Pricing rule UUID
         in: path
@@ -4527,23 +5707,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get pricing rule
@@ -4555,6 +5735,7 @@ paths:
       description: |-
         Update name, priority, status, conditions, and effect. Priority must remain unique per hotel. Only `active` and `disabled` are accepted for `status` on write; `invalid` is server-managed. Updating a previously `invalid` rule with valid conditions clears `invalid_reason` and restores the requested status.
         **Error codes:** common.invalid_pricing_rule_id, pricing.pricing_rule_name_required, pricing.pricing_rule_priority_required, pricing.pricing_rule_invalid_status; pricing.pricing_rule_invalid_condition, pricing.pricing_rule_invalid_effect_type, pricing.pricing_rule_invalid_apply_to, pricing.pricing_rule_invalid_date_range; pricing.pricing_rule_condition_field_not_found, pricing.pricing_rule_condition_value_not_found; pricing.pricing_rule_not_found; pricing.pricing_rule_priority_taken.
+      operationId: updatePricingRule
       parameters:
       - description: Pricing rule UUID
         in: path
@@ -4577,27 +5758,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/pricinghttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update pricing rule
@@ -4608,6 +5789,7 @@ paths:
       description: |-
         Hotel from JWT (org + hotel scope). Includes the hotel's default `currency` (ISO 4217 alpha-3).
         **Error codes:** property.hotel_not_found.
+      operationId: getHotel
       produces:
       - application/json
       responses:
@@ -4618,19 +5800,19 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get hotel profile
@@ -4642,6 +5824,7 @@ paths:
       description: |-
         `name` and `currency` required; name trimmed server-side.
         **Error codes:** property.hotel_name_required, property.hotel_invalid_currency; property.hotel_not_found.
+      operationId: updateHotel
       parameters:
       - description: JSON with name and currency
         in: body
@@ -4659,23 +5842,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update hotel profile
@@ -4685,6 +5868,7 @@ paths:
     get:
       description: '`q` matches type name, description, or any room number under that
         type (substring).'
+      operationId: listRoomTypes
       parameters:
       - description: Search by room type name, description, or room number
         in: query
@@ -4702,15 +5886,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List room types
@@ -4722,6 +5906,7 @@ paths:
       description: |-
         New room type for the JWT hotel. Base rate is managed separately under `/api/property/pricing/base-rates`.
         **Error codes:** property.room_type_name_required; property.room_type_already_exists.
+      operationId: createRoomType
       parameters:
       - description: name required; description optional
         in: body
@@ -4739,23 +5924,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create room type
@@ -4766,6 +5951,7 @@ paths:
       description: |-
         Soft-delete only when no active rooms of that type; past bookings still resolve labels by id.
         **Error codes:** common.invalid_room_type_id; property.room_type_not_found; property.room_type_in_use.
+      operationId: deleteRoomType
       parameters:
       - description: Room type UUID
         in: path
@@ -4780,27 +5966,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete room type
@@ -4812,6 +5998,7 @@ paths:
       description: |-
         Name and optional description. Base rate is managed separately under `/api/property/pricing/base-rates`.
         **Error codes:** common.invalid_room_type_id; property.room_type_name_required; property.room_type_not_found; property.room_type_already_exists.
+      operationId: updateRoomType
       parameters:
       - description: Room type UUID
         in: path
@@ -4834,27 +6021,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update room type
@@ -4863,6 +6050,7 @@ paths:
   /api/property/rooms:
     get:
       description: Optional `q` filters by room number (case-insensitive substring).
+      operationId: listRooms
       parameters:
       - description: Search by room number (case-insensitive substring)
         in: query
@@ -4880,15 +6068,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List rooms
@@ -4900,6 +6088,7 @@ paths:
       description: |-
         Physical room under the JWT hotel.
         **Error codes:** property.room_type_id_required, property.room_number_required; property.room_type_not_found; property.room_already_exists.
+      operationId: createRoom
       parameters:
       - description: room_type_id and number required
         in: body
@@ -4917,27 +6106,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create room
@@ -4948,6 +6137,7 @@ paths:
       description: |-
         Soft-delete; omitted from list/availability but still readable by id for historical bookings.
         **Error codes:** common.invalid_room_id; property.room_not_found.
+      operationId: deleteRoom
       parameters:
       - description: Room UUID
         in: path
@@ -4962,23 +6152,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete room
@@ -4988,6 +6178,7 @@ paths:
       description: |-
         One room by id (org data, JWT hotel for auth).
         **Error codes:** common.invalid_room_id; property.room_not_found.
+      operationId: getRoom
       parameters:
       - description: Room UUID
         in: path
@@ -5004,23 +6195,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get room
@@ -5032,6 +6223,7 @@ paths:
       description: |-
         Room type and number. New `room_type_id` must be in the same hotel. Operational axes are updated via PUT /api/property/rooms/{id}/housekeeping and /maintenance.
         **Error codes:** common.invalid_room_id; property.room_type_id_required, property.room_number_required; property.room_not_found, property.room_type_not_found; property.room_already_exists.
+      operationId: updateRoom
       parameters:
       - description: Room UUID
         in: path
@@ -5054,27 +6246,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update room
@@ -5085,6 +6277,7 @@ paths:
       description: |-
         Append-only room events (availability / housekeeping / maintenance changes) with actor-attributable metadata.
         **Error codes:** common.invalid_room_id; property.room_not_found.
+      operationId: listRoomActivity
       parameters:
       - description: Room UUID
         in: path
@@ -5103,23 +6296,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get room activity
@@ -5132,6 +6325,7 @@ paths:
       description: |-
         Sets the **availability** axis. `ooo` removes the room from availability; `available` releases the block.
         **Error codes:** common.invalid_room_id, property.invalid_availability_status; property.room_not_found; property.concurrency_conflict.
+      operationId: changeRoomAvailability
       parameters:
       - description: Room UUID
         in: path
@@ -5154,27 +6348,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Change room availability
@@ -5187,6 +6381,7 @@ paths:
       description: |-
         Alias for housekeeping task management. Each status maps to the corresponding task transition on the room's open housekeeping task (or creates one when needed). Typical flow: `dirty → cleaning → inspection → clean`.
         **Error codes:** common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.duplicate_open_task, tasks.task_not_found, tasks.concurrency_conflict.
+      operationId: changeRoomHousekeeping
       parameters:
       - description: Room UUID
         in: path
@@ -5207,27 +6402,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Change room housekeeping status
@@ -5240,6 +6435,7 @@ paths:
       description: |-
         Alias for maintenance task management. `required` and `under_maintenance` require `planned_end` on first use (create/start).
         **Error codes:** common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.planned_end_required, tasks.duplicate_open_task, tasks.task_not_found.
+      operationId: changeRoomMaintenance
       parameters:
       - description: Room UUID
         in: path
@@ -5260,27 +6456,27 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Change room maintenance status
@@ -5291,6 +6487,7 @@ paths:
       description: |-
         Room picker: omit `from`/`to` for all rooms. With `from`+`to` (`dd.MM.yyyy`), only rooms free in that range. With `exclude` (booking UUID) and a range, that booking’s occupancy is ignored so its rooms stay selectable.
         **Error codes:** property.list_from_to_both_or_neither, property.list_invalid_from_date, property.list_invalid_to_date, property.list_to_before_from, property.list_invalid_exclude_booking_id.
+      operationId: listAvailableRooms
       parameters:
       - description: Start date (dd.MM.yyyy); required together with to
         in: query
@@ -5317,19 +6514,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/propertyhttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List available rooms
@@ -5337,16 +6534,27 @@ paths:
       - Property - Rooms
   /api/tasks/housekeeping:
     get:
+      description: '**Error codes:** tasks.invalid_status; common.invalid_room_id,
+        common.invalid_employee_id.'
+      operationId: listHousekeepingTasks
       parameters:
-      - description: open | in_progress | inspection | done | cancelled
+      - description: Filter by status
+        enum:
+        - open
+        - in_progress
+        - inspection
+        - done
+        - canceled
         in: query
         name: status
         type: string
       - description: Filter by room UUID
+        format: uuid
         in: query
         name: room_id
         type: string
       - description: Filter by assignee employee UUID
+        format: uuid
         in: query
         name: assignee
         type: string
@@ -5363,18 +6571,22 @@ paths:
             items:
               $ref: '#/definitions/taskshttp.HousekeepingTaskResponse'
             type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List housekeeping tasks
@@ -5386,6 +6598,7 @@ paths:
       description: |-
         Creates an open housekeeping task. Fails with `tasks.duplicate_open_task` if a non-terminal task already exists for the room.
         **Error codes:** tasks.room_id_required, tasks.duplicate_open_task.
+      operationId: createHousekeepingTask
       parameters:
       - description: task body
         in: body
@@ -5403,23 +6616,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create housekeeping task
@@ -5427,6 +6640,7 @@ paths:
       - Tasks
   /api/tasks/housekeeping/{id}:
     get:
+      operationId: getHousekeepingTask
       parameters:
       - description: Task UUID
         in: path
@@ -5443,19 +6657,19 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get housekeeping task
@@ -5466,6 +6680,7 @@ paths:
       - application/json
       description: 'Partial update. Omitted fields stay unchanged. `assignee_employee_id:
         null` clears the assignee.'
+      operationId: updateHousekeepingTask
       parameters:
       - description: Task UUID
         in: path
@@ -5488,23 +6703,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update housekeeping task
@@ -5515,7 +6730,8 @@ paths:
       consumes:
       - application/json
       description: 'Valid transitions: open → in_progress, in_progress → inspection,
-        inspection → done; any non-terminal → cancelled.'
+        inspection → done; any non-terminal → canceled.'
+      operationId: changeHousekeepingTaskStatus
       parameters:
       - description: Task UUID
         in: path
@@ -5527,7 +6743,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/taskshttp.ChangeStatusRequest'
+          $ref: '#/definitions/taskshttp.ChangeHousekeepingTaskStatusRequest'
       produces:
       - application/json
       responses:
@@ -5538,23 +6754,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Change housekeeping task status
@@ -5562,16 +6778,26 @@ paths:
       - Tasks
   /api/tasks/maintenance:
     get:
+      description: '**Error codes:** tasks.invalid_status; common.invalid_room_id,
+        common.invalid_employee_id.'
+      operationId: listMaintenanceTasks
       parameters:
-      - description: open | in_progress | done | cancelled
+      - description: Filter by status
+        enum:
+        - open
+        - in_progress
+        - done
+        - canceled
         in: query
         name: status
         type: string
       - description: Filter by room UUID
+        format: uuid
         in: query
         name: room_id
         type: string
       - description: Filter by assignee employee UUID
+        format: uuid
         in: query
         name: assignee
         type: string
@@ -5588,18 +6814,22 @@ paths:
             items:
               $ref: '#/definitions/taskshttp.MaintenanceTaskResponse'
             type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List maintenance tasks
@@ -5611,6 +6841,7 @@ paths:
       description: |-
         Requires `planned_end`. Fails with `tasks.duplicate_open_task` if a non-terminal task already exists for the room.
         **Error codes:** tasks.room_id_required, tasks.planned_end_required, tasks.duplicate_open_task.
+      operationId: createMaintenanceTask
       parameters:
       - description: task body
         in: body
@@ -5628,23 +6859,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create maintenance task
@@ -5652,6 +6883,7 @@ paths:
       - Tasks
   /api/tasks/maintenance/{id}:
     get:
+      operationId: getMaintenanceTask
       parameters:
       - description: Task UUID
         in: path
@@ -5668,19 +6900,19 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get maintenance task
@@ -5692,6 +6924,7 @@ paths:
       description: |-
         Partial update. Omitted fields stay unchanged. `assignee_employee_id: null` clears the assignee; `planned_end: null` clears the date.
         While the task is in_progress, `planned_end`/`description` edits propagate to the room's maintenance state.
+      operationId: updateMaintenanceTask
       parameters:
       - description: Task UUID
         in: path
@@ -5714,23 +6947,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Update maintenance task
@@ -5741,7 +6974,8 @@ paths:
       consumes:
       - application/json
       description: 'Valid transitions: open → in_progress, in_progress → done; any
-        non-terminal → cancelled.'
+        non-terminal → canceled.'
+      operationId: changeMaintenanceTaskStatus
       parameters:
       - description: Task UUID
         in: path
@@ -5753,7 +6987,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/taskshttp.ChangeStatusRequest'
+          $ref: '#/definitions/taskshttp.ChangeMaintenanceTaskStatusRequest'
       produces:
       - application/json
       responses:
@@ -5764,23 +6998,23 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/taskshttp.ErrorResponse'
+            $ref: '#/definitions/sharedhttp.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Change maintenance task status

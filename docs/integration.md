@@ -4,8 +4,22 @@ This document is the **narrative** companion to the machine-readable API contrac
 
 | Artifact | Role |
 |----------|------|
-| **`docs/swagger.yaml`** (and generated `docs/swagger.json`, UI at `/swagger/*` in development) | **Canonical** reference for every route, request/response shape, field descriptions, examples, and **per-endpoint error codes** (`error.code` for localization). |
+| **`docs/openapi.yaml`** (OpenAPI 3.0) | **Canonical** contract for every route, request/response shape, field descriptions, examples, and **per-endpoint error codes** (`error.code` for localization). Clients generate their types from this file. |
+| `docs/swagger.yaml`, `docs/swagger.json`, `docs/docs.go` | Intermediate Swagger 2.0 output of `swag`; the Swagger UI at `/swagger/*` (development) still serves it. Do not build clients on it. |
 | **This file** | Concepts that are awkward to express only in OpenAPI: multi-step auth, form/runtime split, booking lifecycle, grid behaviour, tenancy rules. |
+
+### Contract conventions
+
+`make swagger` generates the contract from handler annotations and DTO tags: `swag` writes Swagger 2.0, and `tools/openapiconv` (a separate Go module on kin-openapi) converts it to `docs/openapi.yaml`. A unit test (`TestOpenAPIMatchesRoutes`) fails when the contract and the router disagree.
+
+- **`operationId`.** Every operation has a unique, stable `operationId` in lowerCamelCase, verb + entity: `listBookings`, `getBooking`, `createBooking`, `updateBooking`, `checkInBooking`, `getReservationGrid`, `listGuests`, `getBookingFormDefinition`. `list*` returns a collection, `get*` one resource or one composite result, `create*`/`update*`/`delete*` write, and domain verbs name actions (`cancelBooking`, `blockGuest`, `recordPayment`, `changeRoomHousekeeping`). Names are part of the public contract: renaming one is a breaking change.
+- **`required` in responses** lists every field that is always present. A field that may be absent (`omitempty` in Go) is optional.
+- **`required` in requests** lists every field without which the request is rejected by the code (400, or 422 for the booking and guest bodies that go through form `rules` first). Fields that only the org FormDSL `rules` make mandatory are not marked: they are configurable per organization and come back as **422** `common.validation_failed`. Conditional rules (one of `email`/`phone` for a guest, `planned_end` for some maintenance statuses) are described on the schema or field.
+- **`nullable`.** In responses: the field is present but may be `null` (for example `invalid_reason` on a pricing rule, `settings.locale` on the account, `occupation_ids` of an employee without occupations, a stored `phone: null` of a guest). In requests: `null` is accepted; for optional fields it means the same as omitting the field unless the description says it clears the value (`assignee_employee_id: null` unassigns a task).
+- **`enum`.** Statuses and other closed sets carry an `enum` (booking, task, room, bill and rule statuses, entry types, role keys, permission levels `0` none … `3` organization). A nullable enum lists `null` too.
+- **Free-form objects.** `additionalProperties: true` is used only where the structure is genuinely open: FormDSL `definition` trees (see the FormDSL spec), ledger entry `metadata`, room activity `payload`/`metadata`, pricing condition candidates and `booking_data`, `invalid_reason.details`.
+- **FormDSL bodies.** Guest, employee and booking write bodies, and guest/employee detail responses, follow the org form: besides the documented core fields they may carry custom fields of that form. JSON Schema allows such extra properties by default; the schemas do not list them.
+- **Errors.** Every error response references the shared `sharedhttp.ErrorResponse` schema (section 3). The only extended body is **409** `booking.outstanding_balance` on check-out (`bookinghttp.OutstandingBalanceErrorResponse`, the same envelope plus `outstanding_balance`).
 
 ---
 
@@ -134,7 +148,9 @@ Failures return JSON:
 
 For authorization failures, user-facing modules return **403** with **`common.forbidden`**.
 
-**Which `code` applies for each route and status** — in **Swagger** / OpenAPI, open the operation and read the **Description** (look for **Error codes**). The JSON **Example Value** for errors is a generic shape only; rely on `error.code` from the real response or the documented list.
+Every error response in `docs/openapi.yaml` references the shared schema `sharedhttp.ErrorResponse` (`error` → `sharedhttp.APIError`: `code`, `message` required; `fields`, `issues` optional). The one extension is **409** `booking.outstanding_balance` on `PUT /api/bookings/{id}/check-out`, whose `error` object also carries `outstanding_balance`.
+
+**Which `code` applies for each route and status** — in OpenAPI, open the operation and read the **Description** (look for **Error codes**). The JSON **Example Value** for errors is a generic shape only; rely on `error.code` from the real response or the documented list.
 
 ---
 
@@ -686,13 +702,13 @@ Tasks are the handoff between reception, housekeeping, and maintenance. The task
 ### 11.1 Model
 
 **Housekeeping task**
-- Statuses: `open`, `in_progress`, `inspection`, `done`, `cancelled`.
-- Transitions: `open → in_progress`, `in_progress → inspection`, `inspection → done`; any non-terminal → `cancelled`. Terminal states cannot transition further.
-- Fields: `id`, `room_id`, `status`, `description`, `source` (`manual` | `auto_checkout`), optional `booking_id` (set when `source=auto_checkout`), optional `assignee_employee_id`, `created_by_employee_id`, `updated_by_employee_id`, timestamps, `completed_at`, `cancelled_at`.
+- Statuses: `open`, `in_progress`, `inspection`, `done`, `canceled`.
+- Transitions: `open → in_progress`, `in_progress → inspection`, `inspection → done`; any non-terminal → `canceled`. Terminal states cannot transition further.
+- Fields: `id`, `room_id`, `status`, `description`, `source` (`manual` | `auto_checkout`), optional `booking_id` (set when `source=auto_checkout`), optional `assignee_employee_id`, `created_by_employee_id`, `updated_by_employee_id`, timestamps, `completed_at`, `canceled_at`.
 
 **Maintenance task**
-- Statuses: `open`, `in_progress`, `done`, `cancelled` (no `inspection`).
-- Transitions: `open → in_progress`, `in_progress → done`; any non-terminal → `cancelled`.
+- Statuses: `open`, `in_progress`, `done`, `canceled` (no `inspection`).
+- Transitions: `open → in_progress`, `in_progress → done`; any non-terminal → `canceled`.
 - Fields: as above, plus `planned_end` (RFC 3339) and `note` as **task-owned** fields. No `booking_id`.
 
 **Source field:** identifies why the task exists. `manual` = user-initiated (frontend should localize as "Created by {actor}"). `auto_checkout` = opened automatically when a booking checked out (frontend should localize as "Checkout — booking {booking_id}"). No separate i18n key is sent; the `source` value is the i18n hook.
@@ -711,7 +727,7 @@ There is no shared "tasks" type on the wire anymore; housekeeping and maintenanc
 | `GET /api/tasks/housekeeping` | List. Query: `status`, `room_id`, `assignee`, `unassigned=true`. |
 | `GET /api/tasks/housekeeping/{id}` | Get one task. |
 | `PUT /api/tasks/housekeeping/{id}` | Partial update. Body: `{ description?, assignee_employee_id? }`. Omit a field to leave unchanged; send `assignee_employee_id: null` to clear. |
-| `PUT /api/tasks/housekeeping/{id}/status` | Change status. Body: `{ status }` where `status ∈ {in_progress, inspection, done, cancelled}`. |
+| `PUT /api/tasks/housekeeping/{id}/status` | Change status. Body: `{ status }` where `status ∈ {in_progress, inspection, done, canceled}`. |
 
 **Maintenance** — scope `maintenance_tasks.*`.
 
@@ -721,7 +737,7 @@ There is no shared "tasks" type on the wire anymore; housekeeping and maintenanc
 | `GET /api/tasks/maintenance` | List. Query as above. |
 | `GET /api/tasks/maintenance/{id}` | Get one task. |
 | `PUT /api/tasks/maintenance/{id}` | Partial update. Body: `{ description?, planned_end?, note?, assignee_employee_id? }`. Use `null` to clear `assignee_employee_id` or `planned_end`. Edits to `planned_end`/`note` while the task is `in_progress` propagate to the room automatically. |
-| `PUT /api/tasks/maintenance/{id}/status` | Change status. Body: `{ status }` where `status ∈ {in_progress, done, cancelled}`. |
+| `PUT /api/tasks/maintenance/{id}/status` | Change status. Body: `{ status }` where `status ∈ {in_progress, done, canceled}`. |
 
 **Error codes (both domains):** `tasks.invalid_status`, `tasks.invalid_transition`, `tasks.invalid_source`, `tasks.room_id_required`, `tasks.planned_end_required`, `tasks.duplicate_open_task`, `tasks.task_not_found`, `tasks.concurrency_conflict`, `tasks.booking_id_forbidden`, plus the common auth codes.
 
@@ -781,4 +797,4 @@ The `owned` permission level is applied here (and only here — see §5.3). When
 
 ## 12. Feature backlog
 
-Tracked outside this document (issue tracker / product board). When a feature changes the HTTP contract, update **Swagger** (`make swagger`) and adjust this guide only if behaviour or UX semantics change.
+Tracked outside this document (issue tracker / product board). When a feature changes the HTTP contract, update the annotations, regenerate the contract (`make swagger`, which writes `docs/openapi.yaml`) and adjust this guide only if behaviour or UX semantics change.

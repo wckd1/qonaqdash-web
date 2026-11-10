@@ -55,13 +55,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, useId } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useQuery } from '@pinia/colada'
 import {
-  listOccupations,
-  replaceEmployeeOccupations,
-  type OccupationRoleGroup,
-} from '@/features/employees/api'
+  occupationsQuery,
+  useReplaceEmployeeOccupationsMutation,
+} from '@/features/employees/queries'
 import type { EmployeeOccupationsResponse } from '@/shared/types/permissions'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
@@ -80,10 +80,16 @@ const { t, te } = useI18n()
 const { success } = useNotification()
 const titleId = useId()
 
-const loading = ref(true)
-const loadError = ref('')
+const occupationsQ = useQuery(occupationsQuery)
+const replaceOccupations = useReplaceEmployeeOccupationsMutation()
+const loading = computed(() => occupationsQ.isPending.value && !occupationsQ.error.value)
+const loadError = computed(() =>
+  occupationsQ.error.value
+    ? formatUnknownApiError(occupationsQ.error.value) || t('employees.access_settings_load_failed')
+    : '',
+)
 const saving = ref(false)
-const roleGroups = ref<OccupationRoleGroup[]>([])
+const roleGroups = computed(() => occupationsQ.data.value ?? [])
 const selected = ref<string[]>([...props.initialOccupationIds])
 
 function roleLabel(roleKey: string, roleTitleKey: string): string {
@@ -112,18 +118,6 @@ function toggle(id: string, event: Event) {
   }
 }
 
-async function load() {
-  loading.value = true
-  loadError.value = ''
-  try {
-    roleGroups.value = await listOccupations()
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('employees.access_settings_load_failed')
-  } finally {
-    loading.value = false
-  }
-}
-
 function onCancel() {
   if (!saving.value) emit('close')
 }
@@ -132,7 +126,10 @@ async function onSave() {
   if (saving.value) return
   saving.value = true
   try {
-    const res = await replaceEmployeeOccupations(props.employeeId, selected.value)
+    const res = await replaceOccupations.mutateAsync({
+      employeeId: props.employeeId,
+      occupationIds: selected.value,
+    })
     success(t('employees.access_settings_saved'))
     emit('saved', res)
   } catch {
@@ -141,8 +138,6 @@ async function onSave() {
     saving.value = false
   }
 }
-
-onMounted(load)
 </script>
 
 <style scoped>

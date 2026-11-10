@@ -322,9 +322,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
 import { useQuery } from '@pinia/colada'
 import { roomListQuery } from '@/features/property/queries'
 import {
@@ -336,7 +335,7 @@ import {
   useUpdateHousekeepingTaskMutation,
   useUpdateMaintenanceTaskMutation,
 } from '@/features/tasks/queries'
-import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
+import { employeeListQuery } from '@/features/employees/queries'
 import type {
   HousekeepingTask,
   HousekeepingTaskStatus,
@@ -373,10 +372,8 @@ const changeHousekeepingStatus = useChangeHousekeepingStatusMutation()
 const createMaintenance = useCreateMaintenanceTaskMutation()
 const updateMaintenance = useUpdateMaintenanceTaskMutation()
 const changeMaintenanceStatus = useChangeMaintenanceStatusMutation()
-const employeeStore = useEmployeeStore()
 const permissions = usePermissions()
 const rooms = computed(() => roomsQuery.data.value ?? [])
-const { employees } = storeToRefs(employeeStore)
 
 const isMaintenanceDomain = computed(() => props.domain === 'maintenance')
 
@@ -399,6 +396,9 @@ const canAssign = computed(() =>
     ? permissions.canAssignMaintenanceTasks.value
     : permissions.canAssignHousekeepingTasks.value,
 )
+// Assignees to pick from; only users who may assign need them.
+const employeesQuery = useQuery(() => ({ ...employeeListQuery(), enabled: canAssign.value }))
+const employees = computed(() => employeesQuery.data.value ?? [])
 
 const statusOptions = computed<TaskStatus[]>(() =>
   isMaintenanceDomain.value ? MAINTENANCE_STATUSES : HOUSEKEEPING_STATUSES,
@@ -517,18 +517,6 @@ function allowedTransitions(status: TaskStatus): TaskStatus[] {
       return ['done', 'cancelled']
     default:
       return []
-  }
-}
-
-async function loadSupporting() {
-  const ops: Promise<unknown>[] = []
-  if (!employees.value.length && canAssign.value) {
-    ops.push(employeeStore.fetchEmployees())
-  }
-  try {
-    await Promise.all(ops)
-  } catch {
-    // non-fatal
   }
 }
 
@@ -708,11 +696,8 @@ watch(
     selectedTask.value = null
     statusFilter.value = ''
     unassignedOnly.value = false
-    void loadSupporting()
   },
 )
-
-onMounted(() => loadSupporting())
 </script>
 
 <style scoped>

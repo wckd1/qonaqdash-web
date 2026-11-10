@@ -61,10 +61,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
+import { useQuery } from '@pinia/colada'
+import { employeeCreateFormQuery, useCreateEmployeeMutation } from '@/features/employees/queries'
 import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n/apiError'
 import type { FormNode } from '@/shared/types/forms'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
@@ -74,12 +75,17 @@ import { useNotification } from '@/shared/composables/useNotification'
 
 const { t } = useI18n()
 const router = useRouter()
-const store = useEmployeeStore()
 const { success } = useNotification()
+const createEmployee = useCreateEmployeeMutation()
 
-const loading = ref(true)
-const loadError = ref('')
+const formQ = useQuery(employeeCreateFormQuery)
 const employeeForm = ref<{ definition: FormNode; data: Record<string, unknown> } | null>(null)
+const loadError = computed(() =>
+  formQ.error.value
+    ? formatUnknownApiError(formQ.error.value) || t('employees.form_load_failed')
+    : '',
+)
+const loading = computed(() => !employeeForm.value && !loadError.value)
 const formData = ref<Record<string, unknown>>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
@@ -89,23 +95,13 @@ const inviteDialog = ref({
   employeeId: '',
 })
 
+// Every open revalidates the form (`If-None-Match`). Take it once, after that
+// request, so a later update never replaces what the user typed.
 onMounted(async () => {
-  loading.value = true
-  loadError.value = ''
-  try {
-    const template = await store.fetchEmployeeForm({
-      target: 'edit',
-      revalidate: true,
-    })
-    employeeForm.value = template as { definition: FormNode; data: Record<string, unknown> }
-    formData.value = { ...(employeeForm.value.data ?? {}) }
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('employees.form_load_failed')
-    employeeForm.value = null
-    formData.value = {}
-  } finally {
-    loading.value = false
-  }
+  const { data, error } = await formQ.refresh()
+  if (error || !data || employeeForm.value) return
+  employeeForm.value = JSON.parse(JSON.stringify(data))
+  formData.value = { ...(employeeForm.value?.data ?? {}) }
 })
 
 async function onSubmit() {
@@ -120,7 +116,7 @@ async function onSubmit() {
   }
   submitting.value = true
   try {
-    const created = await store.createEmployee(formData.value)
+    const created = await createEmployee.mutateAsync(formData.value)
     inviteDialog.value = {
       open: true,
       token: created.invite_token,

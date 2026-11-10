@@ -101,12 +101,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import EmployeeSidePanel from '@/features/employees/components/EmployeeSidePanel.vue'
-import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
+import { employeeListQuery } from '@/features/employees/queries'
+import { useDebouncedRef } from '@/shared/composables/useDebouncedRef'
 import type { EmployeeListItem } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import SearchBar from '@/shared/components/SearchBar.vue'
@@ -116,15 +117,23 @@ const DEBOUNCE_MS = 300
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const store = useEmployeeStore()
 const { canManageEmployees } = usePermissions()
-const { employees } = storeToRefs(store)
 
-const initialLoading = ref(true)
-const searching = ref(false)
-const loadError = ref('')
 const searchQuery = ref('')
-let searchDebounceId: ReturnType<typeof setTimeout> | null = null
+const debouncedQuery = useDebouncedRef(searchQuery, DEBOUNCE_MS)
+// Keep the current rows on screen while a new search loads.
+const employeesQuery = useQuery(() => ({
+  ...employeeListQuery(debouncedQuery.value),
+  placeholderData: (previous) => previous,
+}))
+const employees = computed(() => employeesQuery.data.value ?? [])
+const initialLoading = computed(() => employeesQuery.isPending.value)
+const searching = computed(() => !initialLoading.value && employeesQuery.isLoading.value)
+const loadError = computed(() =>
+  employeesQuery.error.value
+    ? formatUnknownApiError(employeesQuery.error.value) || t('employees.load_failed')
+    : '',
+)
 
 const selectedEmployeeId = computed(() => {
   const id = route.params.id
@@ -149,31 +158,4 @@ function openPanel(employee: EmployeeListItem) {
 function closePanel() {
   router.push({ name: 'employees' })
 }
-
-async function load(params: { search?: string } = {}, isInitial = false) {
-  loadError.value = ''
-  if (isInitial) {
-    initialLoading.value = true
-  } else {
-    searching.value = true
-  }
-  try {
-    await store.fetchEmployees(params)
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('employees.load_failed')
-  } finally {
-    initialLoading.value = false
-    searching.value = false
-  }
-}
-
-watch(searchQuery, (value) => {
-  if (searchDebounceId) clearTimeout(searchDebounceId)
-  searchDebounceId = setTimeout(() => {
-    searchDebounceId = null
-    load(value ? { search: value } : {})
-  }, DEBOUNCE_MS)
-})
-
-onMounted(() => load({}, true))
 </script>

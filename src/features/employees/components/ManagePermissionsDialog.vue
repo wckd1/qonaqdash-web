@@ -32,7 +32,7 @@
 import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PermissionMatrix from '@/features/employees/components/PermissionMatrix.vue'
-import { replaceEmployeePermissions } from '@/features/employees/api'
+import { useReplaceEmployeePermissionsMutation } from '@/features/employees/queries'
 import type { EmployeePermissionsResponse, Permissions } from '@/shared/types/permissions'
 import {
   clonePermissions,
@@ -60,6 +60,7 @@ const titleId = useId()
 // The actual state: overrides. Display is derived (effective + overrides on top).
 const overrides = ref<Permissions>(clonePermissions(props.initialOverrides))
 const saving = ref(false)
+const replacePermissions = useReplaceEmployeePermissionsMutation()
 
 const merged = computed<Permissions>({
   get: () => {
@@ -101,7 +102,10 @@ async function onSave() {
   if (saving.value) return
   saving.value = true
   try {
-    const res = await replaceEmployeePermissions(props.employeeId, overrides.value)
+    const res = await replacePermissions.mutateAsync({
+      employeeId: props.employeeId,
+      overrides: overrides.value,
+    })
     success(t('employees.access_settings_saved'))
     emit('saved', res)
   } catch {

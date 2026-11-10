@@ -58,8 +58,7 @@
           {{ t('employees.roles_and_occupations_section') }}
         </h2>
 
-        <p v-if="accessError" class="error-message">{{ accessError }}</p>
-        <div v-else-if="accessLoading" class="loading-state">{{ t('common.loading') }}</div>
+        <div v-if="accessLoading" class="loading-state">{{ t('common.loading') }}</div>
         <template v-else>
           <p v-if="!assignedOccupations.length" class="empty-state">
             {{ t('employees.no_occupations_assigned') }}
@@ -113,9 +112,13 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
-import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
+import {
+  employeeDetailQuery,
+  employeeRuntimeFormQuery,
+  useUpdateEmployeeMutation,
+} from '@/features/employees/queries'
 import { useAuthStore } from '@/features/auth/stores/useAuthStore'
 import { refreshAccount } from '@/features/auth/queries'
 import FormView from '@/shared/form-dsl/FormView.vue'
@@ -129,35 +132,20 @@ import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useNotification } from '@/shared/composables/useNotification'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import type {
-  EmployeeOccupationsResponse,
-  EmployeePermissionsResponse,
-  OccupationTemplate,
-  Permissions,
-} from '@/shared/types/permissions'
+import type { OccupationTemplate, Permissions } from '@/shared/types/permissions'
 import { clonePermissions, parsePermissions } from '@/shared/lib/permissions'
 
 const { t, te, locale } = useI18n()
 const route = useRoute()
-const store = useEmployeeStore()
 const authStore = useAuthStore()
 const { success } = useNotification()
 const { canManageEmployees, canManageEmployeePermissions } = usePermissions()
-const { currentEmployee, currentEmployeeFormRef, employeeFormTemplate, employeeFormRuntimeView } =
-  storeToRefs(store)
+const updateEmployee = useUpdateEmployeeMutation()
 
-const loadError = ref('')
-const notFound = ref(false)
 const editing = ref(false)
 const editFormData = ref<Record<string, unknown>>({})
 const errorsMap = ref<Record<string, string[]>>({})
 const submitting = ref(false)
-const accessLoading = ref(false)
-const accessError = ref('')
-const assignedOccupations = ref<OccupationTemplate[]>([])
-const selectedOccupationIds = ref<string[]>([])
-const effectivePermissions = ref<Permissions>({})
-const permissionOverrides = ref<Permissions>({})
 const occupationsDialogOpen = ref(false)
 const permissionsDialogOpen = ref(false)
 
@@ -170,10 +158,47 @@ function routeEmployeeId(): string | null {
 
 const employeeId = computed(() => routeEmployeeId())
 
+const detailQ = useQuery(() => ({
+  ...employeeDetailQuery(employeeId.value ?? ''),
+  enabled: !!employeeId.value,
+}))
+const formHash = computed(() => detailQ.data.value?.formRef?.hash ?? '')
+const formQ = useQuery(() => ({
+  ...employeeRuntimeFormQuery({ target: 'view', hash: formHash.value }),
+  enabled: !!detailQ.data.value,
+}))
+const currentEmployee = computed(() => detailQ.data.value?.data ?? null)
+const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
+const loadError = computed(() => {
+  const err = (notFound.value ? null : detailQ.error.value) ?? formQ.error.value
+  return err ? formatUnknownApiError(err) || t('employees.load_failed') : ''
+})
+
 const employeeForm = computed(() =>
-  composeEntityFormFromTemplate(
-    currentEmployee.value ?? null,
-    employeeFormRuntimeView.value ?? employeeFormTemplate.value,
+  composeEntityFormFromTemplate(currentEmployee.value ?? null, formQ.data.value ?? null),
+)
+
+/** Access settings come with the employee; they reload with it after every change. */
+const accessLoading = computed(() => detailQ.isPending.value)
+const assignedOccupations = computed<OccupationTemplate[]>(() => {
+  const rawOccs = (currentEmployee.value as Record<string, unknown> | null)?.occupations
+  return Array.isArray(rawOccs)
+    ? (rawOccs as OccupationTemplate[]).filter((o) => o && typeof o.id === 'string')
+    : []
+})
+const selectedOccupationIds = computed(() => assignedOccupations.value.map((o) => o.id))
+const effectivePermissions = computed<Permissions>(() =>
+  clonePermissions(
+    parsePermissions(
+      (currentEmployee.value as Record<string, unknown> | null)?.effective_permissions,
+    ),
+  ),
+)
+const permissionOverrides = computed<Permissions>(() =>
+  clonePermissions(
+    parsePermissions(
+      (currentEmployee.value as Record<string, unknown> | null)?.permission_overrides,
+    ),
   ),
 )
 
@@ -208,55 +233,6 @@ function displayTitle(title: string): string {
   return te(source) ? t(source) : source
 }
 
-async function load() {
-  const id = routeEmployeeId()
-  if (!id) return
-  store.clearCurrentEmployee()
-  loadError.value = ''
-  notFound.value = false
-  try {
-    await store.fetchEmployee(id)
-    await store.fetchEmployeeForm({
-      target: 'view',
-      definitionHash: currentEmployeeFormRef.value?.hash ?? null,
-      revalidate: true,
-      ifNoneMatch: currentEmployeeFormRef.value?.hash ?? null,
-    })
-  } catch (err: unknown) {
-    if (httpErrorResponse(err)?.status === 404) {
-      store.clearCurrentEmployee()
-      notFound.value = true
-    } else {
-      loadError.value = formatUnknownApiError(err) || t('employees.load_failed')
-    }
-  }
-}
-
-function loadAccessSettings() {
-  if (!canManageEmployeePermissions.value) return
-  accessLoading.value = true
-  accessError.value = ''
-  try {
-    const emp = currentEmployee.value as Record<string, unknown> | null
-    const rawOccs = emp?.occupations
-    const occupations: OccupationTemplate[] = Array.isArray(rawOccs)
-      ? (rawOccs as OccupationTemplate[]).filter((o) => o && typeof o.id === 'string')
-      : []
-    assignedOccupations.value = occupations
-    selectedOccupationIds.value = occupations.map((o) => o.id)
-    effectivePermissions.value = clonePermissions(parsePermissions(emp?.effective_permissions))
-    permissionOverrides.value = clonePermissions(parsePermissions(emp?.permission_overrides))
-  } catch (err: unknown) {
-    accessError.value = formatUnknownApiError(err) || t('employees.access_settings_load_failed')
-    assignedOccupations.value = []
-    selectedOccupationIds.value = []
-    effectivePermissions.value = {}
-    permissionOverrides.value = {}
-  } finally {
-    accessLoading.value = false
-  }
-}
-
 watch(editing, (isEdit) => {
   if (isEdit && employeeForm.value) {
     editFormData.value = { ...employeeForm.value.data }
@@ -266,15 +242,9 @@ watch(editing, (isEdit) => {
 
 watch(
   () => route.params.id,
-  async (newId) => {
+  () => {
     editing.value = false
-    if (!newId) return
-    await load()
-    if (canManageEmployeePermissions.value && !notFound.value && !loadError.value) {
-      void loadAccessSettings()
-    }
   },
-  { immediate: true },
 )
 
 watch(
@@ -304,7 +274,7 @@ async function onSave() {
   }
   submitting.value = true
   try {
-    await store.updateEmployee(employeeId.value, editFormData.value)
+    await updateEmployee.mutateAsync({ id: employeeId.value, data: editFormData.value })
     editing.value = false
     success(t('employees.saved'))
   } catch (err: unknown) {
@@ -321,29 +291,16 @@ async function onSave() {
   }
 }
 
-async function onOccupationsSaved(res: EmployeeOccupationsResponse) {
-  assignedOccupations.value = Array.isArray(res.occupations) ? res.occupations : []
-  selectedOccupationIds.value = Array.isArray(res.occupation_ids) ? [...res.occupation_ids] : []
+// The dialogs reload the employee after saving; its occupations and
+// permissions follow from that.
+async function onOccupationsSaved() {
   occupationsDialogOpen.value = false
-  // Occupations drive effective permissions, which the backend recomputes — reload the
-  // employee so permission_overrides / effective_permissions snapshots stay in sync.
-  const id = employeeId.value
-  if (id) {
-    try {
-      await store.fetchEmployee(id)
-      loadAccessSettings()
-    } catch {
-      /* load() handles errors for the main page */
-    }
-  }
-  if (authStore.employeeId === id) {
+  if (authStore.employeeId === employeeId.value) {
     await refreshAccount().catch(() => undefined)
   }
 }
 
-async function onPermissionsSaved(res: EmployeePermissionsResponse) {
-  effectivePermissions.value = clonePermissions(res.effective_permissions)
-  permissionOverrides.value = clonePermissions(res.permission_overrides)
+async function onPermissionsSaved() {
   permissionsDialogOpen.value = false
   if (authStore.employeeId === employeeId.value) {
     await refreshAccount().catch(() => undefined)

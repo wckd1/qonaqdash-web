@@ -47,21 +47,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { storeToRefs } from 'pinia'
+import { useQuery } from '@pinia/colada'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import { composeEntityFormFromTemplate } from '@/shared/form-dsl/normalizeFormResponse'
-import { fetchEmployee } from '@/features/employees/api'
-import type { EmployeeDetailData } from '@/features/employees/api'
+import { employeeDetailQuery, employeeRuntimeFormQuery } from '@/features/employees/queries'
 import type { EmployeeSidePanelRef } from '@/features/employees/panelTypes'
-import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { httpErrorResponse } from '@/shared/unknownError'
 
 const { t } = useI18n()
-const employeeStore = useEmployeeStore()
-const { employeeFormTemplate, employeeFormRuntimeView } = storeToRefs(employeeStore)
 
 const props = defineProps<{
   employee?: EmployeeSidePanelRef | null
@@ -71,18 +67,31 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const detailEntity = ref<EmployeeDetailData | null>(null)
-const loading = ref(false)
-const loadError = ref('')
-const notFound = ref(false)
+const employeeId = computed(() => props.employee?.id ?? '')
+const detailQ = useQuery(() => ({
+  ...employeeDetailQuery(employeeId.value),
+  enabled: !!employeeId.value,
+}))
+const formHash = computed(() => detailQ.data.value?.formRef?.hash ?? '')
+const formQ = useQuery(() => ({
+  ...employeeRuntimeFormQuery({ target: 'view', hash: formHash.value }),
+  enabled: !!detailQ.data.value,
+}))
 
-let loadSeq = 0
+const detailEntity = computed(() => (employeeId.value ? (detailQ.data.value?.data ?? null) : null))
+const loading = computed(
+  () =>
+    !!employeeId.value &&
+    (detailQ.isPending.value || (!!detailEntity.value && formQ.isPending.value)),
+)
+const notFound = computed(() => httpErrorResponse(detailQ.error.value)?.status === 404)
+const loadError = computed(() => {
+  const err = (notFound.value ? null : detailQ.error.value) ?? formQ.error.value
+  return err ? formatUnknownApiError(err) || t('employees.load_failed') : ''
+})
 
 const employeeForm = computed(() =>
-  composeEntityFormFromTemplate(
-    detailEntity.value ?? null,
-    employeeFormRuntimeView.value ?? employeeFormTemplate.value,
-  ),
+  composeEntityFormFromTemplate(detailEntity.value ?? null, formQ.data.value ?? null),
 )
 
 const employeePanelTitle = computed(() => {
@@ -100,44 +109,4 @@ const employeePanelTitle = computed(() => {
   const last = 'last_name' in row && typeof row.last_name === 'string' ? row.last_name : ''
   return [first, last].filter(Boolean).join(' ') || t('page_title.employee')
 })
-
-watch(
-  () => props.employee?.id,
-  async (id) => {
-    if (!id) {
-      detailEntity.value = null
-      loadError.value = ''
-      notFound.value = false
-      loading.value = false
-      return
-    }
-    const seq = ++loadSeq
-    loading.value = true
-    loadError.value = ''
-    notFound.value = false
-    detailEntity.value = null
-    try {
-      const payload = await fetchEmployee(id)
-      if (seq !== loadSeq) return
-      detailEntity.value = payload.data
-      await employeeStore.fetchEmployeeForm({
-        target: 'view',
-        definitionHash: payload.formRef?.hash ?? null,
-        revalidate: true,
-        ifNoneMatch: payload.formRef?.hash ?? null,
-      })
-      if (seq !== loadSeq) return
-    } catch (err: unknown) {
-      if (seq !== loadSeq) return
-      if (httpErrorResponse(err)?.status === 404) {
-        notFound.value = true
-      } else {
-        loadError.value = formatUnknownApiError(err) || t('employees.load_failed')
-      }
-    } finally {
-      if (seq === loadSeq) loading.value = false
-    }
-  },
-  { immediate: true },
-)
 </script>

@@ -1,6 +1,6 @@
 import { defineQueryOptions, useMutation, useQueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
-import { snapshotForm, type FormTemplate } from '@/shared/forms/formSnapshot'
+import { snapshotForm, type RuntimeFormSnapshot } from '@/shared/forms/formSnapshot'
 import type { FormNode } from '@/shared/types/forms'
 import * as guestsApi from '@/features/guests/api'
 
@@ -8,9 +8,6 @@ import * as guestsApi from '@/features/guests/api'
 function searchParam(q: string | undefined): { q: string } {
   return { q: q?.trim() ?? '' }
 }
-
-/** Runtime form as cached by a query: definition, template data and its hash. */
-export type RuntimeFormSnapshot = FormTemplate & { hash: string }
 
 export const guestKeys = {
   all: ['guests'] as const,

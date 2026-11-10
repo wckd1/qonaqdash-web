@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import { clearFormDefinitionsFor, normalizeFormRef } from '@/shared/forms/formDefinitionCache'
 import {
   loadRuntimeFormDefinition,
@@ -78,16 +78,27 @@ export function parseEmployeeDetailPayload(raw: unknown): EmployeeDetailPayload 
   }
 }
 
-export function fetchEmployees(params: { search?: string } = {}): Promise<EmployeeListItem[]> {
-  const config = params.search?.trim() ? { params: { search: params.search.trim() } } : {}
+export function fetchEmployees(
+  params: { search?: string } = {},
+  options: RequestOptions = {},
+): Promise<EmployeeListItem[]> {
+  const config = {
+    signal: options.signal,
+    ...(params.search?.trim() ? { params: { search: params.search.trim() } } : {}),
+  }
   return api
     .get('/api/employees', config)
     .then(({ data }) => (Array.isArray(data) ? data : (data?.employees ?? data ?? [])))
     .then((rows) => rows.map(normalizeEmployeeListItem).filter((row) => row.id))
 }
 
-export function fetchEmployee(id: string): Promise<EmployeeDetailPayload> {
-  return api.get(`/api/employees/${id}`).then(({ data }) => parseEmployeeDetailPayload(data))
+export function fetchEmployee(
+  id: string,
+  options: RequestOptions = {},
+): Promise<EmployeeDetailPayload> {
+  return api
+    .get(`/api/employees/${id}`, { signal: options.signal })
+    .then(({ data }) => parseEmployeeDetailPayload(data))
 }
 
 export function loadEmployeeRuntimeForm(
@@ -124,11 +135,11 @@ export function invalidateEmployeeRuntimeFormCache(): void {
   clearFormDefinitionsFor('employee')
 }
 
-export function fetchEmployeeFormDefinition(): Promise<{
+export function fetchEmployeeFormDefinition(options: RequestOptions = {}): Promise<{
   definition: FormNode
   hash: string
 }> {
-  return api.get('/api/employees/form/definition').then(({ data }) => ({
+  return api.get('/api/employees/form/definition', { signal: options.signal }).then(({ data }) => ({
     definition: (data.definition ?? {}) as FormNode,
     hash: String(data.hash ?? ''),
   }))
@@ -161,9 +172,9 @@ export function updateEmployee(
     .then(({ data: res }) => parseEmployeeDetailPayload(res))
 }
 
-export function listOccupations(): Promise<OccupationRoleGroup[]> {
+export function listOccupations(options: RequestOptions = {}): Promise<OccupationRoleGroup[]> {
   return api
-    .get('/api/occupations')
+    .get('/api/occupations', { signal: options.signal })
     .then(({ data }) => (Array.isArray(data) ? data : (data?.role_groups ?? data ?? [])))
     .then((rows) =>
       rows.map(normalizeOccupationRoleGroup).filter((row) => row.role_key && row.role_title),

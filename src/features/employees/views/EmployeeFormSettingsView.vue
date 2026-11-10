@@ -24,69 +24,75 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useQuery } from '@pinia/colada'
 import type { FormNode } from '@/shared/types/forms'
-import { updateEmployeeFormDefinition } from '@/features/employees/api'
-import { useEmployeeStore } from '@/features/employees/stores/useEmployeeStore'
+import {
+  employeeFormDefinitionQuery,
+  useUpdateEmployeeFormDefinitionMutation,
+} from '@/features/employees/queries'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import FormBuild from '@/shared/form-dsl/FormBuild.vue'
 import { useNotification } from '@/shared/composables/useNotification'
 
 const { t } = useI18n()
 const { success, error: notifyError } = useNotification()
-const employeeStore = useEmployeeStore()
 
-const loading = ref(true)
-const saving = ref(false)
-const loadError = ref('')
+const definitionQ = useQuery(employeeFormDefinitionQuery)
+const updateDefinition = useUpdateEmployeeFormDefinitionMutation()
+
+const resetting = ref(false)
+const loading = computed(() => definitionQ.isPending.value || resetting.value)
+const saving = computed(() => updateDefinition.isLoading.value)
+const loadError = computed(() =>
+  definitionQ.error.value
+    ? formatUnknownApiError(definitionQ.error.value) || t('form_settings.load_failed')
+    : '',
+)
 const saveError = ref('')
 
 const definitionDraft = ref<FormNode | null>(null)
 const formData = ref<Record<string, unknown>>({})
-const hasLoaded = ref(false)
+const hasLoaded = computed(() => definitionDraft.value !== null)
 
 const formReady = computed(() => hasLoaded.value && !loadError.value)
 
-async function loadForm() {
-  loading.value = true
-  loadError.value = ''
-  try {
-    const res = await employeeStore.fetchEmployeeFormDefinition()
-    definitionDraft.value = JSON.parse(JSON.stringify(res.definition ?? {}))
-    formData.value = {}
-    hasLoaded.value = true
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('form_settings.load_failed')
-    hasLoaded.value = false
-  } finally {
-    loading.value = false
-  }
+function applyDefinition(definition: FormNode | undefined) {
+  definitionDraft.value = JSON.parse(JSON.stringify(definition ?? {}))
+  formData.value = {}
 }
 
-onMounted(() => loadForm())
+// Each load of the saved definition becomes the draft the builder edits.
+watch(
+  () => definitionQ.data.value,
+  (res) => {
+    if (res) applyDefinition(res.definition)
+  },
+  { immediate: true },
+)
 
 async function onReset() {
   saveError.value = ''
-  await loadForm()
+  resetting.value = true
+  try {
+    const { data } = await definitionQ.refetch()
+    if (data) applyDefinition(data.definition)
+  } finally {
+    resetting.value = false
+  }
 }
 
 async function onSave() {
-  saving.value = true
   saveError.value = ''
   try {
-    const res = await updateEmployeeFormDefinition({
-      definition: definitionDraft.value as FormNode,
-    })
-    definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
-    employeeStore.replaceEmployeeFormTemplate(res)
+    const res = await updateDefinition.mutateAsync(definitionDraft.value as FormNode)
+    applyDefinition(res.definition)
     success(t('form_settings.saved'))
   } catch (err: unknown) {
     const msg = formatUnknownApiError(err) || t('form_settings.save_failed')
     saveError.value = msg
     notifyError(msg)
-  } finally {
-    saving.value = false
   }
 }
 </script>

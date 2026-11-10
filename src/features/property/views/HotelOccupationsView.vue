@@ -131,18 +131,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import PermissionMatrix from '@/features/employees/components/PermissionMatrix.vue'
+import { useQuery } from '@pinia/colada'
+import type { OccupationRoleGroup, OccupationTemplate } from '@/features/employees/api'
 import {
-  createOccupation,
-  deleteOccupation,
-  listOccupations,
-  updateOccupation,
-  type OccupationRoleGroup,
-  type OccupationTemplate,
-} from '@/features/employees/api'
+  occupationsQuery,
+  useCreateOccupationMutation,
+  useDeleteOccupationMutation,
+  useUpdateOccupationMutation,
+} from '@/features/employees/queries'
 import { clonePermissions } from '@/shared/lib/permissions'
 import type { Permissions } from '@/shared/types/permissions'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
@@ -156,9 +156,17 @@ interface OccupationDraft extends OccupationTemplate {
 const { t, te } = useI18n()
 const { success } = useNotification()
 
-const loading = ref(true)
+const occupationsQ = useQuery(occupationsQuery)
+const createOccupation = useCreateOccupationMutation()
+const updateOccupation = useUpdateOccupationMutation()
+const deleteOccupation = useDeleteOccupationMutation()
+const loading = computed(() => occupationsQ.isPending.value && !occupationsQ.error.value)
 const saving = ref(false)
-const loadError = ref('')
+const loadError = computed(() =>
+  occupationsQ.error.value
+    ? formatUnknownApiError(occupationsQ.error.value) || t('occupations.load_failed')
+    : '',
+)
 const roleGroups = ref<OccupationRoleGroup[]>([])
 const drafts = ref<OccupationDraft[]>([])
 
@@ -262,31 +270,25 @@ function clearSelection() {
   creatingRoleKey.value = ''
 }
 
-// Data loading
-async function load() {
-  loadError.value = ''
-  loading.value = true
-  try {
-    const groups = await listOccupations()
-    syncGroups(groups)
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('occupations.load_failed')
-  } finally {
-    loading.value = false
-  }
+// Data loading: every load of the templates resets the local drafts.
+function syncFromQuery() {
+  const groups = occupationsQ.data.value
+  if (groups) syncGroups(groups)
 }
+
+watch(() => occupationsQ.data.value, syncFromQuery, { immediate: true })
 
 // CRUD
 async function onCreate() {
   if (!createDraft.title.trim()) return
   saving.value = true
   try {
-    const created = await createOccupation({
+    const created = await createOccupation.mutateAsync({
       title: createDraft.title.trim(),
       role_key: creatingRoleKey.value,
       permissions: createDraft.permissions,
     })
-    await load()
+    syncFromQuery()
     success(t('occupations.created'))
     // Select the newly created occupation
     if (created?.id) selectOccupation(created.id)
@@ -303,12 +305,11 @@ async function saveDraft() {
   if (!draft || !isDirty.value) return
   draft.saving = true
   try {
-    await updateOccupation(draft.id, {
-      title: draft.title.trim(),
-      role_key: draft.role_key,
-      permissions: draft.permissions,
+    await updateOccupation.mutateAsync({
+      id: draft.id,
+      body: { title: draft.title.trim(), role_key: draft.role_key, permissions: draft.permissions },
     })
-    await load()
+    syncFromQuery()
     success(t('occupations.saved'))
     // Keep current selection
     selectOccupation(draft.id)
@@ -330,16 +331,14 @@ async function removeDraft() {
   if (!window.confirm(t('occupations.delete_confirm', { title: draft.title || draft.id }))) return
   draft.saving = true
   try {
-    await deleteOccupation(draft.id)
+    await deleteOccupation.mutateAsync(draft.id)
     clearSelection()
-    await load()
+    syncFromQuery()
     success(t('occupations.deleted'))
   } catch {
     draft.saving = false
   }
 }
-
-onMounted(load)
 </script>
 
 <style scoped>

@@ -6,6 +6,9 @@ export interface FormTemplate {
   data: Record<string, unknown>
 }
 
+/** Runtime form as a query caches it: definition, template data and its hash. */
+export type RuntimeFormSnapshot = FormTemplate & { hash: string }
+
 /** Deep-clone a raw form response into a store-safe snapshot. */
 export function snapshotForm(res: { definition?: unknown; data?: unknown }): FormTemplate {
   return {

@@ -71,9 +71,6 @@ export const useAuthStore = defineStore('auth', () => {
     void import('@/shared/stores/useSettingsStore').then(({ useSettingsStore }) => {
       useSettingsStore().resetState()
     })
-    void import('@/features/employees/stores/useEmployeeStore').then(({ useEmployeeStore }) => {
-      useEmployeeStore().resetState()
-    })
   }
 
   return {

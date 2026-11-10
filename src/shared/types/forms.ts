@@ -154,12 +154,7 @@ export interface FormButtonNode extends FormNodeConditions {
 }
 
 export type FormNode =
-  | FormStackNode
-  | FormGroupNode
-  | FormInputNode
-  | FormSelectNode
-  | FormArrayNode
-  | FormButtonNode
+  FormStackNode | FormGroupNode | FormInputNode | FormSelectNode | FormArrayNode | FormButtonNode
 
 /** Check whether a node is a layout container (stack / group). */
 export function isLayoutNode(node: FormNode): node is FormStackNode | FormGroupNode {

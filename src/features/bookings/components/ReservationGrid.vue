@@ -150,8 +150,7 @@ type BarMenuState = {
 type DragSelectState = { roomId: string; startDay: Date; endDay: Date }
 
 type GridRow =
-  | { kind: 'type-header'; key: string; title: string }
-  | { kind: 'room'; key: string; room: RoomRow }
+  { kind: 'type-header'; key: string; title: string } | { kind: 'room'; key: string; room: RoomRow }
 
 type BarLayout = {
   key: string

@@ -30,9 +30,7 @@ export interface PricingConditionDateRange {
 }
 
 export type PricingCondition =
-  | PricingConditionProperty
-  | PricingConditionSpecificDate
-  | PricingConditionDateRange
+  PricingConditionProperty | PricingConditionSpecificDate | PricingConditionDateRange
 
 // ---------------------------------------------------------------------------
 // Effect shape

@@ -12,7 +12,7 @@ import type {
   BookingFormDefinitionResponse,
   CreateBookingPayload,
 } from '@/shared/types/bookings'
-import type { AccommodationSnapshot, ManualAdjustmentInput } from '@/shared/types/commercial'
+import type { AccommodationSnapshot, ManualAdjustmentInput } from '@/features/pricing/api'
 import { fetchStoredBookingQuote, type StoredBookingQuote } from '@/features/pricing/api'
 
 export type {
@@ -36,7 +36,7 @@ export type {
   CreateBookingPayload,
 } from '@/shared/types/bookings'
 
-export type { AccommodationSnapshot, ManualAdjustmentInput } from '@/shared/types/commercial'
+export type { AccommodationSnapshot, ManualAdjustmentInput } from '@/features/pricing/api'
 
 export type { FormRef }
 

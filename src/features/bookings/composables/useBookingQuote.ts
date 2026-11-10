@@ -5,7 +5,7 @@ import type {
   CalculateQuoteRequest,
   StayQuoteResponse,
   ManualAdjustmentInput,
-} from '@/shared/types/commercial'
+} from '@/features/pricing/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 
 const DEBOUNCE_MS = 500

@@ -1,6 +1,6 @@
 import type { FormNode, FormRef } from './forms'
 import type { GuestFormFields } from '@/features/guests/api'
-import type { AccommodationSnapshot, ManualAdjustmentInput } from './commercial'
+import type { AccommodationSnapshot, ManualAdjustmentInput } from '@/features/pricing/api'
 
 /** Guest info nested in BookingItem (matches bookinghttp.BookingGuestInfo). */
 export interface BookingGuestInfo {

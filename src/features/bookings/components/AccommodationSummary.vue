@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { AccommodationSnapshot, StayQuoteNight } from '@/shared/types/commercial'
+import type { AccommodationSnapshot, StayQuoteNight } from '@/features/pricing/api'
 import { formatMoney } from '@/shared/lib/money'
 
 const props = defineProps<{

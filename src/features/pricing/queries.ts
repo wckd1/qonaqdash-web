@@ -1,7 +1,7 @@
 import { defineQueryOptions, useMutation, useQueryCache } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import * as pricingApi from '@/features/pricing/api'
-import type { BaseRateItem, CalculateQuoteRequest } from '@/shared/types/commercial'
+import type { BaseRateItem, CalculateQuoteRequest } from '@/features/pricing/api'
 
 export const pricingKeys = {
   all: ['pricing'] as const,

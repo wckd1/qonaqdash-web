@@ -56,7 +56,7 @@ import { formatUnknownApiError, formErrorsMapFromHttpError } from '@/shared/i18n
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import QuoteBreakdown from '@/features/bookings/components/QuoteBreakdown.vue'
 import ManualAdjustmentEditor from '@/features/bookings/components/ManualAdjustmentEditor.vue'
-import type { ManualAdjustmentInput } from '@/shared/types/commercial'
+import type { ManualAdjustmentInput } from '@/features/pricing/api'
 import { validateFormData } from '@/shared/form-dsl/validateFormData'
 import { scrollToFirstFormError } from '@/shared/form-dsl/scrollToFirstError'
 import { useBookingQuote } from '@/features/bookings/composables/useBookingQuote'

@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ManualAdjustmentInput, EffectType, EffectApplyTo } from '@/shared/types/commercial'
+import type { ManualAdjustmentInput, EffectType, EffectApplyTo } from '@/features/pricing/api'
 import { majorToMinor, getCurrencySymbol } from '@/shared/lib/money'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
 

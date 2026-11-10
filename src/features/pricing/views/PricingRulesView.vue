@@ -178,7 +178,7 @@
                     <option value="" disabled>{{ t('pricing.rule_condition_value') }}</option>
                     <option
                       v-for="opt in candidateByFieldId(cond.field_id)?.options ?? []"
-                      :key="opt.value"
+                      :key="opt.value ?? ''"
                       :value="opt.value"
                     >
                       {{ t(opt.label) }}
@@ -329,7 +329,7 @@ import {
 } from '@/features/pricing/queries'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
-import type { PricingRule, PricingCondition, ConditionCandidate } from '@/shared/types/commercial'
+import type { PricingRule, PricingCondition, ConditionCandidate } from '@/features/pricing/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { formatMoney, majorToMinor, minorToMajor, getCurrencySymbol } from '@/shared/lib/money'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
@@ -441,15 +441,15 @@ function conditionsSummary(rule: PricingRule): string {
     .map((c) => {
       switch (c.type) {
         case 'property': {
-          const label = resolveFieldLabel(c.field_id)
-          const valLabel = resolveOptionLabel(c.field_id, c.value ?? '')
+          const label = resolveFieldLabel(c.field_id ?? '')
+          const valLabel = resolveOptionLabel(c.field_id ?? '', c.value ?? '')
           if (c.operator === 'not_eq') return `${label} ≠ ${valLabel}`
           return `${label} = ${valLabel}`
         }
         case 'specific_date':
-          return c.date
+          return c.date ?? ''
         case 'date_range':
-          return `${c.from} — ${c.to}`
+          return `${c.from ?? ''} — ${c.to ?? ''}`
         default:
           return '?'
       }
@@ -488,16 +488,16 @@ function conditionToFormState(c: PricingCondition): ConditionFormState {
   }
   switch (c.type) {
     case 'property':
-      base.field_id = c.field_id
-      base.operator = c.operator
+      base.field_id = c.field_id ?? ''
+      base.operator = c.operator ?? 'eq'
       base.value = c.value ?? ''
       break
     case 'specific_date':
-      base.date = c.date
+      base.date = c.date ?? ''
       break
     case 'date_range':
-      base.from = c.from
-      base.to = c.to
+      base.from = c.from ?? ''
+      base.to = c.to ?? ''
       break
   }
   return base

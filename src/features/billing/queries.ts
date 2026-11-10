@@ -7,6 +7,7 @@ import {
 } from '@pinia/colada'
 import { invalidateKeys } from '@/shared/api/queryCache'
 import { httpErrorResponse } from '@/shared/unknownError'
+import { getApiErrorCode } from '@/shared/i18n/apiError'
 import * as billingApi from '@/features/billing/api'
 import type { MaybeRefOrGetter } from 'vue'
 import { toValue } from 'vue'
@@ -38,14 +39,19 @@ export const billingKeys = {
   outstanding: ['billing', 'reports', 'outstanding'] as const,
 }
 
-/** Bill of a booking; `null` while the booking has none (it opens at check-in). */
+/**
+ * Bill of a booking; `null` while the booking has none (`billing.bill_not_found`,
+ * it opens at check-in). A booking the caller cannot see (`billing.booking_not_found`)
+ * is an error.
+ */
 export const billQuery = defineQueryOptions((bookingId: string) => ({
   key: billingKeys.bill(bookingId),
   query: async ({ signal }) => {
     try {
       return await billingApi.fetchGuestBill(bookingId, { signal })
     } catch (err: unknown) {
-      if (httpErrorResponse(err)?.status === 404) return null
+      const res = httpErrorResponse(err)
+      if (res?.status === 404 && getApiErrorCode(res.data) === 'billing.bill_not_found') return null
       throw err
     }
   },

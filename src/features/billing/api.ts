@@ -31,7 +31,8 @@ export type LedgerEntryMetadata = LedgerEntry['metadata']
 
 /**
  * Bill header, all ledger entries, and outstanding balance.
- * 404 when no bill exists (bill opens at check-in).
+ * 404 `billing.bill_not_found` when no bill exists (bill opens at check-in);
+ * 404 `billing.booking_not_found` for a booking of another hotel or organization.
  */
 export function fetchGuestBill(
   bookingId: string,

@@ -41,6 +41,10 @@
           </div>
         </div>
 
+        <p v-if="saveError" class="manage-occupations-dialog__error" role="alert">
+          {{ saveError }}
+        </p>
+
         <div class="dialog-actions">
           <button type="button" class="btn-secondary" :disabled="saving" @click="onCancel">
             {{ t('common.cancel') }}
@@ -65,6 +69,7 @@ import {
 import type { EmployeeOccupationsResponse } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { useNotification } from '@/shared/composables/useNotification'
+import { permissionEscalationMessage } from '@/features/employees/permissionEscalation'
 
 const props = defineProps<{
   employeeId: string
@@ -89,6 +94,7 @@ const loadError = computed(() =>
     : '',
 )
 const saving = ref(false)
+const saveError = ref('')
 const roleGroups = computed(() => occupationsQ.data.value ?? [])
 const selected = ref<string[]>([...props.initialOccupationIds])
 
@@ -125,6 +131,7 @@ function onCancel() {
 async function onSave() {
   if (saving.value) return
   saving.value = true
+  saveError.value = ''
   try {
     const res = await replaceOccupations.mutateAsync({
       employeeId: props.employeeId,
@@ -132,8 +139,9 @@ async function onSave() {
     })
     success(t('employees.access_settings_saved'))
     emit('saved', res)
-  } catch {
-    /* Global toast via interceptor */
+  } catch (err: unknown) {
+    // Other errors: the global toast via the interceptor.
+    saveError.value = permissionEscalationMessage(err) ?? ''
   } finally {
     saving.value = false
   }
@@ -144,6 +152,12 @@ async function onSave() {
 .manage-occupations-dialog {
   max-width: 520px;
   width: 100%;
+}
+
+.manage-occupations-dialog__error {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-body-size);
+  color: var(--semantic-error);
 }
 
 .manage-occupations-dialog__title {

@@ -111,6 +111,7 @@
         </div>
 
         <div class="occupations-explorer__detail-body">
+          <p v-if="saveError" class="occupations-explorer__error" role="alert">{{ saveError }}</p>
           <label>
             {{ t('occupations.fields.title') }}
             <input v-model="editDraft.title" type="text" :disabled="editDraft.saving" />
@@ -135,6 +136,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PropertySubNav from '@/features/property/components/PropertySubNav.vue'
 import PermissionMatrix from '@/features/employees/components/PermissionMatrix.vue'
+import { permissionEscalationMessage } from '@/features/employees/permissionEscalation'
 import { useQuery } from '@pinia/colada'
 import type {
   OccupationRoleGroup,
@@ -173,6 +175,8 @@ const loadError = computed(() =>
 )
 const roleGroups = ref<OccupationRoleGroup[]>([])
 const drafts = ref<OccupationDraft[]>([])
+/** A refused save of the selected template, e.g. raising it above the caller's own permissions. */
+const saveError = ref('')
 
 // Selection state
 const selectedId = ref<string | null>(null)
@@ -258,6 +262,7 @@ function syncGroups(groups: OccupationRoleGroup[]) {
 function selectOccupation(id: string) {
   selectedId.value = id
   mode.value = 'edit'
+  saveError.value = ''
 }
 
 function startCreate(roleKey: OccupationRoleKey) {
@@ -309,6 +314,7 @@ async function saveDraft() {
   const draft = editDraft.value
   if (!draft || !isDirty.value) return
   draft.saving = true
+  saveError.value = ''
   try {
     await updateOccupation.mutateAsync({
       id: draft.id,
@@ -318,8 +324,10 @@ async function saveDraft() {
     success(t('occupations.saved'))
     // Keep current selection
     selectOccupation(draft.id)
-  } catch {
+  } catch (err: unknown) {
     draft.saving = false
+    // Other errors: the global toast via the interceptor.
+    saveError.value = permissionEscalationMessage(err) ?? ''
   }
 }
 
@@ -328,6 +336,7 @@ function resetDraft() {
   if (!draft) return
   const idx = drafts.value.findIndex((d) => d.id === draft.id)
   if (idx >= 0) drafts.value[idx] = createLocalDraft(draft.original)
+  saveError.value = ''
 }
 
 async function removeDraft() {
@@ -424,6 +433,12 @@ async function removeDraft() {
   justify-content: space-between;
   gap: var(--space-md);
   flex-shrink: 0;
+}
+
+.occupations-explorer__error {
+  margin: 0;
+  font-size: var(--text-body-size);
+  color: var(--semantic-error);
 }
 
 .occupations-explorer__detail-body {

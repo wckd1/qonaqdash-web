@@ -176,6 +176,8 @@ api.interceptors.response.use(
     }
 
     if (status === 403) {
+      // A refused grant above the caller's own levels: the permission screens show it.
+      if (getApiErrorCode(data) === 'iam.permission_escalation') return Promise.reject(err)
       const message = formatApiError(data?.error) || `Request failed (${status})`
       showError(message)
       if (!url.startsWith('/api/account')) {

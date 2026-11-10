@@ -209,6 +209,7 @@
     "occupations_empty": "No occupations are configured for this hotel yet",
     "manage_occupations_action": "Manage occupations",
     "manage_permissions_action": "Manage permissions",
+    "permission_escalation_keys": "You cannot grant permissions above your own: {permissions}",
     "effective_permissions_section": "Effective permissions",
     "effective_permissions_hint": "Preview of the final permission set after occupations and overrides are merged",
     "role_unknown": "Unknown role family"

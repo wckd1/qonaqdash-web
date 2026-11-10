@@ -51,6 +51,25 @@ describe('API client error toasts', () => {
     expect(await toastsOf('post', '/api/employees', answer)).toHaveLength(1)
   })
 
+  // WP2: the permission screens show a refused grant next to the change.
+  test.each([
+    '/api/employees/employee-1/permissions',
+    '/api/employees/employee-1/occupations',
+    '/api/occupations/occupation-1',
+  ])('shows no toast for a permission escalation on put %s', async (url) => {
+    const answer = apiError(403, 'iam.permission_escalation', 'permission escalation', {
+      fields: ['billing.refund'],
+    })
+
+    expect(await toastsOf('put', url, answer)).toEqual([])
+  })
+
+  test('shows a toast for a 403 without permission', async () => {
+    const answer = apiError(403, 'common.forbidden', 'forbidden')
+
+    expect(await toastsOf('put', '/api/employees/employee-1/permissions', answer)).toHaveLength(1)
+  })
+
   test('shows a toast for a 400 with fields outside the form writes', async () => {
     const answer = apiError(400, 'property.invalid_currency', 'invalid currency', {
       fields: ['currency'],

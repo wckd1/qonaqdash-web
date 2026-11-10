@@ -15,6 +15,10 @@
           <PermissionMatrix v-model="merged" :disabled="saving" />
         </div>
 
+        <p v-if="saveError" class="manage-permissions-dialog__error" role="alert">
+          {{ saveError }}
+        </p>
+
         <div class="dialog-actions">
           <button type="button" class="btn-secondary" :disabled="saving" @click="onCancel">
             {{ t('common.cancel') }}
@@ -42,6 +46,7 @@ import {
   permissionActionsFor,
 } from '@/shared/lib/permissions'
 import { useNotification } from '@/shared/composables/useNotification'
+import { permissionEscalationMessage } from '@/features/employees/permissionEscalation'
 
 const props = defineProps<{
   employeeId: string
@@ -61,6 +66,7 @@ const titleId = useId()
 // The actual state: overrides. Display is derived (effective + overrides on top).
 const overrides = ref<Permissions>(clonePermissions(props.initialOverrides))
 const saving = ref(false)
+const saveError = ref('')
 const replacePermissions = useReplaceEmployeePermissionsMutation()
 
 const merged = computed<Permissions>({
@@ -102,6 +108,7 @@ function onCancel() {
 async function onSave() {
   if (saving.value) return
   saving.value = true
+  saveError.value = ''
   try {
     const res = await replacePermissions.mutateAsync({
       employeeId: props.employeeId,
@@ -109,8 +116,9 @@ async function onSave() {
     })
     success(t('employees.access_settings_saved'))
     emit('saved', res)
-  } catch {
-    /* Global toast via interceptor */
+  } catch (err: unknown) {
+    // Other errors: the global toast via the interceptor.
+    saveError.value = permissionEscalationMessage(err) ?? ''
   } finally {
     saving.value = false
   }
@@ -128,6 +136,12 @@ async function onSave() {
   font-weight: var(--text-heading-weight);
   color: var(--ink-primary);
   margin: 0 0 var(--space-md);
+}
+
+.manage-permissions-dialog__error {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-body-size);
+  color: var(--semantic-error);
 }
 
 .manage-permissions-dialog__body {

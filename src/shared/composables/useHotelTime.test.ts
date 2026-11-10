@@ -163,18 +163,18 @@ describe('useHotelTime', () => {
     http.routes.set('GET /api/property/hotel', hotelIn('Asia/Tashkent'))
     let provided: HotelTime | undefined
     let used: HotelTime | undefined
-    const Child = defineComponent({
+    const Child = {
       setup() {
         used = useHotelTime()
         return () => null
       },
-    })
-    const Shell = defineComponent({
+    }
+    const Shell = {
       setup() {
         provided = provideHotelTime()
         return () => h(Child)
       },
-    })
+    }
     const wrapper = mountWithApp(Shell)
 
     expect(used).toBe(provided)

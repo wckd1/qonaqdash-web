@@ -83,6 +83,7 @@ Work is planned in `qonaqdash-docs/work/`: a PM session writes briefs, and the b
 - Every commit keeps `npm run build` green.
 - Two related changes in one commit get a two-line message, each line starting with a verb, with no blank line between them.
 - No body, except rare cases where important context is not visible from the diff.
+- No `Co-Authored-By` or other attribution lines.
 
 ## UI and UX
 

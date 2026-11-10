@@ -63,11 +63,12 @@ function applyDefinition(definition: FormNode | undefined) {
   formData.value = {}
 }
 
-// Each load of the saved definition becomes the draft the builder edits.
+// The first load of the saved definition becomes the draft the builder edits;
+// later ones (after a save) must not reset the builder.
 watch(
   () => definitionQ.data.value,
   (res) => {
-    if (res) applyDefinition(res.definition)
+    if (res && definitionDraft.value === null) applyDefinition(res.definition)
   },
   { immediate: true },
 )
@@ -87,7 +88,7 @@ async function onSave() {
   saveError.value = ''
   try {
     const res = await updateDefinition.mutateAsync(definitionDraft.value as FormNode)
-    applyDefinition(res.definition)
+    definitionDraft.value = JSON.parse(JSON.stringify(res.definition))
     success(t('form_settings.saved'))
   } catch (err: unknown) {
     const msg = formatUnknownApiError(err) || t('form_settings.save_failed')

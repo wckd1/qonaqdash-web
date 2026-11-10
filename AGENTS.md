@@ -102,7 +102,7 @@ Work is planned in `qonaqdash-docs/work/`: a PM session writes briefs, and the b
 - **Every bug fix comes with a test that failed before the fix.**
 - **Known bugs** that are not fixed yet are pinned with `test.fails` (the test asserts the correct behaviour and fails for now) or `test.skip`, with a comment `<bug ID>, fixed in WP<N>`. Bug IDs come from `qonaqdash-docs/review-2026-11.md`. The package that fixes the bug removes `.fails` or `.skip`. Example: F1 in `src/router/index.test.ts`.
 - **e2e** (`e2e/`, Playwright, Chromium only) runs against the backend from `../qonaqdash` with seed data. Start the backend first with `make up && make reset-db && make server` in `../qonaqdash`; Playwright starts the frontend dev server itself on port 3100. Setup once and after every Playwright upgrade: `npx playwright install chromium`.
-  - Seed users come from the backend README and live in `e2e/fixtures/seed-users.ts`; the first one is the main smoke user. `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` override the main user for one run.
+  - Seed users come from the backend README and live in `e2e/fixtures/seed-users.ts`; the first one is the main smoke user. `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` override the main user for one run. Roles the seed lacks (a housekeeping supervisor, a bookings-only reader) are created once through the owner by `e2e/fixtures/employees.ts` and reused by later runs.
   - UI strings in scenarios come from `src/locales/en.json`; the fixture in `e2e/fixtures/test.ts` pins the UI to English.
   - A scenario blocked by a known bug is skipped with the bug ID.
   - CI does not run e2e, because they need the backend checkout.

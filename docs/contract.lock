@@ -1,0 +1,12 @@
+{
+  "backend": {
+    "commit": "8273e9d9a09d8f9c679c62c0f247ec75121bbebf",
+    "branch": "wp-00-foundation",
+    "dirty": false
+  },
+  "synced_at": "2026-11-10T09:58:17.244Z",
+  "files": {
+    "docs/swagger.yaml": "sha256:e58f40501dcd6786f29f400bac4c1add5bef0a9531d8cdea963425ba57262d3e",
+    "docs/integration.md": "sha256:56a10bce39f20de4f2bb59bd8f75e6e59141ada47196dde5d57adf084c09ba57"
+  }
+}

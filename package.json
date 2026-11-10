@@ -8,12 +8,13 @@
     "build": "vue-tsc -b && vite build",
     "typecheck": "vue-tsc -b",
     "preview": "vite preview",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
-    "format": "prettier --write \"src/**/*.{ts,vue,css,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\"",
+    "lint": "eslint src/ e2e/",
+    "lint:fix": "eslint src/ e2e/ --fix",
+    "format": "prettier --write \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"*.config.{ts,js}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,vue,css,json}\" \"e2e/**/*.ts\" \"*.config.{ts,js}\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.10.7",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/test-utils": "^2.5.1",

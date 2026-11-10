@@ -2,6 +2,13 @@
 /docs/requirements.md
 /docs/swagger.yaml
 
+# Playwright
+/e2e/.auth/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Created by https://www.toptal.com/developers/gitignore/api/node,vue,vuejs,web,macos,windows,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,vue,vuejs,web,macos,windows,visualstudiocode
 

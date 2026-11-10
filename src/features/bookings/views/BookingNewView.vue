@@ -21,7 +21,6 @@
       :currency="hotelCurrency"
       :loading="quoteLoading"
       :error="quoteError"
-      :room-type-names="roomTypeNames"
       @remove-manual-adjustment="removeManualAdjustment"
     >
       <template #actions>
@@ -43,12 +42,7 @@ import { ref, computed, onMounted, provide, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@pinia/colada'
-import {
-  availableRoomsQuery,
-  hotelQuery,
-  roomListQuery,
-  roomTypeListQuery,
-} from '@/features/property/queries'
+import { availableRoomsQuery, hotelQuery, roomListQuery } from '@/features/property/queries'
 import { bookingCreateFormQuery, useCreateBookingMutation } from '@/features/bookings/queries'
 import { guestListQuery } from '@/features/guests/queries'
 import type { FormNode } from '@/shared/form-dsl/types'
@@ -72,7 +66,6 @@ const createBooking = useCreateBookingMutation()
 const formQ = useQuery(bookingCreateFormQuery)
 const roomsQ = useQuery(roomListQuery())
 const hotelQ = useQuery(hotelQuery)
-const roomTypesQuery = useQuery(roomTypeListQuery())
 const hotel = computed(() => hotelQ.data.value ?? null)
 
 const loading = ref(true)
@@ -144,11 +137,6 @@ const stayBranch = computed(() => {
 })
 
 const hotelCurrency = computed(() => hotel.value?.currency ?? '')
-const roomTypeNames = computed(() => {
-  const map: Record<string, string> = {}
-  for (const rt of roomTypesQuery.data.value ?? []) map[rt.id] = rt.name
-  return map
-})
 
 function removeManualAdjustment(name: string) {
   manualAdjustments.value = manualAdjustments.value.filter((a) => a.name !== name)

@@ -69,7 +69,6 @@
             v-if="storedQuote?.accommodation && showAccommodationPanel"
             :accommodation="storedQuote.accommodation"
             :currency="hotelCurrency"
-            :room-type-names="roomTypeNames"
           />
         </template>
 
@@ -93,7 +92,6 @@
           :currency="hotelCurrency"
           :loading="quoteLoading"
           :error="quoteError"
-          :room-type-names="roomTypeNames"
           @remove-manual-adjustment="removeManualAdjustment"
         >
           <template #actions>
@@ -119,7 +117,7 @@ import { useHashTab } from '@/shared/composables/useHashTab'
 import { formatDocumentTitle } from '@/shared/i18n/documentTitle'
 import { bookingDetailQuery, useUpdateBookingMutation } from '@/features/bookings/queries'
 import { useQuery } from '@pinia/colada'
-import { availableRoomsQuery, hotelQuery, roomTypeListQuery } from '@/features/property/queries'
+import { availableRoomsQuery, hotelQuery } from '@/features/property/queries'
 import { bookingQuoteQuery } from '@/features/pricing/queries'
 import { guestListQuery } from '@/features/guests/queries'
 import {
@@ -151,7 +149,6 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const updateBooking = useUpdateBookingMutation()
 const hotelQ = useQuery(hotelQuery)
-const roomTypesQuery = useQuery(roomTypeListQuery())
 const { canModifyBookings, canAccessBookingFolio } = usePermissions()
 const concurrentError = ref('')
 const editing = ref(false)
@@ -220,12 +217,6 @@ const hotelCurrency = computed(() => hotelQ.data.value?.currency ?? '')
 function removeManualAdjustment(name: string) {
   editManualAdjustments.value = editManualAdjustments.value.filter((a) => a.name !== name)
 }
-
-const roomTypeNames = computed(() => {
-  const map: Record<string, string> = {}
-  for (const rt of roomTypesQuery.data.value ?? []) map[rt.id] = rt.name
-  return map
-})
 
 const editGuestId = computed(() => {
   if (!editing.value) return undefined

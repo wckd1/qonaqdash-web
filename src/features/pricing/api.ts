@@ -2,7 +2,10 @@ import type { RequestOptions } from '@/shared/api/client'
 import { typedApi, type Schemas } from '@/shared/api/typed'
 import { httpErrorResponse } from '@/shared/unknownError'
 
+/** Base rate as it is saved: room type and rate. */
 export type BaseRateItem = Schemas['pricinghttp.BaseRateItemDTO']
+/** Base rate as it is read: also the name of its room type. */
+export type BaseRate = Schemas['pricinghttp.BaseRateResponseItemDTO']
 export type PricingRule = Schemas['pricinghttp.PricingRuleResponse']
 export type PricingCondition = Schemas['pricinghttp.RuleConditionDTO']
 export type PricingEffect = Schemas['pricinghttp.RuleEffectDTO']
@@ -39,13 +42,14 @@ export interface StoredBookingQuote {
 // Base rates
 // ---------------------------------------------------------------------------
 
-export function fetchBaseRates(options: RequestOptions = {}): Promise<BaseRateItem[]> {
+/** Rates of every active room type of the hotel, ordered by room type name (`0` when not set). */
+export function fetchBaseRates(options: RequestOptions = {}): Promise<BaseRate[]> {
   return typedApi
     .get('/api/pricing/base-rates', { signal: options.signal })
     .then(({ data }) => data.rates)
 }
 
-export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRateItem[]> {
+export function updateBaseRates(rates: BaseRateItem[]): Promise<BaseRate[]> {
   return typedApi.put('/api/pricing/base-rates', { body: { rates } }).then(({ data }) => data.rates)
 }
 

@@ -85,7 +85,6 @@ function serve() {
       check_out_hour: '12:00',
     },
   }))
-  http.routes.set('GET /api/property/room-types', () => ({ status: 200, data: [] }))
   http.routes.set('GET /api/property/rooms/available', () => ({ status: 200, data: [] }))
 }
 

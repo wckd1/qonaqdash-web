@@ -127,8 +127,8 @@
               <div class="pricing-date-group__header">{{ fmtDate(group.date) }}</div>
 
               <div v-for="(entry, idx) in group.entries" :key="idx" class="pricing-night">
-                <div v-if="roomTypeName(entry.room_type_id)" class="pricing-night__room-type">
-                  {{ roomTypeName(entry.room_type_id) }}
+                <div v-if="entry.room_type_name" class="pricing-night__room-type">
+                  {{ entry.room_type_name }}
                 </div>
 
                 <div class="pricing-night__row">
@@ -200,7 +200,6 @@ const props = defineProps<{
   currency: string
   loading: boolean
   error: string
-  roomTypeNames?: Record<string, string>
 }>()
 
 const emit = defineEmits<{
@@ -351,7 +350,8 @@ function fmtDate(dateStr: string): string {
   }
 }
 
+/** Name of a room type, as the nights of the quote carry it. */
 function roomTypeName(id: string): string {
-  return props.roomTypeNames?.[id] ?? ''
+  return props.quote?.nights.find((n) => n.room_type_id === id)?.room_type_name ?? ''
 }
 </script>

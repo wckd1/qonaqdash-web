@@ -16,7 +16,7 @@
             <p class="pricing-view__hint">{{ t('pricing.base_rates_hint') }}</p>
           </div>
           <button
-            v-if="roomTypes.length && canAdjustPricing"
+            v-if="baseRates.length && canAdjustPricing"
             type="button"
             :disabled="!dirty || saving"
             @click="saveAll"
@@ -27,7 +27,7 @@
 
         <p v-if="saveError" class="form-error">{{ saveError }}</p>
 
-        <p v-if="!roomTypes.length" class="pricing-view__empty">
+        <p v-if="!baseRates.length" class="pricing-view__empty">
           {{ t('pricing.base_rates_empty') }}
         </p>
 
@@ -41,19 +41,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="rt in roomTypes" :key="rt.id">
-              <td>{{ rt.name }}</td>
+            <tr v-for="rate in baseRates" :key="rate.room_type_id">
+              <td>{{ rate.room_type_name }}</td>
               <td class="base-rates__col-rate">
                 <div class="base-rates__amount-wrap">
                   <input
                     type="number"
                     min="0"
                     :step="rateInputStep"
-                    :value="editedMajorRate(rt.id)"
+                    :value="editedMajorRate(rate.room_type_id)"
                     :disabled="saving || !canAdjustPricing"
                     class="base-rates__amount-input"
                     @beforeinput="onRateBeforeInput"
-                    @input="onRateInput(rt.id, $event)"
+                    @input="onRateInput(rate.room_type_id, $event)"
                   />
                   <span class="base-rates__currency">{{ currencySymbol }}</span>
                 </div>
@@ -71,7 +71,7 @@ import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PricingSubNav from '@/features/pricing/components/PricingSubNav.vue'
 import { useQuery } from '@pinia/colada'
-import { hotelQuery, roomTypeListQuery } from '@/features/property/queries'
+import { hotelQuery } from '@/features/property/queries'
 import { baseRatesQuery, useUpdateBaseRatesMutation } from '@/features/pricing/queries'
 import {
   minorToMajor,
@@ -86,18 +86,14 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 const { t } = useI18n()
 const { canAdjustPricing } = usePermissions()
 const hotelQ = useQuery(hotelQuery)
-const roomTypesQ = useQuery(roomTypeListQuery())
 const ratesQ = useQuery(baseRatesQuery)
 const updateBaseRates = useUpdateBaseRatesMutation()
 const hotel = computed(() => hotelQ.data.value ?? null)
-const roomTypes = computed(() => roomTypesQ.data.value ?? [])
 const baseRates = computed(() => ratesQ.data.value ?? [])
 
-const loading = computed(
-  () => hotelQ.isPending.value || roomTypesQ.isPending.value || ratesQ.isPending.value,
-)
+const loading = computed(() => hotelQ.isPending.value || ratesQ.isPending.value)
 const loadError = computed(() => {
-  const err = hotelQ.error.value ?? roomTypesQ.error.value ?? ratesQ.error.value
+  const err = hotelQ.error.value ?? ratesQ.error.value
   return err ? formatUnknownApiError(err) || t('pricing.load_failed') : ''
 })
 const saving = ref(false)
@@ -143,9 +139,10 @@ async function saveAll() {
   saving.value = true
   saveError.value = ''
   try {
-    const updatedRates = roomTypes.value.map((rt) => ({
-      room_type_id: rt.id,
-      base_rate_minor: edits.value.get(rt.id) ?? rateForRoomType(rt.id),
+    // The rates carry their room type names; one rate per active room type of the hotel.
+    const updatedRates = baseRates.value.map((rate) => ({
+      room_type_id: rate.room_type_id,
+      base_rate_minor: edits.value.get(rate.room_type_id) ?? rate.base_rate_minor,
     }))
     await updateBaseRates.mutateAsync(updatedRates)
     edits.value.clear()

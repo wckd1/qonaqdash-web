@@ -121,7 +121,6 @@ import { useI18n } from 'vue-i18n'
 import type { LedgerEntry } from '@/features/billing/api'
 import { billQuery } from '@/features/billing/queries'
 import { useQuery } from '@pinia/colada'
-import { roomTypeListQuery } from '@/features/property/queries'
 import { formatMoney } from '@/shared/lib/money'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import PaymentDialog from '@/features/billing/components/PaymentDialog.vue'
@@ -138,9 +137,6 @@ const props = defineProps<{
 const { t, locale } = useI18n()
 const { canCollectPayment, canModifyBilling, canRefundBilling } = usePermissions()
 
-const roomTypesQuery = useQuery(roomTypeListQuery())
-const roomTypes = computed(() => roomTypesQuery.data.value ?? [])
-
 type DialogKind = 'payment' | 'refund' | 'adjustment' | null
 const activeDialog = ref<DialogKind>(null)
 
@@ -152,11 +148,6 @@ const paymentEntries = computed(() =>
 
 function onMutationSuccess() {
   activeDialog.value = null
-}
-
-function roomTypeName(id: string | undefined): string | undefined {
-  if (!id) return undefined
-  return roomTypes.value.find((rt) => rt.id === id)?.name
 }
 
 const hasBillStatus = computed(() => {
@@ -216,7 +207,8 @@ function entryTitle(entry: LedgerEntry): string {
     entry.entry_type === 'accommodation_night' ||
     entry.entry_type === 'accommodation_correction'
   ) {
-    const rtName = roomTypeName(entry.metadata.room_type_id)
+    // The entry carries the name of its room type (principle 5).
+    const rtName = entry.metadata.room_type_name
     const head = date ? `${label} ${date}` : label
     return rtName ? `${head} — ${rtName}` : head
   }

@@ -64,7 +64,7 @@
               :class="{ 'list-row--selected': selectedTask?.id === task.id }"
               @click="openPanel(task)"
             >
-              <td :data-label="t('fields.room_number')">{{ roomLabel(task.room_id) }}</td>
+              <td :data-label="t('fields.room_number')">{{ roomLabel(task) }}</td>
               <td :data-label="t('tasks.col_description')">{{ task.description || '—' }}</td>
               <td :data-label="t('fields.status')" class="col-status">
                 <span class="task-status-badge" :class="statusBadgeClass(task.status)">{{
@@ -85,7 +85,7 @@
       <aside v-if="selectedTask" class="side-panel" aria-labelledby="task-panel-title">
         <div class="side-panel-header">
           <h2 id="task-panel-title">
-            {{ t('tasks.panel_title', { room: roomLabel(selectedTask.room_id) }) }}
+            {{ t('tasks.panel_title', { room: roomLabel(selectedTask) }) }}
           </h2>
           <button
             type="button"
@@ -138,7 +138,7 @@
                 }}</span>
               </dd>
               <dt>{{ t('fields.room_number') }}</dt>
-              <dd>{{ roomLabel(selectedTask.room_id) }}</dd>
+              <dd>{{ roomLabel(selectedTask) }}</dd>
               <template v-if="selectedTask.source === 'auto_checkout'">
                 <dt>{{ t('tasks.source_label') }}</dt>
                 <dd>{{ t('tasks.source.auto_checkout') }}</dd>
@@ -272,7 +272,7 @@
           <select v-model="createForm.room_id" required :disabled="createSaving">
             <option value="" disabled>{{ t('tasks.select_room_placeholder') }}</option>
             <option v-for="room in rooms" :key="room.id" :value="room.id">
-              {{ roomDisplay(room) }}
+              {{ room.number }}
             </option>
           </select>
         </label>
@@ -325,7 +325,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useQuery } from '@pinia/colada'
-import { roomListQuery } from '@/features/property/queries'
+import { hotelRoomsQuery } from '@/features/property/queries'
 import {
   taskListQuery,
   useChangeHousekeepingStatusMutation,
@@ -344,7 +344,6 @@ import type {
   TaskDomain,
   TaskStatus,
 } from '@/features/tasks/api'
-import type { Room } from '@/features/property/api'
 import type { EmployeeListItem } from '@/features/employees/api'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import { usePermissions } from '@/shared/composables/usePermissions'
@@ -365,7 +364,6 @@ const HOUSEKEEPING_STATUSES: HousekeepingTaskStatus[] = [
 const MAINTENANCE_STATUSES: MaintenanceTaskStatus[] = ['open', 'in_progress', 'done', 'canceled']
 
 const { t } = useI18n()
-const roomsQuery = useQuery(roomListQuery())
 const createHousekeeping = useCreateHousekeepingTaskMutation()
 const updateHousekeeping = useUpdateHousekeepingTaskMutation()
 const changeHousekeepingStatus = useChangeHousekeepingStatusMutation()
@@ -373,7 +371,6 @@ const createMaintenance = useCreateMaintenanceTaskMutation()
 const updateMaintenance = useUpdateMaintenanceTaskMutation()
 const changeMaintenanceStatus = useChangeMaintenanceStatusMutation()
 const permissions = usePermissions()
-const rooms = computed(() => roomsQuery.data.value ?? [])
 
 const isMaintenanceDomain = computed(() => props.domain === 'maintenance')
 
@@ -396,6 +393,9 @@ const canAssign = computed(() =>
     ? permissions.canAssignMaintenanceTasks.value
     : permissions.canAssignHousekeepingTasks.value,
 )
+// Rooms to create a task for; the tasks themselves carry their room number.
+const roomsQuery = useQuery(() => ({ ...hotelRoomsQuery, enabled: canCreate.value }))
+const rooms = computed(() => roomsQuery.data.value ?? [])
 // Assignees to pick from; only users who may assign need them.
 const employeesQuery = useQuery(() => ({ ...employeeListQuery(), enabled: canAssign.value }))
 const employees = computed(() => employeesQuery.data.value ?? [])
@@ -456,14 +456,8 @@ function isMaintenance(_task: AnyTask): _task is MaintenanceTask {
   return props.domain === 'maintenance'
 }
 
-function roomLabel(id: string | undefined): string {
-  if (!id) return '—'
-  const room = rooms.value.find((r) => r.id === id)
-  return room?.number ?? id
-}
-
-function roomDisplay(room: Room): string {
-  return room.number
+function roomLabel(task: AnyTask): string {
+  return task.room_number || task.room_id || '—'
 }
 
 function employeeLabel(id: string | null | undefined): string {

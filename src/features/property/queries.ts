@@ -30,6 +30,8 @@ export const propertyKeys = {
   roomList: (q?: string) => ['property', 'rooms', 'list', searchParam(q)] as const,
   roomDetail: (id: string) => ['property', 'rooms', 'detail', id] as const,
   roomActivity: (id: string) => ['property', 'rooms', 'activity', id] as const,
+  /** Every room of the hotel with its type and state (`rooms/available` without a stay). */
+  hotelRooms: ['property', 'rooms', 'available', 'hotel'] as const,
   availableRooms: (params: AvailableRoomsParams) =>
     [
       'property',
@@ -38,6 +40,16 @@ export const propertyKeys = {
       { from: params.from, to: params.to, exclude: params.excludeBookingId ?? '' },
     ] as const,
 }
+
+/**
+ * Every room of the hotel with its type name and state, blocked ones included.
+ * Booking readers and everyone who picks a room may read it (principle 5): the
+ * rows of the reservation grid and the room of a new task come from it.
+ */
+export const hotelRoomsQuery = defineQueryOptions({
+  key: propertyKeys.hotelRooms,
+  query: ({ signal }) => propertyApi.fetchAvailableRooms(null, null, { signal }),
+})
 
 export const hotelQuery = defineQueryOptions({
   key: propertyKeys.hotel,

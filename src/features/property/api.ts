@@ -166,7 +166,8 @@ function availabilityDate(value: Date | string | null): string | undefined {
  * Rooms available for the given date range (e.g. for booking form room picker).
  * Backend returns rooms that can be assigned plus operational `state` /
  * `warnings` so the UI can surface dirty / required-maintenance warnings
- * without hiding the room.
+ * without hiding the room. Without dates: every room of the hotel, blocked
+ * ones included with their `state` (the rows of the reservation grid).
  *
  * @param from - Start date (inclusive)
  * @param to - End date (exclusive)

@@ -1029,6 +1029,7 @@
       "receptionist": "Receptionist",
       "housekeeper": "Housekeeper",
       "housekeeping_supervisor": "Housekeeping Supervisor",
+      "maintenance_technician": "Maintenance Technician",
       "operations_manager": "Operations Manager"
     }
   }

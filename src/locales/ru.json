@@ -1029,6 +1029,7 @@
       "receptionist": "Администратор ресепшн",
       "housekeeper": "Горничная",
       "housekeeping_supervisor": "Супервайзер хозяйственной службы",
+      "maintenance_technician": "Мастер",
       "operations_manager": "Операционный менеджер"
     }
   }

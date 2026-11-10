@@ -152,6 +152,7 @@ import {
   useBlockGuestMutation,
   useUpdateGuestMutation,
 } from '@/features/guests/queries'
+import { guestProfileFields } from '@/features/guests/api'
 import FormView from '@/shared/form-dsl/FormView.vue'
 import FormEdit from '@/shared/form-dsl/FormEdit.vue'
 import { composeGuestFormFromEntity } from '@/shared/form-dsl/normalizeFormResponse'
@@ -252,7 +253,7 @@ const guestDisplayName = computed(() => {
 
 watch(editing, (isEdit) => {
   if (isEdit && guestForm.value) {
-    editFormData.value = { ...guestForm.value.data }
+    editFormData.value = guestProfileFields(guestForm.value.data)
     errorsMap.value = {}
   }
 })
@@ -266,7 +267,7 @@ watch(
 
 function cancelEdit() {
   editing.value = false
-  if (guestForm.value) editFormData.value = { ...guestForm.value.data }
+  if (guestForm.value) editFormData.value = guestProfileFields(guestForm.value.data)
 }
 
 async function onSave() {

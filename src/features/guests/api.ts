@@ -45,6 +45,20 @@ export interface GuestDetailPayload {
   formRef: FormRef | null
 }
 
+/** Keys the server adds to a guest response; they are not profile data. */
+const GUEST_SERVER_KEYS = ['id', 'blocked', '_form'] as const
+
+/**
+ * Profile fields of guest form data: the standard and custom fields of the
+ * guest form, without the keys the server owns. The edit form starts from
+ * them, and they are all a create or update sends.
+ */
+export function guestProfileFields(data: Record<string, unknown>): Record<string, unknown> {
+  const profile = { ...data }
+  for (const key of GUEST_SERVER_KEYS) delete profile[key]
+  return profile
+}
+
 /** Splits a guest response into FormDSL data and its `_form` reference. */
 export function parseGuestDetailPayload(raw: GuestDetailResponse): GuestDetailPayload {
   const { _form, ...data } = raw
@@ -140,7 +154,7 @@ export function updateGuestFormDefinition(body: {
 /** `data` is FormDSL data of the organization's guest form; its rules checked it. */
 export function createGuest(data: Record<string, unknown>): Promise<GuestDetailData> {
   return typedApi
-    .post('/api/guests', { body: data as GuestDataRequest })
+    .post('/api/guests', { body: guestProfileFields(data) as GuestDataRequest })
     .then(({ data: res }) => parseGuestDetailPayload(res).data)
 }
 
@@ -149,7 +163,7 @@ export function updateGuest(
   data: Record<string, unknown>,
 ): Promise<GuestDetailPayload> {
   return typedApi
-    .put('/api/guests/{id}', { path: { id }, body: data as GuestDataRequest })
+    .put('/api/guests/{id}', { path: { id }, body: guestProfileFields(data) as GuestDataRequest })
     .then(({ data: res }) => parseGuestDetailPayload(res))
 }
 

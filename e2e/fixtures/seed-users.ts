@@ -15,8 +15,16 @@ export interface SeedUser {
   password: string
 }
 
-// Filled in at WP-00 integration from the backend README.
-export const SEED_USERS: SeedUser[] = []
+// Backend README, section "Demo users". The owner has full rights in Qonaq City Hotel.
+const DEMO_PASSWORD = 'demo12345'
+
+export const SEED_USERS: SeedUser[] = [
+  { role: 'owner', email: 'owner@qonaqdash.test', password: DEMO_PASSWORD },
+  { role: 'director', email: 'director@qonaqdash.test', password: DEMO_PASSWORD },
+  { role: 'reception', email: 'reception@qonaqdash.test', password: DEMO_PASSWORD },
+  { role: 'housekeeper', email: 'housekeeper@qonaqdash.test', password: DEMO_PASSWORD },
+  { role: 'viewer', email: 'viewer@qonaqdash.test', password: DEMO_PASSWORD },
+]
 
 export function mainUser(): SeedUser | null {
   const email = process.env.E2E_USER_EMAIL

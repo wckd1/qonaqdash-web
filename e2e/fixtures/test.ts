@@ -27,7 +27,9 @@ export async function login(page: Page, user: SeedUser): Promise<void> {
   await page.getByLabel(en.auth.login.email).fill(user.email)
   await page.getByLabel(en.auth.login.password).fill(user.password)
   await page.getByRole('button', { name: en.auth.login.sign_in }).click()
+  // Roles land on different home screens; any screen they may open counts.
   await expect(page).not.toHaveURL(/\/auth\/login/)
+  await expect(page).not.toHaveURL(/\/forbidden/)
   await expect(page.locator('main.app-main')).toBeVisible()
 }
 

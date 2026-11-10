@@ -18,10 +18,9 @@ test('opens reports and changes the period', async ({ page }) => {
   await expect(page.locator('.reports-view .error-message')).toHaveCount(0)
 })
 
-// Known bug F7 (race part), fixed in WP1 by Pinia Colada query keys per period.
 // F7: a slow response for the previous period must not replace the data of
 // the period selected after it.
-test.fail('shows the data of the last selected period', async ({ page }) => {
+test('shows the data of the last selected period', async ({ page }) => {
   const overview = (accommodation: number) => ({
     period: { from: '2026-01-01', to: '2026-02-01' },
     accommodation,

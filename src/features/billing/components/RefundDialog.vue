@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { ref, computed, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { recordRefund } from '@/features/billing/api'
+import { useRecordRefundMutation } from '@/features/billing/queries'
 import type { LedgerEntry } from '@/shared/types/billing'
 import {
   majorToMinor,
@@ -91,6 +91,7 @@ const selectedPaymentId = ref('')
 const amount = ref<number | undefined>(undefined)
 const description = ref('')
 const submitting = ref(false)
+const recordRefund = useRecordRefundMutation()
 
 const step = computed(() => 1 / 10 ** getCurrencyExponent(props.currency))
 
@@ -138,10 +139,13 @@ async function submit() {
 
   submitting.value = true
   try {
-    await recordRefund(props.bookingId, {
-      amount: majorToMinor(amount.value!, props.currency),
-      reverses_entry_id: selectedPaymentId.value,
-      description: description.value.trim() || undefined,
+    await recordRefund.mutateAsync({
+      bookingId: props.bookingId,
+      payload: {
+        amount: majorToMinor(amount.value!, props.currency),
+        reverses_entry_id: selectedPaymentId.value,
+        description: description.value.trim() || undefined,
+      },
     })
     showSuccess(t('billing.refund_success'))
     emit('success')

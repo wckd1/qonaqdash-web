@@ -116,13 +116,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchGuestBill, type BillResponse, type LedgerEntry } from '@/features/billing/api'
+import type { LedgerEntry } from '@/features/billing/api'
+import { billQuery } from '@/features/billing/queries'
 import { useQuery } from '@pinia/colada'
 import { roomTypeListQuery } from '@/features/property/queries'
 import { formatMoney } from '@/shared/lib/money'
-import { httpErrorResponse } from '@/shared/unknownError'
 import { formatUnknownApiError } from '@/shared/i18n/apiError'
 import PaymentDialog from '@/features/billing/components/PaymentDialog.vue'
 import RefundDialog from '@/features/billing/components/RefundDialog.vue'
@@ -152,7 +152,6 @@ const paymentEntries = computed(() =>
 
 function onMutationSuccess() {
   activeDialog.value = null
-  loadBill()
 }
 
 function roomTypeName(id: string | undefined): string | undefined {
@@ -160,16 +159,23 @@ function roomTypeName(id: string | undefined): string | undefined {
   return roomTypes.value.find((rt) => rt.id === id)?.name
 }
 
-const billData = ref<BillResponse | null>(null)
-const loading = ref(false)
-const loadError = ref('')
-
-let loadSeq = 0
-
 const hasBillStatus = computed(() => {
   const s = props.bookingStatus
   return s === 'checked_in' || s === 'checked_out' || s === 'canceled'
 })
+
+const billQ = useQuery(() => ({
+  ...billQuery(props.bookingId ?? ''),
+  enabled: !!props.bookingId && hasBillStatus.value,
+}))
+const billEnabled = computed(() => !!props.bookingId && hasBillStatus.value)
+const billData = computed(() => (billEnabled.value ? (billQ.data.value ?? null) : null))
+const loading = computed(() => billEnabled.value && billQ.isPending.value && !billQ.error.value)
+const loadError = computed(() =>
+  billEnabled.value && billQ.error.value
+    ? formatUnknownApiError(billQ.error.value) || t('billing.load_failed')
+    : '',
+)
 
 const visible = computed(
   () => hasBillStatus.value && (loading.value || !!billData.value || !!loadError.value),
@@ -247,40 +253,7 @@ function fmtDateTime(iso: string): string {
   }
 }
 
-async function loadBill() {
-  const id = props.bookingId
-  if (!id || !hasBillStatus.value) {
-    billData.value = null
-    loadError.value = ''
-    return
-  }
-  const seq = ++loadSeq
-  loading.value = true
-  loadError.value = ''
-  billData.value = null
-  try {
-    const resp = await fetchGuestBill(id)
-    if (seq !== loadSeq) return
-    billData.value = resp
-  } catch (err: unknown) {
-    if (seq !== loadSeq) return
-    if (httpErrorResponse(err)?.status === 404) {
-      billData.value = null
-    } else {
-      loadError.value = formatUnknownApiError(err) || t('billing.load_failed')
-    }
-  } finally {
-    if (seq === loadSeq) loading.value = false
-  }
-}
-
-watch(
-  () => [props.bookingId, props.bookingStatus] as const,
-  () => loadBill(),
-  { immediate: true },
-)
-
-defineExpose({ reload: loadBill })
+defineExpose({ reload: () => billQ.refetch() })
 </script>
 
 <style scoped>

@@ -439,18 +439,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHashTab } from '@/shared/composables/useHashTab'
 import { useQuery } from '@pinia/colada'
 import { hotelQuery } from '@/features/property/queries'
 import {
-  fetchOverview,
-  fetchDailyBreakdown,
-  fetchMonthlyBreakdown,
-  fetchReportLedger,
-  fetchOutstandingBalances,
-} from '@/features/billing/api'
+  dailyBreakdownQuery,
+  monthlyBreakdownQuery,
+  outstandingBalancesQuery,
+  overviewQuery,
+  useReportLedgerQuery,
+} from '@/features/billing/queries'
 import type {
   OverviewResponse,
   DailyBreakdownResponse,
@@ -619,29 +619,85 @@ function shiftRange(direction: 1 | -1) {
 // Data
 // ---------------------------------------------------------------------------
 
-const loading = ref(true)
-const loadError = ref('')
-const groupingLoading = ref(false)
-
-const overview = ref<OverviewResponse | null>(null)
-const daily = ref<DailyBreakdownResponse | null>(null)
-const monthly = ref<MonthlyBreakdownResponse | null>(null)
-const outstanding = ref<OutstandingBalancesResponse | null>(null)
-
-const ledgerEntries = ref<ReportLedgerEntry[]>([])
-const ledgerLoading = ref(false)
-const ledgerHasMore = ref(false)
 const ledgerEntryTypeFilter = ref('')
 const hasTypeFilter = computed(() => ledgerEntryTypeFilter.value !== '')
 
-const loadedKeys = ref(new Set<string>())
+/**
+ * Filter of the reports on screen. It follows the toolbar only when the range
+ * is valid, so a half-typed date keeps the last report instead of a blank one.
+ */
+const appliedParams = ref({
+  from: fromStr.value,
+  to: toStr.value,
+  entry_type: '',
+})
 
-const LEDGER_PAGE_SIZE = 50
+// The hotel currency formats the amounts; wait for it before the first report.
+const hotelReady = computed(() => !hotelQ.isPending.value)
+const rangeReady = computed(
+  () => hotelReady.value && appliedParams.value.from < appliedParams.value.to,
+)
+const isLedgerTab = computed(() => activeTab.value === 'ledger')
 
-function dataKey(): string {
-  if (activeTab.value === 'ledger') return `ledger:${ledgerGrouping.value}`
-  return activeTab.value
-}
+// Each report is cached by its key (period and filter), so a slow response for
+// a previous period can never replace the report of the current one.
+const overviewQ = useQuery(() => ({
+  ...overviewQuery(appliedParams.value),
+  enabled: activeTab.value === 'overview' && rangeReady.value,
+}))
+const dailyQ = useQuery(() => ({
+  ...dailyBreakdownQuery(appliedParams.value),
+  enabled: isLedgerTab.value && ledgerGrouping.value === 'daily' && rangeReady.value,
+}))
+const monthlyQ = useQuery(() => ({
+  ...monthlyBreakdownQuery(appliedParams.value),
+  enabled: isLedgerTab.value && ledgerGrouping.value === 'monthly' && rangeReady.value,
+}))
+const outstandingQ = useQuery(() => ({
+  ...outstandingBalancesQuery,
+  enabled: activeTab.value === 'outstanding' && hotelReady.value,
+}))
+const ledgerQ = useReportLedgerQuery(
+  () => appliedParams.value,
+  () => isLedgerTab.value && ledgerGrouping.value === 'entries' && rangeReady.value,
+)
+
+const overview = computed<OverviewResponse | null>(() => overviewQ.data.value ?? null)
+const daily = computed<DailyBreakdownResponse | null>(() => dailyQ.data.value ?? null)
+const monthly = computed<MonthlyBreakdownResponse | null>(() => monthlyQ.data.value ?? null)
+const outstanding = computed<OutstandingBalancesResponse | null>(
+  () => outstandingQ.data.value ?? null,
+)
+const ledgerEntries = computed<ReportLedgerEntry[]>(
+  () => ledgerQ.data.value?.pages.flatMap((page) => page.entries) ?? [],
+)
+const ledgerHasMore = computed(() => ledgerQ.hasNextPage.value)
+/** A next ledger page is loading (the first page uses the page loading state). */
+const ledgerLoading = computed(() => ledgerQ.isLoading.value && !ledgerQ.isPending.value)
+
+/** Query behind the current tab and grouping. */
+const activeQuery = computed(() => {
+  if (activeTab.value === 'overview') return overviewQ
+  if (activeTab.value === 'outstanding') return outstandingQ
+  if (ledgerGrouping.value === 'daily') return dailyQ
+  if (ledgerGrouping.value === 'monthly') return monthlyQ
+  return ledgerQ
+})
+
+/** Daily and monthly breakdowns load inside the ledger tab, the rest replace the page. */
+const isGroupingView = computed(() => isLedgerTab.value && ledgerGrouping.value !== 'entries')
+const loading = computed(
+  () =>
+    !hotelReady.value ||
+    (!isGroupingView.value && activeQuery.value.isPending.value && !loadError.value),
+)
+const groupingLoading = computed(
+  () => isGroupingView.value && activeQuery.value.isPending.value && !loadError.value,
+)
+const loadError = computed(() => {
+  const err = activeQuery.value.error.value
+  return err ? formatUnknownApiError(err) || t('billing.reports_load_failed') : ''
+})
 
 // ---------------------------------------------------------------------------
 // Entry type labels
@@ -741,149 +797,17 @@ function entryTitle(entry: ReportLedgerEntry): string {
 // Data loading
 // ---------------------------------------------------------------------------
 
-let loadSeq = 0
-
-function invalidateAll() {
-  loadedKeys.value.clear()
-  overview.value = null
-  daily.value = null
-  monthly.value = null
-  outstanding.value = null
-  ledgerEntries.value = []
-  ledgerHasMore.value = false
-}
-
-async function ensureDataLoaded() {
-  const key = dataKey()
-  if (loadedKeys.value.has(key)) return
-  if (activeTab.value !== 'outstanding' && !isValidRange()) return
-
-  const seq = ++loadSeq
-  const isLedgerGroupSwitch = activeTab.value === 'ledger' && ledgerGrouping.value !== 'entries'
-
-  if (isLedgerGroupSwitch) {
-    groupingLoading.value = true
-  } else {
-    loading.value = true
-  }
-  loadError.value = ''
-
-  try {
-    const params = {
-      from: fromStr.value,
-      to: toStr.value,
-      entry_type: ledgerEntryTypeFilter.value || undefined,
-    }
-    switch (activeTab.value) {
-      case 'overview':
-        overview.value = await fetchOverview(params)
-        break
-      case 'ledger':
-        switch (ledgerGrouping.value) {
-          case 'entries': {
-            ledgerEntries.value = []
-            const resp = await fetchReportLedger({
-              ...params,
-              limit: LEDGER_PAGE_SIZE,
-              offset: 0,
-            })
-            ledgerEntries.value = resp.entries
-            ledgerHasMore.value = resp.entries.length >= LEDGER_PAGE_SIZE
-            break
-          }
-          case 'daily':
-            daily.value = await fetchDailyBreakdown(params)
-            break
-          case 'monthly':
-            monthly.value = await fetchMonthlyBreakdown(params)
-            break
-        }
-        break
-      case 'outstanding':
-        outstanding.value = await fetchOutstandingBalances()
-        break
-    }
-    if (seq === loadSeq) loadedKeys.value.add(key)
-  } catch (err: unknown) {
-    if (seq !== loadSeq) return
-    loadError.value = formatUnknownApiError(err) || t('billing.reports_load_failed')
-  } finally {
-    if (seq === loadSeq) {
-      loading.value = false
-      groupingLoading.value = false
-    }
-  }
-}
-
 function onRangeChanged() {
-  invalidateAll()
-  ensureDataLoaded()
-}
-
-watch(activeTab, () => {
-  loadError.value = ''
-  ensureDataLoaded()
-})
-
-watch(ledgerGrouping, () => {
-  if (activeTab.value === 'ledger') {
-    loadError.value = ''
-    ensureDataLoaded()
-  }
-})
-
-function invalidateLedgerKeys() {
-  loadedKeys.value.delete('ledger:entries')
-  loadedKeys.value.delete('ledger:daily')
-  loadedKeys.value.delete('ledger:monthly')
-  ledgerEntries.value = []
-  ledgerHasMore.value = false
-  daily.value = null
-  monthly.value = null
+  appliedParams.value = { ...appliedParams.value, from: fromStr.value, to: toStr.value }
 }
 
 function onEntryTypeFilterChange() {
-  invalidateLedgerKeys()
-  ensureDataLoaded()
-}
-
-async function loadLedger(reset: boolean) {
-  if (reset) {
-    ledgerEntries.value = []
-    loadedKeys.value.delete('ledger:entries')
-  }
-  ledgerLoading.value = true
-  try {
-    const resp = await fetchReportLedger({
-      from: fromStr.value,
-      to: toStr.value,
-      entry_type: ledgerEntryTypeFilter.value || undefined,
-      limit: LEDGER_PAGE_SIZE,
-      offset: reset ? 0 : ledgerEntries.value.length,
-    })
-    if (reset) {
-      ledgerEntries.value = resp.entries
-    } else {
-      ledgerEntries.value = [...ledgerEntries.value, ...resp.entries]
-    }
-    ledgerHasMore.value = resp.entries.length >= LEDGER_PAGE_SIZE
-    loadedKeys.value.add('ledger:entries')
-  } catch (err: unknown) {
-    loadError.value = formatUnknownApiError(err) || t('billing.reports_load_failed')
-  } finally {
-    ledgerLoading.value = false
-  }
+  appliedParams.value = { ...appliedParams.value, entry_type: ledgerEntryTypeFilter.value }
 }
 
 function loadMoreLedger() {
-  loadLedger(false)
+  void ledgerQ.loadNextPage()
 }
-
-onMounted(async () => {
-  // Wait for the hotel currency; on error amounts fall back to USD.
-  await hotelQ.refresh()
-  ensureDataLoaded()
-})
 </script>
 
 <style scoped>

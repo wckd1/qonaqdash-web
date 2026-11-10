@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { ref, computed, useId, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { recordPayment } from '@/features/billing/api'
+import { useRecordPaymentMutation } from '@/features/billing/queries'
 import { majorToMinor, getCurrencyExponent, getCurrencySymbol } from '@/shared/lib/money'
 import { useNotification } from '@/shared/composables/useNotification'
 import { guardNumberBeforeInput } from '@/shared/form-dsl/inputGuard'
@@ -73,6 +73,7 @@ const titleId = useId()
 const amount = ref<number | undefined>(undefined)
 const description = ref('')
 const submitting = ref(false)
+const recordPayment = useRecordPaymentMutation()
 const amountRef = ref<HTMLInputElement | null>(null)
 
 const step = computed(() => 1 / 10 ** getCurrencyExponent(props.currency))
@@ -103,9 +104,12 @@ async function submit() {
 
   submitting.value = true
   try {
-    await recordPayment(props.bookingId, {
-      amount: majorToMinor(amount.value!, props.currency),
-      description: description.value.trim() || undefined,
+    await recordPayment.mutateAsync({
+      bookingId: props.bookingId,
+      payload: {
+        amount: majorToMinor(amount.value!, props.currency),
+        description: description.value.trim() || undefined,
+      },
     })
     showSuccess(t('billing.payment_success'))
     emit('success')

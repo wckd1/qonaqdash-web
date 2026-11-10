@@ -1,4 +1,4 @@
-import api from '@/shared/api/client'
+import api, { type RequestOptions } from '@/shared/api/client'
 import type {
   GuestBill,
   LedgerEntry,
@@ -118,15 +118,20 @@ function parseMutationEntryResponse(data: unknown): MutationEntryResponse {
  * Returns bill header, all ledger entries, and outstanding balance.
  * 404 when no bill exists (bill opens at check-in).
  */
-export function fetchGuestBill(bookingId: string): Promise<BillResponse> {
-  return api.get(`/api/billing/bookings/${bookingId}/bill`).then(({ data }) => {
-    const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-    return {
-      bill: parseBillHeader(o.bill),
-      entries: Array.isArray(o.entries) ? o.entries.map(parseLedgerEntry) : [],
-      outstanding_balance: typeof o.outstanding_balance === 'number' ? o.outstanding_balance : 0,
-    }
-  })
+export function fetchGuestBill(
+  bookingId: string,
+  options: RequestOptions = {},
+): Promise<BillResponse> {
+  return api
+    .get(`/api/billing/bookings/${bookingId}/bill`, { signal: options.signal })
+    .then(({ data }) => {
+      const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
+      return {
+        bill: parseBillHeader(o.bill),
+        entries: Array.isArray(o.entries) ? o.entries.map(parseLedgerEntry) : [],
+        outstanding_balance: typeof o.outstanding_balance === 'number' ? o.outstanding_balance : 0,
+      }
+    })
 }
 
 /** POST /api/billing/bookings/{bookingId}/payments */
@@ -240,80 +245,100 @@ function parseMonthlyRow(raw: unknown): MonthlyBreakdownRow {
 }
 
 /** GET /api/billing/reports/overview */
-export function fetchOverview(params: ReportDateRangeParams): Promise<OverviewResponse> {
-  return api.get('/api/billing/reports/overview', { params }).then(({ data }) => {
-    const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-    return {
-      period: parsePeriod(o.period),
-      accommodation: typeof o.accommodation === 'number' ? o.accommodation : 0,
-      rule_adjustments: typeof o.rule_adjustments === 'number' ? o.rule_adjustments : 0,
-      manual_adjustments: typeof o.manual_adjustments === 'number' ? o.manual_adjustments : 0,
-      service_charges: typeof o.service_charges === 'number' ? o.service_charges : 0,
-      total_charges: typeof o.total_charges === 'number' ? o.total_charges : 0,
-      payments: typeof o.payments === 'number' ? o.payments : 0,
-      refunds: typeof o.refunds === 'number' ? o.refunds : 0,
-      corrections: typeof o.corrections === 'number' ? o.corrections : 0,
-      total_outstanding: typeof o.total_outstanding === 'number' ? o.total_outstanding : 0,
-    }
-  })
+export function fetchOverview(
+  params: ReportDateRangeParams,
+  options: RequestOptions = {},
+): Promise<OverviewResponse> {
+  return api
+    .get('/api/billing/reports/overview', { params, signal: options.signal })
+    .then(({ data }) => {
+      const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
+      return {
+        period: parsePeriod(o.period),
+        accommodation: typeof o.accommodation === 'number' ? o.accommodation : 0,
+        rule_adjustments: typeof o.rule_adjustments === 'number' ? o.rule_adjustments : 0,
+        manual_adjustments: typeof o.manual_adjustments === 'number' ? o.manual_adjustments : 0,
+        service_charges: typeof o.service_charges === 'number' ? o.service_charges : 0,
+        total_charges: typeof o.total_charges === 'number' ? o.total_charges : 0,
+        payments: typeof o.payments === 'number' ? o.payments : 0,
+        refunds: typeof o.refunds === 'number' ? o.refunds : 0,
+        corrections: typeof o.corrections === 'number' ? o.corrections : 0,
+        total_outstanding: typeof o.total_outstanding === 'number' ? o.total_outstanding : 0,
+      }
+    })
 }
 
 /** GET /api/billing/reports/ledger */
-export function fetchReportLedger(params: LedgerReportParams): Promise<LedgerListResponse> {
-  return api.get('/api/billing/reports/ledger', { params }).then(({ data }) => {
-    const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-    return {
-      entries: Array.isArray(o.entries) ? o.entries.map(parseReportLedgerEntry) : [],
-    }
-  })
+export function fetchReportLedger(
+  params: LedgerReportParams,
+  options: RequestOptions = {},
+): Promise<LedgerListResponse> {
+  return api
+    .get('/api/billing/reports/ledger', { params, signal: options.signal })
+    .then(({ data }) => {
+      const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
+      return {
+        entries: Array.isArray(o.entries) ? o.entries.map(parseReportLedgerEntry) : [],
+      }
+    })
 }
 
 /** GET /api/billing/reports/ledger/daily */
 export function fetchDailyBreakdown(
   params: ReportDateRangeParams,
+  options: RequestOptions = {},
 ): Promise<DailyBreakdownResponse> {
-  return api.get('/api/billing/reports/ledger/daily', { params }).then(({ data }) => {
-    const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-    return {
-      period: parsePeriod(o.period),
-      days: Array.isArray(o.days) ? o.days.map(parseDailyRow) : [],
-    }
-  })
+  return api
+    .get('/api/billing/reports/ledger/daily', { params, signal: options.signal })
+    .then(({ data }) => {
+      const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
+      return {
+        period: parsePeriod(o.period),
+        days: Array.isArray(o.days) ? o.days.map(parseDailyRow) : [],
+      }
+    })
 }
 
 /** GET /api/billing/reports/ledger/monthly */
 export function fetchMonthlyBreakdown(
   params: ReportDateRangeParams,
+  options: RequestOptions = {},
 ): Promise<MonthlyBreakdownResponse> {
-  return api.get('/api/billing/reports/ledger/monthly', { params }).then(({ data }) => {
-    const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-    return {
-      period: parsePeriod(o.period),
-      months: Array.isArray(o.months) ? o.months.map(parseMonthlyRow) : [],
-    }
-  })
+  return api
+    .get('/api/billing/reports/ledger/monthly', { params, signal: options.signal })
+    .then(({ data }) => {
+      const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
+      return {
+        period: parsePeriod(o.period),
+        months: Array.isArray(o.months) ? o.months.map(parseMonthlyRow) : [],
+      }
+    })
 }
 
 /** GET /api/billing/reports/outstanding */
-export function fetchOutstandingBalances(): Promise<OutstandingBalancesResponse> {
-  return api.get('/api/billing/reports/outstanding').then(({ data }) => {
-    const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
-    const parseBill = (raw: unknown): OutstandingBillDTO => {
-      const b = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
-      return {
-        bill_id: String(b.bill_id ?? ''),
-        booking_id: String(b.booking_id ?? ''),
-        guest_id: String(b.guest_id ?? ''),
-        status: String(b.status ?? ''),
-        opened_at: String(b.opened_at ?? ''),
-        total_charges: typeof b.total_charges === 'number' ? b.total_charges : 0,
-        total_payments: typeof b.total_payments === 'number' ? b.total_payments : 0,
-        outstanding: typeof b.outstanding === 'number' ? b.outstanding : 0,
+export function fetchOutstandingBalances(
+  options: RequestOptions = {},
+): Promise<OutstandingBalancesResponse> {
+  return api
+    .get('/api/billing/reports/outstanding', { signal: options.signal })
+    .then(({ data }) => {
+      const o = data && typeof data === 'object' ? (data as Record<string, unknown>) : {}
+      const parseBill = (raw: unknown): OutstandingBillDTO => {
+        const b = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+        return {
+          bill_id: String(b.bill_id ?? ''),
+          booking_id: String(b.booking_id ?? ''),
+          guest_id: String(b.guest_id ?? ''),
+          status: String(b.status ?? ''),
+          opened_at: String(b.opened_at ?? ''),
+          total_charges: typeof b.total_charges === 'number' ? b.total_charges : 0,
+          total_payments: typeof b.total_payments === 'number' ? b.total_payments : 0,
+          outstanding: typeof b.outstanding === 'number' ? b.outstanding : 0,
+        }
       }
-    }
-    return {
-      bills: Array.isArray(o.bills) ? o.bills.map(parseBill) : [],
-      total_outstanding: typeof o.total_outstanding === 'number' ? o.total_outstanding : 0,
-    }
-  })
+      return {
+        bills: Array.isArray(o.bills) ? o.bills.map(parseBill) : [],
+        total_outstanding: typeof o.total_outstanding === 'number' ? o.total_outstanding : 0,
+      }
+    })
 }

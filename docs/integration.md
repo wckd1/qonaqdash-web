@@ -112,7 +112,16 @@ The frontend should treat **permissions as a capability hint plus runtime guard*
 
 ### 2.6 `403 common.forbidden`
 
-Every route that needs a permission declares it (`internal/infra/di/route_access.go`), and the server enforces the declaration **before the handler**: a caller without any of the declared permissions gets **403** without the body being read or anything being loaded. Handlers then apply finer rules (owned tasks, per-field and per-status rights, the room-status aliases) with the same response. Account routes need only a valid token.
+Every route that needs a permission declares it (`internal/infra/di/route_access.go`), and the server enforces the declaration **before the handler**: a caller without any of the declared permissions gets **403** without the body being read or anything being loaded. Handlers then apply finer rules (owned tasks, per-field and per-status rights, the room-status aliases) with the same response. Account routes and the basic hotel data (`GET /api/property/hotel`) need only a valid token.
+
+**Rights only on explicit actions** (architecture principle 5). The server checks the right of the action the caller requested and nothing more:
+
+- **Sub-operations** of an allowed action need no right of their own: a booking with a new inline guest creates the guest with `bookings.create` alone; `cleaning` / `under_maintenance` through the room-status aliases open the task without `create`.
+- **Data embedded in a response** needs no right of its resource: the guest and `outstanding_balance` of a booking, `room_number` and `assignee_name` of a task, `room_type_name` of ledger entries, quote nights and base rates, the stored quote of a booking (readable by every booking reader). Use these names instead of resolving the ids through `GET /api/property/room-types` or `GET /api/employees`, which need their own rights.
+- **Data an action cannot do without** is readable with the action's right: the room picker (`GET /api/property/rooms/available`) for booking writers and task creators, the hotel's rooms (the same endpoint without `from`/`to`) for every booking reader, since the reservation grid cannot be shown without them, assignee candidates (`GET /api/tasks/assignees`) for assigners, pricing condition candidates for rule managers, the basic hotel data for every employee of the hotel.
+- **A separate right stays** for an explicitly requested resource (guest list, room card, employee list) and for an explicit action with its own right: assigning (also `assignee_employee_id` on creation), granting permissions, `planned_end` and reassignment through the room-status aliases.
+
+The frontend follows the same rule: it does not hide embedded data and does not request a separate resource when the data already came in the response.
 
 All user-facing bounded contexts use a consistent forbidden response:
 
@@ -134,9 +143,10 @@ Frontend guidance:
 
 ### 2.7 Owner, permission levels, tenancy
 
-- **Owner.** The organization owner is an attribute of the organization, set by provisioning (not an occupation or a role). The owner holds every permission at organization level, whatever their occupations and overrides. `GET`/`PUT /api/account` return **`is_owner`**; for the owner `permissions` is the full set. Changing the owner's permissions or occupations (`PUT /api/employees/{id}/permissions`, `PUT /api/employees/{id}/occupations`) is **409** `iam.owner_permissions_immutable`.
+- **Owner.** The organization owner is an attribute of the organization, set by provisioning (not an occupation or a role). The owner holds every permission at organization level, whatever their occupations and overrides. `GET`/`PUT /api/account` return **`is_owner`**; for the owner `permissions` is the full set. The employee detail (`GET`/`PUT /api/employees/{id}`, `POST /api/employees`) also carries **`is_owner`**, so the employee card can show that the owner's occupations and permissions are fixed. Changing the owner's permissions or occupations (`PUT /api/employees/{id}/permissions`, `PUT /api/employees/{id}/occupations`) is **409** `iam.owner_permissions_immutable`.
 - **Permission levels.** `0` none, `2` hotel and `3` organization are valid for every key; `1` (owned) only for `housekeeping_tasks.*` and `maintenance_tasks.*`. Any other value in occupation permissions or employee overrides is **400** `iam.invalid_permission_level`; `fields` lists the keys (`bookings.view`).
 - **No granting above one's own.** Nobody can raise an employee's effective level of a key (their own included) above their own level of that key: through overrides (`PUT /api/employees/{id}/permissions`), occupations (`PUT .../occupations`) or by raising an occupation that employees hold (`PUT /api/occupations/{id}`). Lowering and keeping existing levels is always allowed, so a full override document can be sent back unchanged. A refusal is **403** `iam.permission_escalation` with the keys in `fields`; nothing is written. The owner holds every permission and is not limited.
+- **Own employee id.** `GET`/`PUT /api/account` return **`employee_id`**, the caller's employee in the session organization: compare it with `assignee_employee_id` / `created_by_employee_id` of tasks, or open the own card `GET /api/employees/{id}` (that still needs `employees.view`).
 - **IAM admin rights.** Employees: `employees.view` reads, `employees.manage` creates and edits (also the employee form). Occupation templates: `hotel.manage_occupations` creates, edits and deletes; reading them needs `hotel.manage_occupations` or `hotel.manage_permissions`. An employee's occupations and permission overrides: `hotel.manage_permissions`.
 - **Other organization or hotel.** A resource of another organization, or of another hotel of the organization, does not exist for the caller: the endpoint answers **404** with its not-found code (`pricing.pricing_rule_not_found`, `pricing.not_found`, `property.room_not_found`, ...). A write never touches it. Billing booking routes answer **404** `billing.booking_not_found` for a booking of another hotel or organization and for an unknown booking; base rates answer **404** `pricing.room_type_not_found` for a room type that is not one of the caller's hotel.
 
@@ -273,32 +283,34 @@ Use the IAM permission tree for **UI composition**, but align it with the actual
 
 | Module / operation family | Primary permission(s) for UI | Notes |
 |---------------------------|------------------------------|-------|
-| **Property** hotel read | `hotel.view` | Hotel settings/detail screens |
+| **Property** hotel read | any employee of the hotel | Basic data (name, currency, check-in and check-out hours) for every screen; `hotel.view` gates no request any more |
 | **Property** hotel update | `hotel.manage` | Hotel settings writes |
-| **Property** rooms / room types read | `rooms.view` | Lists, detail, availability, room activity |
+| **Property** rooms / room types read | `rooms.view` | Lists, detail, room activity |
+| **Property** room picker (`rooms/available` with `from`/`to`) | `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` | Choosing a room is a part of writing a booking or creating a task |
+| **Property** hotel rooms for the reservation grid (`rooms/available` without `from`/`to`) | the room picker rights or any booking read right (`bookings.view`, `operate`, `cancel`) | Every room of the hotel with its type name and state; the grid rows, no `rooms.view` needed |
 | **Property** rooms create | `rooms.create` | Create room / room type |
 | **Property** rooms update/delete | `rooms.manage` | Room and room type writes; availability / housekeeping / maintenance axis writes |
 | **Tasks** list/detail (housekeeping) | `housekeeping_tasks.view` | Housekeeping task pool |
 | **Tasks** create (housekeeping) | `housekeeping_tasks.create` | Create housekeeping tasks |
 | **Tasks** status change (housekeeping) | `housekeeping_tasks.operate` | Move housekeeping tasks through lifecycle |
-| **Tasks** assign (housekeeping) | `housekeeping_tasks.assign` | Assign housekeeping tasks to employees, also `assignee_employee_id` on creation |
+| **Tasks** assign (housekeeping) | `housekeeping_tasks.assign` | Assign housekeeping tasks to employees, also `assignee_employee_id` on creation; candidates from `GET /api/tasks/assignees?type=housekeeping` |
 | **Tasks** list/detail (maintenance) | `maintenance_tasks.view` | Maintenance task pool |
 | **Tasks** create (maintenance) | `maintenance_tasks.create` | Create maintenance tasks |
 | **Tasks** status change (maintenance) | `maintenance_tasks.operate` | Move maintenance tasks through lifecycle |
-| **Tasks** assign (maintenance) | `maintenance_tasks.assign` | Assign maintenance tasks to employees, also `assignee_employee_id` on creation |
+| **Tasks** assign (maintenance) | `maintenance_tasks.assign` | Assign maintenance tasks to employees, also `assignee_employee_id` on creation; candidates from `GET /api/tasks/assignees?type=maintenance` |
 | **Guest** guest list/detail | `guests.view` | Includes profile reads |
-| **Guest** guest create | `guests.create` + `guests.view` | `POST /api/guests` returns the guest, so it needs both; both are checked before the write |
-| **Guest** guest update / form-definition editor | `guests.modify` (+ `guests.view` for `PUT /api/guests/{id}`) | Includes guest form editor |
+| **Guest** guest create | `guests.create` | The response is the created guest, a part of the action: no `guests.view` |
+| **Guest** guest update / form-definition editor | `guests.modify` | Includes guest form editor; the response of `PUT /api/guests/{id}` needs no `guests.view` |
 | **Guest** guest delete/block | `guests.block` | Delete action |
-| **Booking** create | `bookings.create` (+ `guests.create` for a new inline guest) | New reservation flow |
+| **Booking** create | `bookings.create` | New reservation flow; a new inline guest is created as a part of the booking, without guest rights |
 | **Booking** update | `bookings.modify` | Edit reservation |
 | **Booking** check-in / check-out | `bookings.operate` | Front desk operations |
 | **Booking** cancel | `bookings.cancel` | Cancel action |
 | **Booking** read/list/grid/detail | `bookings.view` | Also available to some operational actors; see below |
 | **Booking** form editor | `hotel.manage` | Booking form-definition editor is admin/configuration, not reservation operation |
-| **Pricing** base rates / rules read | `pricing.view` | Pricing admin screens |
+| **Pricing** base rates / rules read | `pricing.view` | Pricing admin screens; every base rate carries `room_type_name`, so the editor needs no `rooms.view` |
 | **Pricing** base rates update | `pricing.adjust` | Rate adjustment |
-| **Pricing** pricing rules create/update/delete | `pricing.manage` | Rule management |
+| **Pricing** pricing rules create/update/delete | `pricing.manage` | Rule management; condition candidates (`GET /api/pricing/conditions`) are readable with `pricing.manage` too |
 | **Billing** reports / ledger / overview | `billing.view` | Billing/admin reporting |
 | **Billing** collect payment | `billing.collect_payment` | Payment actions |
 | **Billing** manual adjustments / close bill | `billing.modify` | Folio modifications |
@@ -314,12 +326,16 @@ These exceptions are intentional. Frontend should **not** over-restrict them.
 
 | Workflow | What to allow in UI | Why |
 |----------|---------------------|-----|
-| **Create booking with an existing guest** | A user with `bookings.create` may book an existing guest (`guest.id`) without `guests.create`; a new inline guest needs `guests.create` (403 otherwise, nothing is written) | Creating a guest profile is a guest right |
-| **Accommodation quote during booking flow** | A user with `bookings.create` or `bookings.modify` may access pricing quote flows even without `pricing.view`; the stored quote of a booking (`GET /api/pricing/bookings/{id}/quote`) is also readable with `bookings.view` | Quote retrieval is part of reservation work, not only pricing admin; a view-only role opens a booking with its quote |
+| **Create booking with a guest** | A user with `bookings.create` may book an existing guest (`guest.id`) or a new inline guest without any guest right | Creating the inline guest is a part of the booking (principle 5) |
+| **Accommodation quote during booking flow** | A user with `bookings.create` or `bookings.modify` may access pricing quote flows even without `pricing.view`; the stored quote of a booking (`GET /api/pricing/bookings/{id}/quote`) is readable by every booking reader (`bookings.view`, `modify`, `operate`, `cancel`) and with `bookings.create` | The quote is a part of the booking |
+| **Booking balance** | `outstanding_balance` in booking list, grid, detail, check-in and check-out is shown to everyone who gets the response; only `GET /api/billing/bookings/{id}/balance` needs a billing right | The balance is a part of the booking |
+| **Room picker** | `GET /api/property/rooms/available` with `bookings.create` / `bookings.modify` or a task `create` right, without `rooms.view` | Choosing a room is a part of the booking or task form |
+| **Reservation grid rows** | `GET /api/property/rooms/available` without `from`/`to` with any booking read right; with `from`/`to` it answers 403 unless the caller has a room picker right | The grid cannot be shown without the hotel's rooms; the grid response itself stays a list of bookings |
+| **Assignee candidates** | `GET /api/tasks/assignees?type=` with the `assign` right of the type, without `employees.view`; it returns `id` and `name` only | The candidates are the data the assign action needs |
 | **Booking read/detail/list/grid for operational staff** | A user with `bookings.modify`, `bookings.operate`, or `bookings.cancel` may still need booking reads even without plain `bookings.view` | Read access is bundled into operational reservation workflows |
 | **Billing bill/balance reads for operators** | A user with `billing.collect_payment`, `billing.modify`, or `billing.refund` may still read bill/balance screens even without plain `billing.view` | Operators need folio context to perform the allowed action |
 | **Guest bookings history** | A user with `bookings.view` may access guest stay history even without `guests.view` | This supports booking-oriented workflows launched from guest context |
-| **Flag room dirty / required maintenance during booking ops** | A user with `bookings.operate` may mark a room `dirty` (`PUT /api/property/rooms/{id}/housekeeping` with `status: "dirty"`) or `required` (`PUT /api/property/rooms/{id}/maintenance` with `status: "required"`) even without `housekeeping_tasks.create` / `maintenance_tasks.create` | Front-desk staff raise these flags during the reservation workflow (e.g. a guest reports a problem at check-out); owning the underlying task pool is a separate responsibility. The exception covers opening the task only: `assignee_employee_id` needs the task `assign` right, `planned_end` or a description for an open task needs `operate`. Other target statuses (`cleaning`, `inspection`, `clean`, `under_maintenance`, `none`) need the task `operate` right, also when the room has no open task. |
+| **Flag room dirty / required maintenance during booking ops** | A user with `bookings.operate` may mark a room `dirty` (`PUT /api/property/rooms/{id}/housekeeping` with `status: "dirty"`) or `required` (`PUT /api/property/rooms/{id}/maintenance` with `status: "required"`) even without `housekeeping_tasks.create` / `maintenance_tasks.create` | Front-desk staff raise these flags during the reservation workflow (e.g. a guest reports a problem at check-out); owning the underlying task pool is a separate responsibility. The exception covers opening the task only: `assignee_employee_id` needs the task `assign` right, `planned_end` or a description for an open task needs `operate`. Other target statuses (`cleaning`, `inspection`, `clean`, `under_maintenance`, `none`) need the task `operate` right, also when the room has no open task; `cleaning` and `under_maintenance` then open the task as a part of the action, without `create`. |
 
 **Form compilation:** forms are compiled at save time (`PUT …/form/definition`) into separate **view** and **edit** variants. The `GET …/form?target=` endpoint serves the pre-compiled form. Guest fields and room-type options are still injected at runtime on top of the compiled tree.
 
@@ -398,7 +414,7 @@ The **Pricing** bounded context exposes its HTTP API under **`/api/pricing/`** (
 Do not gate all pricing endpoints behind `pricing.view`.
 
 - **Pricing admin/configuration** screens should use `pricing.view`, `pricing.adjust`, and `pricing.manage` as described above.
-- **Booking quote / accommodation preview** flows should remain available to users who can create or modify bookings, even if they are not pricing administrators. The stored quote of a booking is also readable with `bookings.view`.
+- **Booking quote / accommodation preview** flows should remain available to users who can create or modify bookings, even if they are not pricing administrators. The stored quote of a booking is readable by everyone who may read the booking (`bookings.view`, `modify`, `operate`, `cancel`).
 - If the frontend has both a standalone pricing area and quote widgets embedded in booking screens, treat them as **different permission surfaces**.
 
 ---
@@ -414,7 +430,7 @@ Do not model Billing as “read requires `billing.view`, write requires somethin
 
 This distinction is important when deciding whether to hide the folio screen entirely versus hiding individual actions inside that screen.
 
-**Booking balance.** `outstanding_balance` in booking responses (list, grid, detail, check-in, check-out) follows the rule of `GET /api/billing/bookings/{bookingId}/balance`: any of `billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`. For others the field is absent. One requirement list (`iamapp.BookingBalanceAccess`) backs both.
+**Booking balance.** `outstanding_balance` in booking responses (list, grid, detail, check-in, check-out) is a part of the booking: whoever reads the booking or checks it in or out sees it, no billing right needed (principle 5). The separate `GET /api/billing/bookings/{bookingId}/balance` needs any of `billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund` (`iamapp.BookingBalanceAccess`).
 
 ### 6.2 Rules
 
@@ -452,7 +468,7 @@ All three produce the same adjustment shape in quote responses and accommodation
 - `guest_id` — optional guest UUID; when provided, the engine resolves system adjustments from guest attributes (currently a stub returning no adjustments; will activate when guest badges are implemented).
 - `manual_adjustments` — optional array of `{ name, effect: { type, value, apply_to } }` for admin-entered corrections.
 
-**Response shape:** `{ nights: [{ date, room_type_id, base_rate, adjustments, subtotal }], nights_subtotal, total_adjustments, grand_total }`. Each adjustment carries `source` (`rule` | `manual` | `system`), optional `source_id`, `name`, `type` (percent/fixed), `value`, `apply_to`, and `amount` (actual delta in minor currency units).
+**Response shape:** `{ nights: [{ date, room_type_id, room_type_name, base_rate, adjustments, subtotal }], nights_subtotal, total_adjustments, grand_total }`. `room_type_name` is a part of the night (no rooms right needed); the stored quote (`GET /api/pricing/bookings/{bookingId}/quote`) serves it on every night too, with the room type's current name. Each adjustment carries `source` (`rule` | `manual` | `system`), optional `source_id`, `name`, `type` (percent/fixed), `value`, `apply_to`, and `amount` (actual delta in minor currency units).
 
 **Evaluation order:**
 
@@ -571,7 +587,7 @@ When a booking is checked in (`PUT /api/bookings/{id}/check-in`), the **Pricing 
 | `accommodation_correction` | +/− | Net delta for a changed night or total-adjustment shift after check-in |
 | `correction` | +/− | Audit correction (future) |
 
-**Folio display (i18n):** system-generated entries (`accommodation_night`, `accommodation_correction`) have an **empty `description`** — build the display label from `entry_type` (use as i18n key, e.g. `billing.accommodation_night` → "Night" / "Ночь") + `metadata.date` (format per locale) + `metadata.room_type_id` (join with room type name for context). `rule_adjustment` entries carry the admin-defined rule name in `description`. `manual_adjustment` entries (from snapshot) carry the operator's label; direct billing `manual_adjustment` entries carry operator free-text. `system_adjustment` entries carry the system label. `payment` entries carry optional operator note in `description`. `refund` entries carry optional note in `description`. Negative `balance_delta` on `accommodation_night` or adjustment entries indicates a credit (removed night). `metadata.date` uses ISO 8601 date-only format (`YYYY-MM-DD`), same as snapshot and grid query parameters.
+**Folio display (i18n):** system-generated entries (`accommodation_night`, `accommodation_correction`) have an **empty `description`** — build the display label from `entry_type` (use as i18n key, e.g. `billing.accommodation_night` → "Night" / "Ночь") + `metadata.date` (format per locale) + `metadata.room_type_name` (served next to `metadata.room_type_id` on every entry that has it, in the bill and in the ledger report; no rooms right needed). `rule_adjustment` entries carry the admin-defined rule name in `description`. `manual_adjustment` entries (from snapshot) carry the operator's label; direct billing `manual_adjustment` entries carry operator free-text. `system_adjustment` entries carry the system label. `payment` entries carry optional operator note in `description`. `refund` entries carry optional note in `description`. Negative `balance_delta` on `accommodation_night` or adjustment entries indicates a credit (removed night). `metadata.date` uses ISO 8601 date-only format (`YYYY-MM-DD`), same as snapshot and grid query parameters.
 
 **Outstanding balance projection:** every balance-mutating billing operation (open bill, adjust accommodation, manual adjustment, payment, refund, close bill) triggers a `BalanceProjector` that updates `booking.reservation_grid.outstanding_balance` — keeping the grid's financial column always current without cross-schema JOINs at query time.
 
@@ -681,13 +697,15 @@ Legacy `PUT /api/property/rooms/{id}` (full room update with the single `status`
 
 ### 9.2 Stay-aware availability (`rooms/available`)
 
-`GET /api/property/rooms/available?from=&to=&exclude=` is the single authoritative source for room selection. Each item in the response carries:
+`GET /api/property/rooms/available?from=&to=&exclude=` is the single authoritative source for room selection. With `from`/`to` it is readable with `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` (owned level included): choosing a room is a part of writing a booking or creating a task, so the booking and task forms use it instead of `GET /api/property/rooms`.
+
+Without `from`/`to` it lists **every room of the hotel**, blocked ones included with their `state` (`blocked_by_inventory`, `blocked_by_maintenance`), each with `room_type_id` and `room_type_name`. This form is also readable by every booking reader (`bookings.view`, `bookings.operate`, `bookings.cancel`): use it for the rows of the reservation grid instead of `GET /api/property/rooms` and `GET /api/property/room-types`, which need `rooms.view`. Each item in the response carries:
 
 - `state`: one of
   - `selectable` — offerable with no warnings
   - `selectable_with_warning` — offerable but operationally imperfect (see `warnings[]`)
-  - `blocked_by_inventory` — `availability_status = ooo` (filtered out unless the UI requests blocked rooms)
-  - `blocked_by_maintenance` — `maintenance_status = under_maintenance` and the stay overlaps `planned_end` (filtered out unless the UI requests blocked rooms)
+  - `blocked_by_inventory` — `availability_status = ooo` (filtered out of a stay, listed without one)
+  - `blocked_by_maintenance` — `maintenance_status = under_maintenance` and the stay overlaps `planned_end` (filtered out of a stay, listed without one)
   - `blocked_by_occupancy` — already reserved in the window
 - `warnings[]`: string keys for i18n. Current values: `housekeeping.dirty`, `housekeeping.cleaning`, `housekeeping.inspection`, `maintenance.required`, `availability.ooo`, `availability.occupied`, `maintenance.under_maintenance`.
 
@@ -766,7 +784,15 @@ There is no shared "tasks" type on the wire anymore; housekeeping and maintenanc
 | `PUT /api/tasks/maintenance/{id}` | Partial update. Body: `{ description?, planned_end?, note?, assignee_employee_id? }`. Use `null` to clear `assignee_employee_id` or `planned_end`. Edits to `planned_end`/`note` while the task is `in_progress` propagate to the room automatically. A body without fields returns the task unchanged and still needs `operate` or `assign` on it. |
 | `PUT /api/tasks/maintenance/{id}/status` | Change status. Body: `{ status }` where `status ∈ {in_progress, done, canceled}`. |
 
-**Error codes (both domains):** `tasks.invalid_status`, `tasks.invalid_transition`, `tasks.invalid_source`, `tasks.room_id_required`, `tasks.planned_end_required`, `tasks.duplicate_open_task`, `tasks.task_not_found`, `tasks.concurrency_conflict`, `tasks.booking_id_forbidden`, plus the common auth codes.
+Every task response (create, list, detail, update, status) carries **`room_number`**, the number of the task's room, and, whenever `assignee_employee_id` is set, **`assignee_name`** (first and last name of the assignee; both are absent for an unassigned task). They are a part of the task: no rooms or employee right is needed, and a deleted room keeps its number.
+
+**Assignee candidates**
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/tasks/assignees?type=housekeeping\|maintenance` | Employees of the current hotel a task of the type may be assigned to: `[{ id, name }]` ordered by name, `id` is the value of `assignee_employee_id`. Needs the `assign` right of the type (an owned level counts); `400 tasks.invalid_task_type` for another or missing `type`. The full employee list (`GET /api/employees`) still needs `employees.view`. |
+
+**Error codes (both domains):** `tasks.invalid_status`, `tasks.invalid_transition`, `tasks.invalid_source`, `tasks.room_id_required`, `tasks.planned_end_required`, `tasks.duplicate_open_task`, `tasks.task_not_found`, `tasks.concurrency_conflict`, `tasks.booking_id_forbidden`, `tasks.invalid_task_type` (assignee candidates), plus the common auth codes.
 
 ### 11.3 Task → room side effects
 
@@ -801,6 +827,7 @@ Because the room axis is derived from tasks, room `required` is only reached thr
 - Dashboards should filter by `status` and offer an **"Unassigned"** quick filter (`?unassigned=true`). Use the two domain endpoints separately — there is no unified task list endpoint.
 - After a checkout, the auto-created housekeeping task is already visible: refetch `/api/tasks/housekeeping?status=open` (or refetch per-room) to pick it up. No client-side create is needed.
 - Use `assignee_employee_id = null` on the PUT body to unassign. Same pattern for `planned_end: null` on maintenance.
+- Show the room from `room_number` of the task and pick assignees from `GET /api/tasks/assignees`; neither needs `rooms.view` or `employees.view`. Recognize the caller's own tasks by `employee_id` from `GET /api/account`.
 - The room-status endpoints (`/api/property/rooms/{id}/housekeeping` and `/maintenance`) are valid alternatives to calling the task endpoints directly — pick whichever matches your UI flow (a "Mark clean" button on the room card vs. a "Close task" action on the task row).
 - Room activity (`GET /api/property/rooms/{id}/activity`) shows the resulting `RoomHousekeepingChanged` / `RoomMaintenanceChanged` events; `metadata.employee_id` is the task-side actor, so the bridge is traceable without cross-joining task events.
 

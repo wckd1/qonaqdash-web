@@ -345,7 +345,7 @@ export interface paths {
     /**
      * List bookings
      * @description Distinct bookings (read model). Optional `q` on guest name. With `from`+`to` (`YYYY-MM-DD`, UTC midnight): `check_out >= from` **and** `check_in <= to`.
-     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+     *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
      *     **Error codes:** booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
      */
     get: operations['listBookings']
@@ -353,7 +353,7 @@ export interface paths {
     /**
      * Create booking
      * @description Flat `{ guest, stay, adjustments? }` JSON (see `CreateBookingRequest`). Optional top-level `adjustments` are manual pricing inputs forwarded to Pricing (not persisted on the booking stream). Room availability is checked twice before commit and the DB rejects overlapping active assignments for the same physical room, so concurrent creates (e.g. OTA + front desk) cannot double-book. `guest.id` links an existing profile; omit to create inline.
-     *     A new inline guest (`guest` without `id`) also needs `guests.create`; without it the request is 403 `common.forbidden` and nothing is written.
+     *     A new inline guest (`guest` without `id`) is created as a part of the booking and needs no guest right.
      *     **Error codes:** booking.invalid_data_format, booking.dates_required, booking.rooms_required, booking.room_type_required_each_room, booking.form_missing_stay_group, booking.guest_information_required; booking.overbooking; **409** `guest.duplicate` when inline guest creation hits an existing profile; **422** `common.validation_failed` with `error.issues[]` when payload fails org booking form `rules` (stay subtree and array rows) or inline guest constraints (e.g. `guest.email` / `guest.phone` `validation.contact_required`).
      */
     post: operations['createBooking']
@@ -373,7 +373,7 @@ export interface paths {
     /**
      * Get booking by id
      * @description Unified booking data from the aggregate. `stay.rooms[]` may include `room_type_label` and `room_id_label`. **`_form`** carries canonical form id (`booking`) and **hash**. Merge with GET `/api/bookings/form?target=view` definition on the client. Pricing data (accommodation snapshot, manual adjustments) is served by the pricing module via `GET /api/pricing/bookings/{id}/quote`. Once the booking is `checked_in` or `checked_out` the response also carries `outstanding_balance` (zero when fully paid, omitted before check-in).
-     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+     *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
      *     **Error codes:** common.invalid_booking_id; booking.not_found.
      */
     get: operations['getBooking']
@@ -422,7 +422,7 @@ export interface paths {
     /**
      * Check in
      * @description Status: `confirmed` → `checked_in`. Response includes `outstanding_balance` reflecting the bill pricing opens on check-in.
-     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+     *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
      *     **Error codes:** 400 — common.invalid_booking_id. 403 — common.forbidden. 404 — booking.not_found. 409 — booking.concurrent_modification. 422 — booking.invalid_status_transition.
      */
     put: operations['checkInBooking']
@@ -449,7 +449,7 @@ export interface paths {
      *     Send `{"force_unpaid": true}` to allow check-out without full payment;
      *     in that case the bill stays open so the debt remains visible.
      *     When balance ≤ 0 (fully paid), the bill is auto-closed on check-out.
-     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+     *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
      *     **Error codes:** common.invalid_booking_id; booking.not_found; booking.invalid_status_transition; booking.check_in_required_before_check_out; booking.outstanding_balance.
      */
     put: operations['checkOutBooking']
@@ -515,7 +515,7 @@ export interface paths {
     /**
      * Get reservation grid
      * @description Bookings in the date range with rooms nested under `stay.rooms[]`. Overlap: `check_in <= to` and `check_out >= from` (dates `YYYY-MM-DD`, UTC midnight). `from` and `to` required.
-     *     `outstanding_balance` is present only for a caller who may read the booking balance (`billing.view`, `billing.collect_payment`, `billing.modify` or `billing.refund`, the rule of `GET /api/billing/bookings/{bookingId}/balance`).
+     *     `outstanding_balance` is a part of the booking: whoever reads the booking or performs the action sees it, no billing right needed.
      *     **Error codes:** booking.grid_from_to_required, booking.grid_invalid_from_date, booking.grid_invalid_to_date, booking.grid_from_before_to.
      */
     get: operations['getReservationGrid']
@@ -696,7 +696,7 @@ export interface paths {
     /**
      * Create guest
      * @description Flat form `data` per org schema; relational columns extracted server-side. An `id` key in the body is ignored; the response carries the new guest `id`.
-     *     Requires `guests.create` and `guests.view` (the response returns the guest); both are checked before the guest is written.
+     *     Requires `guests.create`. The response is the created guest; it needs no `guests.view`.
      *     **Error codes:** 400 — guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required. 403 — common.forbidden. 409 — guest.duplicate. **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules` (see OpenAPI `APIError`).
      */
     post: operations['createGuest']
@@ -722,7 +722,7 @@ export interface paths {
     /**
      * Update guest
      * @description Flat `data` same as POST; relational columns re-extracted. The guest is identified by the path: an `id` key in the body is ignored and not stored.
-     *     Requires `guests.modify` and `guests.view` (the response returns the guest); both are checked before the guest is written.
+     *     Requires `guests.modify`. The response is the updated guest; it needs no `guests.view`.
      *     **Error codes:** common.invalid_guest_id; guest.invalid_data_format, guest.contact_required, guest.first_name_required, guest.last_name_required; guest.not_found; **422** `common.validation_failed` with `error.issues[]` when payload fails org form `rules`.
      */
     put: operations['updateGuest']
@@ -925,7 +925,7 @@ export interface paths {
     /**
      * Get booking quote
      * @description Returns the stored accommodation snapshot (pricing breakdown + manual adjustments) for a booking. Use `manual_adjustments` for round-tripping on updates. Returns 404 if no quote has been calculated yet.
-     *     Readable with `bookings.view` (anyone who may open the booking), `bookings.create`, `bookings.modify` or `pricing.view`, `pricing.adjust`, `pricing.manage`. A booking of another hotel or organization is `404 pricing.not_found`.
+     *     The quote is a part of the booking: readable by anyone who may read the booking (`bookings.view`, `bookings.modify`, `bookings.operate` or `bookings.cancel`), with `bookings.create`, or with `pricing.view`, `pricing.adjust`, `pricing.manage`. A booking of another hotel or organization is `404 pricing.not_found`.
      *     **Error codes:** common.invalid_booking_id; pricing.not_found.
      */
     get: operations['getBookingQuote']
@@ -947,6 +947,7 @@ export interface paths {
     /**
      * Get pricing condition candidates
      * @description Returns indexed form fields eligible as pricing rule conditions. A synthetic **`room_type`** select (bind `room_type`) is always prepended first with this hotel’s room types plus an “any” option (same source as the booking form runtime). Remaining rows come from the org index (saved at booking form save time). **`hash` / `ETag`** reflect the stored index only (not the live room-type list). Hotel scope required (same JWT as other pricing routes).
+     *     Requires `pricing.view` or `pricing.manage`: rule managers read the candidates to compose rules.
      */
     get: operations['getPricingConditions']
     put?: never
@@ -1044,6 +1045,7 @@ export interface paths {
     /**
      * Get hotel profile
      * @description Hotel from JWT (org + hotel scope). Includes the hotel's default `currency` (ISO 4217 alpha-3).
+     *     Basic hotel data every employee of the hotel needs: readable by any employee of the hotel, no permission required. Changing it (`PUT`) needs `hotel.manage`.
      *     **Error codes:** property.hotel_not_found.
      */
     get: operations['getHotel']
@@ -1220,7 +1222,7 @@ export interface paths {
     /**
      * Change room housekeeping status
      * @description Alias for housekeeping task management. Each status maps to the corresponding task transition on the room's open housekeeping task (or creates one when needed). Typical flow: `dirty → cleaning → inspection → clean`.
-     *     Rights: `dirty` needs `housekeeping_tasks.create` or `bookings.operate`; `cleaning`, `inspection` and `clean` need `housekeeping_tasks.operate` on the open task (at any level when the room has none; `cleaning` then also needs `create`). `assignee_employee_id` needs `housekeeping_tasks.assign`, a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
+     *     Rights: `dirty` needs `housekeeping_tasks.create` or `bookings.operate`; `cleaning`, `inspection` and `clean` need `housekeeping_tasks.operate` on the open task (at any level when the room has none; `cleaning` then opens the task as a part of the action, without `create`). `assignee_employee_id` needs `housekeeping_tasks.assign`, a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
      *     **Error codes:** 400 — common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.duplicate_open_task, tasks.concurrency_conflict.
      */
     put: operations['changeRoomHousekeeping']
@@ -1242,7 +1244,7 @@ export interface paths {
     /**
      * Change room maintenance status
      * @description Alias for maintenance task management. `required` and `under_maintenance` require `planned_end` on first use (create/start).
-     *     Rights: `required` needs `maintenance_tasks.create` or `bookings.operate`; `under_maintenance` and `none` need `maintenance_tasks.operate` on the open task (at any level when the room has none; `under_maintenance` then also needs `create`). `assignee_employee_id` needs `maintenance_tasks.assign`; `planned_end` or a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
+     *     Rights: `required` needs `maintenance_tasks.create` or `bookings.operate`; `under_maintenance` and `none` need `maintenance_tasks.operate` on the open task (at any level when the room has none; `under_maintenance` then opens the task as a part of the action, without `create`). `assignee_employee_id` needs `maintenance_tasks.assign`; `planned_end` or a `description` for an open task needs `operate`. Missing rights: 403 `common.forbidden`, checked before anything is written.
      *     **Error codes:** 400 — common.invalid_room_id, tasks.invalid_status, tasks.invalid_transition, tasks.planned_end_required. 403 — common.forbidden. 404 — tasks.task_not_found. 409 — tasks.duplicate_open_task, tasks.concurrency_conflict.
      */
     put: operations['changeRoomMaintenance']
@@ -1262,10 +1264,32 @@ export interface paths {
     }
     /**
      * List available rooms
-     * @description Room picker: omit `from`/`to` for all rooms. With `from`+`to` (`dd.MM.yyyy`), only rooms free in that range. With `exclude` (booking UUID) and a range, that booking’s occupancy is ignored so its rooms stay selectable.
+     * @description Room picker: omit `from`/`to` for all rooms of the hotel, blocked ones included with their `state` (the rows of the reservation grid). With `from`+`to` (`dd.MM.yyyy`), only rooms free in that range. With `exclude` (booking UUID) and a range, that booking’s occupancy is ignored so its rooms stay selectable.
+     *     Choosing a room is a part of writing a booking or creating a task: with `from`+`to` readable with `rooms.view`, `bookings.create`, `bookings.modify`, `housekeeping_tasks.create` or `maintenance_tasks.create` (owned level included). Without them the list of the hotel's rooms is also readable by every booking reader (`bookings.view`, `bookings.operate`, `bookings.cancel`): the reservation grid cannot be shown without it.
      *     **Error codes:** property.list_from_to_both_or_neither, property.list_invalid_from_date, property.list_invalid_to_date, property.list_to_before_from, property.list_invalid_exclude_booking_id.
      */
     get: operations['listAvailableRooms']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/tasks/assignees': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * List task assignee candidates
+     * @description Employees of the current hotel as assignee candidates: `id` and display `name`, ordered by name. This is the data the assign action needs, so it needs only the assign right of the task type: `type=housekeeping` needs `housekeeping_tasks.assign`, `type=maintenance` needs `maintenance_tasks.assign` (an owned level counts). The full employee list (`GET /api/employees`) still needs `employees.view`.
+     *     **Error codes:** 400 — tasks.invalid_task_type. 403 — common.forbidden.
+     */
+    get: operations['listTaskAssignees']
     put?: never
     post?: never
     delete?: never
@@ -1572,6 +1596,11 @@ export interface components {
        */
       room_type_id?: string
       /**
+       * @description RoomTypeName is the name of room_type_id, served with it: a part of the entry, no rooms right needed.
+       * @example Standard Double
+       */
+      room_type_name?: string
+      /**
        * @description Scope is set on stay-level (total) adjustments and their corrections.
        * @example total
        * @enum {string}
@@ -1746,7 +1775,7 @@ export interface components {
       /** @example 550e8400-e29b-41d4-a716-446655440050 */
       id: string
       /**
-       * @description only for callers who may read the booking balance
+       * @description with the booking, no billing right needed
        * @example 15000
        */
       outstanding_balance?: number
@@ -1978,6 +2007,12 @@ export interface components {
     'iamhttp.AccountBundleResponse': {
       account: components['schemas']['iamhttp.AccountInfoBody']
       /**
+       * @description EmployeeID is the caller's employee in the organization of the session:
+       *     the id of their own tasks' assignee_employee_id and of GET /api/employees/{id}.
+       * @example 550e8400-e29b-41d4-a716-446655440020
+       */
+      employee_id: string
+      /**
        * @description IsOwner is true for the owner of the session organization, who holds every
        *     permission (`permissions` is then the full set at organization level).
        * @example false
@@ -2151,6 +2186,12 @@ export interface components {
       first_name: string
       /** @example 550e8400-e29b-41d4-a716-446655440020 */
       id: string
+      /**
+       * @description IsOwner is true for the organization owner: their occupations and
+       *     permissions cannot be changed (409 iam.owner_permissions_immutable).
+       * @example false
+       */
+      is_owner: boolean
       /** @example Nur */
       last_name: string
       /** @description empty when the employee has no occupations */
@@ -2664,8 +2705,19 @@ export interface components {
       /** @example 550e8400-e29b-41d4-a716-446655440010 */
       room_type_id: string
     }
+    'pricinghttp.BaseRateResponseItemDTO': {
+      /** @example 1000000 */
+      base_rate_minor: number
+      /** @example 550e8400-e29b-41d4-a716-446655440010 */
+      room_type_id: string
+      /**
+       * @description a part of the rate: no rooms right needed
+       * @example Standard Double
+       */
+      room_type_name: string
+    }
     'pricinghttp.BaseRatesResponse': {
-      rates: components['schemas']['pricinghttp.BaseRateItemDTO'][]
+      rates: components['schemas']['pricinghttp.BaseRateResponseItemDTO'][]
     }
     'pricinghttp.BookingQuoteNightDTO': {
       /** @description omitted when empty */
@@ -2679,6 +2731,11 @@ export interface components {
       date: string
       /** @example 550e8400-e29b-41d4-a716-446655440010 */
       room_type_id: string
+      /**
+       * @description served with the snapshot, not stored: no rooms right needed
+       * @example Standard Double
+       */
+      room_type_name: string
       /** @example 1200000 */
       subtotal: number
     }
@@ -2832,6 +2889,11 @@ export interface components {
       date: string
       /** @example 550e8400-e29b-41d4-a716-446655440010 */
       room_type_id: string
+      /**
+       * @description a part of the night: no rooms right needed
+       * @example Standard Double
+       */
+      room_type_name: string
       /** @example 1200000 */
       subtotal: number
     }
@@ -3132,6 +3194,18 @@ export interface components {
     'sharedhttp.ErrorResponse': {
       error: components['schemas']['sharedhttp.APIError']
     }
+    'taskshttp.AssigneeResponse': {
+      /**
+       * @description employee id, the value of assignee_employee_id
+       * @example 550e8400-e29b-41d4-a716-446655440020
+       */
+      id: string
+      /**
+       * @description display name: first and last name
+       * @example Gulnara Housekeeper
+       */
+      name: string
+    }
     'taskshttp.ChangeHousekeepingTaskStatusRequest': {
       /**
        * @example in_progress
@@ -3160,6 +3234,11 @@ export interface components {
     }
     'taskshttp.HousekeepingTaskResponse': {
       assignee_employee_id?: string
+      /**
+       * @description display name of the assignee, set whenever assignee_employee_id is: a part of the task, no employee right needed
+       * @example Gulnara Housekeeper
+       */
+      assignee_name?: string
       /** @description set when source=auto_checkout */
       booking_id?: string
       canceled_at?: string
@@ -3170,6 +3249,11 @@ export interface components {
       description?: string
       id: string
       room_id: string
+      /**
+       * @description Number of the task's room, a part of the task: no rooms right needed
+       * @example 101
+       */
+      room_number: string
       /**
        * @example manual
        * @enum {string}
@@ -3185,6 +3269,11 @@ export interface components {
     }
     'taskshttp.MaintenanceTaskResponse': {
       assignee_employee_id?: string
+      /**
+       * @description display name of the assignee, set whenever assignee_employee_id is: a part of the task, no employee right needed
+       * @example Gulnara Housekeeper
+       */
+      assignee_name?: string
       canceled_at?: string
       completed_at?: string
       created_at: string
@@ -3195,6 +3284,11 @@ export interface components {
       /** @example 2026-05-01T12:00:00Z */
       planned_end?: string
       room_id: string
+      /**
+       * @description Number of the task's room, a part of the task: no rooms right needed
+       * @example 101
+       */
+      room_number: string
       /**
        * @example manual
        * @enum {string}
@@ -7692,15 +7786,6 @@ export interface operations {
           'application/json': components['schemas']['sharedhttp.ErrorResponse']
         }
       }
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['sharedhttp.ErrorResponse']
-        }
-      }
       /** @description Not Found */
       404: {
         headers: {
@@ -8818,6 +8903,65 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['propertyhttp.AvailableRoomResponse'][]
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['sharedhttp.ErrorResponse']
+        }
+      }
+    }
+  }
+  listTaskAssignees: {
+    parameters: {
+      query: {
+        /** @description Task type */
+        type: 'housekeeping' | 'maintenance'
+      }
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['taskshttp.AssigneeResponse'][]
         }
       }
       /** @description Bad Request */
